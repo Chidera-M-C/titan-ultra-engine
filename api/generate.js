@@ -1,6 +1,4 @@
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
   const { prompt } = req.body;
 
   try {
@@ -14,8 +12,15 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
+    
+    if (response.status !== 200) {
+      console.error("RunPod Error:", data);
+      return res.status(response.status).json(data);
+    }
+
     return res.status(200).json(data);
   } catch (error) {
-    return res.status(500).json({ error: "GPU Handshake Failed" });
+    console.error("Fetch Error:", error);
+    return res.status(500).json({ error: "GPU Handshake Failed", details: error.message });
   }
 }
