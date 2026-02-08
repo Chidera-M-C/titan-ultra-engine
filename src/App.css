@@ -1,86 +1,95 @@
 :root {
-  --bg-dark: #050505;
-  --bg-sidebar: #0f0f12;
-  --accent: #6366f1; /* Electric Indigo */
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --border-color: rgba(255, 255, 255, 0.08);
+  --bg-dark: #070708;
+  --bg-sidebar: #111114;
+  --accent: #6366f1; /* Indigo */
+  --text-main: #f1f5f9;
+  --text-dim: #64748b;
+  --border: rgba(255, 255, 255, 0.06);
   --glass: rgba(255, 255, 255, 0.03);
 }
 
-body {
+* { box-sizing: border-box; }
+
+body, html {
   margin: 0;
+  height: 100%;
   background: var(--bg-dark);
-  color: var(--text-primary);
+  color: var(--text-main);
   font-family: 'Inter', sans-serif;
   overflow: hidden;
 }
 
 .app-shell {
   display: flex;
+  width: 100vw;
   height: 100vh;
 }
 
-/* --- SIDEBAR --- */
+/* --- SIDEBAR FIXES --- */
 .sidebar {
-  width: 240px;
+  width: 260px;
   background: var(--bg-sidebar);
-  border-right: 1px solid var(--border-color);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   padding: 1.5rem;
+  flex-shrink: 0; /* Prevents sidebar from squishing */
+}
+
+.sidebar-top {
+  flex-grow: 1;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-weight: 800;
-  font-size: 1.2rem;
-  margin-bottom: 2rem;
+  gap: 12px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 2.5rem;
+  color: #fff;
 }
 
 .side-nav {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .side-nav button {
   background: transparent;
   border: none;
-  color: var(--text-secondary);
+  color: var(--text-dim);
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px;
+  padding: 10px 12px;
   border-radius: 10px;
   cursor: pointer;
   transition: 0.2s;
-  font-weight: 500;
-  text-align: left;
+  font-size: 0.95rem;
 }
 
-.side-nav button.active {
+.side-nav button:hover, .side-nav button.active {
   background: var(--glass);
   color: var(--accent);
 }
 
 .sidebar-bottom {
-  border-top: 1px solid var(--border-color);
   padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .credits-display {
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(99, 102, 241, 0.08);
   color: var(--accent);
-  padding: 10px;
+  padding: 10px 14px;
   border-radius: 8px;
   font-size: 0.85rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -89,51 +98,61 @@ body {
 .user-profile {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 0.9rem;
+  gap: 12px;
 }
 
 .avatar-small {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   background: var(--accent);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
+  font-size: 0.8rem;
 }
 
-/* --- MAIN STAGE --- */
-.main-stage {
-  flex: 1;
+.user-info {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  flex-grow: 1;
+}
+
+.user-name { font-size: 0.85rem; font-weight: 600; }
+.user-plan { font-size: 0.7rem; color: var(--text-dim); }
+
+.settings-icon { color: var(--text-dim); cursor: pointer; }
+
+/* --- MAIN CONTENT AREA --- */
+.main-stage {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
   padding: 2rem;
   overflow-y: auto;
 }
 
-.generate-container {
+.generate-layout {
   width: 100%;
-  max-width: 800px;
+  max-width: 900px;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
-/* OUTPUT AREA */
-.output-area {
-  width: 100%;
+/* OUTPUT BOX (FIXED ASPECT RATIO BOX) */
+.output-container {
+  flex-grow: 1;
   min-height: 400px;
-  max-height: 60vh;
   background: var(--bg-sidebar);
   border-radius: 20px;
-  border: 1px solid var(--border-color);
-  overflow: hidden;
+  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  position: relative;
 }
 
 .final-output {
@@ -142,69 +161,82 @@ body {
   object-fit: contain;
 }
 
-.empty-state {
-  color: var(--text-secondary);
-  text-align: center;
+.empty-canvas { color: var(--text-dim); text-align: center; }
+
+/* COMMAND BAR (MINIMALIST) */
+.command-center {
+  width: 100%;
 }
 
-/* COMMAND BAR (BAKED-IN) */
 .command-bar {
   background: var(--bg-sidebar);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 8px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  gap: 10px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
 }
 
-.bar-main textarea {
-  width: 100%;
+.command-bar textarea {
   background: transparent;
   border: none;
-  color: white;
-  padding: 12px;
+  color: #fff;
   font-size: 1rem;
   resize: none;
   outline: none;
+  padding: 4px;
 }
 
-.bar-actions {
+.bar-footer {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  border-top: 1px solid var(--border-color);
-  padding: 8px 4px 0 4px;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
 }
 
-.aspect-ratio-selector select {
-  background: var(--glass);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-color);
-  padding: 6px 12px;
+.selector-wrapper select {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 6px 10px;
   border-radius: 8px;
+  font-size: 0.8rem;
   outline: none;
 }
 
+/* THE SHORT EXECUTE BUTTON */
 .execute-btn {
   background: var(--accent);
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 10px;
+  padding: 8px 16px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   transition: 0.2s;
+  width: fit-content; /* Makes button short */
 }
 
-.execute-btn:hover {
-  transform: scale(1.02);
+.execute-btn:hover:not(:disabled) {
   filter: brightness(1.1);
+  transform: translateY(-1px);
 }
 
-.spin { animation: rotate 1s linear infinite; }
-@keyframes rotate { to { transform: rotate(360deg); } }
+.error-text {
+  color: #ef4444;
+  font-size: 0.8rem;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
