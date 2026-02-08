@@ -37,110 +37,112 @@ export default function App() {
   };
 
   return (
-    <div className="app-shell">
-      {/* --- FIXED SIDEBAR --- */}
-      <aside className="sidebar">
-        <div className="sidebar-top">
-          <div className="brand">
-            <Zap className="brand-icon" size={20} fill="#6366f1" color="#6366f1" />
-            <span>Nudely</span>
-          </div>
-          
-          <nav className="side-nav">
-            <button className={activeTab === 'generate' ? 'active' : ''} onClick={() => setActiveTab('generate')}>
-              <Sparkles size={18} /> <span>Generate</span>
-            </button>
-            <button className={activeTab === 'gallery' ? 'active' : ''} onClick={() => setActiveTab('gallery')}>
-              <History size={18} /> <span>Gallery</span>
-            </button>
-            <button className={activeTab === 'inspiration' ? 'active' : ''} onClick={() => setActiveTab('inspiration')}>
-              <Compass size={18} /> <span>Styles</span>
-            </button>
-          </nav>
-        </div>
-
-        <div className="sidebar-bottom">
-          <div className="credits-display">
-            <CreditCard size={14} />
-            <span>12 Credits</span>
-          </div>
-          <div className="user-profile">
-            <div className="avatar-small">JD</div>
-            <div className="user-info">
-              <span className="user-name">John Doe</span>
-              <span className="user-plan">Pro Plan</span>
+    <div className="master-wrapper">
+      <div className="app-shell">
+        {/* --- FIXED SIDEBAR --- */}
+        <aside className="sidebar">
+          <div className="sidebar-top">
+            <div className="brand">
+              <Zap className="brand-icon" size={20} fill="#6366f1" color="#6366f1" />
+              <span>Nudely</span>
             </div>
-            <Settings size={16} className="settings-icon" />
+            
+            <nav className="side-nav">
+              <button className={activeTab === 'generate' ? 'active' : ''} onClick={() => setActiveTab('generate')}>
+                <Sparkles size={18} /> <span>Generate</span>
+              </button>
+              <button className={activeTab === 'gallery' ? 'active' : ''} onClick={() => setActiveTab('gallery')}>
+                <History size={18} /> <span>Gallery</span>
+              </button>
+              <button className={activeTab === 'inspiration' ? 'active' : ''} onClick={() => setActiveTab('inspiration')}>
+                <Compass size={18} /> <span>Styles</span>
+              </button>
+            </nav>
           </div>
-        </div>
-      </aside>
 
-      {/* --- MAIN STAGE --- */}
-      <main className="main-stage">
-        {activeTab === 'generate' && (
-          <div className="generate-layout">
-            {/* OUTPUT BOX ABOVE */}
-            <div className="output-container">
-              {image ? (
-                <div className="image-wrapper">
-                  <img src={image} alt="Generated" className="final-output" />
-                  <button className="expand-btn"><Maximize2 size={16} /></button>
-                </div>
-              ) : (
-                <div className="empty-canvas">
-                  {loading ? (
-                    <div className="loader-box">
-                      <Loader2 className="spin" size={32} />
-                      <p>Rendering Details...</p>
-                    </div>
-                  ) : (
-                    <div className="idle-box">
-                      <ImageIcon size={48} strokeWidth={1} />
-                      <p>Visual output will appear here</p>
-                    </div>
-                  )}
-                </div>
-              )}
+          <div className="sidebar-bottom">
+            <div className="credits-display">
+              <CreditCard size={14} />
+              <span>12 Credits</span>
             </div>
-
-            {/* COMMAND BAR BELOW */}
-            <div className="command-center">
-              <div className="command-bar">
-                <textarea 
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Describe your vision..."
-                  rows="2"
-                />
-                
-                <div className="bar-footer">
-                  <div className="selector-wrapper">
-                    <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value)}>
-                      <option value="1:1">1:1 Square</option>
-                      <option value="16:9">16:9 Cinema</option>
-                      <option value="9:16">9:16 Mobile</option>
-                    </select>
-                  </div>
-                  
-                  <button 
-                    className="execute-btn"
-                    onClick={generateImage}
-                    disabled={loading || !prompt}
-                  >
-                    {loading ? <Loader2 className="spin" size={16} /> : <Zap size={16} fill="currentColor" />}
-                    <span>Generate</span>
-                  </button>
-                </div>
+            <div className="user-profile">
+              <div className="avatar-small">JD</div>
+              <div className="user-info">
+                <span className="user-name">John Doe</span>
+                <span className="user-plan">Pro Plan</span>
               </div>
-              {error && <p className="error-text"><AlertCircle size={12} /> {error}</p>}
+              <Settings size={16} className="settings-icon" />
             </div>
           </div>
-        )}
+        </aside>
 
-        {activeTab !== 'generate' && (
-          <div className="placeholder-view">Feature arriving soon.</div>
-        )}
-      </main>
+        {/* --- MAIN STAGE --- */}
+        <main className="main-stage">
+          {activeTab === 'generate' && (
+            <div className="generate-layout">
+              {/* OUTPUT BOX ABOVE */}
+              <div className="output-container">
+                {image ? (
+                  <div className="image-wrapper">
+                    <img src={image} alt="Generated" className="final-output" />
+                    <button className="expand-btn"><Maximize2 size={16} /></button>
+                  </div>
+                ) : (
+                  <div className="empty-canvas">
+                    {loading ? (
+                      <div className="loader-box">
+                        <Loader2 className="spin" size={32} />
+                        <p>Rendering Details...</p>
+                      </div>
+                    ) : (
+                      <div className="idle-box">
+                        <ImageIcon size={48} strokeWidth={1} />
+                        <p>Visual output will appear here</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* COMMAND BAR BELOW */}
+              <div className="command-center">
+                <div className="command-bar">
+                  <textarea 
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="Describe your vision..."
+                    rows="2"
+                  />
+                  
+                  <div className="bar-footer">
+                    <div className="selector-wrapper">
+                      <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value)}>
+                        <option value="1:1">1:1 Square</option>
+                        <option value="16:9">16:9 Cinema</option>
+                        <option value="9:16">9:16 Mobile</option>
+                      </select>
+                    </div>
+                    
+                    <button 
+                      className="execute-btn"
+                      onClick={generateImage}
+                      disabled={loading || !prompt}
+                    >
+                      {loading ? <Loader2 className="spin" size={16} /> : <Zap size={16} fill="currentColor" />}
+                      <span>Generate</span>
+                    </button>
+                  </div>
+                </div>
+                {error && <p className="error-text"><AlertCircle size={12} /> {error}</p>}
+              </div>
+            </div>
+          )}
+
+          {activeTab !== 'generate' && (
+            <div className="placeholder-view">Feature arriving soon.</div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
