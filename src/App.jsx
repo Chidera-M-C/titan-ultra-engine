@@ -1,3 +1,4 @@
+import './App.css';
 import React, { useState } from 'react';
 import { 
   Sparkles, Zap, Image as ImageIcon, AlertCircle, Loader2, 
