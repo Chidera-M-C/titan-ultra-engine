@@ -8,32 +8,53 @@
   --glass: rgba(255, 255, 255, 0.03);
 }
 
-* { box-sizing: border-box; }
+* { 
+  box-sizing: border-box; /* Crucial: padding won't push width/height */
+}
 
 body, html {
   margin: 0;
-  height: 100%;
+  padding: 0;
+  height: 100vh;
+  width: 100vw;
   background: var(--bg-dark);
   color: var(--text-main);
   font-family: 'Inter', sans-serif;
-  overflow: hidden;
+  overflow: hidden; /* No scrollbars on the body */
 }
 
+/* THE "INCH SPACE" WRAPPER */
+.master-wrapper {
+  height: 100vh;
+  width: 100vw;
+  padding: 24px; /* The "inch space" around the app */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* THE ACTUAL APP CONTAINER */
 .app-shell {
   display: flex;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  overflow: hidden; /* Keeps sidebar/profile inside the rounded corners */
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
 }
 
-/* --- SIDEBAR FIXES --- */
+/* --- SIDEBAR --- */
 .sidebar {
-  width: 260px;
-  background: var(--bg-sidebar);
+  width: 240px;
+  height: 100%;
+  background: #0d0d10;
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   padding: 1.5rem;
-  flex-shrink: 0; /* Prevents sidebar from squishing */
+  flex-shrink: 0;
 }
 
 .sidebar-top {
@@ -45,15 +66,15 @@ body, html {
   align-items: center;
   gap: 12px;
   font-weight: 700;
-  font-size: 1.1rem;
-  margin-bottom: 2.5rem;
+  font-size: 1rem;
+  margin-bottom: 2rem;
   color: #fff;
 }
 
 .side-nav {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .side-nav button {
@@ -63,11 +84,12 @@ body, html {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 12px;
-  border-radius: 10px;
+  padding: 10px;
+  border-radius: 8px;
   cursor: pointer;
   transition: 0.2s;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  width: 100%;
 }
 
 .side-nav button:hover, .side-nav button.active {
@@ -76,6 +98,7 @@ body, html {
 }
 
 .sidebar-bottom {
+  margin-top: auto;
   padding-top: 1.5rem;
   border-top: 1px solid var(--border);
   display: flex;
@@ -84,11 +107,11 @@ body, html {
 }
 
 .credits-display {
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(99, 102, 241, 0.1);
   color: var(--accent);
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 0.85rem;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -98,55 +121,56 @@ body, html {
 .user-profile {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .avatar-small {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   background: var(--accent);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
+  flex-shrink: 0;
 }
 
 .user-info {
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
+  overflow: hidden;
 }
 
-.user-name { font-size: 0.85rem; font-weight: 600; }
-.user-plan { font-size: 0.7rem; color: var(--text-dim); }
+.user-name { font-size: 0.8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-plan { font-size: 0.65rem; color: var(--text-dim); }
 
-.settings-icon { color: var(--text-dim); cursor: pointer; }
-
-/* --- MAIN CONTENT AREA --- */
+/* --- MAIN STAGE --- */
 .main-stage {
   flex-grow: 1;
+  background: var(--bg-dark);
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   padding: 2rem;
-  overflow-y: auto;
+  overflow: hidden; /* Prevents output box from stretching the app */
 }
 
 .generate-layout {
   width: 100%;
-  max-width: 900px;
+  height: 100%;
+  max-width: 800px;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-/* OUTPUT BOX (FIXED ASPECT RATIO BOX) */
+/* OUTPUT BOX */
 .output-container {
-  flex-grow: 1;
-  min-height: 400px;
+  flex-grow: 1; /* Takes all available space */
   background: var(--bg-sidebar);
-  border-radius: 20px;
+  border-radius: 16px;
   border: 1px solid var(--border);
   display: flex;
   align-items: center;
@@ -161,29 +185,21 @@ body, html {
   object-fit: contain;
 }
 
-.empty-canvas { color: var(--text-dim); text-align: center; }
-
-/* COMMAND BAR (MINIMALIST) */
-.command-center {
-  width: 100%;
-}
-
+/* COMMAND CENTER */
 .command-bar {
   background: var(--bg-sidebar);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.4);
 }
 
 .command-bar textarea {
+  width: 100%;
   background: transparent;
   border: none;
   color: #fff;
-  font-size: 1rem;
+  font-size: 0.95rem;
   resize: none;
   outline: none;
   padding: 4px;
@@ -193,49 +209,34 @@ body, html {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 8px;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
 }
 
 .selector-wrapper select {
-  background: transparent;
+  background: var(--glass);
   border: 1px solid var(--border);
   color: var(--text-dim);
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
   outline: none;
 }
 
-/* THE SHORT EXECUTE BUTTON */
+/* THE SHORT GENERATE BUTTON */
 .execute-btn {
   background: var(--accent);
   color: white;
   border: none;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.2s;
-  width: fit-content; /* Makes button short */
-}
-
-.execute-btn:hover:not(:disabled) {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
-}
-
-.error-text {
-  color: #ef4444;
-  font-size: 0.8rem;
-  margin-top: 8px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  width: fit-content;
 }
 
 .spin { animation: spin 1s linear infinite; }
