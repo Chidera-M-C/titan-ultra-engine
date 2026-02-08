@@ -1,24 +1,18 @@
-import './App.css';
 import React, { useState } from 'react';
+import './App.css';
 import { 
   Sparkles, Zap, Image as ImageIcon, AlertCircle, Loader2, 
-  History, Compass, CreditCard, User, Settings, LogOut, ChevronDown 
+  History, Compass, CreditCard, User, Settings, LogOut, 
+  ChevronDown, Maximize2 
 } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('generate'); // generate, gallery, inspiration
+  const [activeTab, setActiveTab] = useState('generate');
   const [prompt, setPrompt] = useState('');
+  const [aspectRatio, setAspectRatio] = useState('1:1');
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  
-  // Dummy Data for Preview
-  const [credits] = useState(12);
-  const [history] = useState([
-    { id: 1, url: 'https://via.placeholder.com/300x400', prompt: 'Cinematic portrait...' },
-    { id: 2, url: 'https://via.placeholder.com/300x400', prompt: 'Studio lighting...' },
-  ]);
 
   const generateImage = async () => {
     if (!prompt) return;
@@ -28,13 +22,13 @@ export default function App() {
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
+        body: JSON.stringify({ prompt, aspectRatio }) // Backend ready for aspect ratio
       });
       const data = await response.json();
       if (data.status === 'COMPLETED' && data.output?.image) {
         setImage(data.output.image);
       } else {
-        throw new Error(data.error || "Generation failed.");
+        throw new Error(data.error || "GPU Timeout. Try again.");
       }
     } catch (err) {
       setError(err.message);
@@ -44,132 +38,109 @@ export default function App() {
   };
 
   return (
-    <div className="app-container">
-      {/* --- TOP NAVIGATION --- */}
-      <nav className="top-nav">
-        <div className="brand">
-          <Zap className="logo-icon" size={24} fill="#ec4899" color="#ec4899" />
-          <span className="logo-text">Nudely <span className="logo-accent">Uncensored</span></span>
-        </div>
-
-        <div className="nav-links">
-          <button className={activeTab === 'generate' ? 'active' : ''} onClick={() => setActiveTab('generate')}>
-            <Sparkles size={18} /> Generate
-          </button>
-          <button className={activeTab === 'gallery' ? 'active' : ''} onClick={() => setActiveTab('gallery')}>
-            <History size={18} /> My Gallery
-          </button>
-          <button className={activeTab === 'inspiration' ? 'active' : ''} onClick={() => setActiveTab('inspiration')}>
-            <Compass size={18} /> Inspiration
-          </button>
-        </div>
-
-        <div className="nav-actions">
-          <div className="credit-badge" onClick={() => alert("Buy more credits coming soon!")}>
-            <CreditCard size={14} />
-            <span>{credits} Credits</span>
+    <div className="app-shell">
+      {/* --- VERTICAL SIDEBAR --- */}
+      <aside className="sidebar">
+        <div className="sidebar-top">
+          <div className="brand">
+            <Zap className="brand-icon" size={22} fill="#6366f1" color="#6366f1" />
+            <span>Nudely</span>
           </div>
           
-          <div className="profile-dropdown">
-            <button className="profile-trigger" onClick={() => setShowProfileMenu(!showProfileMenu)}>
-              <div className="avatar">U</div>
-              <ChevronDown size={14} />
+          <nav className="side-nav">
+            <button className={activeTab === 'generate' ? 'active' : ''} onClick={() => setActiveTab('generate')}>
+              <Sparkles size={20} /> Generate
             </button>
-            
-            {showProfileMenu && (
-              <div className="dropdown-menu">
-                <div className="menu-item"><User size={14} /> Profile</div>
-                <div className="menu-item"><Settings size={14} /> Settings</div>
-                <hr />
-                <div className="menu-item logout"><LogOut size={14} /> Log Out</div>
-              </div>
-            )}
+            <button className={activeTab === 'gallery' ? 'active' : ''} onClick={() => setActiveTab('gallery')}>
+              <History size={20} /> Gallery
+            </button>
+            <button className={activeTab === 'inspiration' ? 'active' : ''} onClick={() => setActiveTab('inspiration')}>
+              <Compass size={20} /> Styles
+            </button>
+          </nav>
+        </div>
+
+        <div className="sidebar-bottom">
+          <div className="credits-display">
+            <CreditCard size={16} />
+            <span>12 Credits</span>
+          </div>
+          <div className="user-profile">
+            <div className="avatar-small">JD</div>
+            <span>John Doe</span>
+            <Settings size={16} className="settings-icon" />
           </div>
         </div>
-      </nav>
+      </aside>
 
-      {/* --- MAIN CONTENT AREA --- */}
-      <main className="content">
-        
-        {/* TAB 1: GENERATOR */}
+      {/* --- MAIN STAGE --- */}
+      <main className="main-stage">
         {activeTab === 'generate' && (
-          <div className="generator-view">
-            <div className="canvas-section">
+          <div className="generate-container">
+            {/* OUTPUT BOX ABOVE */}
+            <section className="output-area">
               {image ? (
-                <div className="result-wrapper">
-                   <img src={image} alt="Generated Content" className="main-image" />
-                   <button className="download-btn">Download HD</button>
+                <div className="image-wrapper">
+                  <img src={image} alt="Generated" className="final-output" />
+                  <div className="image-overlay">
+                    <button className="overlay-btn"><Maximize2 size={18} /></button>
+                  </div>
                 </div>
               ) : (
-                <div className="placeholder-box">
+                <div className="empty-state">
                   {loading ? (
-                    <div className="loader-state">
-                      <Loader2 className="spin" size={48} />
-                      <p>Applying High-Res Fix...</p>
+                    <div className="loading-state">
+                      <Loader2 className="spin" size={40} />
+                      <p>Resolving Anatomy...</p>
                     </div>
                   ) : (
                     <div className="idle-state">
-                      <ImageIcon size={48} opacity={0.2} />
-                      <p>Your creation will appear here</p>
+                      <ImageIcon size={40} strokeWidth={1} />
+                      <p>Awaiting Instructions</p>
                     </div>
                   )}
                 </div>
               )}
-            </div>
+            </section>
 
-            <aside className="controls">
-              <div className="control-group">
-                <label>Visual Description</label>
-                <textarea 
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="e.g. Hyper-realistic, studio lighting, 8k, sharp focus..."
-                />
-                <p className="hint">Be specific about lighting and textures for better results.</p>
+            {/* COMMAND BAR BELOW (BAKED-IN UI) */}
+            <section className="input-area">
+              <div className="command-bar">
+                <div className="bar-main">
+                  <textarea 
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder="Describe the visual..."
+                    rows="1"
+                  />
+                </div>
+                
+                <div className="bar-actions">
+                  <div className="aspect-ratio-selector">
+                    <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value)}>
+                      <option value="1:1">1:1 Square</option>
+                      <option value="16:9">16:9 Cinematic</option>
+                      <option value="9:16">9:16 Portrait</option>
+                    </select>
+                  </div>
+                  
+                  <button 
+                    className="execute-btn"
+                    onClick={generateImage}
+                    disabled={loading || !prompt}
+                  >
+                    {loading ? <Loader2 className="spin" size={18} /> : <Zap size={18} fill="currentColor" />}
+                    <span>Generate</span>
+                  </button>
+                </div>
               </div>
-
-              {error && <div className="error-msg"><AlertCircle size={14} /> {error}</div>}
-
-              <button 
-                className="generate-btn" 
-                onClick={generateImage} 
-                disabled={loading || !prompt}
-              >
-                {loading ? "COOKING..." : "GENERATE IMAGE"}
-              </button>
-            </aside>
+              {error && <p className="status-error">{error}</p>}
+            </section>
           </div>
         )}
 
-        {/* TAB 2: GALLERY */}
-        {activeTab === 'gallery' && (
-          <div className="grid-view">
-            <h2>Your Generation History</h2>
-            <div className="image-grid">
-              {history.map(item => (
-                <div key={item.id} className="grid-item">
-                  <img src={item.url} alt="Past work" />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: INSPIRATION */}
-        {activeTab === 'inspiration' && (
-          <div className="grid-view">
-            <h2>Community Inspiration</h2>
-            <div className="image-grid">
-              {/* Dummy inspiration items */}
-              {[1,2,3,4,5,6].map(i => (
-                <div key={i} className="grid-item inspiration-item">
-                  <img src={`https://picsum.photos/seed/${i+20}/300/400`} alt="Inspiration" />
-                  <div className="hover-prompt">Click to use prompt</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {activeTab === 'gallery' && <div className="placeholder-view">Gallery coming soon...</div>}
+        {activeTab === 'inspiration' && <div className="placeholder-view">Styles coming soon...</div>}
       </main>
     </div>
   );
