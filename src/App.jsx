@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import './App.css';
 import { 
   Sparkles, Zap, Image as ImageIcon, AlertCircle, Loader2, 
-  History, Compass, CreditCard, User, Settings, LogOut, 
-  ChevronDown, Maximize2 
+  History, Compass, CreditCard, Settings, Maximize2 
 } from 'lucide-react';
 
 export default function App() {
@@ -22,13 +21,13 @@ export default function App() {
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, aspectRatio }) // Backend ready for aspect ratio
+        body: JSON.stringify({ prompt, aspectRatio })
       });
       const data = await response.json();
       if (data.status === 'COMPLETED' && data.output?.image) {
         setImage(data.output.image);
       } else {
-        throw new Error(data.error || "GPU Timeout. Try again.");
+        throw new Error(data.error || "Generation failed.");
       }
     } catch (err) {
       setError(err.message);
@@ -39,35 +38,38 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      {/* --- VERTICAL SIDEBAR --- */}
+      {/* --- FIXED SIDEBAR --- */}
       <aside className="sidebar">
         <div className="sidebar-top">
           <div className="brand">
-            <Zap className="brand-icon" size={22} fill="#6366f1" color="#6366f1" />
+            <Zap className="brand-icon" size={20} fill="#6366f1" color="#6366f1" />
             <span>Nudely</span>
           </div>
           
           <nav className="side-nav">
             <button className={activeTab === 'generate' ? 'active' : ''} onClick={() => setActiveTab('generate')}>
-              <Sparkles size={20} /> Generate
+              <Sparkles size={18} /> <span>Generate</span>
             </button>
             <button className={activeTab === 'gallery' ? 'active' : ''} onClick={() => setActiveTab('gallery')}>
-              <History size={20} /> Gallery
+              <History size={18} /> <span>Gallery</span>
             </button>
             <button className={activeTab === 'inspiration' ? 'active' : ''} onClick={() => setActiveTab('inspiration')}>
-              <Compass size={20} /> Styles
+              <Compass size={18} /> <span>Styles</span>
             </button>
           </nav>
         </div>
 
         <div className="sidebar-bottom">
           <div className="credits-display">
-            <CreditCard size={16} />
+            <CreditCard size={14} />
             <span>12 Credits</span>
           </div>
           <div className="user-profile">
             <div className="avatar-small">JD</div>
-            <span>John Doe</span>
+            <div className="user-info">
+              <span className="user-name">John Doe</span>
+              <span className="user-plan">Pro Plan</span>
+            </div>
             <Settings size={16} className="settings-icon" />
           </div>
         </div>
@@ -76,51 +78,47 @@ export default function App() {
       {/* --- MAIN STAGE --- */}
       <main className="main-stage">
         {activeTab === 'generate' && (
-          <div className="generate-container">
+          <div className="generate-layout">
             {/* OUTPUT BOX ABOVE */}
-            <section className="output-area">
+            <div className="output-container">
               {image ? (
                 <div className="image-wrapper">
                   <img src={image} alt="Generated" className="final-output" />
-                  <div className="image-overlay">
-                    <button className="overlay-btn"><Maximize2 size={18} /></button>
-                  </div>
+                  <button className="expand-btn"><Maximize2 size={16} /></button>
                 </div>
               ) : (
-                <div className="empty-state">
+                <div className="empty-canvas">
                   {loading ? (
-                    <div className="loading-state">
-                      <Loader2 className="spin" size={40} />
-                      <p>Resolving Anatomy...</p>
+                    <div className="loader-box">
+                      <Loader2 className="spin" size={32} />
+                      <p>Rendering Details...</p>
                     </div>
                   ) : (
-                    <div className="idle-state">
-                      <ImageIcon size={40} strokeWidth={1} />
-                      <p>Awaiting Instructions</p>
+                    <div className="idle-box">
+                      <ImageIcon size={48} strokeWidth={1} />
+                      <p>Visual output will appear here</p>
                     </div>
                   )}
                 </div>
               )}
-            </section>
+            </div>
 
-            {/* COMMAND BAR BELOW (BAKED-IN UI) */}
-            <section className="input-area">
+            {/* COMMAND BAR BELOW */}
+            <div className="command-center">
               <div className="command-bar">
-                <div className="bar-main">
-                  <textarea 
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="Describe the visual..."
-                    rows="1"
-                  />
-                </div>
+                <textarea 
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="Describe your vision..."
+                  rows="2"
+                />
                 
-                <div className="bar-actions">
-                  <div className="aspect-ratio-selector">
+                <div className="bar-footer">
+                  <div className="selector-wrapper">
                     <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value)}>
                       <option value="1:1">1:1 Square</option>
-                      <option value="16:9">16:9 Cinematic</option>
-                      <option value="9:16">9:16 Portrait</option>
+                      <option value="16:9">16:9 Cinema</option>
+                      <option value="9:16">9:16 Mobile</option>
                     </select>
                   </div>
                   
@@ -129,21 +127,20 @@ export default function App() {
                     onClick={generateImage}
                     disabled={loading || !prompt}
                   >
-                    {loading ? <Loader2 className="spin" size={18} /> : <Zap size={18} fill="currentColor" />}
+                    {loading ? <Loader2 className="spin" size={16} /> : <Zap size={16} fill="currentColor" />}
                     <span>Generate</span>
                   </button>
                 </div>
               </div>
-              {error && <p className="status-error">{error}</p>}
-            </section>
+              {error && <p className="error-text"><AlertCircle size={12} /> {error}</p>}
+            </div>
           </div>
         )}
 
-        {activeTab === 'gallery' && <div className="placeholder-view">Gallery coming soon...</div>}
-        {activeTab === 'inspiration' && <div className="placeholder-view">Styles coming soon...</div>}
+        {activeTab !== 'generate' && (
+          <div className="placeholder-view">Feature arriving soon.</div>
+        )}
       </main>
     </div>
   );
-
-  
 }
