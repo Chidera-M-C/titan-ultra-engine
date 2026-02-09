@@ -7,8 +7,7 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('inspiration');
-  // New state for the category tabs
+  const [activeTab, setActiveTab] = useState('explore');
   const [activeCategory, setActiveCategory] = useState('Explore'); 
   const [prompt, setPrompt] = useState('');
   const [aspectRatio, setAspectRatio] = useState('2:3'); 
@@ -18,39 +17,70 @@ export default function App() {
 
   const textareaRef = useRef(null);
   
-  // List of categories for the nav
   const categories = ['Explore', 'Top', 'People', 'Nature', 'Poster', '3D Render'];
 
-  // Auto-resize textarea logic
+  // Fix: Better auto-resize textarea logic
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+      const newHeight = Math.min(textareaRef.current.scrollHeight, 200);
+      textareaRef.current.style.height = newHeight + 'px';
     }
   }, [prompt]);
 
-  // Dummy Data - Refreshes based on category to simulate "Page" change
-  const dummyImages = Array.from({ length: 50 }, (_, i) => ({
-    id: i,
-    // We add activeCategory to seed to simulate different content per tab
-    url: `https://picsum.photos/seed/${activeCategory}${i * 99}/400/600`, 
-    prompt: "Portrait of a cyborg in neon rain..."
-  }));
+  // Fix: Better dummy data that actually changes per category
+  const getDummyImages = () => {
+    const categorySeeds = {
+      'Explore': 100,
+      'Top': 200,
+      'People': 300,
+      'Nature': 400,
+      'Poster': 500,
+      '3D Render': 600
+    };
+    
+    const baseSeed = categorySeeds[activeCategory] || 100;
+    
+    return Array.from({ length: 50 }, (_, i) => ({
+      id: `${activeCategory}-${i}`,
+      url: `https://picsum.photos/seed/${baseSeed + i}/400/600`,
+      prompt: `Amazing ${activeCategory.toLowerCase()} style artwork #${i + 1}`
+    }));
+  };
 
   const generateImage = async () => {
     if (!prompt) return;
     setViewState('result');
     setLoading(true);
-    // Simulation
+    setImage(null);
+    
+    // Simulation with aspect ratio consideration
     setTimeout(() => {
-        setImage(`https://picsum.photos/seed/${Math.random()}/800/1200`);
-        setLoading(false);
+      const dimensions = aspectRatio === '16:9' ? '1200/675' : 
+                        aspectRatio === '1:1' ? '800/800' : '800/1200';
+      setImage(`https://picsum.photos/seed/${Date.now()}/${dimensions}`);
+      setLoading(false);
     }, 2000);
   };
 
   const closeResult = () => {
     setViewState('gallery');
     setImage(null);
+  };
+
+  // Fix: Proper navigation handler
+  const handleNavigation = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'explore') {
+      setViewState('gallery');
+    } else {
+      setViewState('empty');
+    }
+  };
+
+  // Fix: Handle image click with actual prompt
+  const handleImageClick = (imagePrompt) => {
+    setPrompt(imagePrompt);
   };
 
   return (
@@ -66,13 +96,22 @@ export default function App() {
             </div>
             
             <nav className="side-nav">
-              <button className={activeTab === 'inspiration' ? 'active' : ''} onClick={() => {setActiveTab('inspiration'); setViewState('gallery');}}>
+              <button 
+                className={activeTab === 'explore' ? 'active' : ''} 
+                onClick={() => handleNavigation('explore')}
+              >
                 <Compass size={20} /> <span>Explore</span>
               </button>
-              <button className={activeTab === 'gallery' ? 'active' : ''} onClick={() => setActiveTab('gallery')}>
+              <button 
+                className={activeTab === 'gallery' ? 'active' : ''} 
+                onClick={() => handleNavigation('gallery')}
+              >
                 <History size={20} /> <span>My Images</span>
               </button>
-              <button>
+              <button 
+                className={activeTab === 'settings' ? 'active' : ''} 
+                onClick={() => handleNavigation('settings')}
+              >
                 <Settings size={20} /> <span>Settings</span>
               </button>
             </nav>
@@ -105,7 +144,6 @@ export default function App() {
           
           {/* HEADER SECTION */}
           <header className="top-header">
-            {/* Aesthetic Font applied here */}
             <h1 className="aesthetic-title">What will you create?</h1>
             
             {/* THE WIDE PROMPT BOX */}
@@ -117,6 +155,12 @@ export default function App() {
                 placeholder="Describe what you want to see..."
                 rows={1}
                 className="prompt-input"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    generateImage();
+                  }
+                }}
               />
               
               <div className="prompt-tools">
@@ -144,7 +188,7 @@ export default function App() {
                      onClick={generateImage}
                      disabled={!prompt || loading}
                    >
-                     {loading ? <div className="spinner"></div> : <ArrowUp size={24} strokeWidth={2.5} />}
+                     {loading ? <div className="spinner"></div> : <ArrowUp size={20} strokeWidth={2.5} />}
                    </button>
                 </div>
               </div>
@@ -154,8 +198,8 @@ export default function App() {
           {/* CONTENT AREA */}
           <div className="scrollable-area">
             
-            {/* RESPONSIVE CATEGORY TABS */}
-            {viewState === 'gallery' && (
+            {/* FIX: Show category tabs only on explore page */}
+            {viewState === 'gallery' && activeTab === 'explore' && (
                <div className="category-tabs">
                   {categories.map((cat) => (
                     <span 
@@ -169,11 +213,11 @@ export default function App() {
                </div>
             )}
 
-            {/* GALLERY GRID */}
-            {viewState === 'gallery' && (
+            {/* GALLERY GRID - Only show on explore tab */}
+            {viewState === 'gallery' && activeTab === 'explore' && (
               <div className="masonry-grid">
-                {dummyImages.map((img) => (
-                  <div key={img.id} className="pin-item" onClick={() => setPrompt(img.prompt)}>
+                {getDummyImages().map((img) => (
+                  <div key={img.id} className="pin-item" onClick={() => handleImageClick(img.prompt)}>
                     <img src={img.url} alt="Inspiration" loading="lazy" />
                     <div className="pin-overlay">
                        <button className="use-btn">Remix</button>
@@ -183,20 +227,40 @@ export default function App() {
               </div>
             )}
 
+            {/* FIX: Empty states for other sections */}
+            {viewState === 'empty' && (
+              <div className="empty-state">
+                <div className="empty-state-icon">
+                  {activeTab === 'gallery' && <History size={32} />}
+                  {activeTab === 'settings' && <Settings size={32} />}
+                </div>
+                <h2>
+                  {activeTab === 'gallery' && 'No Images Yet'}
+                  {activeTab === 'settings' && 'Settings Coming Soon'}
+                </h2>
+                <p>
+                  {activeTab === 'gallery' && 'Your generated images will appear here. Start creating to see your gallery!'}
+                  {activeTab === 'settings' && 'We\'re working on bringing you powerful customization options. Stay tuned!'}
+                </p>
+              </div>
+            )}
+
             {/* RESULT VIEW */}
             {viewState === 'result' && (
               <div className="result-modal">
                  <div className="result-content">
-                    <button className="close-result" onClick={closeResult}><X size={24}/></button>
+                    <button className="close-result" onClick={closeResult}>
+                      <X size={24}/>
+                    </button>
                     <div className="image-stage">
-                        {image ? (
-                            <img src={image} alt="Generated" className="gen-result"/>
-                        ) : (
+                        {loading ? (
                             <div className="loading-state">
                                 <div className="pulse-loader"></div>
                                 <p>Generating your masterpiece...</p>
                             </div>
-                        )}
+                        ) : image ? (
+                            <img src={image} alt="Generated" className="gen-result"/>
+                        ) : null}
                     </div>
                  </div>
               </div>
