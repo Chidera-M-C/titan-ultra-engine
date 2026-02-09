@@ -27,7 +27,7 @@ body, html {
 .master-wrapper {
   height: 100vh;
   width: 100vw;
-  padding: 24px; /* The "inch space" around the app */
+  padding: 18px; /* The "inch space" around the app */
   display: flex;
   align-items: center;
   justify-content: center;
