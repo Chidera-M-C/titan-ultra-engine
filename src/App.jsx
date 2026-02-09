@@ -8,13 +8,18 @@ import {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('inspiration');
+  // New state for the category tabs
+  const [activeCategory, setActiveCategory] = useState('Explore'); 
   const [prompt, setPrompt] = useState('');
-  const [aspectRatio, setAspectRatio] = useState('2:3'); // Default portrait
+  const [aspectRatio, setAspectRatio] = useState('2:3'); 
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [viewState, setViewState] = useState('gallery'); 
 
   const textareaRef = useRef(null);
+  
+  // List of categories for the nav
+  const categories = ['Explore', 'Top', 'People', 'Nature', 'Poster', '3D Render'];
 
   // Auto-resize textarea logic
   useEffect(() => {
@@ -24,11 +29,11 @@ export default function App() {
     }
   }, [prompt]);
 
-  // Dummy Data with PORTRAIT images
+  // Dummy Data - Refreshes based on category to simulate "Page" change
   const dummyImages = Array.from({ length: 50 }, (_, i) => ({
     id: i,
-    // Using 2:3 aspect ratio dimensions (e.g., 400x600)
-    url: `https://picsum.photos/seed/${i * 99}/400/600`, 
+    // We add activeCategory to seed to simulate different content per tab
+    url: `https://picsum.photos/seed/${activeCategory}${i * 99}/400/600`, 
     prompt: "Portrait of a cyborg in neon rain..."
   }));
 
@@ -52,7 +57,7 @@ export default function App() {
     <div className="master-wrapper">
       <div className="app-shell">
         
-        {/* --- LEFT SIDEBAR (Dark & Minimal) --- */}
+        {/* --- LEFT SIDEBAR --- */}
         <aside className="sidebar">
           <div className="sidebar-top">
             <div className="brand">
@@ -100,9 +105,10 @@ export default function App() {
           
           {/* HEADER SECTION */}
           <header className="top-header">
-            <h1>What will you create?</h1>
+            {/* Aesthetic Font applied here */}
+            <h1 className="aesthetic-title">What will you create?</h1>
             
-            {/* THE NEW WIDE PROMPT BOX */}
+            {/* THE WIDE PROMPT BOX */}
             <div className="prompt-container">
               <textarea
                 ref={textareaRef}
@@ -138,7 +144,7 @@ export default function App() {
                      onClick={generateImage}
                      disabled={!prompt || loading}
                    >
-                     {loading ? <div className="spinner"></div> : <ArrowUp size={20} strokeWidth={3} />}
+                     {loading ? <div className="spinner"></div> : <ArrowUp size={24} strokeWidth={2.5} />}
                    </button>
                 </div>
               </div>
@@ -148,15 +154,18 @@ export default function App() {
           {/* CONTENT AREA */}
           <div className="scrollable-area">
             
-            {/* CATEGORY TABS */}
+            {/* RESPONSIVE CATEGORY TABS */}
             {viewState === 'gallery' && (
                <div className="category-tabs">
-                  <span className="tab active">Explore</span>
-                  <span className="tab">Top</span>
-                  <span className="tab">People</span>
-                  <span className="tab">Nature</span>
-                  <span className="tab">Poster</span>
-                  <span className="tab">3D Render</span>
+                  {categories.map((cat) => (
+                    <span 
+                      key={cat} 
+                      className={`tab ${activeCategory === cat ? 'active' : ''}`}
+                      onClick={() => setActiveCategory(cat)}
+                    >
+                      {cat}
+                    </span>
+                  ))}
                </div>
             )}
 
