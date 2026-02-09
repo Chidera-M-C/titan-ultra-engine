@@ -2,13 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { 
   Zap, Sparkles, History, Compass, CreditCard, Settings, 
-  Maximize2, X, ChevronDown, ArrowUp, Image as ImageIcon,
+  Maximize2, X, ChevronDown, Send, Image as ImageIcon,
   MoreHorizontal
 } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('inspiration');
-  // New state for the category tabs
   const [activeCategory, setActiveCategory] = useState('Explore'); 
   const [prompt, setPrompt] = useState('');
   const [aspectRatio, setAspectRatio] = useState('2:3'); 
@@ -17,11 +16,8 @@ export default function App() {
   const [viewState, setViewState] = useState('gallery'); 
 
   const textareaRef = useRef(null);
-  
-  // List of categories for the nav
   const categories = ['Explore', 'Top', 'People', 'Nature', 'Poster', '3D Render'];
 
-  // Auto-resize textarea logic
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -29,11 +25,9 @@ export default function App() {
     }
   }, [prompt]);
 
-  // Dummy Data - Refreshes based on category to simulate "Page" change
   const dummyImages = Array.from({ length: 50 }, (_, i) => ({
     id: i,
-    // We add activeCategory to seed to simulate different content per tab
-    url: `https://picsum.photos/seed/${activeCategory}${i * 99}/400/600`, 
+    url: `https://picsum.photos/seed/${activeCategory}${i * 88}/400/600`, 
     prompt: "Portrait of a cyborg in neon rain..."
   }));
 
@@ -41,7 +35,6 @@ export default function App() {
     if (!prompt) return;
     setViewState('result');
     setLoading(true);
-    // Simulation
     setTimeout(() => {
         setImage(`https://picsum.photos/seed/${Math.random()}/800/1200`);
         setLoading(false);
@@ -57,23 +50,22 @@ export default function App() {
     <div className="master-wrapper">
       <div className="app-shell">
         
-        {/* --- LEFT SIDEBAR --- */}
         <aside className="sidebar">
           <div className="sidebar-top">
             <div className="brand">
               <div className="brand-logo">N</div>
-              <span>Nudely</span>
+              <span className="nav-label">Nudely</span>
             </div>
             
             <nav className="side-nav">
               <button className={activeTab === 'inspiration' ? 'active' : ''} onClick={() => {setActiveTab('inspiration'); setViewState('gallery');}}>
-                <Compass size={20} /> <span>Explore</span>
+                <Compass size={20} /> <span className="nav-label">Explore</span>
               </button>
               <button className={activeTab === 'gallery' ? 'active' : ''} onClick={() => setActiveTab('gallery')}>
-                <History size={20} /> <span>My Images</span>
+                <History size={20} /> <span className="nav-label">My Images</span>
               </button>
               <button>
-                <Settings size={20} /> <span>Settings</span>
+                <Settings size={20} /> <span className="nav-label">Settings</span>
               </button>
             </nav>
           </div>
@@ -81,17 +73,17 @@ export default function App() {
           <div className="sidebar-bottom">
             <div className="credits-card">
                <div className="credits-header">
-                 <span>Pro Plan</span>
+                 <span className="nav-label">Pro Plan</span>
                  <span className="badge">PRO</span>
                </div>
                <div className="progress-bar"><div className="fill" style={{width: '60%'}}></div></div>
-               <p>120 fast generations left</p>
-               <button className="upgrade-btn"><Zap size={14} fill="white"/> Upgrade</button>
+               <p className="nav-label">120 fast left</p>
+               <button className="upgrade-btn"><Zap size={14} fill="white"/> <span className="nav-label">Upgrade</span></button>
             </div>
             
             <div className="user-profile">
               <div className="avatar">J</div>
-              <div className="user-details">
+              <div className="user-details nav-label">
                  <span className="name">John Doe</span>
                  <span className="handle">@johndoe</span>
               </div>
@@ -100,15 +92,10 @@ export default function App() {
           </div>
         </aside>
 
-        {/* --- MAIN CONTENT --- */}
         <main className="main-content">
-          
-          {/* HEADER SECTION */}
           <header className="top-header">
-            {/* Aesthetic Font applied here */}
-            <h1 className="aesthetic-title">What will you create?</h1>
+            <h1 className="main-title">What will you create?</h1>
             
-            {/* THE WIDE PROMPT BOX */}
             <div className="prompt-container">
               <textarea
                 ref={textareaRef}
@@ -121,7 +108,6 @@ export default function App() {
               
               <div className="prompt-tools">
                 <div className="left-tools">
-                   {/* Aspect Ratio Pill */}
                    <div className="tool-pill">
                       <span className="pill-label">Aspect Ratio</span>
                       <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value)}>
@@ -131,8 +117,6 @@ export default function App() {
                       </select>
                       <ChevronDown size={14} className="pill-icon"/>
                    </div>
-                   
-                   {/* Model Version Pill */}
                    <div className="tool-pill">
                       <span className="pill-label">Model v3.0</span>
                    </div>
@@ -144,17 +128,14 @@ export default function App() {
                      onClick={generateImage}
                      disabled={!prompt || loading}
                    >
-                     {loading ? <div className="spinner"></div> : <ArrowUp size={24} strokeWidth={2.5} />}
+                     {loading ? <div className="spinner"></div> : <Send size={18} fill="black" color="black" />}
                    </button>
                 </div>
               </div>
             </div>
           </header>
 
-          {/* CONTENT AREA */}
           <div className="scrollable-area">
-            
-            {/* RESPONSIVE CATEGORY TABS */}
             {viewState === 'gallery' && (
                <div className="category-tabs">
                   {categories.map((cat) => (
@@ -169,7 +150,6 @@ export default function App() {
                </div>
             )}
 
-            {/* GALLERY GRID */}
             {viewState === 'gallery' && (
               <div className="masonry-grid">
                 {dummyImages.map((img) => (
@@ -183,7 +163,6 @@ export default function App() {
               </div>
             )}
 
-            {/* RESULT VIEW */}
             {viewState === 'result' && (
               <div className="result-modal">
                  <div className="result-content">
@@ -201,7 +180,6 @@ export default function App() {
                  </div>
               </div>
             )}
-
           </div>
         </main>
       </div>
