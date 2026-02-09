@@ -37,10 +37,9 @@ body, html {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  padding: 1.5rem 1rem;
+  padding: 1.5rem 1rem 2rem 1rem; /* Fix: Removed extra left padding, combined bottom padding */
   flex-shrink: 0;
-  overflow-y: auto; /* Fix: Allows scrolling so profile isn't cut off */
-  padding-bottom: 2rem; /* Fix: Extra space at bottom */
+  overflow-y: auto;
 }
 
 /* Hide scrollbar for sidebar but keep functionality */
@@ -167,28 +166,32 @@ body, html {
   height: 32px;
 }
 
-/* Fix: Send Button with explicit icon color */
+/* Fix: Send Button with proper gradient/color background and white icon */
 .generate-fab {
   width: 36px; height: 36px;
-  background: #fff; 
-  color: #000; /* Fix: Explicit black color for icon */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Purple gradient */
+  color: #fff; /* White icon */
   border: none; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
   transition: 0.2s;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
-.generate-fab:hover:not(:disabled) { transform: scale(1.05); }
+.generate-fab:hover:not(:disabled) { 
+  transform: scale(1.05); 
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+}
 .generate-fab:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* Fix: Ensure icon inside button is black */
+/* Fix: Ensure icon inside button is white and visible */
 .generate-fab svg {
-  color: #000;
-  stroke: #000;
+  color: #fff;
+  stroke: #fff;
 }
 
 .spinner {
-  width: 18px; height: 18px; border: 2px solid #000;
-  border-top-color: transparent; border-radius: 50%;
+  width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff; border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
