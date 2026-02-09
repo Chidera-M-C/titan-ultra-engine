@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { 
   Zap, Sparkles, History, Compass, CreditCard, Settings, 
-  Maximize2, X, ChevronDown, ArrowUp, Image as ImageIcon,
+  Maximize2, X, ChevronDown, Send, User, Image as ImageIcon,
   MoreHorizontal
 } from 'lucide-react';
 
@@ -28,7 +28,6 @@ export default function App() {
     }
   }, [prompt]);
 
-  // Fix: Better dummy data that actually changes per category
   const getDummyImages = () => {
     const categorySeeds = {
       'Explore': 100,
@@ -49,12 +48,11 @@ export default function App() {
   };
 
   const generateImage = async () => {
-    if (!prompt) return;
+    if (!prompt || loading) return;
     setViewState('result');
     setLoading(true);
     setImage(null);
     
-    // Simulation with aspect ratio consideration
     setTimeout(() => {
       const dimensions = aspectRatio === '16:9' ? '1200/675' : 
                         aspectRatio === '1:1' ? '800/800' : '800/1200';
@@ -68,7 +66,6 @@ export default function App() {
     setImage(null);
   };
 
-  // Fix: Proper navigation handler
   const handleNavigation = (tab) => {
     setActiveTab(tab);
     if (tab === 'explore') {
@@ -78,7 +75,6 @@ export default function App() {
     }
   };
 
-  // Fix: Handle image click with actual prompt
   const handleImageClick = (imagePrompt) => {
     setPrompt(imagePrompt);
   };
@@ -103,16 +99,22 @@ export default function App() {
                 <Compass size={20} /> <span>Explore</span>
               </button>
               <button 
+                className={activeTab === 'character' ? 'active' : ''} 
+                onClick={() => handleNavigation('character')}
+              >
+                <User size={20} /> <span>Character</span>
+              </button>
+              <button 
                 className={activeTab === 'gallery' ? 'active' : ''} 
                 onClick={() => handleNavigation('gallery')}
               >
                 <History size={20} /> <span>My Images</span>
               </button>
               <button 
-                className={activeTab === 'settings' ? 'active' : ''} 
-                onClick={() => handleNavigation('settings')}
+                className={activeTab === 'style' ? 'active' : ''} 
+                onClick={() => handleNavigation('style')}
               >
-                <Settings size={20} /> <span>Settings</span>
+                <Sparkles size={20} /> <span>Style</span>
               </button>
             </nav>
           </div>
@@ -141,12 +143,9 @@ export default function App() {
 
         {/* --- MAIN CONTENT --- */}
         <main className="main-content">
-          
-          {/* HEADER SECTION */}
           <header className="top-header">
             <h1 className="aesthetic-title">What will you create?</h1>
             
-            {/* THE WIDE PROMPT BOX */}
             <div className="prompt-container">
               <textarea
                 ref={textareaRef}
@@ -165,7 +164,6 @@ export default function App() {
               
               <div className="prompt-tools">
                 <div className="left-tools">
-                   {/* Aspect Ratio Pill */}
                    <div className="tool-pill">
                       <span className="pill-label">Aspect Ratio</span>
                       <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value)}>
@@ -176,7 +174,6 @@ export default function App() {
                       <ChevronDown size={14} className="pill-icon"/>
                    </div>
                    
-                   {/* Model Version Pill */}
                    <div className="tool-pill">
                       <span className="pill-label">Model v3.0</span>
                    </div>
@@ -187,18 +184,16 @@ export default function App() {
                      className="generate-fab"
                      onClick={generateImage}
                      disabled={!prompt || loading}
+                     aria-label="Send prompt"
                    >
-                     {loading ? <div className="spinner"></div> : <ArrowUp size={20} strokeWidth={2.5} />}
+                     {loading ? <div className="spinner"></div> : <Send size={18} strokeWidth={2.5} />}
                    </button>
                 </div>
               </div>
             </div>
           </header>
 
-          {/* CONTENT AREA */}
           <div className="scrollable-area">
-            
-            {/* FIX: Show category tabs only on explore page */}
             {viewState === 'gallery' && activeTab === 'explore' && (
                <div className="category-tabs">
                   {categories.map((cat) => (
@@ -213,7 +208,6 @@ export default function App() {
                </div>
             )}
 
-            {/* GALLERY GRID - Only show on explore tab */}
             {viewState === 'gallery' && activeTab === 'explore' && (
               <div className="masonry-grid">
                 {getDummyImages().map((img) => (
@@ -227,25 +221,25 @@ export default function App() {
               </div>
             )}
 
-            {/* FIX: Empty states for other sections */}
             {viewState === 'empty' && (
               <div className="empty-state">
                 <div className="empty-state-icon">
                   {activeTab === 'gallery' && <History size={32} />}
-                  {activeTab === 'settings' && <Settings size={32} />}
+                  {activeTab === 'style' && <Sparkles size={32} />}
+                  {activeTab === 'character' && <User size={32} />}
                 </div>
                 <h2>
                   {activeTab === 'gallery' && 'No Images Yet'}
-                  {activeTab === 'settings' && 'Settings Coming Soon'}
+                  {activeTab === 'style' && 'Styles Coming Soon'}
+                  {activeTab === 'character' && 'Characters Coming Soon'}
                 </h2>
                 <p>
                   {activeTab === 'gallery' && 'Your generated images will appear here. Start creating to see your gallery!'}
-                  {activeTab === 'settings' && 'We\'re working on bringing you powerful customization options. Stay tuned!'}
+                  {(activeTab === 'style' || activeTab === 'character') && "We're working on bringing you powerful customization options. Stay tuned!"}
                 </p>
               </div>
             )}
 
-            {/* RESULT VIEW */}
             {viewState === 'result' && (
               <div className="result-modal">
                  <div className="result-content">
@@ -265,7 +259,6 @@ export default function App() {
                  </div>
               </div>
             )}
-
           </div>
         </main>
       </div>
