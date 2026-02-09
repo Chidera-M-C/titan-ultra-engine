@@ -55,7 +55,7 @@ export default function App() {
                 <History size={18} /> <span>Gallery</span>
               </button>
               <button className={activeTab === 'inspiration' ? 'active' : ''} onClick={() => setActiveTab('inspiration')}>
-                <Compass size={18} /> <span>Styles</span>
+                <Compass size={18} /> <span>Inspiration</span>
               </button>
             </nav>
           </div>
