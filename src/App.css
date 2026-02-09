@@ -1,9 +1,6 @@
-#root {
+:root {
   padding: 0 !important;
   margin: 0 !important;
-}
-
-:root {
   --bg-app: #101010;
   --bg-sidebar: #000000;
   --bg-prompt: #1E1E1E;
