@@ -1,3 +1,4 @@
+import './Shared.css';
 import React from 'react';
 
 export const Spinner = () => <div className="spinner"></div>;
