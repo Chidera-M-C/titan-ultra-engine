@@ -1,3 +1,4 @@
+import './Gallery.css';
 import React from 'react';
 
 export default function ImageCard({ url, prompt, onAction, actionLabel = "Remix" }) {
