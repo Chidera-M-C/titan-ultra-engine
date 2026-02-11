@@ -2,6 +2,8 @@ import React from 'react';
 import { Compass, User, History, Sparkles, MoreHorizontal } from 'lucide-react';
 import NavItem from './NavItem';
 import CreditsCard from './CreditsCard';
+import './Sidebar.css';
+import './SidebarExtras.css';
 
 export default function Sidebar({ activeTab, onNavigate }) {
   return (
