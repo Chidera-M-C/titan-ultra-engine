@@ -1,3 +1,4 @@
+import './Shared.css';
 import React from 'react';
 
 export default function EmptyState({ icon: Icon, title, description }) {
