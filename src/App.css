@@ -104,22 +104,99 @@ body, html {
   letter-spacing: -0.5px;
 }
 
-/* --- 5. PROMPT BOX (Cleaned Up) --- */
+/* --- PROMPT BOX LAYOUT --- */
 .prompt-container {
-  width: 100%; max-width: 800px;
-  background: var(--bg-prompt);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 14px 18px;
-  display: flex; flex-direction: column; gap: 12px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+  width: 100%;
+  max-width: 800px;
+  background: #1a1a1a; /* Matching your dark theme */
+  border: 1px solid #2a2a2a;
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .prompt-input {
-  width: 100%; background: transparent; border: none; outline: none;
-  color: #fff; font-size: 1.05rem; resize: none;
-  font-family: inherit; line-height: 1.5;
-  max-height: 150px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 1.1rem;
+  resize: none;
+  padding: 4px;
+}
+
+.prompt-tools {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* Keeps pills and button on one line */
+}
+
+.left-tools {
+  display: flex;
+  gap: 8px; /* Horizontal spacing between pills */
+}
+
+/* --- TOOL PILLS --- */
+.tool-pill {
+  position: relative;
+  background: #2a2a2a;
+  padding: 6px 12px;
+  border-radius: 100px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: 0.2s;
+}
+
+.tool-pill:hover {
+  background: #333;
+  border-color: #444;
+}
+
+.pill-label {
+  color: #666; /* Subtle grey for "Aspect Ratio" */
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.pill-value {
+  color: #fff; /* Bright white for the actual value */
+  font-size: 0.8rem;
+}
+
+/* Hiding the real select but keeping it clickable */
+.tool-pill select {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+
+  /* --- GENERATE BUTTON --- */
+.generate-fab {
+  width: 40px;
+  height: 40px;
+  background: #fff;
+  color: #000;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.generate-fab:hover {
+  transform: scale(1.05);
+  background: #f0f0f0;
 }
 
 /* --- 6. THE SCROLLABLE GALLERY (The only part that moves) --- */
