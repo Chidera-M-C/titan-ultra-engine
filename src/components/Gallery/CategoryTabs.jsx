@@ -1,3 +1,4 @@
+import './Gallery.css';
 import React from 'react';
 
 export default function CategoryTabs({ categories, activeCategory, onSelectCategory }) {
