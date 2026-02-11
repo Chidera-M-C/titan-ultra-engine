@@ -1,14 +1,17 @@
+/* src/components/PromptSection/PromptBox.css */
+
 .prompt-container {
   width: 100%;
   max-width: 850px;
-  background: var(--bg-prompt);
-  border: 1px solid var(--border);
+  background: #161616; /* Deep dark grey */
+  border: 1px solid #222;
   border-radius: 24px;
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  margin: 0 auto; /* Center it */
+  margin: 0 auto;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
 .prompt-input {
@@ -16,52 +19,97 @@
   background: transparent;
   border: none;
   outline: none;
-  color: #fff;
+  color: #888; /* Muted text like the screenshot */
   font-size: 1.2rem;
-  font-family: monospace;
+  font-family: 'Courier New', Courier, monospace; /* For that code/typewriter feel */
   resize: none;
+  min-height: 40px;
 }
 
 .prompt-tools {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: center; /* Keeps everything on one line */
 }
 
-.left-tools { display: flex; gap: 12px; }
+.left-tools {
+  display: flex;
+  gap: 12px;
+}
 
+/* --- TOOL PILLS --- */
 .tool-pill {
   position: relative;
-  background: var(--bg-pill);
-  height: 36px;
+  background: #222;
+  height: 38px;
   padding: 0 16px;
   border-radius: 100px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
+  border: 1px solid #333;
+  transition: 0.2s;
+}
+
+.tool-pill:hover {
+  background: #2a2a2a;
 }
 
 .pill-label {
-  color: var(--text-secondary);
+  color: #555; /* Dark grey for labels */
   font-size: 0.7rem;
   font-weight: 800;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
+.pill-value {
+  color: #fff; /* White for the active selection */
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Hiding the real select dropdown */
 .tool-pill select {
   position: absolute;
   inset: 0;
   opacity: 0;
+  width: 100%;
+  height: 100%;
   cursor: pointer;
 }
 
+.pill-icon {
+  color: #555;
+}
+
+/* --- THE SEND BUTTON (Fixed) --- */
 .generate-fab {
-  width: 36px;
-  height: 36px;
-  background: #2a2a2a;
-  color: #666;
-  border: none;
-  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  background: #222; /* Matching the pill background */
+  color: #555;
+  border: 1px solid #333;
+  border-radius: 10px; /* Slightly squared like the ref */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  transition: 0.2s;
+}
+
+.generate-fab:hover:not(:disabled) {
+  background: #333;
+  color: #fff;
+}
+
+.generate-fab:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.generate-fab svg {
+  width: 18px;
+  height: 18px;
 }
