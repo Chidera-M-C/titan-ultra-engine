@@ -1,3 +1,4 @@
+import './Gallery.css';
 import React from 'react';
 import ImageCard from './ImageCard';
 
