@@ -1,3 +1,4 @@
+import './PromptBox.css'
 import React, { useEffect, useRef } from 'react';
 import { Send } from 'lucide-react';
 import ToolPill from './ToolPill';
