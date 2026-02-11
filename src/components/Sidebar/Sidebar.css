@@ -1,0 +1,28 @@
+.sidebar {
+  width: 260px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 100vh;
+}
+
+.brand { padding: 2rem 1.5rem; font-weight: 700; }
+
+.side-nav button {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #9F9F9F;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 10px;
+  cursor: pointer;
+}
+
+.side-nav button.active {
+  background: #1a1a1a;
+  color: #fff;
+}
