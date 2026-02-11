@@ -1,3 +1,4 @@
+import './Shared.css';
 import React from 'react';
 import { X, AlertCircle } from 'lucide-react';
 import { PulseLoader } from './Loader';
