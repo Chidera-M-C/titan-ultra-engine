@@ -55,26 +55,33 @@
   cursor: pointer;
 }
 
-/* THE ICON FIX */
+/* --- THE SEND BUTTON --- */
 .generate-fab {
   width: 44px;
   height: 44px;
-  background: #222;
-  color: #FFFFFF !important; /* Force icon color to white */
+  background: #222; /* Normal active background */
+  color: #FFFFFF;
   border: 1px solid #333;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 0;
+  transition: all 0.2s ease;
 }
 
+/* THE FIX: Styles when there is NO input text */
+.generate-fab:disabled {
+  background: #1a1a1a;    /* Darker, flatter background */
+  color: #444444;       /* Dims the icon color */
+  border-color: #222;   /* Mutes the border */
+  cursor: not-allowed;  /* Shows the 'block' cursor */
+  opacity: 0.5;         /* Makes the whole button look faded */
+}
+
+/* Hover effect ONLY when enabled */
 .generate-fab:hover:not(:disabled) {
   background: #333;
   border-color: #555;
-}
-
-.generate-fab svg {
-  display: block; /* Prevents weird baseline alignment */
+  transform: translateY(-1px);
 }
