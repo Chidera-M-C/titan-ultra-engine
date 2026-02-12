@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import { Send } from 'lucide-react';
-import ToolPill from './ToolPill';
 import './PromptBox.css';
 
 export default function PromptBox({ prompt, setPrompt, aspectRatio, setAspectRatio, onGenerate, loading }) {
@@ -26,7 +25,6 @@ export default function PromptBox({ prompt, setPrompt, aspectRatio, setAspectRat
       
       <div className="prompt-tools">
         <div className="left-tools">
-          {/* ASPECT RATIO PILL */}
           <div className="tool-pill">
             <span className="pill-label">ASPECT RATIO</span>
             <span className="pill-value">{aspectRatio}</span>
@@ -41,7 +39,6 @@ export default function PromptBox({ prompt, setPrompt, aspectRatio, setAspectRat
             </select>
           </div>
 
-          {/* MODEL PILL */}
           <div className="tool-pill">
             <span className="pill-label">MODEL</span>
             <span className="pill-value">v3.0</span>
@@ -56,7 +53,7 @@ export default function PromptBox({ prompt, setPrompt, aspectRatio, setAspectRat
           {loading ? (
             <div className="spinner"></div>
           ) : (
-            <Send size={18} strokeWidth={2.5} />
+            <Send size={20} strokeWidth={2.5} />
           )}
         </button>
       </div>
