@@ -55,33 +55,20 @@
   cursor: pointer;
 }
 
-/* --- THE SEND BUTTON --- */
+/* Normal state: Icon is bright white */
 .generate-fab {
-  width: 44px;
-  height: 44px;
-  background: #222; /* Normal active background */
-  color: #FFFFFF;
+  background: #222;
+  color: #FFFFFF; /* This controls the icon color */
   border: 1px solid #333;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+  /* ... your other styles ... */
   transition: all 0.2s ease;
 }
 
-/* THE FIX: Styles when there is NO input text */
+/* Disabled state: Everything fades out */
 .generate-fab:disabled {
-  background: #1a1a1a;    /* Darker, flatter background */
-  color: #444444;       /* Dims the icon color */
-  border-color: #222;   /* Mutes the border */
-  cursor: not-allowed;  /* Shows the 'block' cursor */
-  opacity: 0.5;         /* Makes the whole button look faded */
-}
-
-/* Hover effect ONLY when enabled */
-.generate-fab:hover:not(:disabled) {
-  background: #333;
-  border-color: #555;
-  transform: translateY(-1px);
+  background: #1a1a1a;
+  color: #444;       /* Dims the Lucide icon */
+  border-color: #222;
+  opacity: 0.6;      /* Makes it look 'ghosted' */
+  cursor: not-allowed;
 }
