@@ -2,16 +2,26 @@ import React, { useEffect, useRef } from 'react';
 import { Send } from 'lucide-react';
 import './PromptBox.css';
 
+const aspectRatioOptions = [
+  { value: '1:1', label: '1:1 Square' },
+  { value: '2:3', label: '2:3 Portrait' },
+  { value: '3:4', label: '3:4 Portrait' },
+  { value: '16:9', label: '16:9 Landscape' },
+  { value: '9:16', label: '9:16 Vertical' },
+];
+
 export default function PromptBox({ prompt, setPrompt, aspectRatio, setAspectRatio, onGenerate, loading }) {
   const textareaRef = useRef(null);
 
-  // Auto-resize textarea logic
+  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [prompt]);
+
+  const currentLabel = aspectRatioOptions.find(opt => opt.value === aspectRatio)?.label || aspectRatio;
 
   return (
     <div className="prompt-container">
@@ -23,43 +33,40 @@ export default function PromptBox({ prompt, setPrompt, aspectRatio, setAspectRat
         className="prompt-input"
         rows="1"
       />
-      
+
       <div className="prompt-tools">
         <div className="left-tools">
           {/* ASPECT RATIO PILL */}
           <div className="tool-pill">
             <span className="pill-label">ASPECT RATIO</span>
-            <span className="pill-value">{aspectRatio}</span>
-            <select 
-              value={aspectRatio} 
+            <span className="pill-value">{currentLabel}</span>
+            <select
+              value={aspectRatio}
               onChange={(e) => setAspectRatio(e.target.value)}
               className="hidden-select"
             >
-              <option value="2:3">2:3 Portrait</option>
-              <option value="1:1">1:1 Square</option>
-              <option value="16:9">16:9 Landscape</option>
+              {aspectRatioOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
           </div>
 
-          {/* MODEL PILL */}
+          {/* MODEL PILL (static for now) */}
           <div className="tool-pill">
             <span className="pill-label">MODEL</span>
             <span className="pill-value">v3.0</span>
           </div>
         </div>
 
-        {/* THE SEND BUTTON */}
-        <button 
-          className="generate-fab" 
-          onClick={onGenerate} 
-          disabled={!prompt.trim() || loading} // .trim() prevents spaces-only bypass
+        {/* GENERATE BUTTON */}
+        <button
+          className="generate-fab"
+          onClick={onGenerate}
+          disabled={!prompt.trim() || loading}
         >
-          {loading ? (
-            <div className="spinner"></div>
-          ) : (
-            /* We leave out 'color' so the CSS :disabled state can change it */
-            <Send size={20} strokeWidth={2.5} />
-          )}
+          {loading ? <div className="spinner" /> : <Send size={24} strokeWidth={2.5} />}
         </button>
       </div>
     </div>
