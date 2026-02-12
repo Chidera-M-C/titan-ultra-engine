@@ -5,6 +5,7 @@ import './PromptBox.css';
 export default function PromptBox({ prompt, setPrompt, aspectRatio, setAspectRatio, onGenerate, loading }) {
   const textareaRef = useRef(null);
 
+  // Auto-resize textarea logic
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -25,6 +26,7 @@ export default function PromptBox({ prompt, setPrompt, aspectRatio, setAspectRat
       
       <div className="prompt-tools">
         <div className="left-tools">
+          {/* ASPECT RATIO PILL */}
           <div className="tool-pill">
             <span className="pill-label">ASPECT RATIO</span>
             <span className="pill-value">{aspectRatio}</span>
@@ -39,20 +41,23 @@ export default function PromptBox({ prompt, setPrompt, aspectRatio, setAspectRat
             </select>
           </div>
 
+          {/* MODEL PILL */}
           <div className="tool-pill">
             <span className="pill-label">MODEL</span>
             <span className="pill-value">v3.0</span>
           </div>
         </div>
 
+        {/* THE SEND BUTTON */}
         <button 
           className="generate-fab" 
           onClick={onGenerate} 
-          disabled={!prompt || loading}
+          disabled={!prompt.trim() || loading} // .trim() prevents spaces-only bypass
         >
           {loading ? (
             <div className="spinner"></div>
           ) : (
+            /* We leave out 'color' so the CSS :disabled state can change it */
             <Send size={20} strokeWidth={2.5} />
           )}
         </button>
