@@ -8,7 +8,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
 }
 
 .prompt-input {
@@ -20,17 +20,26 @@
   font-size: 1.2rem;
   font-family: 'Courier New', Courier, monospace;
   resize: none;
+  padding: 8px 0; /* Small vertical padding for comfort */
+  line-height: 1.5;
+}
+
+.prompt-input::placeholder {
+  color: #666;
+  opacity: 1;
 }
 
 .prompt-tools {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-end; /* Align everything to the bottom */
+  gap: 16px;
 }
 
 .left-tools {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap; /* Allows pills to wrap nicely on small screens */
 }
 
 .tool-pill {
@@ -43,10 +52,31 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  transition: all 0.2s ease;
 }
 
-.pill-label { color: #555; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
-.pill-value { color: #fff; font-size: 0.85rem; font-weight: 600; }
+/* Hover only on clickable pill (the one with hidden select) */
+.tool-pill:has(> .hidden-select):hover {
+  background: #2a2a2a;
+  border-color: #444;
+}
+
+.tool-pill:has(> .hidden-select) {
+  cursor: pointer;
+}
+
+.pill-label {
+  color: #777;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.pill-value {
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
 
 .hidden-select {
   position: absolute;
@@ -55,20 +85,47 @@
   cursor: pointer;
 }
 
-/* Normal state: Icon is bright white */
+/* FAB Generate Button */
 .generate-fab {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
   background: #222;
-  color: #FFFFFF; /* This controls the icon color */
   border: 1px solid #333;
-  /* ... your other styles ... */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
-/* Disabled state: Everything fades out */
+.generate-fab:hover:not(:disabled) {
+  background: #333;
+  border-color: #444;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
 .generate-fab:disabled {
   background: #1a1a1a;
-  color: #444;       /* Dims the Lucide icon */
+  color: #444;
   border-color: #222;
-  opacity: 0.6;      /* Makes it look 'ghosted' */
+  opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Spinner */
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #333;
+  border-top: 3px solid #ECECEC;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
