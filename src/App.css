@@ -19,9 +19,15 @@ body, html {
   overflow: hidden;
 }
 
-.app-shell { display: flex; width: 100vw; height: 100vh; }
+.app-shell { 
+  display: flex; 
+  width: 100vw; 
+  height: 100vh; 
+}
 
+/* Main content now shifted to make room for fixed sidebar */
 .main-content {
+  margin-left: 260px; /* Matches sidebar width */
   flex: 1;
   display: flex;
   flex-direction: column;
