@@ -1,3 +1,4 @@
+/* src/App.css */
 :root {
   --bg-app: #101010;
   --bg-sidebar: #000000;
@@ -31,4 +32,24 @@ body, html {
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+}
+
+/* --- THE FIX FOR THE CENTERED TITLE --- */
+.top-header {
+  width: 100%;
+  display: flex;
+  flex-direction: column; /* Stacks Title on Top of Box */
+  align-items: center;    /* Centers both horizontally */
+  padding: 4rem 2rem 2rem 2rem;
+  flex-shrink: 0;
+}
+
+.aesthetic-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 2rem;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-align: center;
 }
