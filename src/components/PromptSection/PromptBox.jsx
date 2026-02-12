@@ -1,7 +1,7 @@
-import './PromptBox.css'
 import React, { useEffect, useRef } from 'react';
 import { Send } from 'lucide-react';
 import ToolPill from './ToolPill';
+import './PromptBox.css';
 
 export default function PromptBox({ prompt, setPrompt, aspectRatio, setAspectRatio, onGenerate, loading }) {
   const textareaRef = useRef(null);
@@ -26,24 +26,28 @@ export default function PromptBox({ prompt, setPrompt, aspectRatio, setAspectRat
       
       <div className="prompt-tools">
         <div className="left-tools">
-          <ToolPill label="Aspect Ratio">
+          <ToolPill label="ASPECT RATIO" value={aspectRatio}>
             <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value)}>
               <option value="2:3">2:3 Portrait</option>
               <option value="1:1">1:1 Square</option>
               <option value="16:9">16:9 Landscape</option>
             </select>
-            <span>{aspectRatio}</span>
           </ToolPill>
 
-          <ToolPill label="Model" value="v3.0" />
+          <ToolPill label="MODEL" value="v3.0" />
         </div>
 
         <button 
           className="generate-fab" 
           onClick={onGenerate} 
           disabled={!prompt || loading}
+          aria-label="Send prompt"
         >
-          {loading ? <div className="spinner"></div> : <Send size={18} />}
+          {loading ? (
+            <div className="spinner"></div>
+          ) : (
+            <Send size={18} strokeWidth={2.5} color="#FFFFFF" />
+          )}
         </button>
       </div>
     </div>
