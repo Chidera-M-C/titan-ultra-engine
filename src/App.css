@@ -1,4 +1,3 @@
-/* src/App.css */
 :root {
   --bg-app: #101010;
   --bg-sidebar: #000000;
@@ -20,11 +19,7 @@ body, html {
   overflow: hidden;
 }
 
-.app-shell {
-  display: flex;
-  width: 100vw;
-  height: 100vh;
-}
+.app-shell { display: flex; width: 100vw; height: 100vh; }
 
 .main-content {
   flex: 1;
@@ -34,22 +29,24 @@ body, html {
   overflow: hidden;
 }
 
-/* --- THE FIX FOR THE CENTERED TITLE --- */
+/* MASTER HEADER FIX */
 .top-header {
   width: 100%;
   display: flex;
-  flex-direction: column; /* Stacks Title on Top of Box */
-  align-items: center;    /* Centers both horizontally */
-  padding: 4rem 2rem 2rem 2rem;
+  flex-direction: column; 
+  align-items: center;    
+  justify-content: center;
+  padding: 5rem 2rem 2rem 2rem;
   flex-shrink: 0;
 }
 
 .aesthetic-title {
+  width: 100%;
+  text-align: center;
   font-size: 2.2rem;
   font-weight: 800;
   margin-bottom: 2rem;
   color: #fff;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  text-align: center;
+  letter-spacing: 1.5px;
 }
