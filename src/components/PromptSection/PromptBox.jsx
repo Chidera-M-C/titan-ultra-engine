@@ -26,27 +26,37 @@ export default function PromptBox({ prompt, setPrompt, aspectRatio, setAspectRat
       
       <div className="prompt-tools">
         <div className="left-tools">
-          <ToolPill label="ASPECT RATIO" value={aspectRatio}>
-            <select value={aspectRatio} onChange={(e) => setAspectRatio(e.target.value)}>
+          {/* ASPECT RATIO PILL */}
+          <div className="tool-pill">
+            <span className="pill-label">ASPECT RATIO</span>
+            <span className="pill-value">{aspectRatio}</span>
+            <select 
+              value={aspectRatio} 
+              onChange={(e) => setAspectRatio(e.target.value)}
+              className="hidden-select"
+            >
               <option value="2:3">2:3 Portrait</option>
               <option value="1:1">1:1 Square</option>
               <option value="16:9">16:9 Landscape</option>
             </select>
-          </ToolPill>
+          </div>
 
-          <ToolPill label="MODEL" value="v3.0" />
+          {/* MODEL PILL */}
+          <div className="tool-pill">
+            <span className="pill-label">MODEL</span>
+            <span className="pill-value">v3.0</span>
+          </div>
         </div>
 
         <button 
           className="generate-fab" 
           onClick={onGenerate} 
           disabled={!prompt || loading}
-          aria-label="Send prompt"
         >
           {loading ? (
             <div className="spinner"></div>
           ) : (
-            <Send size={18} strokeWidth={2.5} color="#FFFFFF" />
+            <Send size={18} strokeWidth={2.5} />
           )}
         </button>
       </div>
