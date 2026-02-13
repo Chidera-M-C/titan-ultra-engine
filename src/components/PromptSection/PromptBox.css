@@ -87,8 +87,8 @@
 
 /* FAB Generate Button – smaller and more compact */
 .generate-fab {
-  width: 48px;                 /* Reduced from 56px */
-  height: 48px;                /* Reduced from 56px */
+  width: 56px;                 /* Reduced from 56px */
+  height: 56px;                /* Reduced from 56px */
   border-radius: 16px;         /* Keeps rounded square look */
   background: #222;
   border: 1px solid #333;
@@ -132,6 +132,6 @@
 
 /* Force Lucide SVG icon size */
 .generate-fab svg {
-  width: 28px !important;  /* Adjust to 28px or 32px as needed – overrides Lucide defaults */
-  height: 28px !important;
+  width: 36px !important;  /* Adjust to 28px or 32px as needed – overrides Lucide defaults */
+  height: 36px !important;
 }
