@@ -69,7 +69,7 @@ export default function PromptBox({ prompt, setPrompt, aspectRatio, setAspectRat
           {loading ? (
             <div className="spinner" />
           ) : (
-            <Send size={32} strokeWidth={2.5} />
+            <Send size={26} strokeWidth={2.5} />
           )}
         </button>
       </div>
