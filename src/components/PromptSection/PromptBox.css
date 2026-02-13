@@ -20,7 +20,7 @@
   font-size: 1rem;             /* Reduced from 1.2rem */
   font-family: 'Courier New', Courier, monospace;
   resize: none;
-  padding: 3px 0;              /* Reduced from 8px 0 */
+  padding: 4px 0;              /* Reduced from 8px 0 */
   line-height: 1.5;
 }
 
