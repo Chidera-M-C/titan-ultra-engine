@@ -3,7 +3,7 @@
   display: flex;
   gap: 32px;
   justify-content: center;
-  padding: 1.5rem 2rem 1rem 2rem; /* Matches scrollable-area side padding */
+  padding: 1.5rem 1rem 1rem 1rem; /* Matches scrollable-area minimal padding */
   border-bottom: 1px solid #222;
   margin-bottom: 3rem;
   
@@ -39,11 +39,11 @@
   background: #fff;
 }
 
-/* Masonry grid – forced 5 large columns filling almost the full width */
+/* Masonry grid – forced 5 largest possible columns filling nearly the full width */
 .masonry-grid {
-  width: 100%; /* Fills the wider padded area */
+  width: 100%; /* Fills the almost-full padded area */
   column-count: 5; /* Exactly 5 columns */
-  column-gap: 16px; /* Tight, clean spacing – makes cards larger */
+  column-gap: 16px; /* Tight spacing – maximizes card size */
 }
 
 .pin-item {
