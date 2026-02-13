@@ -4,20 +4,18 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 2rem 4rem 8rem 4rem; /* Strong symmetric side padding for balanced, professional centering in the main panel */
+  padding: 2rem 6rem 8rem 6rem; /* Larger symmetric side padding – this forces perfect balanced centering in the main panel */
   background: #101010;
-  /* Removed flex column + align-items:center – it was fighting max-width centering on the grid */
 }
 
 .category-tabs {
   width: 100%;
-  max-width: 1600px; /* Match grid max-width for perfect alignment */
-  margin: 0 auto 3rem auto; /* Centers the entire tab bar */
   display: flex;
   gap: 32px;
-  justify-content: center; /* Centers the tab group */
+  justify-content: center; /* Centers the tabs group */
   padding: 1.5rem 0 1rem 0;
   border-bottom: 1px solid #222;
+  margin-bottom: 3rem;
   
   position: sticky;
   top: 0;
@@ -52,17 +50,12 @@
 }
 
 .masonry-grid {
-  width: 100%;
-  max-width: 1600px; 
-  margin: 0 auto; /* Perfect centering within the padded scrollable-area */
-  padding: 0; /* Removed inner padding – lets the columns use full width */
-  
-  column-count: 5;      /* Forces exactly 5 columns on large screens */
-  column-gap: 28px;     /* Slightly larger gap for breathing room */
+  width: 100%; /* Full width of the padded area – no max-width cap */
+  column-count: 5;      /* Exactly 5 columns on large screens */
+  column-gap: 32px;     /* Clean breathing room */
 }
 
-/* Responsive column reduction – never drops below reasonable size */
-@media (max-width: 1700px) {
+@media (max-width: 1800px) {
   .masonry-grid {
     column-count: 4;
   }
@@ -91,7 +84,7 @@
   width: 100%;
   display: inline-block;
   break-inside: avoid;
-  margin-bottom: 28px; /* Matches gap */
+  margin-bottom: 32px;
   position: relative;
   border-radius: 12px;
   overflow: hidden;
@@ -102,7 +95,7 @@
 
 .pin-item img {
   width: 100%;
-  height: auto; /* Fully respects native aspect ratio – tall, wide, square all display correctly */
+  height: auto;
   display: block;
   transition: transform 0.4s ease;
 }
