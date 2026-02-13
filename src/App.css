@@ -34,12 +34,11 @@ body, html {
   overflow: hidden;
 }
 
-/* KEY FIX: Symmetric side padding for balanced, professional centering of all gallery content */
 .scrollable-area {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 4rem 8rem 4rem; /* Equal left/right gutters – adjust 4rem if you want more/less side space */
+  padding: 0 2rem 8rem 2rem; /* Minimal symmetric side gutters – maximizes width for larger cards while keeping a tiny breathing room */
   background: #101010;
 }
 
