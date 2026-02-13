@@ -20,11 +20,12 @@
   font-size: 1rem;             /* Reduced from 1.2rem */
   font-family: 'Courier New', Courier, monospace;
   resize: none;
-  padding: 4px 0;              /* Reduced from 8px 0 */
+  padding: 6px 0;              /* Reduced from 8px 0 */
   line-height: 1.5;
 }
 
 .prompt-input::placeholder {
+  font-family: 'Courier New', Courier, monospace;
   color: #666;
   opacity: 1;
 }
