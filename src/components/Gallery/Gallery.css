@@ -1,110 +1,52 @@
-/* Container handles the scroll and centering alignment */
+/* src/components/Gallery/Gallery.css */
+
 .scrollable-area {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-bottom: 4rem;
   display: flex;
   flex-direction: column;
-  align-items: center; /* Ensures inner max-width containers stay centered */
+  /* This is the secret—it centers everything inside the scrollable view */
+  align-items: center; 
+  padding-bottom: 8rem;
 }
 
-/* STICKY TABS: Now stays locked at the top */
 .category-tabs {
+  /* Set a fixed max-width for both containers to keep them perfectly aligned */
   width: 100%;
-  max-width: 1400px; /* Reduced slightly to match typical screen flow */
-  margin: 0 auto;
+  max-width: 1400px; 
+  margin: 0 auto; 
+  
   display: flex;
   gap: 32px;
   padding: 1.5rem 2rem 1rem 2rem;
   border-bottom: 1px solid #222;
-  
+
   position: sticky;
   top: 0;
-  background: #101010; /* Solid background to prevent overlap bleed */
-  z-index: 20;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  background: #101010; 
+  z-index: 50;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
-
-.tab {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #666;
-  cursor: pointer;
-  position: relative;
-  white-space: nowrap;
-}
-
-.tab.active { color: #fff; }
-
-.tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: -11px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: #fff;
-}
-
-/* src/components/Gallery/Gallery.css */
 
 .masonry-grid {
   width: 100%;
-  /* Increased max-width to ensure 5 columns fit comfortably at 250px-280px each */
-  max-width: 1600px; 
+  /* MUST MATCH THE TABS MAX-WIDTH ABOVE */
+  max-width: 1400px; 
   margin: 2rem auto 0 auto;
-  padding: 0 2rem;
   
-  /* THE FIX: Changed count to 5 and reduced min-width to 240px */
+  /* Keep your 5 columns exactly as they are */
   columns: 5 240px; 
-  column-gap: 20px;
+  column-gap: 24px;
+  
+  /* Ensure padding matches the tabs so the edges line up perfectly */
+  padding: 0 2rem; 
 }
 
-/* Individual Card logic */
 .pin-item {
+  /* This ensures the items don't jitter or lean left inside the column */
   width: 100%;
-  display: inline-block; /* Required for column masonry */
-  break-inside: avoid;   /* Prevents the card from splitting between columns */
-  margin-bottom: 20px;   /* Vertical gap between items */
-  position: relative;
-  border-radius: 12px;
-  overflow: hidden;
-  cursor: pointer;
-  background: #1a1a1a;
-  transition: transform 0.3s ease;
-}
-
-.pin-item img {
-  width: 100%;
-  height: auto; /* RESPECTS NATURAL ASPECT RATIO */
-  display: block;
-  transition: transform 0.4s ease;
-}
-
-.pin-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 60%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 20px;
-}
-
-.pin-item:hover .pin-overlay { opacity: 1; }
-.pin-item:hover img { transform: scale(1.05); }
-
-/* Standardize the button styling */
-.use-btn {
-  background: #fff;
-  color: #000;
-  border: none;
-  padding: 8px 20px;
-  border-radius: 100px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  cursor: pointer;
+  display: inline-block;
+  break-inside: avoid;
+  margin-bottom: 24px;
 }
