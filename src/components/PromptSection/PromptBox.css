@@ -4,11 +4,11 @@
   background: #161616;
   border: 1px solid #252525;
   border-radius: 20px;
-  padding: 24px;
+  padding: 16px;               /* Reduced from 24px */
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  gap: 12px;                   /* Reduced from 20px */
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
 }
 
 .prompt-input {
@@ -17,10 +17,10 @@
   border: none;
   outline: none;
   color: #ECECEC;
-  font-size: 1.2rem;
+  font-size: 1rem;             /* Reduced from 1.2rem */
   font-family: 'Courier New', Courier, monospace;
   resize: none;
-  padding: 8px 0; /* Small vertical padding for comfort */
+  padding: 4px 0;              /* Reduced from 8px 0 */
   line-height: 1.5;
 }
 
@@ -32,22 +32,22 @@
 .prompt-tools {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end; /* Align everything to the bottom */
-  gap: 16px;
+  align-items: flex-end;
+  gap: 12px;                   /* Reduced from 16px */
 }
 
 .left-tools {
   display: flex;
   gap: 12px;
-  flex-wrap: wrap; /* Allows pills to wrap nicely on small screens */
+  flex-wrap: wrap;
 }
 
 .tool-pill {
   position: relative;
   background: #222;
   border: 1px solid #333;
-  height: 36px;
-  padding: 0 16px;
+  height: 32px;                /* Reduced from 36px */
+  padding: 0 14px;             /* Reduced from 0 16px */
   border-radius: 100px;
   display: flex;
   align-items: center;
@@ -55,7 +55,6 @@
   transition: all 0.2s ease;
 }
 
-/* Hover only on clickable pill (the one with hidden select) */
 .tool-pill:has(> .hidden-select):hover {
   background: #2a2a2a;
   border-color: #444;
@@ -85,11 +84,11 @@
   cursor: pointer;
 }
 
-/* FAB Generate Button */
+/* FAB Generate Button – smaller and more compact */
 .generate-fab {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;  /* or 12px if you want subtler corners */
+  width: 48px;                 /* Reduced from 56px */
+  height: 48px;                /* Reduced from 56px */
+  border-radius: 16px;         /* Keeps rounded square look */
   background: #222;
   border: 1px solid #333;
   display: flex;
@@ -114,10 +113,10 @@
   cursor: not-allowed;
 }
 
-/* Spinner */
+/* Smaller spinner to match button */
 .spinner {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border: 3px solid #333;
   border-top: 3px solid #ECECEC;
   border-radius: 50%;
