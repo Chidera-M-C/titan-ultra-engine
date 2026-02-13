@@ -6,22 +6,15 @@ export default function ExploreView({ onSelectPrompt }) {
   const [activeCategory, setActiveCategory] = useState('Explore');
   const categories = ['Explore', 'Top', 'People', 'Nature', 'Poster', '3D Render'];
 
-  // Varying aspect ratios for true masonry variety
+  // Keep your varying dimensions for true masonry variety
   const dimensions = [
-    '400/600',  // standard portrait
-    '600/400',  // landscape
-    '500/500',  // square
-    '400/800',  // tall portrait
-    '800/400',  // wide landscape
-    '600/600',  // larger square
-    '450/750',  // extra tall
-    '750/450',  // extra wide
+    '400/600', '600/400', '500/500', '400/800', '800/400', '600/600', '450/750', '750/450',
   ];
 
   const getDummyImages = () => {
     const categorySeeds = { 'Explore': 100, 'Top': 200, 'People': 300, 'Nature': 400, 'Poster': 500, '3D Render': 600 };
     const baseSeed = categorySeeds[activeCategory] || 100;
-    return Array.from({ length: 30 }, (_, i) => {  // Increased to 30 for better testing
+    return Array.from({ length: 30 }, (_, i) => {
       const dim = dimensions[i % dimensions.length];
       const [width, height] = dim.split('/');
       return {
@@ -34,15 +27,14 @@ export default function ExploreView({ onSelectPrompt }) {
 
   return (
     <>
-      {/* CategoryTabs stays full-width for sticky bar with solid background */}
       <CategoryTabs 
         categories={categories} 
         activeCategory={activeCategory} 
         onSelectCategory={setActiveCategory} 
       />
 
-      {/* Wrapper centers the grid with equal side space + balanced gutters */}
-      <div className="gallery-wrapper">
+      {/* Centered wrapper – this forces perfect balance and large cards */}
+      <div className="gallery-centered-wrapper">
         <MasonryGrid 
           images={getDummyImages()} 
           onImageClick={onSelectPrompt} 
