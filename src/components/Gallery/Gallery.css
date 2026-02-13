@@ -1,9 +1,9 @@
-/* Sticky tabs – matches the scrollable-area padding for alignment */
+/* Sticky tabs – minimal side padding to match scrollable-area */
 .category-tabs {
   display: flex;
   gap: 32px;
   justify-content: center;
-  padding: 1.5rem 4rem 1rem 4rem; /* Matches scrollable-area side padding */
+  padding: 1.5rem 2rem 1rem 2rem; /* Matches scrollable-area side padding */
   border-bottom: 1px solid #222;
   margin-bottom: 3rem;
   
@@ -39,11 +39,11 @@
   background: #fff;
 }
 
-/* Masonry grid – forced 5 large columns, tight professional gaps, fills padded area */
+/* Masonry grid – forced 5 large columns filling almost the full width */
 .masonry-grid {
-  width: 100%; /* Fills the padded scrollable-area perfectly */
+  width: 100%; /* Fills the wider padded area */
   column-count: 5; /* Exactly 5 columns */
-  column-gap: 20px; /* Tight, clean spacing */
+  column-gap: 16px; /* Tight, clean spacing – makes cards larger */
 }
 
 .pin-item {
@@ -53,7 +53,7 @@
   cursor: pointer;
   background: #1a1a1a;
   break-inside: avoid;
-  margin-bottom: 20px; /* Tight vertical spacing */
+  margin-bottom: 16px; /* Tight vertical spacing – larger cards */
   display: inline-block;
   width: 100%;
   transition: transform 0.3s ease;
@@ -61,7 +61,7 @@
 
 .pin-item img {
   width: 100%;
-  height: auto; /* Native aspect ratios – varying heights for dynamic look */
+  height: auto;
   display: block;
   transition: transform 0.4s ease;
 }
