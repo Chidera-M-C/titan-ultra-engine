@@ -2,16 +2,15 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 5rem 8rem 5rem; /* Symmetric large gutters – this creates perfect balanced centering in the main panel */
-  background: #101010;
+  padding-bottom: 8rem;
 }
 
-/* Sticky tabs – matches the padding for consistent alignment */
+/* Sticky tabs – centered group, full-width background */
 .category-tabs {
   display: flex;
   gap: 32px;
-  justify-content: center; /* Centers the tab group */
-  padding: 1.5rem 5rem 1rem 5rem; /* Matches scrollable-area padding */
+  justify-content: center;
+  padding: 1.5rem 2rem 1rem 2rem;
   border-bottom: 1px solid #222;
   margin-bottom: 3rem;
   
@@ -47,37 +46,18 @@
   background: #fff;
 }
 
-/* Masonry grid – exactly 5 columns on large screens, fills the padded area perfectly */
+/* New centered wrapper – high max-width for large cards + 5 columns */
+.gallery-centered-wrapper {
+  max-width: 1920px; /* High enough for 5 large columns on most screens */
+  margin: 0 auto; /* Perfect symmetric centering with equal side space */
+  padding: 0 3rem; /* Balanced inner gutters – adjust if you want tighter */
+}
+
+/* Forced 5 columns, large cards, true varying aspect ratios */
 .masonry-grid {
-  width: 100%; /* Fills the padded scrollable-area */
-  column-count: 5; /* Forces 5 columns */
-  column-gap: 32px;
-}
-
-/* Responsive – reduce columns on smaller screens so cards stay large */
-@media (max-width: 1900px) {
-  .masonry-grid {
-    column-count: 4;
-  }
-}
-
-@media (max-width: 1500px) {
-  .masonry-grid {
-    column-count: 3;
-  }
-}
-
-@media (max-width: 1100px) {
-  .masonry-grid {
-    column-count: 2;
-  }
-}
-
-@media (max-width: 700px) {
-  .masonry-grid {
-    column-count: 1;
-    column-gap: 0;
-  }
+  width: 100%;
+  column-count: 5; /* Forces exactly 5 columns */
+  column-gap: 36px; /* Generous spacing for premium feel */
 }
 
 .pin-item {
@@ -87,7 +67,7 @@
   cursor: pointer;
   background: #1a1a1a;
   break-inside: avoid;
-  margin-bottom: 32px;
+  margin-bottom: 36px;
   display: inline-block;
   width: 100%;
   transition: transform 0.3s ease;
@@ -95,7 +75,7 @@
 
 .pin-item img {
   width: 100%;
-  height: auto; /* Native aspect ratios – varying heights for true masonry */
+  height: auto;
   display: block;
   transition: transform 0.4s ease;
 }
@@ -129,4 +109,11 @@
   font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
+}
+
+/* Responsive fallback – drops to fewer columns only on smaller screens */
+@media (max-width: 1600px) {
+  .masonry-grid {
+    column-count: 4;
+  }
 }
