@@ -3,7 +3,7 @@
   display: flex;
   gap: 32px;
   justify-content: center;
-  padding: 1.5rem 4.5rem 1rem 0.5rem; /* Matches scrollable-area for alignment */
+  padding: 1.5rem 3.5rem 1rem 0rem; /* Matches scrollable-area for alignment */
   border-bottom: 1px solid #222;
   margin-bottom: 3rem;
   
@@ -43,7 +43,7 @@
 .masonry-grid {
   width: 100%; /* Fills the wider available area */
   column-count: 5; /* Exactly 5 columns */
-  column-gap: 12px; /* Tighter horizontal spacing – makes cards larger */
+  column-gap: 10px; /* Tighter horizontal spacing – makes cards larger */
 }
 
 .pin-item {
@@ -53,7 +53,7 @@
   cursor: pointer;
   background: #1a1a1a;
   break-inside: the;
-  margin-bottom: 12px; /* Tighter vertical spacing – larger cards */
+  margin-bottom: 10px; /* Tighter vertical spacing – larger cards */
   display: inline-block;
   width: 100%;
   transition: transform 0.3s ease;
