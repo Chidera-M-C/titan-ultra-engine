@@ -1,9 +1,10 @@
 .scrollable-area {
   flex: 1;
   overflow-y: auto;
-  padding: 1rem 2rem 4rem 2rem;
+  padding: 1rem 2rem 6rem 2rem; /* Increased bottom padding a bit for safety */
 }
 
+/* Centered tabs (kept narrow and centered like the prompt box) */
 .category-tabs {
   max-width: 1200px;
   margin: 0 auto 2.5rem auto;
@@ -11,6 +12,14 @@
   gap: 24px;
   border-bottom: 1px solid #222;
   padding-bottom: 12px;
+
+  /* Sticky behavior */
+  position: sticky;
+  top: 0;
+  background: #101010; /* Matches app background */
+  z-index: 20;
+  padding-top: 1rem; /* Small buffer when stuck */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Subtle lift when scrolling */
 }
 
 .tab {
@@ -32,12 +41,12 @@
   background: #fff;
 }
 
+/* Masonry using CSS columns — true varying aspect ratios, no gaps */
 .masonry-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 16px;
-  max-width: 1600px;
-  margin: 0 auto;
+  columns: auto;
+  column-width: 260px;
+  column-gap: 16px;
+  /* Removed max-width and margin: 0 auto → now fills the full available width symmetrically */
 }
 
 .pin-item {
@@ -46,6 +55,10 @@
   overflow: hidden;
   cursor: pointer;
   background: #1a1a1a;
+  break-inside: avoid;         /* Prevents breaking across columns */
+  margin-bottom: 16px;         /* Vertical spacing instead of grid gap */
+  display: inline-block;       /* Required for columns layout */
+  width: 100%;
 }
 
 .pin-item img {
