@@ -6,7 +6,6 @@ export default function ExploreView({ onSelectPrompt }) {
   const [activeCategory, setActiveCategory] = useState('Explore');
   const categories = ['Explore', 'Top', 'People', 'Nature', 'Poster', '3D Render'];
 
-  // Keep your varying dimensions for true masonry variety
   const dimensions = [
     '400/600', '600/400', '500/500', '400/800', '800/400', '600/600', '450/750', '750/450',
   ];
@@ -33,8 +32,8 @@ export default function ExploreView({ onSelectPrompt }) {
         onSelectCategory={setActiveCategory} 
       />
 
-      {/* Centered wrapper – this forces perfect balance and large cards */}
-      <div className="gallery-centered-wrapper">
+      {/* Centered wrapper with tuned max-width for exactly 5 large columns + tight gaps */}
+      <div className="gallery-centered-block">
         <MasonryGrid 
           images={getDummyImages()} 
           onImageClick={onSelectPrompt} 
