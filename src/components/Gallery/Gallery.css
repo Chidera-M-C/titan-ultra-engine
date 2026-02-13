@@ -47,15 +47,17 @@
   background: #fff;
 }
 
-/* TRUE MASONRY: Uses columns to allow varied heights */
+/* src/components/Gallery/Gallery.css */
+
 .masonry-grid {
   width: 100%;
-  max-width: 1400px;
+  /* Increased max-width to ensure 5 columns fit comfortably at 250px-280px each */
+  max-width: 1600px; 
   margin: 2rem auto 0 auto;
-  padding: 0 2rem; /* Balanced horizontal padding */
+  padding: 0 2rem;
   
-  /* Masonry Magic: 4 columns, or auto-fill down to 280px */
-  columns: 4 280px; 
+  /* THE FIX: Changed count to 5 and reduced min-width to 240px */
+  columns: 5 240px; 
   column-gap: 20px;
 }
 
