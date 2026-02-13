@@ -4,10 +4,10 @@
   background: #161616;
   border: 1px solid #252525;
   border-radius: 20px;
-  padding: 12px;               /* Reduced from 24px */
+  padding: 9px;               /* Reduced from 24px */
   display: flex;
   flex-direction: column;
-  gap: 8px;                   /* Reduced from 20px */
+  gap: 5px;                   /* Reduced from 20px */
   box-shadow: 0 10px 40px rgba(0,0,0,0.6);
 }
 
@@ -20,7 +20,7 @@
   font-size: 1rem;             /* Reduced from 1.2rem */
   font-family: 'Courier New', Courier, monospace;
   resize: none;
-  padding: 4px 0;              /* Reduced from 8px 0 */
+  padding: 3px 0;              /* Reduced from 8px 0 */
   line-height: 1.5;
 }
 
