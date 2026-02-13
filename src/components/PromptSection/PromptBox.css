@@ -87,8 +87,8 @@
 
 /* FAB Generate Button */
 .generate-fab {
-  width: 42px;                 /* Increased back to comfortable size */
-  height: 42px;
+  width: 40px;                 /* Increased back to comfortable size */
+  height: 40px;
   border-radius: 16px;
   background: #222;
   border: 1px solid #333;
@@ -133,11 +133,11 @@
 
 /* FORCE the SVG icon size - this will override ANY other CSS */
 .generate-fab svg {
-  width: 26px !important;
-  height: 26px !important;
-  min-width: 26px !important;
-  min-height: 26px !important;
-  max-width: 26px !important;
-  max-height: 26px !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
   display: block;
 }
