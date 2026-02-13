@@ -1,6 +1,7 @@
 import './Gallery.css';
 import React from 'react';
 import ImageCard from './ImageCard';
+
 export default function MasonryGrid({ images, onImageClick, actionLabel }) {
   return (
     <div className="masonry-grid">
@@ -9,7 +10,8 @@ export default function MasonryGrid({ images, onImageClick, actionLabel }) {
           key={img.id}
           url={img.url}
           prompt={img.prompt}
-          onAction={onImageClick}
+          // Pass the whole image object so the modal/prompt knows what to show
+          onAction={() => onImageClick(img)} 
           actionLabel={actionLabel}
         />
       ))}
