@@ -66,7 +66,11 @@ export default function PromptBox({ prompt, setPrompt, aspectRatio, setAspectRat
           onClick={onGenerate}
           disabled={!prompt.trim() || loading}
         >
-          {loading ? <div className="spinner" /> : <Send size={47} strokeWidth={2.5} />}
+          {loading ? (
+            <div className="spinner" />
+          ) : (
+            <Send size={32} strokeWidth={2.5} />
+          )}
         </button>
       </div>
     </div>
