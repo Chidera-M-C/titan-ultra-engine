@@ -46,18 +46,18 @@
   background: #fff;
 }
 
-/* New centered wrapper – high max-width for large cards + 5 columns */
-.gallery-centered-wrapper {
-  max-width: 1920px; /* High enough for 5 large columns on most screens */
-  margin: 0 auto; /* Perfect symmetric centering with equal side space */
-  padding: 0 3rem; /* Balanced inner gutters – adjust if you want tighter */
+/* Centered block – tuned for 5 large columns with tight gaps */
+.gallery-centered-block {
+  max-width: 1480px; /* Optimized for 5 columns ~280px each + 20px gaps * 4 = ~1480px total */
+  margin: 0 auto; /* Perfect symmetric centering – equal side space */
+  padding: 0 20px; /* Small inner gutters to prevent edge touch */
 }
 
-/* Forced 5 columns, large cards, true varying aspect ratios */
+/* Forced 5 columns, tight gaps, large cards */
 .masonry-grid {
   width: 100%;
-  column-count: 5; /* Forces exactly 5 columns */
-  column-gap: 36px; /* Generous spacing for premium feel */
+  column-count: 5;
+  column-gap: 20px; /* Tight, professional spacing – no more huge gaps */
 }
 
 .pin-item {
@@ -67,7 +67,7 @@
   cursor: pointer;
   background: #1a1a1a;
   break-inside: avoid;
-  margin-bottom: 36px;
+  margin-bottom: 20px; /* Tight vertical spacing */
   display: inline-block;
   width: 100%;
   transition: transform 0.3s ease;
@@ -111,8 +111,11 @@
   cursor: pointer;
 }
 
-/* Responsive fallback – drops to fewer columns only on smaller screens */
+/* Responsive – only drop columns on smaller screens */
 @media (max-width: 1600px) {
+  .gallery-centered-block {
+    max-width: 1200px; /* Adjusts for 4 columns if needed */
+  }
   .masonry-grid {
     column-count: 4;
   }
