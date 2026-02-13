@@ -1,12 +1,14 @@
-import './Gallery.css';
 import React from 'react';
 
-export default function ImageCard({ url, prompt, onAction, actionLabel = "Remix" }) {
+export default function ImageCard({ url, prompt, onAction, actionLabel }) {
   return (
-    <div className="pin-item" onClick={() => onAction(prompt)}>
-      <img src={url} alt="Artwork" loading="lazy" />
-      <div className="pin-overlay">
-        <button className="use-btn">{actionLabel}</button>
+    <div className="image-card" onClick={onAction}>
+      <img src={url} alt={prompt} loading="lazy" />
+      <div className="image-overlay">
+        <div className="overlay-content">
+          <p className="overlay-prompt">{prompt}</p>
+          {actionLabel && <button className="overlay-btn">{actionLabel}</button>}
+        </div>
       </div>
     </div>
   );
