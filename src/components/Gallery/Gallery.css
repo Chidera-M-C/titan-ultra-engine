@@ -2,22 +2,16 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-bottom: 8rem;
+  padding: 0 5rem 8rem 5rem; /* Symmetric large gutters – this creates perfect balanced centering in the main panel */
+  background: #101010;
 }
 
-/* New wrapper – centers the grid perfectly with balanced side space */
-.gallery-wrapper {
-  max-width: 1600px;
-  margin: 0 auto; /* Equal empty space left/right for professional centering */
-  padding: 0 2rem; /* Small inner gutters – adjust if you want tighter/looser */
-}
-
-/* Sticky tabs – full-width background, centered tab group */
+/* Sticky tabs – matches the padding for consistent alignment */
 .category-tabs {
   display: flex;
   gap: 32px;
-  justify-content: center; /* Perfectly centers the tabs */
-  padding: 1.5rem 2rem 1rem 2rem;
+  justify-content: center; /* Centers the tab group */
+  padding: 1.5rem 5rem 1rem 5rem; /* Matches scrollable-area padding */
   border-bottom: 1px solid #222;
   margin-bottom: 3rem;
   
@@ -26,7 +20,7 @@
   background: #101010;
   z-index: 20;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px); /* Premium grounded look */
+  backdrop-filter: blur(8px);
 }
 
 .tab {
@@ -53,12 +47,37 @@
   background: #fff;
 }
 
-/* True responsive masonry – large cards, natural varying aspect ratios */
+/* Masonry grid – exactly 5 columns on large screens, fills the padded area perfectly */
 .masonry-grid {
-  width: 100%;
-  columns: auto;
-  column-width: 280px; /* Base size – auto-creates ~5-6 columns on wide screens */
+  width: 100%; /* Fills the padded scrollable-area */
+  column-count: 5; /* Forces 5 columns */
   column-gap: 32px;
+}
+
+/* Responsive – reduce columns on smaller screens so cards stay large */
+@media (max-width: 1900px) {
+  .masonry-grid {
+    column-count: 4;
+  }
+}
+
+@media (max-width: 1500px) {
+  .masonry-grid {
+    column-count: 3;
+  }
+}
+
+@media (max-width: 1100px) {
+  .masonry-grid {
+    column-count: 2;
+  }
+}
+
+@media (max-width: 700px) {
+  .masonry-grid {
+    column-count: 1;
+    column-gap: 0;
+  }
 }
 
 .pin-item {
@@ -76,7 +95,7 @@
 
 .pin-item img {
   width: 100%;
-  height: auto; /* Preserves exact native aspect ratio – tall/wide/square all vary naturally */
+  height: auto; /* Native aspect ratios – varying heights for true masonry */
   display: block;
   transition: transform 0.4s ease;
 }
