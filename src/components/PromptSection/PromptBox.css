@@ -4,10 +4,10 @@
   background: #161616;
   border: 1px solid #252525;
   border-radius: 20px;
-  padding: 9px;               /* Reduced from 24px */
+  padding: 9px;
   display: flex;
   flex-direction: column;
-  gap: 5px;                   /* Reduced from 20px */
+  gap: 5px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.6);
 }
 
@@ -17,10 +17,10 @@
   border: none;
   outline: none;
   color: #ECECEC;
-  font-size: 1rem;             /* Reduced from 1.2rem */
+  font-size: 1rem;
   font-family: 'Courier New', Courier, monospace;
   resize: none;
-  padding: 6px 0;              /* Reduced from 8px 0 */
+  padding: 6px 0;
   line-height: 1.5;
 }
 
@@ -34,7 +34,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  gap: 8px;                   /* Reduced from 16px */
+  gap: 8px;
 }
 
 .left-tools {
@@ -47,8 +47,8 @@
   position: relative;
   background: #222;
   border: 1px solid #333;
-  height: 32px;                /* Reduced from 36px */
-  padding: 0 14px;             /* Reduced from 0 16px */
+  height: 32px;
+  padding: 0 14px;
   border-radius: 100px;
   display: flex;
   align-items: center;
@@ -85,11 +85,11 @@
   cursor: pointer;
 }
 
-/* FAB Generate Button – smaller and more compact */
+/* FAB Generate Button */
 .generate-fab {
-  width: 46px;                 /* Reduced from 56px */
-  height: 46px;                /* Reduced from 56px */
-  border-radius: 16px;         /* Keeps rounded square look */
+  width: 56px;                 /* Increased back to comfortable size */
+  height: 56px;
+  border-radius: 16px;
   background: #222;
   border: 1px solid #333;
   display: flex;
@@ -98,6 +98,7 @@
   color: #FFFFFF;
   transition: all 0.2s ease;
   cursor: pointer;
+  flex-shrink: 0;              /* Prevent button from shrinking */
 }
 
 .generate-fab:hover:not(:disabled) {
@@ -114,7 +115,7 @@
   cursor: not-allowed;
 }
 
-/* Smaller spinner to match button */
+/* Spinner */
 .spinner {
   width: 20px;
   height: 20px;
@@ -130,8 +131,13 @@
   }
 }
 
-/* Force Lucide SVG icon size */
-/* We remove the hardcoded size so the JSX 'size' prop takes control */
+/* FORCE the SVG icon size - this will override ANY other CSS */
 .generate-fab svg {
-  display: block; /* Just keeps it centered */
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+  max-width: 32px !important;
+  max-height: 32px !important;
+  display: block;
 }
