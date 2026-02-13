@@ -2,15 +2,22 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-bottom: 8rem; /* Extra bottom space for scrolling */
+  padding-bottom: 8rem;
 }
 
+/* New wrapper – centers the grid perfectly with balanced side space */
+.gallery-wrapper {
+  max-width: 1600px;
+  margin: 0 auto; /* Equal empty space left/right for professional centering */
+  padding: 0 2rem; /* Small inner gutters – adjust if you want tighter/looser */
+}
+
+/* Sticky tabs – full-width background, centered tab group */
 .category-tabs {
-  width: 100%;
   display: flex;
   gap: 32px;
-  justify-content: center; /* Centers the tabs perfectly */
-  padding: 1.5rem 0 1rem 0;
+  justify-content: center; /* Perfectly centers the tabs */
+  padding: 1.5rem 2rem 1rem 2rem;
   border-bottom: 1px solid #222;
   margin-bottom: 3rem;
   
@@ -19,7 +26,7 @@
   background: #101010;
   z-index: 20;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px); /* Premium grounded look */
 }
 
 .tab {
@@ -46,28 +53,30 @@
   background: #fff;
 }
 
+/* True responsive masonry – large cards, natural varying aspect ratios */
 .masonry-grid {
-  width: 100%; /* Fills the padded main panel */
-  column-count: 5; /* Exactly 5 columns */
-  column-gap: 32px; /* Good breathing room */
+  width: 100%;
+  columns: auto;
+  column-width: 280px; /* Base size – auto-creates ~5-6 columns on wide screens */
+  column-gap: 32px;
 }
 
 .pin-item {
-  width: 100%;
-  display: inline-block;
-  break-inside: avoid;
-  margin-bottom: 32px;
   position: relative;
   border-radius: 12px;
   overflow: hidden;
   cursor: pointer;
   background: #1a1a1a;
+  break-inside: avoid;
+  margin-bottom: 32px;
+  display: inline-block;
+  width: 100%;
   transition: transform 0.3s ease;
 }
 
 .pin-item img {
   width: 100%;
-  height: auto; /* Native aspect ratios preserved */
+  height: auto; /* Preserves exact native aspect ratio – tall/wide/square all vary naturally */
   display: block;
   transition: transform 0.4s ease;
 }
@@ -101,17 +110,4 @@
   font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
-}
-
-/* Responsive fallback – drops columns on smaller screens so cards stay large */
-@media (max-width: 1800px) {
-  .masonry-grid {
-    column-count: 4;
-  }
-}
-
-@media (max-width: 1400px) {
-  .masonry-grid {
-    column-count: 3;
-  }
 }
