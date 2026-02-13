@@ -1,29 +1,32 @@
-/* Container handles the scroll and centering alignment */
+/* Main scrollable container – symmetric side gutters for balanced, professional centering in the panel */
 .scrollable-area {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-bottom: 4rem;
+  padding: 2rem 4rem 8rem 4rem; /* Strong symmetric left/right padding creates even side space */
   display: flex;
   flex-direction: column;
-  align-items: center; /* Ensures inner max-width containers stay centered */
+  align-items: center; /* Keeps everything centered within the padded area */
+  background: #101010;
 }
 
-/* STICKY TABS: Now stays locked at the top */
+/* Sticky tabs – now spans the full padded width cleanly, feels integrated */
 .category-tabs {
   width: 100%;
-  max-width: 1400px; /* Reduced slightly to match typical screen flow */
-  margin: 0 auto;
+  max-width: 1400px; /* Consistent cap with grid for large screens */
+  margin: 0 auto 3rem auto; /* Centers it perfectly */
   display: flex;
   gap: 32px;
-  padding: 1.5rem 2rem 1rem 2rem;
+  justify-content: center; /* Centers the tab group horizontally */
+  padding: 1.5rem 0 1rem 0;
   border-bottom: 1px solid #222;
-  
+
   position: sticky;
   top: 0;
-  background: #101010; /* Solid background to prevent overlap bleed */
+  background: #101010;
   z-index: 20;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px); /* Premium grounded look when scrolling */
 }
 
 .tab {
@@ -33,40 +36,39 @@
   cursor: pointer;
   position: relative;
   white-space: nowrap;
+  padding: 8px 0;
 }
 
-.tab.active { color: #fff; }
+.tab.active { 
+  color: #fff; 
+}
 
 .tab.active::after {
   content: '';
   position: absolute;
-  bottom: -11px;
+  bottom: -14px;
   left: 0;
   right: 0;
   height: 2px;
   background: #fff;
 }
 
-/* src/components/Gallery/Gallery.css */
-
+/* Masonry grid – true responsive columns, natural aspect ratios, perfectly centered */
 .masonry-grid {
   width: 100%;
-  /* Increased max-width to ensure 5 columns fit comfortably at 250px-280px each */
-  max-width: 1600px; 
-  margin: 2rem auto 0 auto;
-  padding: 0 2rem;
+  max-width: 1400px; /* Matches tabs max-width for consistency */
+  margin: 0 auto; /* Centers within the padded scrollable-area */
   
-  /* THE FIX: Changed count to 5 and reduced min-width to 240px */
-  columns: 5 240px; 
-  column-gap: 20px;
+  columns: auto;
+  column-width: 280px; /* Responsive – auto-adjusts number of columns based on width */
+  column-gap: 32px;
 }
 
-/* Individual Card logic */
 .pin-item {
   width: 100%;
-  display: inline-block; /* Required for column masonry */
-  break-inside: avoid;   /* Prevents the card from splitting between columns */
-  margin-bottom: 20px;   /* Vertical gap between items */
+  display: inline-block;
+  break-inside: avoid;
+  margin-bottom: 32px; /* Clean vertical spacing */
   position: relative;
   border-radius: 12px;
   overflow: hidden;
@@ -77,7 +79,7 @@
 
 .pin-item img {
   width: 100%;
-  height: auto; /* RESPECTS NATURAL ASPECT RATIO */
+  height: auto; /* Fully respects each image's native aspect ratio – tall, wide, square all work perfectly */
   display: block;
   transition: transform 0.4s ease;
 }
@@ -94,10 +96,15 @@
   padding: 20px;
 }
 
-.pin-item:hover .pin-overlay { opacity: 1; }
-.pin-item:hover img { transform: scale(1.05); }
+.pin-item:hover .pin-overlay { 
+  opacity: 1; 
+}
 
-/* Standardize the button styling */
+.pin-item:hover img { 
+  transform: scale(1.05); 
+}
+
+/* Button styling */
 .use-btn {
   background: #fff;
   color: #000;
