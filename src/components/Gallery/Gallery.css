@@ -1,90 +1,108 @@
-/* --- MASTER SCROLL AREA --- */
-.scrollable-area { 
-  flex: 1; 
-  overflow-y: auto; 
-  /* Balanced padding: top, right, bottom, left */
-  padding: 0 2rem 4rem 2rem; 
-  scrollbar-gutter: stable; /* Prevents layout jump when scrollbar appears */
+/* This is the master container that handles the scrolling */
+.scrollable-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 8rem;
+  /* This ensures children with 'margin: 0 auto' actually center correctly */
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
 }
 
-/* --- STICKY CATEGORY TABS --- */
-.category-tabs { 
-  max-width: 1200px; 
-  margin: 0 auto 2.5rem auto; 
-  display: flex; 
-  gap: 24px; 
-  border-bottom: 1px solid #222; 
-  padding: 1.5rem 0 12px 0; 
+/* THE STICKY HEADER FIX */
+.category-tabs {
+  width: 100%;
+  max-width: 1400px;
+  /* Centering logic */
+  margin: 0 auto; 
   
-  /* The Sticky Fix */
+  display: flex;
+  gap: 32px;
+  padding: 1.5rem 40px 1rem 40px; /* Matched padding for grid alignment */
+  border-bottom: 1px solid #222;
+
+  /* Sticky magic */
   position: sticky;
   top: 0;
-  background: #101010; /* Match your app background exactly */
-  z-index: 100;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.4); /* Prevents "bleeding" look when scrolling */
+  background: #101010; 
+  z-index: 50; 
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
 }
 
-.tab { 
-  font-size: 0.9rem; 
-  font-weight: 600; 
-  color: #666; 
-  cursor: pointer; 
-  position: relative; 
+.tab {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  position: relative;
+  padding: 8px 0;
   white-space: nowrap;
 }
 
-.tab.active { color: #fff; } 
-.tab.active::after { 
-  content: ''; 
-  position: absolute; 
-  bottom: -13px; 
-  left: 0; 
-  right: 0; 
-  height: 2px; 
-  background: #fff; 
+.tab.active { color: #fff; }
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -11px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #fff;
 }
 
-/* --- TRUE MASONRY GRID --- */
-.masonry-grid { 
-  /* Switch from Grid to Columns for natural aspect ratios */
-  columns: 4 280px; 
-  column-gap: 20px;
+/* THE MASONRY GRID FIX */
+.masonry-grid {
   width: 100%;
-  max-width: 1600px; 
-  margin: 0 auto; 
+  max-width: 1400px;
+  margin: 2rem auto; /* Top margin to breathe, auto to center */
+  padding: 0 40px;   /* Gutter space on edges */
+  
+  /* Masonry via CSS Columns */
+  columns: 4 280px;  /* 4 columns or drop down to 280px wide */
+  column-gap: 24px;
 }
 
-.pin-item { 
-  /* Mandatory for Column layouts: prevents items from splitting between columns */
-  break-inside: avoid; 
+.pin-item {
+  /* This prevents the card from "splitting" between two columns */
+  break-inside: avoid;
   display: inline-block;
   width: 100%;
+  margin-bottom: 24px;
   
-  position: relative; 
-  border-radius: 12px; 
-  overflow: hidden; 
-  cursor: pointer; 
-  background: #1a1a1a; 
-  margin-bottom: 20px; /* Vertical gap between items */
+  background: #1a1a1a;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.3s ease;
 }
 
-.pin-item img { 
-  width: 100%; 
-  height: auto; /* This respects the natural height of every image */
-  display: block; 
-  transition: transform 0.4s; 
+.pin-item img {
+  width: 100%;
+  height: auto; /* RESPECTS NATURAL ASPECT RATIO */
+  display: block;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.pin-overlay { 
-  position: absolute; 
-  inset: 0; 
-  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 60%); 
-  opacity: 0; 
-  transition: 0.2s; 
-  display: flex; 
-  align-items: flex-end; 
-  padding: 20px; 
+.pin-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  display: flex;
+  align-items: flex-end;
+  padding: 20px;
 }
 
-.pin-item:hover .pin-overlay { opacity: 1; } 
+.pin-item:hover .pin-overlay { opacity: 1; }
 .pin-item:hover img { transform: scale(1.05); }
+
+/* Custom scrollbar to keep it sleek */
+.scrollable-area::-webkit-scrollbar { width: 8px; }
+.scrollable-area::-webkit-scrollbar-track { background: transparent; }
+.scrollable-area::-webkit-scrollbar-thumb { 
+  background: #222; 
+  border-radius: 10px; 
+}
