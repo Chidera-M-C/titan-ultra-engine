@@ -87,8 +87,8 @@
 
 /* FAB Generate Button */
 .generate-fab {
-  width: 56px;                 /* Increased back to comfortable size */
-  height: 56px;
+  width: 48px;                 /* Increased back to comfortable size */
+  height: 48px;
   border-radius: 16px;
   background: #222;
   border: 1px solid #333;
