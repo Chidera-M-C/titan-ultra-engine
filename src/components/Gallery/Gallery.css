@@ -1,16 +1,9 @@
-.scrollable-area {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding-bottom: 8rem;
-}
-
-/* Sticky tabs – centered group, full-width background */
+/* Sticky tabs – matches the scrollable-area padding for alignment */
 .category-tabs {
   display: flex;
   gap: 32px;
   justify-content: center;
-  padding: 1.5rem 2rem 1rem 2rem;
+  padding: 1.5rem 4rem 1rem 4rem; /* Matches scrollable-area side padding */
   border-bottom: 1px solid #222;
   margin-bottom: 3rem;
   
@@ -46,18 +39,11 @@
   background: #fff;
 }
 
-/* Centered block – tuned for 5 large columns with tight gaps */
-.gallery-centered-block {
-  max-width: 1480px; /* Optimized for 5 columns ~280px each + 20px gaps * 4 = ~1480px total */
-  margin: 0 auto; /* Perfect symmetric centering – equal side space */
-  padding: 0 20px; /* Small inner gutters to prevent edge touch */
-}
-
-/* Forced 5 columns, tight gaps, large cards */
+/* Masonry grid – forced 5 large columns, tight professional gaps, fills padded area */
 .masonry-grid {
-  width: 100%;
-  column-count: 5;
-  column-gap: 20px; /* Tight, professional spacing – no more huge gaps */
+  width: 100%; /* Fills the padded scrollable-area perfectly */
+  column-count: 5; /* Exactly 5 columns */
+  column-gap: 20px; /* Tight, clean spacing */
 }
 
 .pin-item {
@@ -75,7 +61,7 @@
 
 .pin-item img {
   width: 100%;
-  height: auto;
+  height: auto; /* Native aspect ratios – varying heights for dynamic look */
   display: block;
   transition: transform 0.4s ease;
 }
@@ -109,14 +95,4 @@
   font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
-}
-
-/* Responsive – only drop columns on smaller screens */
-@media (max-width: 1600px) {
-  .gallery-centered-block {
-    max-width: 1200px; /* Adjusts for 4 columns if needed */
-  }
-  .masonry-grid {
-    column-count: 4;
-  }
 }
