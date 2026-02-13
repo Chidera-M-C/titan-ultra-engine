@@ -1,7 +1,6 @@
+import './Gallery.css';
 import React from 'react';
 import ImageCard from './ImageCard';
-import './Gallery.css';
-
 export default function MasonryGrid({ images, onImageClick, actionLabel }) {
   return (
     <div className="masonry-grid">
@@ -10,7 +9,7 @@ export default function MasonryGrid({ images, onImageClick, actionLabel }) {
           key={img.id}
           url={img.url}
           prompt={img.prompt}
-          onAction={() => onImageClick(img)}
+          onAction={onImageClick}
           actionLabel={actionLabel}
         />
       ))}
