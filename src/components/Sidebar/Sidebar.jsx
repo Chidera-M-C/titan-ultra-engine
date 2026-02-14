@@ -1,5 +1,5 @@
-import React from 'react';
-import { Compass, User, History, Sparkles, MoreHorizontal } from 'lucide-react';
+import React, { useState } from 'react';
+import { Compass, User, History, Sparkles, MoreHorizontal, Settings, HelpCircle, LogOut } from 'lucide-react';
 import NavItem from './NavItem';
 import CreditsCard from './CreditsCard';
 import { useAuth } from '../../context/AuthContext';
@@ -7,10 +7,26 @@ import './Sidebar.css';
 
 export default function Sidebar({ activeTab, onNavigate }) {
   const { user, loginWithGoogle, logout } = useAuth();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const getHandle = (email) => {
     if (!email) return '@user';
     return `@${email.split('@')[0]}`;
+  };
+
+  const handleLogout = () => {
+    logout();
+    setIsDropdownOpen(false);
+  };
+
+  const handleSettings = () => {
+    // Add navigation or open settings modal here
+    setIsDropdownOpen(false);
+  };
+
+  const handleSupport = () => {
+    // Add navigation or open support here
+    setIsDropdownOpen(false);
   };
 
   return (
@@ -56,14 +72,37 @@ export default function Sidebar({ activeTab, onNavigate }) {
         
         {user ? (
           <div className="user-profile">
-            <div className="avatar">{user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}</div>
-            <div className="user-details">
-              <span className="name">{user.displayName || 'User'}</span>
-              <span className="handle">{getHandle(user.email)}</span>
+            <div className="user-info">
+              <div className="avatar">{user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}</div>
+              <div className="user-details">
+                <span className="name">{user.displayName || 'User'}</span>
+                <span className="handle">{getHandle(user.email)}</span>
+              </div>
             </div>
-            <button onClick={logout} className="more-icon" title="Logout">
-              <MoreHorizontal size={16} />
+            <button 
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)} 
+              className="more-icon-btn" 
+              title="More options"
+            >
+              <MoreHorizontal size={18} />
             </button>
+
+            {isDropdownOpen && (
+              <div className="profile-dropdown">
+                <button onClick={handleSettings} className="dropdown-item">
+                  <Settings size={18} />
+                  <span>Settings</span>
+                </button>
+                <button onClick={handleSupport} className="dropdown-item">
+                  <HelpCircle size={18} />
+                  <span>Support</span>
+                </button>
+                <button onClick={handleLogout} className="dropdown-item logout-item">
+                  <LogOut size={18} />
+                  <span>Log out</span>
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <button onClick={loginWithGoogle} className="google-login-btn">
