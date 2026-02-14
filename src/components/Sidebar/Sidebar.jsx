@@ -9,7 +9,6 @@ import './SidebarExtras.css';
 export default function Sidebar({ activeTab, onNavigate }) {
   const { user, loginWithGoogle, logout } = useAuth();
 
-  // Derive handle from email (e.g., "john.doe@gmail.com" -> "@johndoe")
   const getHandle = (email) => {
     if (!email) return '@user';
     const localPart = email.split('@')[0];
@@ -54,24 +53,18 @@ export default function Sidebar({ activeTab, onNavigate }) {
         </nav>
       </div>
 
-      <div className="sidebar-footer">
+      <div className="sidebar-bottom">
         {user ? (
           <>
             <CreditsCard />
             <div className="user-profile">
-              <div className="user-info">
-                <div className="avatar">{user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}</div>
-                <div className="details">
-                  <span className="name">{user.displayName || user.email || 'User'}</span>
-                  <span className="handle">{getHandle(user.email)}</span>
-                </div>
+              <div className="avatar">{user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}</div>
+              <div className="user-details">
+                <span className="name">{user.displayName || 'User'}</span>
+                <span className="handle">{getHandle(user.email)}</span>
               </div>
-              <button 
-                onClick={logout} 
-                className="more-icon-btn" 
-                title="More options"
-              >
-                <MoreHorizontal size={18} />
+              <button onClick={logout} className="more-icon" title="Logout">
+                <MoreHorizontal size={16} />
               </button>
             </div>
           </>
