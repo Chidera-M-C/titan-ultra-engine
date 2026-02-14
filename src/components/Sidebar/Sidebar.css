@@ -147,7 +147,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 40px; /* Fixed height for perfect alignment */
+  height: 40px; /* Fixed height for exact alignment */
 }
 
 .user-info {
@@ -155,7 +155,7 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
-  height: 100%; /* Full height */
+  height: 100%; /* Full height alignment */
 }
 
 .avatar {
@@ -173,12 +173,13 @@
 }
 
 .user-name {
-  font-size: 0.85rem;
+   font-size: 0.85rem;
   font-weight: 500;
   color: #eee;
+  line-height: 1; /* Tight line-height for perfect centering */
 }
 
-/* More icon button – tight hover, perfect alignment */
+/* More icon button – exact alignment with profile row */
 .more-icon-btn {
   background: transparent;
   border: none;
@@ -186,7 +187,7 @@
   cursor: pointer;
   padding: 0;
   width: 40px;
-  height: 40px; /* Matches profile row height */
+  height: 40px; /* Matches .user-profile height */
   display: flex;
   align-items: center;
   justify-content: center;
