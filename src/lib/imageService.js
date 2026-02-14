@@ -1,9 +1,8 @@
-import { storage, tables, ID } from './appwrite';
+import { storage, db, ID } from './appwrite';
 
 export const saveAiImage = async (userId, base64String, prompt) => {
   try {
-    // 1. Clean the base64 string and convert to a Blob
-    // Remove the "data:image/png;base64," prefix if it exists
+    // 1. Convert Base64 string to a Blob
     const base64Data = base64String.replace(/^data:image\/\w+;base64,/, "");
     const byteCharacters = atob(base64Data);
     const byteNumbers = new Array(byteCharacters.length);
@@ -13,25 +12,25 @@ export const saveAiImage = async (userId, base64String, prompt) => {
     const byteArray = new Uint8Array(byteNumbers);
     const blob = new Blob([byteArray], { type: 'image/png' });
 
-    // 2. Upload to Appwrite Storage
+    // 2. Upload to Appwrite Storage Bucket
     const file = new File([blob], `gen_${Date.now()}.png`, { type: 'image/png' });
     const uploadedFile = await storage.createFile('generated_images', ID.unique(), file);
 
-    // 3. Get the permanent URL
+    // 3. Get the direct file URL
     const fileUrl = storage.getFileView('generated_images', uploadedFile.$id);
 
-    // 4. Save to your Table (The 2026 TablesDB way)
-    await tables.createRow({
-      databaseId: 'main_db',
-      tableId: 'images',
-      rowId: ID.unique(),
-      data: {
+    // 4. Save metadata to your Table (using universal 'createDocument')
+    await db.createDocument(
+      'main_db',     // Your Database ID
+      'images',      // Your Table ID
+      ID.unique(),   // Unique Document/Row ID
+      {
         userId: userId,
         imageUrl: fileUrl.href,
         prompt: prompt,
         category: 'Explore'
       }
-    });
+    );
 
     return true;
   } catch (error) {
