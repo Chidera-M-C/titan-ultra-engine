@@ -2,7 +2,7 @@ import React from 'react';
 import { Compass, User, History, Sparkles, LogOut } from 'lucide-react';
 import NavItem from './NavItem';
 import CreditsCard from './CreditsCard';
-import { useAuth } from '../context/AuthContext'; // Import the hook
+import { useAuth } from '../../context/AuthContext'; // Import the hook
 import './Sidebar.css';
 import './SidebarExtras.css';
 
