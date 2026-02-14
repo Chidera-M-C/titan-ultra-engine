@@ -176,14 +176,14 @@
   color: #eee;
 }
 
-/* More icon button */
+/* More icon button – tighter hover area */
 .more-icon-btn {
   background: transparent;
   border: none;
   color: #666;
   cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
+  padding: 4px;              /* Reduced from 8px – hover area now tight around the three dots */
+  border-radius: 4px;        /* Reduced for smaller, tighter hover shape */
   transition: 0.2s;
 }
 
