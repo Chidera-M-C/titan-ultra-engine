@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import './App.css';
 
+// --- APPWRITE & AUTH ---
+import { useAuth } from './context/AuthContext.js'; // Assuming you have an AuthContext
+import { saveAiImage } from './lib/imageService.js'; 
+
 // --- COMPONENTS ---
 import Sidebar from './components/Sidebar/Sidebar';
 import PromptBox from './components/PromptSection/PromptBox';
@@ -13,9 +17,11 @@ import MyImagesView from './views/MyImagesView';
 import StyleView from './views/StyleView';
 
 export default function App() {
+  const { user } = useAuth(); // Get the logged-in user
+  
   // --- GLOBAL STATE ---
   const [activeTab, setActiveTab] = useState('explore');
-  const [viewState, setViewState] = useState('gallery'); // gallery, result, or empty
+  const [viewState, setViewState] = useState('gallery'); 
   
   const [prompt, setPrompt] = useState('');
   const [aspectRatio, setAspectRatio] = useState('2:3');
@@ -25,7 +31,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // --- CORE RUNPOD LOGIC ---
+  // --- CORE GENERATION & STORAGE LOGIC ---
   const generateImage = async () => {
     if (!prompt || loading) return;
 
@@ -35,6 +41,7 @@ export default function App() {
     setImage(null);
     
     try {
+      // 1. Fetch from your Vercel API
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,11 +51,24 @@ export default function App() {
       if (!response.ok) throw new Error(`Server Error: ${response.statusText}`);
       const data = await response.json();
 
+      // 2. Check RunPod Response
       if (data.status === 'COMPLETED' && data.output?.image) {
-        const newImg = data.output.image;
-        setImage(newImg);
-        // Add to history
-        setUserGallery(prev => [{ id: Date.now(), url: newImg, prompt }, ...prev]);
+        const base64Image = data.output.image; // This is the string
+        setImage(base64Image);
+
+        // 3. PERSISTENCE: Save to Appwrite Storage & Table
+        if (user) {
+          try {
+            await saveAiImage(user.$id, base64Image, prompt);
+            console.log("Saved to Appwrite successfully!");
+          } catch (saveErr) {
+            console.error("Database save failed, but image generated:", saveErr);
+          }
+        }
+
+        // 4. Update local UI gallery
+        setUserGallery(prev => [{ id: Date.now(), url: base64Image, prompt }, ...prev]);
+        
       } else {
         throw new Error(data.error || "GPU Generation failed. Please try again.");
       }
@@ -60,17 +80,16 @@ export default function App() {
     }
   };
 
+  // ... (rest of your handlers and renderActiveView stay exactly the same)
+  
   // --- HANDLERS ---
   const handleNavigation = (tab) => {
     setActiveTab(tab);
-    
-    // Logic to decide initial view state for each tab
     if (tab === 'explore') {
       setViewState('gallery');
     } else if (tab === 'gallery') {
       setViewState(userGallery.length > 0 ? 'gallery' : 'empty');
     } else {
-      // Character and Style default to empty/dev state for now
       setViewState('empty');
     }
   };
@@ -80,9 +99,7 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // --- DYNAMIC VIEW ENGINE ---
   const renderActiveView = () => {
-    // If the viewState is 'empty', show a generic empty state for any tab
     if (viewState === 'empty') {
       return (
         <div className="empty-state">
@@ -92,7 +109,6 @@ export default function App() {
       );
     }
 
-    // Switch between the specific View files
     switch (activeTab) {
       case 'explore':
         return <ExploreView onSelectPrompt={handleSelectPrompt} />;
@@ -110,15 +126,10 @@ export default function App() {
   return (
     <div className="master-wrapper">
       <div className="app-shell">
-        
-        {/* Sidebar Component */}
         <Sidebar activeTab={activeTab} onNavigate={handleNavigation} />
-
         <main className="main-content">
           <header className="top-header">
             <h1 className="aesthetic-title">What will you create?</h1>
-            
-            {/* Prompt Section Component */}
             <PromptBox 
               prompt={prompt}
               setPrompt={setPrompt}
@@ -128,12 +139,8 @@ export default function App() {
               loading={loading}
             />
           </header>
-
           <div className="scrollable-area">
-            {/* Dynamically Rendered Page Content */}
             {renderActiveView()}
-
-            {/* Modal Layer */}
             {viewState === 'result' && (
               <ResultModal 
                 image={image} 
