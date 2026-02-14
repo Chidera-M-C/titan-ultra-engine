@@ -54,7 +54,7 @@
   gap: 14px;
   padding: 12px 14px;
   border-radius: 8px;
-  cursor: pointer;
+  cursor:199 pointer;
   font-size: 0.95rem;
   font-weight: 500;
   transition: 0.2s;
@@ -176,14 +176,19 @@
   color: #eee;
 }
 
-/* More icon button – tighter hover area */
+/* More icon button – fixed size, tight hover area exactly around the icon */
 .more-icon-btn {
   background: transparent;
   border: none;
   color: #666;
   cursor: pointer;
-  padding: 4px;              /* Reduced from 8px – hover area now tight around the three dots */
-  border-radius: 4px;        /* Reduced for smaller, tighter hover shape */
+  padding: 0;                    /* No padding – hover area controlled by fixed size */
+  width: 32px;                   /* Fixed small square – matches avatar size */
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;            /* Rounded square hover shape */
   transition: 0.2s;
 }
 
