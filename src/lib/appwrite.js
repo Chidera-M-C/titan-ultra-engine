@@ -7,8 +7,7 @@ const client = new Client()
 export const account = new Account(client);
 export const storage = new Storage(client);
 
-// USE THIS: 'Databases' is exported in all versions. 
-// It works perfectly with the new "Tables" UI.
+// Use 'Databases' - it's compatible with your "Tables" UI
 export const db = new Databases(client); 
 
 export { client, ID, Query } from 'appwrite';
