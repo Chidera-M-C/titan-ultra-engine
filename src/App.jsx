@@ -31,28 +31,29 @@ export default function App() {
   const [error, setError] = useState(null);
 
   // --- 1. PERSISTENCE LOGIC: Load images from Appwrite on startup ---
+  const loadGallery = async () => {
+    if (!user) {
+      setUserGallery([]);
+      return;
+    }
+    try {
+      const response = await db.listDocuments(
+        'main_db',
+        'images',
+        [Query.equal('userId', user.$id), Query.orderDesc('$createdAt')]
+      );
+      const fetchedImages = response.documents.map(doc => ({
+        id: doc.$id,
+        url: doc.imageUrl,
+        prompt: doc.prompt
+      }));
+      setUserGallery(fetchedImages);
+    } catch (err) {
+      console.error("Failed to fetch gallery history:", err);
+    }
+  };
+
   useEffect(() => {
-    const loadGallery = async () => {
-      if (!user) {
-        setUserGallery([]);
-        return;
-      }
-      try {
-        const response = await db.listDocuments(
-          'main_db',
-          'images',
-          [Query.equal('userId', user.$id), Query.orderDesc('$createdAt')]
-        );
-        const fetchedImages = response.documents.map(doc => ({
-          id: doc.$id,
-          url: doc.imageUrl,
-          prompt: doc.prompt
-        }));
-        setUserGallery(fetchedImages);
-      } catch (err) {
-        console.error("Failed to fetch gallery history:", err);
-      }
-    };
     loadGallery();
   }, [user]);
 
@@ -81,15 +82,18 @@ export default function App() {
             // Save and get the proper persistent Appwrite view URL back
             const savedUrl = await saveAiImage(user.$id, base64Image, prompt);
             
-            // Add to gallery using the real Appwrite view URL (consistent with fetched ones)
+            // Add immediately to gallery (temporary ID)
             setUserGallery(prev => [{
-              id: Date.now(), // temporary ID until reload
+              id: Date.now(), // temporary until reload
               url: savedUrl,
               prompt
             }, ...prev]);
+
+            // Refresh from DB to get real document IDs and ensure sync
+            await loadGallery();
           } catch (saveErr) {
             console.error("Database save failed:", saveErr);
-            setError("Image generated successfully, but failed to save permanently. It won't appear in your gallery after refresh.");
+            setError("Image generated successfully, but failed to save permanently. Check console for Appwrite error details. It won't persist after refresh.");
           }
         }
        
@@ -107,10 +111,8 @@ export default function App() {
   // --- HANDLERS ---
   const handleNavigation = (tab) => {
     setActiveTab(tab);
-    if (tab === 'explore') {
+    if (tab === 'explore' || tab === 'gallery') {
       setViewState('gallery');
-    } else if (tab === 'gallery') {
-      setViewState(userGallery.length > 0 ? 'gallery' : 'empty');
     } else {
       setViewState('empty');
     }
@@ -125,7 +127,7 @@ export default function App() {
     if (viewState === 'empty') {
       return (
         <div className="empty-state">
-           <h2>{activeTab.charAt(0).toUpperCase() + activeKey.slice(1)} coming soon</h2>
+           <h2>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} coming soon</h2>
            <p>We're polishing this feature for you!</p>
         </div>
       );
