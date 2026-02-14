@@ -1,10 +1,13 @@
 // src/lib/imageService.js
 import { storage, db, ID } from './appwrite.js';
-import { Permission, Role } from 'appwrite';
+// Removed Permission/Role import - we use raw strings for max compatibility
 
 export const saveAiImage = async (userId, base64String, prompt) => {
   try {
+    // 1. Clean the Base64 string
     const base64Data = base64String.replace(/^data:image\/\w+;base64,/, "");
+   
+    // 2. Convert Base64 to a File Object
     const byteCharacters = atob(base64Data);
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
@@ -14,18 +17,19 @@ export const saveAiImage = async (userId, base64String, prompt) => {
     const blob = new Blob([byteArray], { type: 'image/png' });
     const file = new File([blob], `gen-${Date.now()}.png`, { type: 'image/png' });
 
+    // 3. UPLOAD to Storage Bucket - public read, no owner-specific perms (storage doesn't support "owner")
     const uploadedFile = await storage.createFile(
       'generated_images',
       ID.unique(),
       file,
-      [
-        Permission.read(Role.any()),     // Public view (simplest & most reliable)
-        Permission.delete(Role.owner())  // Only owner can delete
-      ]
+      ['read("any")']  // Makes the image publicly viewable (simplest & most reliable)
+      // You can add delete perms later if needed, e.g. via a server function
     );
 
+    // 4. GENERATE the View URL
     const fileUrl = storage.getFileView('generated_images', uploadedFile.$id);
 
+    // 5. SAVE Metadata to Database - owner-only permissions (databases DO support "owner")
     await db.createDocument(
       'main_db',
       'images',
@@ -37,12 +41,13 @@ export const saveAiImage = async (userId, base64String, prompt) => {
         category: 'Explore'
       },
       [
-        Permission.read(Role.owner()),
-        Permission.update(Role.owner()),
-        Permission.delete(Role.owner())
+        'read("owner")',
+        'update("owner")',
+        'delete("owner")'
       ]
     );
 
+    // Return the proper view URL
     return fileUrl.toString();
   } catch (error) {
     console.error("Appwrite save failed:", error);
