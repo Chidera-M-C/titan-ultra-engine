@@ -1,4 +1,4 @@
-import { saveAiImage } from '../lib/imageService.js'; // We'll create this next
+import { saveAiImage } from '../src/lib/imageService.js'; // We'll create this next
 import { useAuth } from '../context/AuthContext';
 
 const handleGenerate = async () => {
