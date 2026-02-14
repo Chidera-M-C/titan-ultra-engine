@@ -1,6 +1,5 @@
 // src/lib/imageService.js
 import { storage, db, ID } from './appwrite.js';
-// Removed Permission/Role import - we use raw strings for max compatibility
 
 export const saveAiImage = async (userId, base64String, prompt) => {
   try {
@@ -17,19 +16,21 @@ export const saveAiImage = async (userId, base64String, prompt) => {
     const blob = new Blob([byteArray], { type: 'image/png' });
     const file = new File([blob], `gen-${Date.now()}.png`, { type: 'image/png' });
 
-    // 3. UPLOAD to Storage Bucket - public read, no owner-specific perms (storage doesn't support "owner")
+    // 3. UPLOAD to Storage Bucket - public read
     const uploadedFile = await storage.createFile(
       'generated_images',
       ID.unique(),
       file,
-      ['read("any")']  // Makes the image publicly viewable (simplest & most reliable)
-      // You can add delete perms later if needed, e.g. via a server function
+      [
+        'read("any")',        // Public viewable (anyone with the URL can see it - safe for generated images)
+        'delete("user:' + userId + '")'  // Optional: only the owner can delete the file
+      ]
     );
 
     // 4. GENERATE the View URL
     const fileUrl = storage.getFileView('generated_images', uploadedFile.$id);
 
-    // 5. SAVE Metadata to Database - owner-only permissions (databases DO support "owner")
+    // 5. SAVE Metadata to Database - owner-only access using specific user ID
     await db.createDocument(
       'main_db',
       'images',
@@ -41,9 +42,9 @@ export const saveAiImage = async (userId, base64String, prompt) => {
         category: 'Explore'
       },
       [
-        'read("owner")',
-        'update("owner")',
-        'delete("owner")'
+        'read("user:' + userId + '")',
+        'update("user:' + userId + '")',
+        'delete("user:' + userId + '")'
       ]
     );
 
