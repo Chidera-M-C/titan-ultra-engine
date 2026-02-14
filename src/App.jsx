@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Added useEffect
 import './App.css';
 
 // --- APPWRITE & AUTH ---
-import { useAuth } from './context/AuthContext'; // Assuming you have an AuthContext
+import { useAuth } from './context/AuthContext'; 
 import { saveAiImage } from './lib/imageService.js'; 
+import { db } from './lib/appwrite.js'; // Need this to fetch
+import { Query } from 'appwrite';     // Need this for filtering
 
 // --- COMPONENTS ---
 import Sidebar from './components/Sidebar/Sidebar';
@@ -17,7 +19,7 @@ import MyImagesView from './views/MyImagesView';
 import StyleView from './views/StyleView';
 
 export default function App() {
-  const { user } = useAuth(); // Get the logged-in user
+  const { user } = useAuth(); 
   
   // --- GLOBAL STATE ---
   const [activeTab, setActiveTab] = useState('explore');
@@ -31,7 +33,37 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // --- CORE GENERATION & STORAGE LOGIC ---
+  // --- 1. PERSISTENCE LOGIC: Load images from Appwrite on startup ---
+  useEffect(() => {
+    const loadGallery = async () => {
+      if (!user) {
+        setUserGallery([]); // Clear gallery if logged out
+        return;
+      }
+
+      try {
+        const response = await db.listDocuments(
+          'main_db', 
+          'images', 
+          [Query.equal('userId', user.$id), Query.orderDesc('$createdAt')]
+        );
+
+        const fetchedImages = response.documents.map(doc => ({
+          id: doc.$id,
+          url: doc.imageUrl,
+          prompt: doc.prompt
+        }));
+
+        setUserGallery(fetchedImages);
+      } catch (err) {
+        console.error("Failed to fetch gallery history:", err);
+      }
+    };
+
+    loadGallery();
+  }, [user]); // Re-runs whenever the user logs in or out
+
+  // --- 2. CORE GENERATION & STORAGE LOGIC ---
   const generateImage = async () => {
     if (!prompt || loading) return;
 
@@ -41,7 +73,6 @@ export default function App() {
     setImage(null);
     
     try {
-      // 1. Fetch from your Vercel API
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -51,26 +82,24 @@ export default function App() {
       if (!response.ok) throw new Error(`Server Error: ${response.statusText}`);
       const data = await response.json();
 
-      // 2. Check RunPod Response
       if (data.status === 'COMPLETED' && data.output?.image) {
-        const base64Image = data.output.image; // This is the string
+        const base64Image = data.output.image;
         setImage(base64Image);
 
-        // 3. PERSISTENCE: Save to Appwrite Storage & Table
         if (user) {
           try {
+            // This now calls the fixed imageService that handles storage + db
             await saveAiImage(user.$id, base64Image, prompt);
-            console.log("Saved to Appwrite successfully!");
+            
+            // Optional: Re-fetch or manually add to top of gallery so it shows up
+            setUserGallery(prev => [{ id: Date.now(), url: base64Image, prompt }, ...prev]);
           } catch (saveErr) {
-            console.error("Database save failed, but image generated:", saveErr);
+            console.error("Database save failed:", saveErr);
           }
         }
-
-        // 4. Update local UI gallery
-        setUserGallery(prev => [{ id: Date.now(), url: base64Image, prompt }, ...prev]);
         
       } else {
-        throw new Error(data.error || "GPU Generation failed. Please try again.");
+        throw new Error(data.error || "GPU Generation failed.");
       }
     } catch (err) {
       console.error("RunPod Error:", err);
@@ -80,8 +109,6 @@ export default function App() {
     }
   };
 
-  // ... (rest of your handlers and renderActiveView stay exactly the same)
-  
   // --- HANDLERS ---
   const handleNavigation = (tab) => {
     setActiveTab(tab);
@@ -115,6 +142,7 @@ export default function App() {
       case 'character':
         return <CharacterView />;
       case 'gallery':
+        // Now using the persistent userGallery state!
         return <MyImagesView images={userGallery} onSelectPrompt={handleSelectPrompt} />;
       case 'style':
         return <StyleView />;
