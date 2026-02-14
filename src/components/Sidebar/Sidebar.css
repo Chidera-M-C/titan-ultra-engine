@@ -72,25 +72,12 @@
 
 .side-nav button:hover {
   background: #1a1a1a;
-  color: #fff;
 }
 
 .side-nav button.active {
   background: #1a1a1a;
   color: #fff;
-  position: relative;
-}
-
-.side-nav button.active::after {
-  content: '';
-  position: absolute;
-  bottom: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
-  height: 2px;
-  background: #fff;
-  border-radius: 1px;
+  /* Removed the white dash underline completely */
 }
 
 /* Sidebar bottom container */
@@ -101,7 +88,7 @@
   background: var(--bg-sidebar);
 }
 
-/* Keep your existing bottom profile styles (user-profile, avatar, user-details, more-icon, etc.) – they remain unchanged */
+/* Bottom profile – unchanged from your old great version */
 .user-profile {
   display: flex;
   align-items: center;
@@ -157,4 +144,22 @@
 
 .more-icon:hover {
   color: #fff;
+}
+
+/* Google login button when logged out */
+.google-login-btn {
+  width: 100%;
+  background: #333;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.google-login-btn:hover {
+  background: #444;
 }
