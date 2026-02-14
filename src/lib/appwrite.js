@@ -1,14 +1,18 @@
-import { Client, Account } from 'appwrite';
+import { Client, Account, TablesDB, Storage } from 'appwrite';
 
-// Initialize the SDK
 const client = new Client();
 
 client
-    .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT) // Your API Endpoint
-    .setProject(import.meta.env.VITE_APPWRITE_PROJECT_ID); // Your Project ID
+    .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT) 
+    .setProject(import.meta.env.VITE_APPWRITE_PROJECT_ID);
 
-// Export the 'account' service so we can call login/logout/session methods
+// 1. Account Service (You already have this)
 export const account = new Account(client);
 
-// If you plan on saving images or user prompts later, you'd export 'databases' or 'storage' here too.
-export { client };
+// 2. TablesDB Service (The new way to handle your "Tables" and "Rows")
+export const tables = new TablesDB(client);
+
+// 3. Storage Service (To upload the actual image files)
+export const storage = new Storage(client);
+
+export { client, ID, Query } from 'appwrite';
