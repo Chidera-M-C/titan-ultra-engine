@@ -20,18 +20,18 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  min-width: 0; /* Important for text truncation */
+  min-width: 0; /* Enables truncation */
 }
 
 .avatar {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   background: #222;
   border: 1px solid #333;
   border-radius: 8px;
   display: grid;
   place-items: center;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #fff;
   flex-shrink: 0;
@@ -40,37 +40,56 @@
 .details {
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  min-width: 0; /* Enables truncation inside */
 }
 
 .name {
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: #eee;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.email {
-  font-size: 0.75rem;
-  color: #666;
+.handle {
+  font-size: 0.8rem;
+  color: #888;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.logout-icon-btn {
+/* More icon button – neutral gray, matches screenshot */
+.more-icon-btn {
   background: transparent;
   border: none;
-  color: #444;
+  color: #666;
   cursor: pointer;
   padding: 8px;
   border-radius: 6px;
   transition: 0.2s;
 }
 
-.logout-icon-btn:hover {
-  background: rgba(255, 77, 77, 0.1);
-  color: #ff4d4d;
+.more-icon-btn:hover {
+  background: #1a1a1a;
+  color: #fff;
+}
+
+/* Google login button (for logged out state) */
+.google-login-btn {
+  width: 100%;
+  background: #333;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.google-login-btn:hover {
+  background: #444;
 }
