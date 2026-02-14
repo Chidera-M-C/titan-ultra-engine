@@ -152,10 +152,10 @@
 
 .user-info {
   display: flex;
-  align-items: center;
+  align-items: center;   /* Already there – ensure it's present */
   gap: 10px;
   min-width: 0;
-  height: 100%; /* Full height alignment */
+  height: 32px;          /* Force exact height to match avatar */
 }
 
 .avatar {
@@ -173,10 +173,12 @@
 }
 
 .user-name {
-   font-size: 0.85rem;
+  font-size: 0.85rem;
   font-weight: 500;
   color: #eee;
-  line-height: 1; /* Tight line-height for perfect centering */
+  line-height: 32px;     /* Match avatar height exactly – centers text vertically */
+  margin: 0;             /* Remove any default margin */
+  padding: 0;            /* Remove any padding */
 }
 
 /* More icon button – exact alignment with profile row */
