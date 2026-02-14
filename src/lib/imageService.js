@@ -1,5 +1,6 @@
 // src/lib/imageService.js
-import { storage, db, ID, Permission, Role } from './appwrite.js'; // Add Permission, Role
+import { storage, db, ID } from './appwrite.js';
+import { Permission, Role } from 'appwrite'; // Import Permission & Role directly from the SDK
 
 export const saveAiImage = async (userId, base64String, prompt) => {
   try {
