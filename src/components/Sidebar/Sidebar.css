@@ -30,7 +30,7 @@
 }
 
 .brand-logo {
-  width:  mitosis 28px;
+  width: 28px;
   height: 28px;
   background: #fff;
   color: #000;
@@ -141,51 +141,42 @@
   background: #2563eb;
 }
 
-/* User profile row – clickable for dropdown */
+/* User profile – tight, initial + "User" only */
 .user-profile {
-  position: relative; /* For dropdown positioning */
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
 .avatar {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   background: #222;
   border: 1px solid #333;
   border-radius: 8px;
   display: grid;
   place-items: center;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #fff;
   flex-shrink: 0;
 }
 
-.user-details {
-  flex: 1;
-  margin-left: 12px;
-  min-width: 0;
-}
-
-.name {
-  font-size: 0.9rem;
-  font-weight: 600;
+.user-name {
+  font-size: 0.85rem;
+  font-weight: 500;
   color: #eee;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.handle {
-  font-size: 0.8rem;
-  color: #888;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
+/* More icon button */
 .more-icon-btn {
   background: transparent;
   border: none;
@@ -201,7 +192,7 @@
   color: #fff;
 }
 
-/* Profile dropdown – professional card, opens above profile row */
+/* Profile dropdown – professional card */
 .profile-dropdown {
   position: absolute;
   left: 0;
@@ -251,284 +242,6 @@
 
 .logout-item svg {
   color: #ff4d4d;
-}
-
-/* Google login button when logged out */
-.google-login-btn {
-  width: 100%;
-  background: #333;
-  color: #fff;
-  border: none;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.google-login-btn:hover {
-  background: #444;
-}.sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 260px;
-  height: 100vh;
-  background: var(--bg-sidebar);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  z-index: 50;
-  overflow: hidden;
-}
-
-/* Scrollable top area for nav items */
-.sidebar-top {
-  flex-grow: 1;
-  overflow-y: auto;
-}
-.sidebar-top::-webkit-scrollbar { display: none; }
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 700;
-  font-size: 1.2rem;
-  padding: 1.5rem 1.25rem;
-  color: #fff;
-}
-
-.brand-logo {
-  width: 28px;
-  height: 28px;
-  background: #fff;
-  color: #000;
-  border-radius: 6px;
-  display: grid;
-  place-items: center;
-  font-weight: 900;
-}
-
-.side-nav {
-  padding: 0 0.75rem;
-}
-
-.side-nav button {
-  width: 100%;
-  background: transparent;     /* No background */
-  border: none;
-  color: #fff;                 /* White text */
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.95rem;
-  font-weight: 500;
-  transition: 0.2s;
-  margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.side-nav button svg {
-  width: 18px;
-  height: 18px;
-  color: #fff;                 /* White icons */
-}
-
-.side-nav button:hover {
-  background: #1a1a1a;
-}
-
-.side-nav button.active {
-  background: #1a1a1a;
-  color: #fff;
-  /* Removed the white dash underline completely */
-}
-
-/* Sidebar bottom container – refined for professional look */
-.sidebar-bottom { 
-  margin-top: auto;
-  padding: 1.25rem;
-  border-top: 1px solid var(--border);
-  background: var(--bg-sidebar);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem; /* Clean spacing between CreditsCard and profile */
-}
-
-/* CreditsCard – professional styled like reference (rounded card, plan tag, credits, upgrade button) */
-.credits-card {
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 12px;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.credits-plan {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.plan-tag {
-  background: #444;
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 4px 8px;
-  border-radius: 6px;
-}
-
-.credits-left {
-  font-size: 0.85rem;
-  color: #eee;
-}
-
-.upgrade-btn {
-  background: #3b82f6; /* Blue upgrade button like reference */
-  color: #fff;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: 0.2s;
-}
-
-.upgrade-btn:hover {
-  background: #2563eb;
-}
-
-/* User profile – clean and professional like reference */
-.user-profile {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 0;
-}
-
-.avatar {
-  width: 36px;
-  height: 36px;
-  background: #222;
-  border: 1px solid #333;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #fff;
-  flex-shrink: 0;
-}
-
-.user-details {
-  flex: 1;
-  margin-left: 12px;
-  min-width: 0; /* Truncation */
-}
-
-.name {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #eee;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.handle {
-  font-size: 0.8rem;
-  color: #888;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.more-icon {
-  background: transparent;
-  border: none;
-  color: #666;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
-  transition: 0.2s;
-}
-
-.more-icon:hover {
-  background: #1a1a1a;
-  color: #fff;
-}
-
-/* Bottom profile – unchanged from your old great version */
-.user-profile {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.avatar {
-  width: 32px;
-  height: 32px;
-  background: #222;
-  border: 1px solid #333;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #fff;
-  flex-shrink: 0;
-}
-
-.user-details {
-  flex: 1;
-  margin-left: 12px;
-  min-width: 0;
-}
-
-.name {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #eee;
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.handle {
-  font-size: 0.75rem;
-  color: #666;
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.more-icon {
-  background: transparent;
-  border: none;
-  color: #666;
-  cursor: pointer;
-  padding: 0;
-}
-
-.more-icon:hover {
-  color: #fff;
 }
 
 /* Google login button when logged out */
