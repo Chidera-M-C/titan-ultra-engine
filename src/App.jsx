@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './App.css';
 
 // --- APPWRITE & AUTH ---
-import { useAuth } from './context/AuthContext.js'; // Assuming you have an AuthContext
+import { useAuth } from './context/AuthContext'; // Assuming you have an AuthContext
 import { saveAiImage } from './lib/imageService.js'; 
 
 // --- COMPONENTS ---
