@@ -7,7 +7,6 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Check if a session exists as soon as the app loads
   useEffect(() => {
     checkUserStatus();
   }, []);
@@ -24,12 +23,13 @@ export function AuthProvider({ children }) {
   };
 
   const loginWithGoogle = () => {
-    // This redirects the user to Google's sign-in page
-    // After sign-in, it bounces them back to your homepage
+    // FIX: Grab the current URL dynamically (localhost OR vercel)
+    const currentOrigin = window.location.origin;
+
     account.createOAuth2Session(
       'google',
-      'http://localhost:5173', // Success URL
-      'http://localhost:5173'  // Failure URL
+      currentOrigin, // Redirects back to your current site on success
+      currentOrigin  // Redirects back to your current site on failure
     );
   };
 
@@ -49,5 +49,4 @@ export function AuthProvider({ children }) {
   );
 }
 
-// Hook to use auth easily in any component
 export const useAuth = () => useContext(AuthContext);
