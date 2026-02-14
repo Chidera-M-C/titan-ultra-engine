@@ -1,82 +1,74 @@
-/* Container for the bottom elements */
-.sidebar-footer {
+/* SidebarExtras.css – refined to match old "great" UI with truncation and dynamic data */
+
+.sidebar-bottom { 
   margin-top: auto;
-  padding: 1.25rem;
+  padding: 1.5rem 1.25rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg-sidebar);
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* User Profile Styling */
 .user-profile {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 0;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0; /* Enables truncation */
 }
 
 .avatar {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   background: #222;
   border: 1px solid #333;
   border-radius: 8px;
   display: grid;
   place-items: center;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #fff;
   flex-shrink: 0;
 }
 
-.details {
-  display: flex;
-  flex-direction: column;
-  min-width: 0; /* Enables truncation inside */
+.user-details {
+  flex: 1;
+  margin-left: 12px;
+  min-width: 0; /* Enables truncation */
 }
 
 .name {
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 500;
   color: #eee;
+  display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .handle {
-  font-size: 0.8rem;
-  color: #888;
+  font-size: 0.75rem;
+  color: #666;
+  display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* More icon button – neutral gray, matches screenshot */
-.more-icon-btn {
+.more-icon {
   background: transparent;
   border: none;
   color: #666;
   cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
-  transition: 0.2s;
+  padding: 0;
+  margin-left: 8px;
 }
 
-.more-icon-btn:hover {
-  background: #1a1a1a;
+.more-icon:hover {
   color: #fff;
 }
 
-/* Google login button (for logged out state) */
+/* Google login button for logged out state – centered in bottom */
 .google-login-btn {
   width: 100%;
   background: #333;
