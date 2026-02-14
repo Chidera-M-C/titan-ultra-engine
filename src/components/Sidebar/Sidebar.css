@@ -147,7 +147,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 40px; /* Fixed height for exact alignment */
+  height: 40px;
 }
 
 .user-info {
@@ -155,8 +155,7 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
-  height: 40px; /* Full height match */
-  margin-top: 4px;
+  height: 40px;
 }
 
 .avatar {
@@ -171,17 +170,15 @@
   font-weight: 600;
   color: #fff;
   flex-shrink: 0;
-  margin-top: 4px;
 }
 
 .user-name {
   font-size: 0.85rem;
   font-weight: 500;
   color: #eee;
-  line-height: 40px; /* Exact match to row height – perfect vertical centering */
+  line-height: 40px;
   margin: 0;
   padding: 0;
-  margin-top: 4px;
 }
 
 /* More icon button – exact alignment with profile row */
@@ -192,13 +189,12 @@
   cursor: pointer;
   padding: 0;
   width: 40px;
-  height: 40px; /* Matches .user-profile height */
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
   transition: 0.2s;
-  margin-top: 4px;  /* Same effect – adjust -1px to -3px */
 }
 
 .more-icon-btn:hover {
@@ -258,11 +254,11 @@
   color: #ff4d4d;
 }
 
-/* Google login button when logged out */
+/* Google login button – familiar Google style */
 .google-login-btn {
   width: 100%;
-  background: #333;
-  color: #fff;
+  background: #fff;
+  color: #000;
   border: none;
   padding: 12px;
   border-radius: 8px;
@@ -270,8 +266,18 @@
   font-weight: 600;
   cursor: pointer;
   transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
 }
 
 .google-login-btn:hover {
-  background: #444;
+  background: #f8f9fa;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.google-login-btn .google-icon {
+  width: 18px;
+  height: 18px;
 }
