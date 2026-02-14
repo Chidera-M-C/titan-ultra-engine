@@ -9,9 +9,10 @@ export default function Sidebar({ activeTab, onNavigate }) {
   const { user, loginWithGoogle, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const getHandle = (email) => {
-    if (!email) return '@user';
-    return `@${email.split('@')[0]}`;
+  const getInitial = () => {
+    if (user?.displayName) return user.displayName.charAt(0).toUpperCase();
+    if (user?.email) return user.email.charAt(0).toUpperCase();
+    return 'U';
   };
 
   const handleLogout = () => {
@@ -20,12 +21,12 @@ export default function Sidebar({ activeTab, onNavigate }) {
   };
 
   const handleSettings = () => {
-    // Add navigation or open settings modal here
+    // Add settings logic
     setIsDropdownOpen(false);
   };
 
   const handleSupport = () => {
-    // Add navigation or open support here
+    // Add support logic
     setIsDropdownOpen(false);
   };
 
@@ -73,11 +74,8 @@ export default function Sidebar({ activeTab, onNavigate }) {
         {user ? (
           <div className="user-profile">
             <div className="user-info">
-              <div className="avatar">{user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}</div>
-              <div className="user-details">
-                <span className="name">{user.displayName || 'User'}</span>
-                <span className="handle">{getHandle(user.email)}</span>
-              </div>
+              <div className="avatar">{getInitial()}</div>
+              <span className="user-name">User</span>
             </div>
             <button 
               onClick={() => setIsDropdownOpen(!isDropdownOpen)} 
