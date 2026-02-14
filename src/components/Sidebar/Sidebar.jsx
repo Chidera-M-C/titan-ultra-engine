@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Compass, User, History, Sparkles, MoreHorizontal, Settings, HelpCircle, LogOut } from 'lucide-react';
 import NavItem from './NavItem';
 import CreditsCard from './CreditsCard';
@@ -8,6 +8,7 @@ import './Sidebar.css';
 export default function Sidebar({ activeTab, onNavigate }) {
   const { user, loginWithGoogle, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   const getInitial = () => {
     if (user?.displayName) return user.displayName.charAt(0).toUpperCase();
@@ -29,6 +30,18 @@ export default function Sidebar({ activeTab, onNavigate }) {
     // Add support logic
     setIsDropdownOpen(false);
   };
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <aside className="sidebar">
@@ -72,7 +85,7 @@ export default function Sidebar({ activeTab, onNavigate }) {
         <CreditsCard />
         
         {user ? (
-          <div className="user-profile">
+          <div className="user-profile" ref={dropdownRef}>
             <div className="user-info">
               <div className="avatar">{getInitial()}</div>
               <span className="user-name">User</span>
