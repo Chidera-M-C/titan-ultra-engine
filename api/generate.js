@@ -1,27 +1,24 @@
-import { saveAiImage } from '../src/lib/imageService.js'; // We'll create this next
-import { useAuth } from '../context/AuthContext';
+// api/generate.js
+// DELETE THIS LINE: import { saveAiImage } from '../src/lib/imageService.js'; 
 
-const handleGenerate = async () => {
-  setLoading(true);
+export default async function handler(req, res) {
+  const { prompt } = JSON.parse(req.body);
+
   try {
-    // 1. Call your RunPod handler (the code you just showed me)
-    const res = await fetch('/api/generate', {
+    const response = await fetch(`https://api.runpod.ai/v2/${process.env.RUNPOD_ENDPOINT_ID}/runsync`, {
       method: 'POST',
-      body: JSON.stringify({ prompt })
+      headers: {
+        'Authorization': `Bearer ${process.env.RUNPOD_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ input: { prompt } })
     });
-    const data = await res.json();
 
-    // RunPod usually returns { output: "data:image/png;base64,..." }
-    const base64Image = data.output; 
-
-    // 2. Save it to Appwrite
-    if (user && base64Image) {
-      await saveAiImage(user.$id, base64Image, prompt);
-      alert("Image generated and saved forever!");
-    }
-  } catch (err) {
-    console.error("Generation failed", err);
-  } finally {
-    setLoading(false);
+    const data = await response.json();
+    // Just return the output to the frontend. 
+    // The frontend will handle the saving.
+    res.status(200).json({ output: data.output });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-};
+}
