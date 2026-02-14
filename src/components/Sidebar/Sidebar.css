@@ -54,7 +54,7 @@
   gap: 14px;
   padding: 12px 14px;
   border-radius: 8px;
-  cursor:199 pointer;
+  cursor: pointer;
   font-size: 0.95rem;
   font-weight: 500;
   transition: 0.2s;
@@ -141,12 +141,13 @@
   background: #2563eb;
 }
 
-/* User profile – tight, initial + "User" only */
+/* User profile – perfect horizontal alignment */
 .user-profile {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 40px; /* Fixed height for perfect alignment */
 }
 
 .user-info {
@@ -154,6 +155,7 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
+  height: 100%; /* Full height */
 }
 
 .avatar {
@@ -176,19 +178,19 @@
   color: #eee;
 }
 
-/* More icon button – fixed size, tight hover area exactly around the icon */
+/* More icon button – tight hover, perfect alignment */
 .more-icon-btn {
   background: transparent;
   border: none;
   color: #666;
   cursor: pointer;
-  padding: 0;                    /* No padding – hover area controlled by fixed size */
-  width: 32px;                   /* Fixed small square – matches avatar size */
-  height: 32px;
+  padding: 0;
+  width: 40px;
+  height: 40px; /* Matches profile row height */
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;            /* Rounded square hover shape */
+  border-radius: 8px;
   transition: 0.2s;
 }
 
