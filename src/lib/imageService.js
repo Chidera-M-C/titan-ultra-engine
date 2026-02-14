@@ -1,13 +1,10 @@
 // src/lib/imageService.js
 import { storage, db, ID } from './appwrite.js';
-import { Permission, Role } from 'appwrite'; // Import Permission & Role directly from the SDK
+import { Permission, Role } from 'appwrite';
 
 export const saveAiImage = async (userId, base64String, prompt) => {
   try {
-    // 1. Clean the Base64 string
     const base64Data = base64String.replace(/^data:image\/\w+;base64,/, "");
-   
-    // 2. Convert Base64 to a File Object
     const byteCharacters = atob(base64Data);
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
@@ -17,24 +14,21 @@ export const saveAiImage = async (userId, base64String, prompt) => {
     const blob = new Blob([byteArray], { type: 'image/png' });
     const file = new File([blob], `gen-${Date.now()}.png`, { type: 'image/png' });
 
-    // 3. UPLOAD to Storage Bucket with owner read permission
     const uploadedFile = await storage.createFile(
-      'generated_images', // Bucket ID
+      'generated_images',
       ID.unique(),
       file,
       [
-        Permission.read(Role.owner()),   // Owner can read
-        Permission.delete(Role.owner())  // Optional: owner can delete
+        Permission.read(Role.any()),     // Public view (simplest & most reliable)
+        Permission.delete(Role.owner())  // Only owner can delete
       ]
     );
 
-    // 4. GENERATE the View URL
     const fileUrl = storage.getFileView('generated_images', uploadedFile.$id);
 
-    // 5. SAVE Metadata to Database with owner permissions
     await db.createDocument(
-      'main_db', // Database ID
-      'images', // Collection ID
+      'main_db',
+      'images',
       ID.unique(),
       {
         userId: userId,
@@ -49,7 +43,6 @@ export const saveAiImage = async (userId, base64String, prompt) => {
       ]
     );
 
-    // Return the proper view URL so the UI can use it immediately
     return fileUrl.toString();
   } catch (error) {
     console.error("Appwrite save failed:", error);
