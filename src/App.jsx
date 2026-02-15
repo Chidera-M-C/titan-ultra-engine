@@ -11,6 +11,7 @@ import Sidebar from './components/Sidebar/Sidebar';
 import PromptBox from './components/PromptSection/PromptBox';
 import ResultModal from './components/Shared/ResultModal';
 import EditModal from './components/Shared/EditModal';
+import ImageViewModal from './components/Shared/ImageViewModal';
 // --- VIEWS ---
 import ExploreView from './views/ExploreView';
 import CharacterView from './views/CharacterView';
@@ -33,6 +34,10 @@ export default function App() {
   // --- EDIT MODAL STATE ---
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingImage, setEditingImage] = useState(null);
+
+  // --- IMAGE VIEW MODAL STATE ---
+  const [viewImageModalOpen, setViewImageModalOpen] = useState(false);
+  const [viewingImageUrl, setViewingImageUrl] = useState(null);
 
   // --- 1. PERSISTENCE LOGIC ---
   const loadGallery = async () => {
@@ -128,12 +133,13 @@ export default function App() {
     }
   };
 
+  // Updated: Open full-screen image view instead of result modal
   const handleViewImage = (img) => {
-    setImage(img.url);
-    setViewState('result');
+    setViewingImageUrl(img.url);
+    setViewImageModalOpen(true);
   };
 
-  // NEW: Handler for opening edit modal
+  // Handler for opening edit modal
   const handleEditImage = (img) => {
     setEditingImage(img);
     setEditModalOpen(true);
@@ -202,7 +208,7 @@ export default function App() {
           />
         )}
 
-        {/* Edit Modal - NEW with originalPrompt */}
+        {/* Edit Modal */}
         {editModalOpen && (
           <EditModal
             image={editingImage?.url}
@@ -215,6 +221,14 @@ export default function App() {
               console.log('Original image:', editingImage);
               // You'll connect this to your actual edit/generation API later
             }}
+          />
+        )}
+
+        {/* Image View Modal - Full screen */}
+        {viewImageModalOpen && (
+          <ImageViewModal
+            imageUrl={viewingImageUrl}
+            onClose={() => setViewImageModalOpen(false)}
           />
         )}
       </div>
