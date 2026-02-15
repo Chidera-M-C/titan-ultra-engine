@@ -17,16 +17,14 @@ import StyleView from './views/StyleView';
 
 export default function App() {
   const { user } = useAuth();
- 
+
   // --- GLOBAL STATE ---
   const [activeTab, setActiveTab] = useState('explore');
   const [viewState, setViewState] = useState('gallery');
- 
   const [prompt, setPrompt] = useState('');
   const [aspectRatio, setAspectRatio] = useState('2:3');
   const [image, setImage] = useState(null);
   const [userGallery, setUserGallery] = useState([]);
- 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -64,7 +62,7 @@ export default function App() {
     setLoading(true);
     setError(null);
     setImage(null);
-   
+  
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
@@ -73,22 +71,20 @@ export default function App() {
       });
       if (!response.ok) throw new Error(`Server Error: ${response.statusText}`);
       const data = await response.json();
-      
+     
       if (data.status === 'COMPLETED' && data.output?.image) {
         const base64Image = data.output.image;
         setImage(base64Image); // Show in modal immediately
-
         if (user) {
           try {
             await saveAiImage(user.$id, base64Image, prompt);
-            
+           
             // Add to local gallery immediately using the base64 string
             setUserGallery(prev => [{
-              id: Date.now(), 
+              id: Date.now(),
               url: base64Image,
               prompt
             }, ...prev]);
-
             // Refresh from DB to get permanent URLs
             loadGallery();
           } catch (saveErr) {
@@ -96,7 +92,7 @@ export default function App() {
             setError("Image generated but failed to save to history.");
           }
         }
-       
+      
       } else {
         throw new Error(data.error || "GPU Generation failed.");
       }
@@ -124,10 +120,10 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // NEW: Handler for viewing an image from the gallery
+  // UPDATED: Handler for viewing an image from the gallery — ONLY views the image (does NOT load the prompt)
   const handleViewImage = (img) => {
     setImage(img.url);
-    setPrompt(img.prompt);
+    // REMOVED setPrompt(img.prompt) → clicking the image now only opens the full-size view
     setViewState('result');
   };
 
@@ -135,8 +131,8 @@ export default function App() {
     if (viewState === 'empty') {
       return (
         <div className="empty-state">
-           <h2>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} coming soon</h2>
-           <p>We're polishing this feature for you!</p>
+          <h2>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} coming soon</h2>
+          <p>We're polishing this feature for you!</p>
         </div>
       );
     }
@@ -147,10 +143,10 @@ export default function App() {
         return <CharacterView />;
       case 'gallery':
         return (
-          <MyImagesView 
-            images={userGallery} 
-            onSelectPrompt={handleSelectPrompt} 
-            onViewImage={handleViewImage} 
+          <MyImagesView
+            images={userGallery}
+            onSelectPrompt={handleSelectPrompt}
+            onViewImage={handleViewImage}
           />
         );
       case 'style':
