@@ -10,6 +10,7 @@ import { Query } from 'appwrite';
 import Sidebar from './components/Sidebar/Sidebar';
 import PromptBox from './components/PromptSection/PromptBox';
 import ResultModal from './components/Shared/ResultModal';
+import EditModal from './components/Shared/EditModal';
 // --- VIEWS ---
 import ExploreView from './views/ExploreView';
 import CharacterView from './views/CharacterView';
@@ -28,6 +29,10 @@ export default function App() {
   const [userGallery, setUserGallery] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // --- EDIT MODAL STATE ---
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingImage, setEditingImage] = useState(null);
 
   // --- 1. PERSISTENCE LOGIC ---
   const loadGallery = async () => {
@@ -128,6 +133,12 @@ export default function App() {
     setViewState('result');
   };
 
+  // NEW: Handler for opening edit modal
+  const handleEditImage = (img) => {
+    setEditingImage(img);
+    setEditModalOpen(true);
+  };
+
   const renderActiveView = () => {
     if (viewState === 'empty') {
       return (
@@ -149,6 +160,7 @@ export default function App() {
             onSelectPrompt={handleSelectPrompt}
             onViewImage={handleViewImage}
             currentPrompt={prompt}
+            onEditImage={handleEditImage}
           />
         );
       case 'style':
@@ -179,7 +191,7 @@ export default function App() {
           </div>
         </main>
         
-        {/* MOVED OUTSIDE scrollable-area - Now it floats everywhere */}
+        {/* Generation Modal - floats everywhere */}
         {(viewState === 'result' || loading) && (
           <ResultModal
             image={image}
@@ -187,6 +199,17 @@ export default function App() {
             error={error}
             onClose={() => setViewState('gallery')}
             onRetry={generateImage}
+          />
+        )}
+
+        {/* Edit Modal - NEW */}
+        {editModalOpen && (
+          <EditModal
+            image={editingImage?.url}
+            loading={false}
+            error={null}
+            onClose={() => setEditModalOpen(false)}
+            onRetry={() => console.log('Retry edit')}
           />
         )}
       </div>
