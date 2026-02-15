@@ -73,3 +73,54 @@ body, html {
   text-align: center;
   color: #666;
 }
+
+/* ... existing code ... */
+
+/* --- GALLERY GRID FIX --- */
+.gallery-grid {
+  display: grid;
+  /* Auto-fit columns: at least 250px wide, but fill available space */
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+  padding: 20px;
+  width: 100%;
+}
+
+.gallery-card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 2/3; /* Matches your default portrait aspect ratio */
+  background-color: #2a2a2a;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.gallery-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--accent);
+}
+
+.gallery-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Optional: Overlay text on hover */
+.gallery-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 10px;
+  background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.gallery-card:hover .gallery-overlay {
+  opacity: 1;
+}
