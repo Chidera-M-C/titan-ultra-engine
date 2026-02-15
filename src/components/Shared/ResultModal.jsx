@@ -35,6 +35,7 @@ export default function ResultModal({ image, loading, error, onClose, onRetry })
           {loading && (
             <div className="loading-wrapper">
               <PulseLoader />
+              <p className="loading-label">Creating your image...</p>
             </div>
           )}
 
