@@ -77,15 +77,15 @@ body, html {
   color: #666;
 }
 
-/* --- GALLERY GRID --- */
+/* --- GALLERY GRID (for MyImagesView specifically) --- */
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
   width: 100%;
-  max-width: 1400px;
-  margin: 2rem auto 0 auto;
-  padding: 0 2rem;
+  max-width: 100%;
+  margin: 0;
+  padding: 1rem 0 0 2rem;
 }
 
 /* --- GALLERY CARD --- */
