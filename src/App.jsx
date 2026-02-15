@@ -148,7 +148,7 @@ export default function App() {
             images={userGallery}
             onSelectPrompt={handleSelectPrompt}
             onViewImage={handleViewImage}
-            currentPrompt={prompt}  // NEW: pass current prompt for toggle logic
+            currentPrompt={prompt}
           />
         );
       case 'style':
@@ -176,17 +176,19 @@ export default function App() {
           </header>
           <div className="scrollable-area">
             {renderActiveView()}
-            {viewState === 'result' && (
-              <ResultModal
-                image={image}
-                loading={loading}
-                error={error}
-                onClose={() => setViewState('gallery')}
-                onRetry={generateImage}
-              />
-            )}
           </div>
         </main>
+        
+        {/* MOVED OUTSIDE scrollable-area - Now it floats everywhere */}
+        {(viewState === 'result' || loading) && (
+          <ResultModal
+            image={image}
+            loading={loading}
+            error={error}
+            onClose={() => setViewState('gallery')}
+            onRetry={generateImage}
+          />
+        )}
       </div>
     </div>
   );
