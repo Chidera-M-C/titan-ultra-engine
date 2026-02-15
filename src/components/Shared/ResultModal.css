@@ -22,8 +22,8 @@
 
 /* Minimized state */
 .result-modal.minimized {
-  width: 180px;
-  height: auto;
+  width: 280px;
+  height: 80px;
 }
 
 .result-content {
