@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, AlertCircle, Minus, ChevronUp } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { PulseLoader } from './Loader';
 import './ResultModal.css';
 
@@ -7,7 +7,8 @@ export default function ResultModal({ image, loading, error, onClose, onRetry })
   const [isMinimized, setIsMinimized] = useState(false);
 
   // Only allow closing when NOT loading
-  const handleClose = () => {
+  const handleClose = (e) => {
+    e.stopPropagation();
     if (!loading) {
       onClose();
     }
@@ -29,19 +30,19 @@ export default function ResultModal({ image, loading, error, onClose, onRetry })
             {loading ? 'Image generating' : error ? 'Generation failed' : 'Generation complete'}
           </div>
           <div className="header-actions">
-            {/* Minimize/Expand button */}
+            {/* Minimize/Expand button - CSS icon */}
             <button 
-              className="minimize-btn" 
+              className={`minimize-btn ${isMinimized ? 'expand' : ''}`}
               onClick={toggleMinimize} 
               title={isMinimized ? 'Expand' : 'Minimize'}
             >
-              {isMinimized ? <ChevronUp size={18} /> : <Minus size={18} />}
+              {isMinimized ? '▲' : '−'}
             </button>
             
-            {/* Close button - only show when NOT loading */}
+            {/* Close button - CSS icon - only show when NOT loading */}
             {!loading && (
               <button className="close-result" onClick={handleClose} title="Close">
-                <X size={18} />
+                ✕
               </button>
             )}
           </div>
