@@ -1,10 +1,9 @@
 import React from 'react';
-import MasonryGrid from '../components/Gallery/MasonryGrid';
-import EmptyState from '../components/Shared/EmptyState';
+import EmptyState from '../components/Shared/EmptyState'; // Ensure this path is correct
 import { History } from 'lucide-react';
 
 export default function MyImagesView({ images, onSelectPrompt }) {
-  if (images.length === 0) {
+  if (!images || images.length === 0) {
     return (
       <EmptyState 
         icon={History} 
@@ -15,10 +14,19 @@ export default function MyImagesView({ images, onSelectPrompt }) {
   }
 
   return (
-    <MasonryGrid 
-      images={images} 
-      onImageClick={onSelectPrompt} 
-      actionLabel="Reuse Prompt"
-    />
+    <div className="gallery-grid">
+      {images.map((img) => (
+        <div 
+          key={img.id} 
+          className="gallery-card"
+          onClick={() => onSelectPrompt(img.prompt)}
+        >
+          <img src={img.url} alt="Generated" loading="lazy" />
+          <div className="gallery-overlay">
+            <p style={{ fontSize: '12px', color: '#fff' }}>Use Prompt</p>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
