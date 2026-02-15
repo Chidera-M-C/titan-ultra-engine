@@ -113,12 +113,12 @@ body, html {
   padding: 20px;
   opacity: 0;
   transition: opacity 0.3s ease;
-  pointer-events: none; /* Allow clicks to pass through when hidden */
+  pointer-events: none;
 }
 
 .gallery-card:hover .gallery-overlay {
   opacity: 1;
-  pointer-events: auto; /* Enable clicks when visible */
+  pointer-events: auto;
 }
 
 .overlay-actions {
@@ -144,6 +144,7 @@ body, html {
   transition: all 0.2s ease;
   padding: 0;
   flex-shrink: 0;
+  position: relative;
 }
 
 .icon-btn:hover {
@@ -158,7 +159,58 @@ body, html {
 
 .icon-btn svg {
   display: block;
-  pointer-events: none; /* Prevent SVG from blocking clicks */
+  pointer-events: none;
+}
+
+/* --- ELEGANT TOOLTIPS (Pinterest-style) --- */
+.icon-btn::before {
+  content: attr(title);
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: rgba(17, 17, 17, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.3px;
+  z-index: 1000;
+}
+
+/* Tooltip arrow */
+.icon-btn::after {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid rgba(17, 17, 17, 0.95);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1000;
+}
+
+.icon-btn:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.icon-btn:hover::after {
+  opacity: 1;
 }
 
 /* Heart Active State */
