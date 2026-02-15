@@ -48,7 +48,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, curr
                     onSelectPrompt(img.prompt);
                   }
                 }}
-                title="Load prompt"
+                data-tooltip="Load prompt"
               >
                 <RotateCcw size={18} color="#ffffff" />
               </button>
@@ -57,7 +57,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, curr
               <button
                 className="icon-btn"
                 onClick={(e) => handleDownload(e, img.url, img.id)}
-                title="Download image"
+                data-tooltip="Download image"
               >
                 <Download size={18} color="#ffffff" />
               </button>
@@ -69,7 +69,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, curr
                   e.stopPropagation();
                   console.log('Edit clicked for image:', img.id);
                 }}
-                title="Edit image"
+                data-tooltip="Edit image"
               >
                 <Wand2 size={18} color="#ffffff" />
               </button>
@@ -94,7 +94,7 @@ function HeartButton() {
         e.stopPropagation();
         setActive(!active);
       }}
-      title={active ? 'Unlike' : 'Like'}
+      data-tooltip={active ? 'Unlike' : 'Like'}
     >
       <Heart 
         size={18} 
