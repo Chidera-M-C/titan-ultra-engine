@@ -51,7 +51,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
 
           <div className="gallery-overlay">
             <div className="overlay-actions">
-              {/* Load Prompt – Correct Magic Wand with Sparkles SVG */}
+              {/* Load Prompt – Magic Wand with Sparkles (explicit white stroke) */}
               <button
                 className="icon-btn"
                 onClick={(e) => {
@@ -60,7 +60,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
                 }}
                 aria-label="Load prompt"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M15 4V2"/>
                   <path d="M15 16v-2"/>
                   <path d="M8 9h2"/>
@@ -74,20 +74,20 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
                 </svg>
               </button>
 
-              {/* Download – unchanged (already correct) */}
+              {/* Download (explicit white stroke) */}
               <button
                 className="icon-btn"
                 onClick={(e) => handleDownload(e, img.url, img.id)}
                 aria-label="Download image"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="7 10 12 15 17 10" />
                   <line x1="12" x2="12" y1="15" y2="3" />
                 </svg>
               </button>
 
-              {/* Heart Toggle – unchanged (already correct) */}
+              {/* Heart Toggle (explicit white stroke/fill) */}
               <HeartButton />
             </div>
           </div>
@@ -109,7 +109,7 @@ function HeartButton() {
       }}
       aria-label={active ? 'Unlike' : 'Like'}
     >
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill={active ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill={active ? '#ffffff' : 'none'} stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3.47.81-4.5 2.1C10.97 3.81 9.26 3 7.5 3A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z" />
       </svg>
     </button>
