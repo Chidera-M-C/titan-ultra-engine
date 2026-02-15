@@ -1,34 +1,22 @@
+// Updated src/views/MyImagesView.jsx (full file)
 import React, { useState } from 'react';
 import { Wand2, Download, Heart } from 'lucide-react';
 import EmptyState from '../components/Shared/EmptyState';
 
-export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
+export default function MyImagesView({ images, onSelectPrompt, onViewImage, currentPrompt }) {
   if (!images || images.length === 0) {
     return <EmptyState title="No images yet" description="Generate something first!" />;
   }
 
   const handleDownload = async (e, url, imageId) => {
     e.stopPropagation();
-   
+
     try {
-      let blob;
-     
-      if (url.startsWith('data:')) {
-        // Convert base64 to blob
-        const response = await fetch(url);
-        blob = await response.blob();
-      } else {
-        // Fetch the image from URL
-        const response = await fetch(url, {
-          mode: 'cors',
-          credentials: 'omit'
-        });
-       
-        if (!response.ok) throw new Error('Failed to fetch image');
-        blob = await response.blob();
-      }
-     
-      // Create download link
+      // Simplified fetch – no mode/credentials (works reliably for both base64 and public Appwrite URLs)
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch image');
+
+      const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = blobUrl;
@@ -36,14 +24,12 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-     
-      // Clean up
+
       setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
-     
     } catch (error) {
       console.error('Download failed:', error);
-      // NO FALLBACK to window.open → this prevents opening a new tab
-      // If fetch truly fails (rare with public Appwrite URLs), it just logs the error
+      // No fallback to window.open – prevents unwanted tab
+      // If it truly fails (rare with public files/base64), it just does nothing silently
     }
   };
 
@@ -59,21 +45,24 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
 
           <div className="gallery-overlay">
             <div className="overlay-actions">
-              {/* Load Prompt Button */}
+              {/* Toggle Prompt Button – first click loads, second click clears */}
               <button
                 className="icon-btn"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onSelectPrompt(img.prompt);
-                  // REMOVED scroll here – let the parent handleSelectPrompt do the scroll (avoids double-scroll)
+                  if (img.prompt === currentPrompt) {
+                    onSelectPrompt(''); // Clear prompt
+                  } else {
+                    onSelectPrompt(img.prompt); // Load prompt
+                  }
                 }}
-                aria-label="Load prompt"
-                title="Load this prompt"
+                aria-label="Toggle prompt"
+                title="Load/clear this prompt"
               >
                 <Wand2 size={18} color="#ffffff" />
               </button>
 
-              {/* Download Button – now always forces real download, never opens tab */}
+              {/* Download Button – forces real download, no tab */}
               <button
                 className="icon-btn"
                 onClick={(e) => handleDownload(e, img.url, img.id)}
@@ -95,7 +84,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
 
 function HeartButton() {
   const [active, setActive] = useState(false);
- 
+
   return (
     <button
       className={`icon-btn ${active ? 'active-heart' : ''}`}
