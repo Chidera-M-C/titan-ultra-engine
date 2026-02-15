@@ -7,32 +7,23 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, curr
     return <EmptyState title="No images yet" description="Generate something first!" />;
   }
 
-  const handleDownload = async (e, url, imageId) => {
+  const handleDownload = (e, url, imageId) => {
     e.stopPropagation();
     
-    try {
-      // Fetch the image as a blob
-      const response = await fetch(url);
-      const blob = await response.blob();
-      
-      // Create a blob URL
-      const blobUrl = URL.createObjectURL(blob);
-      
-      // Create download link with blob URL (this FORCES download)
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = `ai-generated-${imageId || Date.now()}.png`;
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // Clean up the blob URL
-      URL.revokeObjectURL(blobUrl);
-      
-    } catch (error) {
-      console.error('Download failed:', error);
+    // Convert Appwrite view URL to download URL
+    let downloadUrl = url;
+    if (url.includes('appwrite.io') && url.includes('/view?')) {
+      downloadUrl = url.replace('/view?', '/download?');
     }
+    
+    // Create direct download link
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `ai-generated-${imageId || Date.now()}.png`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
