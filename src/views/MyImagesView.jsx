@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Wand2, Download, Heart } from 'lucide-react';
+import { Wand2, Download, Heart, Edit } from 'lucide-react';
 import EmptyState from '../components/Shared/EmptyState';
 
 export default function MyImagesView({ images, onSelectPrompt, onViewImage, currentPrompt }) {
@@ -62,6 +62,20 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, curr
                 title="Download image"
               >
                 <Download size={18} color="#ffffff" />
+              </button>
+
+              {/* Edit Button - NEW */}
+              <button
+                className="icon-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // This will open the edit modal (we'll connect this later)
+                  console.log('Edit clicked for image:', img.id);
+                }}
+                aria-label="Edit image"
+                title="Edit image"
+              >
+                <Edit size={18} color="#ffffff" />
               </button>
 
               {/* Heart Button */}
