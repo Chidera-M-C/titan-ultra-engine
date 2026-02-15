@@ -7,24 +7,32 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, curr
     return <EmptyState title="No images yet" description="Generate something first!" />;
   }
 
-  const handleDownload = (e, url, imageId) => {
+  const handleDownload = async (e, url, imageId) => {
     e.stopPropagation();
-    console.log('Download clicked for:', url); // Debug log
     
-    // Simple, direct download approach
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `ai-generated-${imageId || Date.now()}.png`;
-    link.target = '_blank'; // Helps with some browsers
-    link.rel = 'noopener noreferrer';
-    
-    // For base64 images, this works directly
-    // For Appwrite URLs, the browser will handle it
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    console.log('Download triggered'); // Debug log
+    try {
+      // Fetch the image as a blob
+      const response = await fetch(url);
+      const blob = await response.blob();
+      
+      // Create a blob URL
+      const blobUrl = URL.createObjectURL(blob);
+      
+      // Create download link with blob URL (this FORCES download)
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `ai-generated-${imageId || Date.now()}.png`;
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the blob URL
+      URL.revokeObjectURL(blobUrl);
+      
+    } catch (error) {
+      console.error('Download failed:', error);
+    }
   };
 
   return (
