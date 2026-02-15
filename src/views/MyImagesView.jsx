@@ -8,9 +8,8 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
 
   const handleDownload = (e, url, imageId) => {
     e.stopPropagation();
-
     const filename = `ai-generated-${imageId || Date.now()}.png`;
-
+    
     const triggerDownload = (downloadUrl) => {
       const a = document.createElement('a');
       a.href = downloadUrl;
@@ -48,10 +47,9 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
           onClick={() => onViewImage(img)}
         >
           <img src={img.url} alt="Generated AI image" loading="lazy" />
-
           <div className="gallery-overlay">
             <div className="overlay-actions">
-              {/* Load Prompt – Magic Wand with Sparkles (explicit white stroke) */}
+              {/* Load Prompt Button */}
               <button
                 className="icon-btn"
                 onClick={(e) => {
@@ -74,7 +72,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
                 </svg>
               </button>
 
-              {/* Download (explicit white stroke) */}
+              {/* Download Button */}
               <button
                 className="icon-btn"
                 onClick={(e) => handleDownload(e, img.url, img.id)}
@@ -87,7 +85,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
                 </svg>
               </button>
 
-              {/* Heart Toggle (explicit white stroke/fill) */}
+              {/* Heart/Like Button */}
               <HeartButton />
             </div>
           </div>
@@ -99,10 +97,10 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
 
 function HeartButton() {
   const [active, setActive] = useState(false);
-
+  
   return (
     <button
-      className={`icon-btn ${active ? 'active-heart' : ''}`}
+      className={`icon-btn ${active ? 'active-heart' : ''}`}  // ← FIX: Use {`...`} not =`...`
       onClick={(e) => {
         e.stopPropagation();
         setActive(!active);
