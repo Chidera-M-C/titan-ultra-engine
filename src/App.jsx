@@ -80,18 +80,16 @@ export default function App() {
 
         if (user) {
           try {
-            // FIX: Don't expect a URL return if saveAiImage returns true/void
             await saveAiImage(user.$id, base64Image, prompt);
             
             // Add to local gallery immediately using the base64 string
-            // (So the user sees it without waiting for a re-fetch)
             setUserGallery(prev => [{
               id: Date.now(), 
               url: base64Image,
               prompt
             }, ...prev]);
 
-            // Optional: Background refresh to get the real permanent URL
+            // Refresh from DB to get permanent URLs
             loadGallery();
           } catch (saveErr) {
             console.error("Database save failed:", saveErr);
@@ -122,7 +120,15 @@ export default function App() {
 
   const handleSelectPrompt = (selectedPrompt) => {
     setPrompt(selectedPrompt);
+    // Smooth scroll to top so user sees the prompt populated in the box
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // NEW: Handler for viewing an image from the gallery
+  const handleViewImage = (img) => {
+    setImage(img.url);
+    setPrompt(img.prompt);
+    setViewState('result');
   };
 
   const renderActiveView = () => {
@@ -140,7 +146,13 @@ export default function App() {
       case 'character':
         return <CharacterView />;
       case 'gallery':
-        return <MyImagesView images={userGallery} onSelectPrompt={handleSelectPrompt} />;
+        return (
+          <MyImagesView 
+            images={userGallery} 
+            onSelectPrompt={handleSelectPrompt} 
+            onViewImage={handleViewImage} 
+          />
+        );
       case 'style':
         return <StyleView />;
       default:
