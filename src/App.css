@@ -179,7 +179,7 @@ body, html {
 
 /* --- ELEGANT TOOLTIPS (Pinterest-style) --- */
 .icon-btn::before {
-  content: attr(title);
+  content: attr(data-tooltip);
   position: absolute;
   bottom: calc(100% + 12px);
   left: 50%;
