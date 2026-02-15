@@ -7,35 +7,43 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
     return <EmptyState title="No images yet" description="Generate something first!" />;
   }
 
-  const handleDownload = (e, url, imageId) => {
+  const handleDownload = async (e, url, imageId) => {
     e.stopPropagation();
-    const filename = `ai-generated-${imageId || Date.now()}.png`;
     
-    const triggerDownload = (downloadUrl) => {
+    try {
+      let blob;
+      
+      if (url.startsWith('data:')) {
+        // Convert base64 to blob
+        const response = await fetch(url);
+        blob = await response.blob();
+      } else {
+        // Fetch the image from URL
+        const response = await fetch(url, {
+          mode: 'cors',
+          credentials: 'omit'
+        });
+        
+        if (!response.ok) throw new Error('Failed to fetch image');
+        blob = await response.blob();
+      }
+      
+      // Create download link
+      const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = filename;
+      a.href = blobUrl;
+      a.download = `ai-generated-${imageId || Date.now()}.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-    };
-
-    if (url.startsWith('data:')) {
-      triggerDownload(url);
-    } else {
-      fetch(url)
-        .then(res => {
-          if (!res.ok) throw new Error('Fetch failed');
-          return res.blob();
-        })
-        .then(blob => {
-          const objectUrl = URL.createObjectURL(blob);
-          triggerDownload(objectUrl);
-          setTimeout(() => URL.revokeObjectURL(objectUrl), 100);
-        })
-        .catch(() => {
-          window.open(url, '_blank');
-        });
+      
+      // Clean up
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      
+    } catch (error) {
+      console.error('Download failed:', error);
+      // Fallback: open in new tab if download fails
+      window.open(url, '_blank');
     }
   };
 
@@ -56,8 +64,11 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
                 onClick={(e) => {
                   e.stopPropagation();
                   onSelectPrompt(img.prompt);
+                  // Scroll to top so user sees the prompt loaded
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 aria-label="Load prompt"
+                title="Load this prompt"
               >
                 <Wand2 size={18} color="#ffffff" />
               </button>
@@ -67,6 +78,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
                 className="icon-btn"
                 onClick={(e) => handleDownload(e, img.url, img.id)}
                 aria-label="Download image"
+                title="Download image"
               >
                 <Download size={18} color="#ffffff" />
               </button>
@@ -92,6 +104,7 @@ function HeartButton() {
         setActive(!active);
       }}
       aria-label={active ? 'Unlike' : 'Like'}
+      title={active ? 'Unlike' : 'Like'}
     >
       <Heart 
         size={18} 
