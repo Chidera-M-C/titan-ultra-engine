@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Wand2, Download, Heart, RotateCcw } from 'lucide-react';
 import EmptyState from '../components/Shared/EmptyState';
 
-export default function MyImagesView({ images, onSelectPrompt, onViewImage, currentPrompt }) {
+export default function MyImagesView({ images, onSelectPrompt, onViewImage, currentPrompt, onEditImage }) {
   if (!images || images.length === 0) {
     return <EmptyState title="No images yet" description="Generate something first!" />;
   }
@@ -67,7 +67,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, curr
                 className="icon-btn"
                 onClick={(e) => {
                   e.stopPropagation();
-                  console.log('Edit clicked for image:', img.id);
+                  onEditImage(img);
                 }}
                 data-tooltip="Edit image"
               >
