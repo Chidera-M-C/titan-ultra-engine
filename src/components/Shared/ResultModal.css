@@ -95,8 +95,9 @@
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 300;
+  line-height: 1;
 }
 
 .minimize-btn:hover,
