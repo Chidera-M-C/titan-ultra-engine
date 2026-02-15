@@ -17,6 +17,13 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
   animation: slideInFromBottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Minimized state */
+.result-modal.minimized {
+  width: 220px;
+  height: auto;
 }
 
 .result-content {
@@ -32,6 +39,17 @@
   justify-content: space-between;
   padding: 16px 16px 12px 16px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.result-header:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.minimized .result-header {
+  padding: 12px 16px;
+  border-bottom: none;
 }
 
 .status-text {
@@ -50,12 +68,20 @@
   border-radius: 50%;
   background: #4ade80;
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  flex-shrink: 0;
 }
 
 .status-dot.generating {
   background: #fbbf24;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.minimize-btn,
 .close-result {
   background: transparent;
   border: none;
@@ -68,8 +94,10 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
+.minimize-btn:hover,
 .close-result:hover {
   background: rgba(255, 255, 255, 0.1);
   color: white;
@@ -84,6 +112,15 @@
   align-items: center;
   justify-content: center;
   position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.minimized .image-stage {
+  height: 0;
+  min-height: 0;
+  aspect-ratio: auto;
+  opacity: 0;
+  overflow: hidden;
 }
 
 /* THE IMAGE */
