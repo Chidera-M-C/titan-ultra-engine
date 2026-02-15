@@ -4,6 +4,13 @@ import { PulseLoader } from './Loader';
 import './ResultModal.css';
 
 export default function ResultModal({ image, loading, error, onClose, onRetry }) {
+  // Only allow closing when NOT loading
+  const handleClose = () => {
+    if (!loading) {
+      onClose();
+    }
+  };
+
   return (
     <div className="result-modal">
       <div className="result-content">
@@ -14,9 +21,12 @@ export default function ResultModal({ image, loading, error, onClose, onRetry })
             <span className={`status-dot ${loading ? 'generating' : ''}`}></span>
             {loading ? 'Image generating' : error ? 'Generation failed' : 'Generation ready'}
           </div>
-          <button className="close-result" onClick={onClose} title="Close">
-            <X size={18} />
-          </button>
+          {/* Only show close button when NOT loading */}
+          {!loading && (
+            <button className="close-result" onClick={handleClose} title="Close">
+              <X size={18} />
+            </button>
+          )}
         </div>
 
         {/* Image area */}
@@ -25,7 +35,6 @@ export default function ResultModal({ image, loading, error, onClose, onRetry })
           {loading && (
             <div className="loading-wrapper">
               <PulseLoader />
-              <p className="loading-label">Creating your image...</p>
             </div>
           )}
 
