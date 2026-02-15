@@ -1,22 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Wand2, Download, Heart, RotateCcw } from 'lucide-react';
 import EmptyState from '../components/Shared/EmptyState';
 
 export default function MyImagesView({ images, onSelectPrompt, onViewImage, currentPrompt }) {
-  // Disable browser's default tooltips on icon buttons
-  useEffect(() => {
-    const buttons = document.querySelectorAll('.icon-btn[title]');
-    buttons.forEach(btn => {
-      btn.addEventListener('mouseenter', (e) => {
-        e.target.setAttribute('data-title', e.target.getAttribute('title'));
-        e.target.removeAttribute('title');
-      });
-      btn.addEventListener('mouseleave', (e) => {
-        e.target.setAttribute('title', e.target.getAttribute('data-title'));
-      });
-    });
-  }, [images]);
-
   if (!images || images.length === 0) {
     return <EmptyState title="No images yet" description="Generate something first!" />;
   }
