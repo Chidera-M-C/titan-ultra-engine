@@ -30,7 +30,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // --- 1. PERSISTENCE LOGIC: Load images from Appwrite on startup ---
+  // --- 1. PERSISTENCE LOGIC ---
   const loadGallery = async () => {
     if (!user) {
       setUserGallery([]);
@@ -73,27 +73,29 @@ export default function App() {
       });
       if (!response.ok) throw new Error(`Server Error: ${response.statusText}`);
       const data = await response.json();
+      
       if (data.status === 'COMPLETED' && data.output?.image) {
         const base64Image = data.output.image;
-        setImage(base64Image);
+        setImage(base64Image); // Show in modal immediately
 
         if (user) {
           try {
-            // Save and get the proper persistent Appwrite view URL back
-            const savedUrl = await saveAiImage(user.$id, base64Image, prompt);
+            // FIX: Don't expect a URL return if saveAiImage returns true/void
+            await saveAiImage(user.$id, base64Image, prompt);
             
-            // Add immediately to gallery (temporary ID)
+            // Add to local gallery immediately using the base64 string
+            // (So the user sees it without waiting for a re-fetch)
             setUserGallery(prev => [{
-              id: Date.now(), // temporary until reload
-              url: savedUrl,
+              id: Date.now(), 
+              url: base64Image,
               prompt
             }, ...prev]);
 
-            // Refresh from DB to get real document IDs and ensure sync
-            await loadGallery();
+            // Optional: Background refresh to get the real permanent URL
+            loadGallery();
           } catch (saveErr) {
             console.error("Database save failed:", saveErr);
-            setError("Image generated successfully, but failed to save permanently. Check console for Appwrite error details. It won't persist after refresh.");
+            setError("Image generated but failed to save to history.");
           }
         }
        
