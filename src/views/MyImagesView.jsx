@@ -1,4 +1,3 @@
-// Updated src/views/MyImagesView.jsx (full file)
 import React, { useState } from 'react';
 import { Wand2, Download, Heart } from 'lucide-react';
 import EmptyState from '../components/Shared/EmptyState';
@@ -8,29 +7,24 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, curr
     return <EmptyState title="No images yet" description="Generate something first!" />;
   }
 
-  const handleDownload = async (e, url, imageId) => {
+  const handleDownload = (e, url, imageId) => {
     e.stopPropagation();
-
-    try {
-      // Simplified fetch – no mode/credentials (works reliably for both base64 and public Appwrite URLs)
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch image');
-
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = `ai-generated-${imageId || Date.now()}.png`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
-    } catch (error) {
-      console.error('Download failed:', error);
-      // No fallback to window.open – prevents unwanted tab
-      // If it truly fails (rare with public files/base64), it just does nothing silently
-    }
+    console.log('Download clicked for:', url); // Debug log
+    
+    // Simple, direct download approach
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ai-generated-${imageId || Date.now()}.png`;
+    link.target = '_blank'; // Helps with some browsers
+    link.rel = 'noopener noreferrer';
+    
+    // For base64 images, this works directly
+    // For Appwrite URLs, the browser will handle it
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    console.log('Download triggered'); // Debug log
   };
 
   return (
@@ -42,10 +36,9 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, curr
           onClick={() => onViewImage(img)}
         >
           <img src={img.url} alt="Generated AI image" loading="lazy" />
-
           <div className="gallery-overlay">
             <div className="overlay-actions">
-              {/* Toggle Prompt Button – first click loads, second click clears */}
+              {/* Toggle Prompt Button */}
               <button
                 className="icon-btn"
                 onClick={(e) => {
@@ -62,7 +55,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, curr
                 <Wand2 size={18} color="#ffffff" />
               </button>
 
-              {/* Download Button – forces real download, no tab */}
+              {/* Download Button */}
               <button
                 className="icon-btn"
                 onClick={(e) => handleDownload(e, img.url, img.id)}
@@ -84,7 +77,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, curr
 
 function HeartButton() {
   const [active, setActive] = useState(false);
-
+  
   return (
     <button
       className={`icon-btn ${active ? 'active-heart' : ''}`}
@@ -95,10 +88,10 @@ function HeartButton() {
       aria-label={active ? 'Unlike' : 'Like'}
       title={active ? 'Unlike' : 'Like'}
     >
-      <Heart
-        size={18}
-        color="#ffffff"
-        fill={active ? '#ffffff' : 'none'}
+      <Heart 
+        size={18} 
+        color="#ffffff" 
+        fill={active ? '#ffffff' : 'none'} 
       />
     </button>
   );
