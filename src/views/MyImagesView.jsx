@@ -49,7 +49,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
           <img src={img.url} alt="Generated AI image" loading="lazy" />
           <div className="gallery-overlay">
             <div className="overlay-actions">
-              {/* Load Prompt Button */}
+              {/* Load Prompt – Magic Wand with Sparkles */}
               <button
                 className="icon-btn"
                 onClick={(e) => {
@@ -72,7 +72,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
                 </svg>
               </button>
 
-              {/* Download Button */}
+              {/* Download */}
               <button
                 className="icon-btn"
                 onClick={(e) => handleDownload(e, img.url, img.id)}
@@ -85,7 +85,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
                 </svg>
               </button>
 
-              {/* Heart/Like Button */}
+              {/* Heart Toggle */}
               <HeartButton />
             </div>
           </div>
@@ -100,7 +100,7 @@ function HeartButton() {
   
   return (
     <button
-      className={`icon-btn ${active ? 'active-heart' : ''}`}  // ← FIX: Use {`...`} not =`...`
+      className={`icon-btn ${active ? 'active-heart' : ''}`}
       onClick={(e) => {
         e.stopPropagation();
         setActive(!active);
