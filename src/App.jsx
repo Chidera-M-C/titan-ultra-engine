@@ -1,3 +1,4 @@
+// Updated src/App.jsx (full file with only the necessary changes)
 import React, { useState, useEffect } from 'react';
 import './App.css';
 // --- APPWRITE & AUTH ---
@@ -62,7 +63,7 @@ export default function App() {
     setLoading(true);
     setError(null);
     setImage(null);
-  
+ 
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
@@ -71,14 +72,14 @@ export default function App() {
       });
       if (!response.ok) throw new Error(`Server Error: ${response.statusText}`);
       const data = await response.json();
-     
+    
       if (data.status === 'COMPLETED' && data.output?.image) {
         const base64Image = data.output.image;
         setImage(base64Image); // Show in modal immediately
         if (user) {
           try {
             await saveAiImage(user.$id, base64Image, prompt);
-           
+          
             // Add to local gallery immediately using the base64 string
             setUserGallery(prev => [{
               id: Date.now(),
@@ -92,7 +93,7 @@ export default function App() {
             setError("Image generated but failed to save to history.");
           }
         }
-      
+     
       } else {
         throw new Error(data.error || "GPU Generation failed.");
       }
@@ -114,16 +115,16 @@ export default function App() {
     }
   };
 
+  // Updated: only scroll when actually loading a new prompt (not when clearing)
   const handleSelectPrompt = (selectedPrompt) => {
     setPrompt(selectedPrompt);
-    // Smooth scroll to top so user sees the prompt populated in the box
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (selectedPrompt) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
-  // UPDATED: Handler for viewing an image from the gallery — ONLY views the image (does NOT load the prompt)
   const handleViewImage = (img) => {
     setImage(img.url);
-    // REMOVED setPrompt(img.prompt) → clicking the image now only opens the full-size view
     setViewState('result');
   };
 
@@ -147,6 +148,7 @@ export default function App() {
             images={userGallery}
             onSelectPrompt={handleSelectPrompt}
             onViewImage={handleViewImage}
+            currentPrompt={prompt}  // NEW: pass current prompt for toggle logic
           />
         );
       case 'style':
