@@ -1,51 +1,47 @@
 import React from 'react';
 import { X, AlertCircle } from 'lucide-react';
 import { PulseLoader } from './Loader';
-import './ResultModal.css'; // Your new dedicated CSS
+import './ResultModal.css';
 
 export default function ResultModal({ image, loading, error, onClose, onRetry }) {
-  // Prevent background clicks from closing while loading
-  const handleOverlayClick = () => {
-    if (!loading) onClose();
-  };
-
   return (
-    <div className="result-modal" onClick={handleOverlayClick}>
-      <div className="result-content" onClick={(e) => e.stopPropagation()}>
+    <div className="result-modal">
+      <div className="result-content">
         
-        {/* Close button - hidden during active loading */}
-        {!loading && (
+        {/* Header with status */}
+        <div className="result-header">
+          <div className="status-text">
+            <span className={`status-dot ${loading ? 'generating' : ''}`}></span>
+            {loading ? 'Image generating' : error ? 'Generation failed' : 'Generation ready'}
+          </div>
           <button className="close-result" onClick={onClose} title="Close">
-            <X size={24} />
+            <X size={18} />
           </button>
-        )}
+        </div>
 
+        {/* Image area */}
         <div className="image-stage">
-          {/* 1. LOADING STATE */}
+          {/* LOADING STATE */}
           {loading && (
             <div className="loading-wrapper">
               <PulseLoader />
-              <p className="loading-label">Visualizing masterpiece...</p>
+              <p className="loading-label">Creating your image...</p>
             </div>
           )}
 
-          {/* 2. ERROR STATE */}
+          {/* ERROR STATE */}
           {error && !loading && (
-            <div className="loading-state" style={{ color: '#ff4444', textAlign: 'center', padding: '20px' }}>
-              <AlertCircle size={48} style={{ marginBottom: '15px' }} />
-              <p style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Generation Failed</p>
-              <p style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '5px' }}>{error}</p>
-              <button 
-                className="icon-btn" 
-                style={{ marginTop: '20px', width: 'auto', padding: '0 24px', borderRadius: '30px' }} 
-                onClick={onRetry}
-              >
+            <div className="error-wrapper">
+              <AlertCircle size={32} color="#ff4444" />
+              <p className="error-title">Generation Failed</p>
+              <p className="error-message">{error}</p>
+              <button className="retry-btn" onClick={onRetry}>
                 Try Again
               </button>
             </div>
           )}
 
-          {/* 3. SUCCESS STATE */}
+          {/* SUCCESS STATE */}
           {image && !loading && (
             <img src={image} alt="Generated result" className="gen-result" />
           )}
