@@ -5,8 +5,10 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
+  left: auto;
+  top: auto;
   z-index: 2000;
-  width: 320px;
+  width: 280px;
   background: rgba(20, 20, 20, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
