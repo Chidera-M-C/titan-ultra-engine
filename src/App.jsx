@@ -202,14 +202,19 @@ export default function App() {
           />
         )}
 
-        {/* Edit Modal - NEW */}
+        {/* Edit Modal - NEW with originalPrompt */}
         {editModalOpen && (
           <EditModal
             image={editingImage?.url}
+            originalPrompt={editingImage?.prompt}
             loading={false}
             error={null}
             onClose={() => setEditModalOpen(false)}
-            onRetry={() => console.log('Retry edit')}
+            onRetry={(editPrompt) => {
+              console.log('Edit with prompt:', editPrompt);
+              console.log('Original image:', editingImage);
+              // You'll connect this to your actual edit/generation API later
+            }}
           />
         )}
       </div>
