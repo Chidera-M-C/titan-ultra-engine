@@ -9,8 +9,8 @@
   --border: #2A2A2A;
 }
 
-/* --- RESET & BASE --- */
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
 body, html {
   width: 100%; height: 100%;
   background: var(--bg-app);
@@ -19,7 +19,6 @@ body, html {
   overflow: hidden;
 }
 
-/* --- LAYOUT SHELL --- */
 .app-shell { 
   display: flex; 
   width: 100vw; 
@@ -27,7 +26,7 @@ body, html {
 }
 
 .main-content {
-  margin-left: 260px; /* Sidebar width */
+  margin-left: 260px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -39,38 +38,54 @@ body, html {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 1rem 2rem 5rem 2rem;
-  background: var(--bg-app);
+  padding: 0 3.5rem 8rem 0rem;
+  background: #101010;
 }
 
-/* --- HEADER --- */
+/* MASTER HEADER FIX */
 .top-header {
   width: 100%;
   display: flex;
   flex-direction: column; 
   align-items: center;    
   justify-content: center;
-  padding: 2rem 1rem; 
+  padding: 1rem 2rem 1rem 1rem; 
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  background: var(--bg-app);
 }
 
 .aesthetic-title {
+  width: 100%;
+  text-align: center;
   font-size: 2.2rem;
   font-weight: 800;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   color: #fff;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
 }
 
-/* --- THE GALLERY GRID --- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: #666;
+}
+
+/* --- GALLERY GRID --- */
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
   width: 100%;
   max-width: 1400px;
-  margin: 0 auto;
+  margin: 2rem auto 0 auto;
+  padding: 0 2rem;
 }
 
 /* --- GALLERY CARD --- */
@@ -223,14 +238,4 @@ body, html {
 .active-heart svg {
   fill: #ff4d4d !important;
   stroke: #ff4d4d !important;
-}
-
-/* --- UTILS --- */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding-top: 10vh;
-  color: var(--text-secondary);
 }
