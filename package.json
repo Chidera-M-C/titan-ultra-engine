@@ -12,8 +12,9 @@
     "appwrite": "^21.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "lucide-react": "^0.441.0"   // ← Update this line (or "latest")
-  }
+    "lucide-react": "^0.441.0"
+  },
+  
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",
     "vite": "^4.4.5"
