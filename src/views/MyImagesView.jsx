@@ -9,10 +9,10 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
 
   const handleDownload = async (e, url, imageId) => {
     e.stopPropagation();
-    
+   
     try {
       let blob;
-      
+     
       if (url.startsWith('data:')) {
         // Convert base64 to blob
         const response = await fetch(url);
@@ -23,11 +23,11 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
           mode: 'cors',
           credentials: 'omit'
         });
-        
+       
         if (!response.ok) throw new Error('Failed to fetch image');
         blob = await response.blob();
       }
-      
+     
       // Create download link
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -36,14 +36,14 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      
+     
       // Clean up
       setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
-      
+     
     } catch (error) {
       console.error('Download failed:', error);
-      // Fallback: open in new tab if download fails
-      window.open(url, '_blank');
+      // NO FALLBACK to window.open → this prevents opening a new tab
+      // If fetch truly fails (rare with public Appwrite URLs), it just logs the error
     }
   };
 
@@ -56,6 +56,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
           onClick={() => onViewImage(img)}
         >
           <img src={img.url} alt="Generated AI image" loading="lazy" />
+
           <div className="gallery-overlay">
             <div className="overlay-actions">
               {/* Load Prompt Button */}
@@ -64,8 +65,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
                 onClick={(e) => {
                   e.stopPropagation();
                   onSelectPrompt(img.prompt);
-                  // Scroll to top so user sees the prompt loaded
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  // REMOVED scroll here – let the parent handleSelectPrompt do the scroll (avoids double-scroll)
                 }}
                 aria-label="Load prompt"
                 title="Load this prompt"
@@ -73,7 +73,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
                 <Wand2 size={18} color="#ffffff" />
               </button>
 
-              {/* Download Button */}
+              {/* Download Button – now always forces real download, never opens tab */}
               <button
                 className="icon-btn"
                 onClick={(e) => handleDownload(e, img.url, img.id)}
@@ -95,7 +95,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage }) {
 
 function HeartButton() {
   const [active, setActive] = useState(false);
-  
+ 
   return (
     <button
       className={`icon-btn ${active ? 'active-heart' : ''}`}
@@ -106,10 +106,10 @@ function HeartButton() {
       aria-label={active ? 'Unlike' : 'Like'}
       title={active ? 'Unlike' : 'Like'}
     >
-      <Heart 
-        size={18} 
-        color="#ffffff" 
-        fill={active ? '#ffffff' : 'none'} 
+      <Heart
+        size={18}
+        color="#ffffff"
+        fill={active ? '#ffffff' : 'none'}
       />
     </button>
   );
