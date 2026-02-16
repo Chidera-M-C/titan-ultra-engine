@@ -244,10 +244,15 @@ body, html {
 
 /* Collapsed header state */
 .top-header.collapsed {
-  padding: 0; /* No top or bottom padding */
+  padding: 0;
   margin-bottom: -10px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg-app);
   transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Smoother easing */
 }
+
 
 /* Heart Active State */
 .active-heart {
