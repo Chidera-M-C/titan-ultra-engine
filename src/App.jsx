@@ -207,8 +207,8 @@ export default function App() {
       <div className="app-shell">
         <Sidebar activeTab={activeTab} onNavigate={handleNavigation} />
         <main className="main-content">
-          <header className="top-header">
-            <h1 className="aesthetic-title">What will you create?</h1>
+          <header className={`top-header ${promptCollapsed ? 'collapsed' : ''}`}>
+            {!promptCollapsed && <h1 className="aesthetic-title">What will you create?</h1>}
             <PromptBox
               prompt={prompt}
               setPrompt={setPrompt}
