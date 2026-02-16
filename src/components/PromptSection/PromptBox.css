@@ -138,14 +138,13 @@
   display: block;
 }
 
-/* Collapsed state styles */
 .prompt-container.collapsed {
   max-width: 850px;
-  padding: 4px; /* Reduced from 6px */
+  padding: 4px;
   flex-direction: row;
   align-items: center;
   transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
-  margin: 0; /* Remove any margins */
+  margin: 0.75rem auto 0 auto; /* Controls vertical position */
 }
 
 .prompt-container.collapsed .prompt-input {
