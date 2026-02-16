@@ -97,3 +97,14 @@
   
   cursor: pointer;
 }
+
+/* Override gallery-card for masonry layout */
+.masonry-grid .gallery-card {
+  aspect-ratio: auto; /* Remove fixed ratio for masonry */
+  height: auto; /* Let images flow naturally */
+  margin-bottom: 10px; /* Match column-gap */
+}
+
+.masonry-grid .gallery-card img {
+  height: auto; /* Natural image height */
+}
