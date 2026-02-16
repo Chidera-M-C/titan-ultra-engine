@@ -156,7 +156,13 @@ export default function App() {
     }
     switch (activeTab) {
       case 'explore':
-        return <ExploreView onSelectPrompt={handleSelectPrompt} />;
+      return (
+        <ExploreView 
+          onSelectPrompt={handleSelectPrompt}
+          onViewImage={handleViewImage}
+          onEditImage={handleEditImage}
+        />
+      );
       case 'character':
         return <CharacterView />;
       case 'gallery':
