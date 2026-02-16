@@ -198,13 +198,16 @@ export default function App() {
         </main>
         
         {/* Generation Modal - floats everywhere */}
-        {(viewState === 'result' || loading) && (
+        {(viewState === 'result' || loading || image || error) && (
           <ResultModal
             image={image}
             loading={loading}
             error={error}
-            prompt={prompt}
-            onClose={() => setViewState('gallery')}
+            onClose={() => {
+              setViewState('gallery');
+              setImage(null);
+              setError(null);
+            }}
             onRetry={generateImage}
           />
         )}
