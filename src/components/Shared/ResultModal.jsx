@@ -88,13 +88,17 @@ export default function ResultModal({ image, loading, error, onClose, onRetry })
                 <img src={image} alt="Generated result" className="gen-result" />
                 
                 {/* Action Buttons Overlay - appears on hover */}
-                <div className="result-action-overlay">
-                  <ActionButtons
-                    image={image}
-                    onDownload={handleDownload}
-                    compact={true}
-                  />
-                </div>
+              <div className="result-action-overlay">
+                <ActionButtons
+                  image={image}
+                  onDownload={handleDownload}
+                  onEdit={() => {
+                    console.log('Edit from result modal - to be implemented');
+                    // You'll connect this to open EditModal later
+                  }}
+                  compact={true}
+                />
+              </div>
               </>
             )}
           </div>
