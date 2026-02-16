@@ -61,43 +61,43 @@ export default function ResultModal({ image, loading, error, onClose, onRetry })
 
         {/* Image area - hidden when minimized */}
         {!isMinimized && (
-          <>
-            <div className="image-stage">
-              {/* LOADING STATE */}
-              {loading && (
-                <div className="loading-wrapper">
-                  <PulseLoader />
-                  <p className="loading-label">Creating your image...</p>
-                </div>
-              )}
-
-              {/* ERROR STATE */}
-              {error && !loading && (
-                <div className="error-wrapper">
-                  <AlertCircle size={32} color="#ff4444" />
-                  <p className="error-title">Generation Failed</p>
-                  <p className="error-message">{error}</p>
-                  <button className="retry-btn" onClick={onRetry}>
-                    Try Again
-                  </button>
-                </div>
-              )}
-
-              {/* SUCCESS STATE */}
-              {image && !loading && (
-                <img src={image} alt="Generated result" className="gen-result" />
-              )}
-            </div>
-
-            {/* Action Buttons - Only show when image is ready */}
-            {image && !loading && !error && (
-              <ActionButtons
-                image={image}
-                onDownload={handleDownload}
-                compact={true}
-              />
+          <div className="image-stage">
+            {/* LOADING STATE */}
+            {loading && (
+              <div className="loading-wrapper">
+                <PulseLoader />
+                <p className="loading-label">Creating your image...</p>
+              </div>
             )}
-          </>
+
+            {/* ERROR STATE */}
+            {error && !loading && (
+              <div className="error-wrapper">
+                <AlertCircle size={32} color="#ff4444" />
+                <p className="error-title">Generation Failed</p>
+                <p className="error-message">{error}</p>
+                <button className="retry-btn" onClick={onRetry}>
+                  Try Again
+                </button>
+              </div>
+            )}
+
+            {/* SUCCESS STATE - Image with overlay buttons */}
+            {image && !loading && !error && (
+              <>
+                <img src={image} alt="Generated result" className="gen-result" />
+                
+                {/* Action Buttons Overlay - appears on hover */}
+                <div className="result-action-overlay">
+                  <ActionButtons
+                    image={image}
+                    onDownload={handleDownload}
+                    compact={true}
+                  />
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
     </div>
