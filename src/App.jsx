@@ -203,6 +203,7 @@ export default function App() {
             image={image}
             loading={loading}
             error={error}
+            prompt={prompt}
             onClose={() => setViewState('gallery')}
             onRetry={generateImage}
           />
