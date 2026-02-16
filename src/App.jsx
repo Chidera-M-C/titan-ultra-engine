@@ -39,6 +39,9 @@ export default function App() {
   const [viewImageModalOpen, setViewImageModalOpen] = useState(false);
   const [viewingImageUrl, setViewingImageUrl] = useState(null);
 
+  // --- PROMPT COLLAPSE STATE ---
+  const [promptCollapsed, setPromptCollapsed] = useState(false);
+
   // --- 1. PERSISTENCE LOGIC ---
   const loadGallery = async () => {
     if (!user) {
@@ -65,6 +68,23 @@ export default function App() {
   useEffect(() => {
     loadGallery();
   }, [user]);
+
+  // --- SCROLL DETECTION FOR PROMPT COLLAPSE ---
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollable = document.querySelector('.scrollable-area');
+      if (scrollable) {
+        const scrollTop = scrollable.scrollTop;
+        setPromptCollapsed(scrollTop > 100); // Collapse after 100px scroll
+      }
+    };
+
+    const scrollable = document.querySelector('.scrollable-area');
+    if (scrollable) {
+      scrollable.addEventListener('scroll', handleScroll);
+      return () => scrollable.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
 
   // --- 2. CORE GENERATION & STORAGE LOGIC ---
   const generateImage = async () => {
@@ -156,13 +176,13 @@ export default function App() {
     }
     switch (activeTab) {
       case 'explore':
-      return (
-        <ExploreView 
-          onSelectPrompt={handleSelectPrompt}
-          onViewImage={handleViewImage}
-          onEditImage={handleEditImage}
-        />
-      );
+        return (
+          <ExploreView 
+            onSelectPrompt={handleSelectPrompt}
+            onViewImage={handleViewImage}
+            onEditImage={handleEditImage}
+          />
+        );
       case 'character':
         return <CharacterView />;
       case 'gallery':
@@ -196,6 +216,7 @@ export default function App() {
               setAspectRatio={setAspectRatio}
               onGenerate={generateImage}
               loading={loading}
+              collapsed={promptCollapsed}
             />
           </header>
           <div className="scrollable-area">
