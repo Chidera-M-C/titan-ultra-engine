@@ -3,7 +3,7 @@
   display: flex;
   gap: 32px;
   justify-content: center;
-  padding: 0 3.5rem 1rem 0rem; /* Changed from 0.5rem to 0 */
+  padding: 0 3.5rem 0 0rem; /* No top or bottom padding */
   border-bottom: 1px solid #222;
   margin-bottom: 10px;
   
