@@ -5,7 +5,7 @@
   justify-content: center;
   padding: 1.5rem 3.5rem 1rem 0rem; /* Matches scrollable-area for alignment */
   border-bottom: 1px solid #222;
-  margin-bottom: 3rem;
+  margin-bottom: 10px;
   
   position: sticky;
   top: 0;
