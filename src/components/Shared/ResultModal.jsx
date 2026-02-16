@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { PulseLoader } from './Loader';
+import ActionButtons from './ActionButtons';
 import './ResultModal.css';
 
 export default function ResultModal({ image, loading, error, onClose, onRetry }) {
@@ -19,6 +20,16 @@ export default function ResultModal({ image, loading, error, onClose, onRetry })
     setIsMinimized(!isMinimized);
   };
 
+  const handleDownload = () => {
+    // Convert base64 or URL to download
+    const link = document.createElement('a');
+    link.href = image;
+    link.download = `ai-generated-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className={`result-modal ${isMinimized ? 'minimized' : ''}`}>
       <div className="result-content">
@@ -34,14 +45,14 @@ export default function ResultModal({ image, loading, error, onClose, onRetry })
             <button 
               className={`minimize-btn ${isMinimized ? 'expand' : ''}`}
               onClick={toggleMinimize} 
-              title={isMinimized ? 'Expand' : 'Minimize'}
+              data-tooltip={isMinimized ? 'Expand' : 'Minimize'}
             >
               {isMinimized ? '▲' : '−'}
             </button>
             
             {/* Close button - CSS icon - only show when NOT loading */}
             {!loading && (
-              <button className="close-result" onClick={handleClose} title="Close">
+              <button className="close-result" onClick={handleClose} data-tooltip="Close">
                 ✕
               </button>
             )}
@@ -50,32 +61,43 @@ export default function ResultModal({ image, loading, error, onClose, onRetry })
 
         {/* Image area - hidden when minimized */}
         {!isMinimized && (
-          <div className="image-stage">
-            {/* LOADING STATE */}
-            {loading && (
-              <div className="loading-wrapper">
-                <PulseLoader />
-                <p className="loading-label">Creating your image...</p>
-              </div>
-            )}
+          <>
+            <div className="image-stage">
+              {/* LOADING STATE */}
+              {loading && (
+                <div className="loading-wrapper">
+                  <PulseLoader />
+                  <p className="loading-label">Creating your image...</p>
+                </div>
+              )}
 
-            {/* ERROR STATE */}
-            {error && !loading && (
-              <div className="error-wrapper">
-                <AlertCircle size={32} color="#ff4444" />
-                <p className="error-title">Generation Failed</p>
-                <p className="error-message">{error}</p>
-                <button className="retry-btn" onClick={onRetry}>
-                  Try Again
-                </button>
-              </div>
-            )}
+              {/* ERROR STATE */}
+              {error && !loading && (
+                <div className="error-wrapper">
+                  <AlertCircle size={32} color="#ff4444" />
+                  <p className="error-title">Generation Failed</p>
+                  <p className="error-message">{error}</p>
+                  <button className="retry-btn" onClick={onRetry}>
+                    Try Again
+                  </button>
+                </div>
+              )}
 
-            {/* SUCCESS STATE */}
-            {image && !loading && (
-              <img src={image} alt="Generated result" className="gen-result" />
+              {/* SUCCESS STATE */}
+              {image && !loading && (
+                <img src={image} alt="Generated result" className="gen-result" />
+              )}
+            </div>
+
+            {/* Action Buttons - Only show when image is ready */}
+            {image && !loading && !error && (
+              <ActionButtons
+                image={image}
+                onDownload={handleDownload}
+                compact={true}
+              />
             )}
-          </div>
+          </>
         )}
       </div>
     </div>
