@@ -214,6 +214,10 @@ export default function App() {
               setEditingImage(img);
               setEditModalOpen(true);
             }}
+            onViewFullScreen={(imageUrl) => {
+              setViewingImageUrl(imageUrl);
+              setViewImageModalOpen(true);
+            }}
           />
         )}
 
