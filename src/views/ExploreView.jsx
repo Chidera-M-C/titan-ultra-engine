@@ -4,7 +4,7 @@ import { Query } from 'appwrite';
 import CategoryTabs from '../components/Gallery/CategoryTabs';
 import MasonryGrid from '../components/Gallery/MasonryGrid';
 
-export default function ExploreView({ onSelectPrompt }) {
+export default function ExploreView({ onSelectPrompt, onViewImage, onEditImage }) {
   const [activeCategory, setActiveCategory] = useState('Explore');
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -101,8 +101,9 @@ export default function ExploreView({ onSelectPrompt }) {
         ) : (
           <MasonryGrid 
             images={images} 
-            onImageClick={onSelectPrompt} 
-            actionLabel="Remix"
+            onImageClick={onViewImage}
+            onSelectPrompt={onSelectPrompt}
+            onEditImage={onEditImage}
           />
         )}
         
