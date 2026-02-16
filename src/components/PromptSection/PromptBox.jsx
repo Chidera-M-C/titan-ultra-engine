@@ -1,78 +1,78 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { Send } from 'lucide-react';
+import ToolPill from './ToolPill';
 import './PromptBox.css';
 
-const aspectRatioOptions = [
-  { value: '1:1', label: '1:1 Square' },
-  { value: '2:3', label: '2:3 Portrait' },
-  { value: '3:4', label: '3:4 Portrait' },
-  { value: '16:9', label: '16:9 Landscape' },
-  { value: '9:16', label: '9:16 Vertical' },
-];
-
-export default function PromptBox({ prompt, setPrompt, aspectRatio, setAspectRatio, onGenerate, loading }) {
-  const textareaRef = useRef(null);
-
-  // Auto-resize textarea
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
-    }
-  }, [prompt]);
-
-  const currentLabel = aspectRatioOptions.find(opt => opt.value === aspectRatio)?.label || aspectRatio;
-
+export default function PromptBox({ 
+  prompt, 
+  setPrompt, 
+  aspectRatio, 
+  setAspectRatio, 
+  onGenerate, 
+  loading,
+  collapsed = false 
+}) {
+  
   return (
-    <div className="prompt-container">
+    <div className={`prompt-container ${collapsed ? 'collapsed' : ''}`}>
       <textarea
-        ref={textareaRef}
+        className="prompt-input"
+        placeholder={collapsed ? "Describe what you want to see..." : "Generate new or upload & edit..."}
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
-        placeholder="Describe what you want to see..."
-        className="prompt-input"
-        rows="1"
+        rows={collapsed ? 1 : 3}
+        disabled={loading}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            onGenerate();
+          }
+        }}
       />
-
-      <div className="prompt-tools">
-        <div className="left-tools">
-          {/* ASPECT RATIO PILL */}
-          <div className="tool-pill">
-            <span className="pill-label">ASPECT RATIO</span>
-            <span className="pill-value">{currentLabel}</span>
-            <select
-              value={aspectRatio}
-              onChange={(e) => setAspectRatio(e.target.value)}
-              className="hidden-select"
-            >
-              {aspectRatioOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
+      
+      {/* Show tools only when expanded */}
+      {!collapsed && (
+        <div className="prompt-tools">
+          <div className="left-tools">
+            <ToolPill label="ASPECT RATIO" value={aspectRatio}>
+              <select 
+                className="hidden-select" 
+                value={aspectRatio} 
+                onChange={(e) => setAspectRatio(e.target.value)}
+              >
+                <option value="1:1">1:1 Square</option>
+                <option value="2:3">2:3 Portrait</option>
+                <option value="3:2">3:2 Landscape</option>
+                <option value="4:5">4:5 Tall</option>
+                <option value="16:9">16:9 Wide</option>
+              </select>
+            </ToolPill>
+            
+            <ToolPill label="MODEL" value="v3.0" />
           </div>
-
-          {/* MODEL PILL (static for now) */}
-          <div className="tool-pill">
-            <span className="pill-label">MODEL</span>
-            <span className="pill-value">v3.0</span>
-          </div>
+          
+          <button 
+            className="generate-fab" 
+            onClick={onGenerate} 
+            disabled={!prompt.trim() || loading}
+            title="Generate"
+          >
+            {loading ? <div className="spinner"></div> : <Send size={20} />}
+          </button>
         </div>
+      )}
 
-        {/* GENERATE BUTTON */}
-        <button
-          className="generate-fab"
-          onClick={onGenerate}
+      {/* Show send button when collapsed */}
+      {collapsed && (
+        <button 
+          className="generate-fab collapsed-send" 
+          onClick={onGenerate} 
           disabled={!prompt.trim() || loading}
+          title="Generate"
         >
-          {loading ? (
-            <div className="spinner" />
-          ) : (
-            <Send size={20} strokeWidth={2.5} />
-          )}
+          {loading ? <div className="spinner"></div> : <Send size={20} />}
         </button>
-      </div>
+      )}
     </div>
   );
 }
