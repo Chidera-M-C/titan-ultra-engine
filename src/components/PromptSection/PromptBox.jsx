@@ -20,7 +20,7 @@ export default function PromptBox({
         placeholder="Describe what you want to see..."
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
-        rows={collapsed ? 1 : 3}
+        rows={collapsed ? 1 : 2}
         disabled={loading}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey) {
