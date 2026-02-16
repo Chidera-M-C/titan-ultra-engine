@@ -43,7 +43,7 @@ export default function ActionButtons({
         <Download size={16} color="#ffffff" />
       </button>
 
-      {/* Edit Button */}
+      {/* Edit Button - Only show if handler provided */}
       {onEdit && (
         <button
           className="icon-btn"
