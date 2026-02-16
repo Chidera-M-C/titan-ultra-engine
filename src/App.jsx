@@ -203,12 +203,17 @@ export default function App() {
             image={image}
             loading={loading}
             error={error}
+            prompt={prompt}
             onClose={() => {
               setViewState('gallery');
               setImage(null);
               setError(null);
             }}
             onRetry={generateImage}
+            onOpenEdit={(img) => {
+              setEditingImage(img);
+              setEditModalOpen(true);
+            }}
           />
         )}
 
