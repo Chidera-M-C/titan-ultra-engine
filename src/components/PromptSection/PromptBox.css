@@ -12,6 +12,7 @@
   gap: 5px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.6);
 }
+
 .prompt-input {
   width: 100%;
   background: transparent;
@@ -23,8 +24,10 @@
   resize: none;
   padding: 6px 0;
   line-height: 1.5;
-  min-height: 60px; /* ADD THIS - controls height in expanded state */
-  max-height: 60px; /* ADD THIS - prevents growing */
+  height: 40px; /* Force specific height */
+  min-height: 40px;
+  max-height: 40px;
+  overflow-y: auto; /* Allow scrolling if text is long */
 }
 
 .prompt-input::placeholder {
