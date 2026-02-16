@@ -24,7 +24,7 @@
   resize: none;
   padding: 6px 0;
   line-height: 1.5;
-  height: 40px; /* Force specific height */
+  height: 30px; /* Force specific height */
   min-height: 40px;
   max-height: 40px;
   overflow-y: auto; /* Allow scrolling if text is long */
@@ -140,7 +140,7 @@
 
 /* Collapsed state styles */
 .prompt-container.collapsed {
-  max-width: 600px;
+  max-width: 850px; /* Change from 600px to 850px to match expanded state */
   padding: 6px;
   flex-direction: row;
   align-items: center;
