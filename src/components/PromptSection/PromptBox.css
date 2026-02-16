@@ -140,11 +140,12 @@
 
 /* Collapsed state styles */
 .prompt-container.collapsed {
-  max-width: 850px; /* Change from 600px to 850px to match expanded state */
-  padding: 6px;
+  max-width: 850px;
+  padding: 4px; /* Reduced from 6px */
   flex-direction: row;
   align-items: center;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Smoother easing */
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
+  margin: 0; /* Remove any margins */
 }
 
 .prompt-container.collapsed .prompt-input {
