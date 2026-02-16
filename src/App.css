@@ -242,6 +242,12 @@ body, html {
   display: block;
 }
 
+/* Collapsed header state */
+.top-header.collapsed {
+  padding: 0.5rem 2rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Heart Active State */
 .active-heart {
   background: rgba(255, 77, 77, 0.3) !important;
