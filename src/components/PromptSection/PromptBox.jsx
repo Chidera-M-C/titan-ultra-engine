@@ -17,7 +17,7 @@ export default function PromptBox({
     <div className={`prompt-container ${collapsed ? 'collapsed' : ''}`}>
       <textarea
         className="prompt-input"
-        placeholder={collapsed ? "Describe what you want to see..." : "Generate new or upload & edit..."}
+        placeholder="Describe what you want to see..."
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
         rows={collapsed ? 1 : 3}
@@ -30,8 +30,9 @@ export default function PromptBox({
         }}
       />
       
-      {/* Show tools only when expanded */}
-      {!collapsed && (
+      {/* Only show ONE button - either in tools or standalone */}
+      {!collapsed ? (
+        // Expanded state - show tools with button
         <div className="prompt-tools">
           <div className="left-tools">
             <ToolPill label="ASPECT RATIO" value={aspectRatio}>
@@ -60,12 +61,10 @@ export default function PromptBox({
             {loading ? <div className="spinner"></div> : <Send size={20} />}
           </button>
         </div>
-      )}
-
-      {/* Show send button when collapsed */}
-      {collapsed && (
+      ) : (
+        // Collapsed state - button inside container (inline with textarea)
         <button 
-          className="generate-fab collapsed-send" 
+          className="generate-fab" 
           onClick={onGenerate} 
           disabled={!prompt.trim() || loading}
           title="Generate"
