@@ -1,0 +1,91 @@
+/* Action buttons container */
+.action-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Smaller version for modals */
+.action-buttons.compact {
+  gap: 8px;
+  padding: 12px;
+}
+
+.action-buttons .icon-btn {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.action-buttons .icon-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-2px) scale(1.1);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.action-buttons .icon-btn:hover svg {
+  stroke: #000000;
+}
+
+.action-buttons .icon-btn svg {
+  display: block;
+  pointer-events: none;
+}
+
+/* Tooltips for action buttons */
+.action-buttons .icon-btn::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: rgba(17, 17, 17, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: #ffffff;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.2px;
+  z-index: 1000;
+  text-transform: capitalize;
+}
+
+.action-buttons .icon-btn:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Heart active state */
+.action-buttons .icon-btn.active-heart {
+  background: rgba(255, 77, 77, 0.3) !important;
+  border-color: #ff4d4d !important;
+}
+
+.action-buttons .icon-btn.active-heart svg {
+  fill: #ff4d4d !important;
+  stroke: #ff4d4d !important;
+}
