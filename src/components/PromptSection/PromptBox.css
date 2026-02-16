@@ -144,7 +144,7 @@
   padding: 6px;
   flex-direction: row;
   align-items: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s ease-out;
 }
 
 .prompt-container.collapsed .prompt-input {
@@ -162,9 +162,9 @@
 
 /* Smooth transition for expansion */
 .prompt-container {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s ease-out;
 }
 
 .prompt-input {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  ttransition: all 0.4s ease-out;
 }
