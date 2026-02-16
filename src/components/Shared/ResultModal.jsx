@@ -4,7 +4,7 @@ import { PulseLoader } from './Loader';
 import ActionButtons from './ActionButtons';
 import './ResultModal.css';
 
-export default function ResultModal({ image, loading, error, onClose, onRetry, prompt, onOpenEdit }) {
+export default function ResultModal({ image, loading, error, onClose, onRetry, prompt, onOpenEdit, onViewFullScreen }) {
   const [isMinimized, setIsMinimized] = useState(false);
 
   // Only allow closing when NOT loading
@@ -85,7 +85,17 @@ export default function ResultModal({ image, loading, error, onClose, onRetry, p
             {/* SUCCESS STATE - Image with overlay buttons */}
             {image && !loading && !error && (
               <>
-                <img src={image} alt="Generated result" className="gen-result" />
+                <img 
+                  src={image} 
+                  alt="Generated result" 
+                  className="gen-result"
+                  onClick={() => {
+                    if (onViewFullScreen) {
+                      onViewFullScreen(image);
+                    }
+                  }}
+                  style={{ cursor: 'zoom-in' }}
+                />
                 
                 {/* Action Buttons Overlay - appears on hover */}
                 <div className="result-action-overlay">
