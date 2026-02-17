@@ -8,9 +8,7 @@
   --text-secondary: #666666;
   --border: #2A2A2A;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
 body, html {
   width: 100%; height: 100%;
   background: var(--bg-app);
@@ -18,13 +16,11 @@ body, html {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow: hidden;
 }
-
 .app-shell {
   display: flex;
   width: 100vw;
   height: 100vh;
 }
-
 .main-content {
   margin-left: 260px;
   flex: 1;
@@ -33,7 +29,6 @@ body, html {
   height: 100vh;
   overflow: visible; /* Change from hidden to visible */
 }
-
 .scrollable-area {
   flex: 1;
   overflow-y: auto;
@@ -41,7 +36,6 @@ body, html {
   padding: 0 2rem 8rem 2rem !important;
   background: #101010;
 }
-
 /* MASTER HEADER FIX */
 .top-header {
   width: 100%;
@@ -55,11 +49,9 @@ body, html {
   z-index: 1;
   background: var(--bg-app);
   min-height: unset; /* ADD THIS */
-  height: auto;      /* ADD THIS */
+  height: auto; /* ADD THIS */
   justify-content: flex-start; /* ADD THIS - stops centering vertically */
-  transition: padding 0.55s ease;
 }
-
 .aesthetic-title {
   width: 100%;
   text-align: center;
@@ -70,7 +62,6 @@ body, html {
   text-transform: uppercase;
   letter-spacing: 1.5px;
 }
-
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -80,7 +71,6 @@ body, html {
   text-align: center;
   color: #666;
 }
-
 /* --- GALLERY GRID (for MyImagesView specifically) --- */
 .gallery-grid {
   display: grid;
@@ -91,7 +81,6 @@ body, html {
   margin: 0;
   padding: 1rem 0 0 -1rem;
 }
-
 /* --- GALLERY CARD --- */
 .gallery-card {
   position: relative;
@@ -103,21 +92,18 @@ body, html {
   cursor: zoom-in;
   border: 1px solid var(--border);
 }
-
 .gallery-card:hover {
   transform: scale(1.02);
   z-index: 10;
   box-shadow: 0 20px 40px rgba(0,0,0,0.6);
   border-color: rgba(255,255,255,0.2);
 }
-
 .gallery-card img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
-
 /* --- ICON OVERLAY --- */
 .gallery-overlay {
   position: absolute;
@@ -134,18 +120,15 @@ body, html {
   transition: opacity 0.3s ease;
   pointer-events: none;
 }
-
 .gallery-card:hover .gallery-overlay {
   opacity: 1;
   pointer-events: auto;
 }
-
 .overlay-actions {
   display: flex;
   gap: 12px;
   z-index: 10;
 }
-
 /* --- ICON BUTTONS --- */
 .icon-btn {
   background: rgba(255, 255, 255, 0.15);
@@ -165,22 +148,18 @@ body, html {
   flex-shrink: 0;
   position: relative;
 }
-
 .icon-btn:hover {
   background: rgba(255, 255, 255, 0.95);
   transform: translateY(-2px) scale(1.1);
   border-color: rgba(255, 255, 255, 0.5);
 }
-
 .icon-btn:hover svg {
   stroke: #000000;
 }
-
 .icon-btn svg {
   display: block;
   pointer-events: none;
 }
-
 /* --- ELEGANT TOOLTIPS (Pinterest-style) --- */
 .icon-btn::before {
   content: attr(data-tooltip);
@@ -205,7 +184,6 @@ body, html {
   z-index: 1000;
   text-transform: capitalize;
 }
-
 /* Tooltip arrow */
 .icon-btn::after {
   content: '';
@@ -223,45 +201,37 @@ body, html {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
 }
-
 .icon-btn:hover::before {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
   pointer-events: auto;
 }
-
 .icon-btn:hover::after {
   opacity: 1;
 }
-
 /* Prevent browser's default title tooltip - THIS IS THE KEY FIX */
 .icon-btn[title] {
   position: relative;
   overflow: visible;
 }
-
 /* Hide browser tooltip by making title attribute inaccessible to browser on hover */
 .gallery-overlay .icon-btn:hover::before,
 .gallery-overlay .icon-btn:hover::after {
   display: block;
 }
-
 /* Collapsed header state */
 .top-header.collapsed {
-  padding: 0.25rem 1rem 0.2rem 7.5rem;   /* ← just increase this number */
+  padding: 0.25rem 1rem 0.2rem 7.5rem; /* ← just increase this number */
   margin: 0;
   position: sticky;
   top: 0;
   z-index: 100;
   background: transparent;
-  transition: 
-    padding 0.55s ease,
-    background 0.55s ease;
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   overflow: visible;
   height: auto;
   min-height: unset;
 }
-
 /* Floating prompt when scrolled */
 .floating-prompt {
   position: fixed;
@@ -274,13 +244,11 @@ body, html {
   padding: 0 1rem;
   background: transparent;
 }
-
 /* Heart Active State */
 .active-heart {
   background: rgba(255, 77, 77, 0.3) !important;
   border-color: #ff4d4d !important;
 }
-
 .active-heart svg {
   fill: #ff4d4d !important;
   stroke: #ff4d4d !important;
