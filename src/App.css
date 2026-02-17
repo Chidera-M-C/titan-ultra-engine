@@ -275,14 +275,14 @@ body, html {
 /* Floating prompt when scrolled */
 .floating-prompt {
   position: fixed;
-  top: 12px;
+  top: 20px; /* Adjust this to move it down */
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
   max-width: 850px;
   z-index: 500;
   padding: 0 1rem;
-  background: transparent; /* ADD THIS */
+  background: transparent;
 }
 
 /* Heart Active State */
