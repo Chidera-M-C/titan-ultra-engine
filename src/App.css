@@ -268,21 +268,19 @@ body, html {
   transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* src/App.css */
-
-/* ... existing .top-header styles ... */
-
-/* ADD THIS BLOCK */
 .top-header.collapsed {
-  padding-top: 0.5rem;    /* Reduces top space significantly */
-  padding-bottom: 0.5rem; /* Balances the bottom */
-  min-height: 60px;       /* Forces the container to shrink */
-  
-  /* Optional: Adds a subtle blur backdrop so content scrolling under looks cool */
-  background: rgba(16, 16, 16, 0.95);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border);
+  padding: 0;
+  margin-top: 0px;
+  margin-bottom: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg-app);
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: visible;
+  justify-content: flex-start;
+  height: auto;
+  min-height: unset;
 }
 
 /* Heart Active State */
