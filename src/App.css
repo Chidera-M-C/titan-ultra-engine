@@ -54,6 +54,8 @@ body, html {
   position: relative;
   z-index: 1;
   background: var(--bg-app);
+  min-height: unset; /* ADD THIS */
+  height: auto;      /* ADD THIS */
 }
 
 .aesthetic-title {
