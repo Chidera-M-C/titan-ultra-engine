@@ -1,26 +1,48 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import ToolPill from './ToolPill';
 import './PromptBox.css';
 
-export default function PromptBox({ 
-  prompt, 
-  setPrompt, 
-  aspectRatio, 
-  setAspectRatio, 
-  onGenerate, 
+export default function PromptBox({
+  prompt,
+  setPrompt,
+  aspectRatio,
+  setAspectRatio,
+  onGenerate,
   loading,
-  collapsed = false 
+  collapsed = false
 }) {
-  
+  const textareaRef = useRef(null);
+
+  // Auto-resize textarea height based on content
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const resize = () => {
+      textarea.style.height = 'auto'; // reset to auto so we can measure scrollHeight
+      textarea.style.height = `${textarea.scrollHeight}px`; // set to exact content height
+    };
+
+    resize(); // initial resize
+
+    textarea.addEventListener('input', resize);
+    window.addEventListener('resize', resize);
+
+    return () => {
+      textarea.removeEventListener('input', resize);
+      window.removeEventListener('resize', resize);
+    };
+  }, [prompt]); // re-run when prompt changes
+
   return (
     <div className={`prompt-container ${collapsed ? 'collapsed' : ''}`}>
       <textarea
+        ref={textareaRef}
         className="prompt-input"
         placeholder="Describe what you want to see..."
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
-        rows={1}
         disabled={loading}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey) {
@@ -36,9 +58,9 @@ export default function PromptBox({
         <div className="prompt-tools">
           <div className="left-tools">
             <ToolPill label="ASPECT RATIO" value={aspectRatio}>
-              <select 
-                className="hidden-select" 
-                value={aspectRatio} 
+              <select
+                className="hidden-select"
+                value={aspectRatio}
                 onChange={(e) => setAspectRatio(e.target.value)}
               >
                 <option value="1:1">1:1 Square</option>
@@ -52,9 +74,9 @@ export default function PromptBox({
             <ToolPill label="MODEL" value="v3.0" />
           </div>
           
-          <button 
-            className="generate-fab" 
-            onClick={onGenerate} 
+          <button
+            className="generate-fab"
+            onClick={onGenerate}
             disabled={!prompt.trim() || loading}
             title="Generate"
           >
@@ -63,9 +85,9 @@ export default function PromptBox({
         </div>
       ) : (
         // Collapsed state - button inside container (inline with textarea)
-        <button 
-          className="generate-fab" 
-          onClick={onGenerate} 
+        <button
+          className="generate-fab"
+          onClick={onGenerate}
           disabled={!prompt.trim() || loading}
           title="Generate"
         >
