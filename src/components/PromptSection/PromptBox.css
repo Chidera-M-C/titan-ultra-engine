@@ -154,21 +154,26 @@
   padding: 6px 9px;
   flex-direction: row;
   align-items: center;
-  margin: 0 auto;
-  background: rgba(22, 22, 22, 0.7); /* Semi-transparent instead of solid */
+  margin: 0 auto;                     /* keeps it centered */
+  background: rgba(22, 22, 22, 0.7);  /* your semi-transparent you love */
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;                /* optional: slightly smaller radius looks nicer collapsed */
 }
 
+/* Make sure the input doesn't push left */
 .prompt-container.collapsed .prompt-input {
   font-size: 0.9rem;
   line-height: 1.3;
   height: 30px;
   min-height: 30px;
   max-height: 30px;
-  padding: 0 8px;
+  padding: 0 12px;                    /* ← increased left/right padding for balance */
+  flex: 1;                            /* ← lets it grow to fill space */
+  margin-right: 8px;                  /* space before button */
 }
 
+/* Generate button in collapsed mode */
 .collapsed-send {
   margin-left: 8px;
   flex-shrink: 0;
