@@ -40,13 +40,10 @@ body, html {
   overflow-x: hidden;
   padding: 0 2rem 8rem 2rem !important;
   background: #101010;
-
-  /* Firefox + modern browsers scrollbar */
   scrollbar-width: thin;
   scrollbar-color: #3A3A3A #101010;
 }
 
-/* Chrome/Edge/Brave/Opera scrollbar */
 .scrollable-area::-webkit-scrollbar {
   width: 8px;
 }
@@ -66,7 +63,7 @@ body, html {
   background: #4A4A4A;
 }
 
-/* MASTER HEADER FIX */
+/* MASTER HEADER */
 .top-header {
   width: 100%;
   display: flex;
@@ -80,7 +77,7 @@ body, html {
   background: var(--bg-app);
   min-height: unset;
   height: auto;
-  justify-content: flex-start;
+  transition: opacity 0.3s ease, height 0.3s ease, padding 0.3s ease;
 }
 
 .aesthetic-title {
@@ -92,6 +89,7 @@ body, html {
   color: #fff;
   text-transform: uppercase;
   letter-spacing: 1.5px;
+  transition: opacity 0.3s ease;
 }
 
 .empty-state {
@@ -256,7 +254,6 @@ body, html {
   opacity: 1;
 }
 
-/* Prevent browser default tooltip */
 .icon-btn[title] {
   position: relative;
   overflow: visible;
@@ -264,22 +261,19 @@ body, html {
 
 /* Collapsed header state */
 .top-header.collapsed {
-  padding: 0.25rem 1rem 0.2rem 7.5rem;
+  padding: 0;
   margin: 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: transparent;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  overflow: visible;
-  height: auto;
-  min-height: unset;
+  height: 0;
+  min-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 /* Floating prompt when scrolled */
 .floating-prompt {
   position: fixed;
-  top: 60px;
+  top: 20px;
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
@@ -287,6 +281,18 @@ body, html {
   z-index: 500;
   padding: 0 1rem;
   background: transparent;
+  animation: fadeInDown 0.3s ease forwards;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 /* Heart Active State */
@@ -294,6 +300,7 @@ body, html {
   background: rgba(255, 77, 77, 0.3) !important;
   border-color: #ff4d4d !important;
 }
+
 .active-heart svg {
   fill: #ff4d4d !important;
   stroke: #ff4d4d !important;
