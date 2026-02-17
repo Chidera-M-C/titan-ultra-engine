@@ -154,7 +154,7 @@
   padding: 6px 9px;
   flex-direction: row;
   align-items: center;
-  margin: 0 auto;                     /* keeps it centered */
+  margin: 0 auto 0 2.5rem;                    /* keeps it centered */
   background: rgba(22, 22, 22, 0.7);  /* your semi-transparent you love */
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
