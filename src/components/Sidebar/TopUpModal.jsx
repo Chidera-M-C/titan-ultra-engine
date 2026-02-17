@@ -3,10 +3,31 @@ import React from 'react';
 import { X, Zap } from 'lucide-react';
 import './TopUpModal.css';
 
-const CREDIT_OPTIONS = [
-  { id: 'small', credits: 50, price: 5, label: '$5.00' },
-  { id: 'medium', credits: 100, price: 10, label: '$10.00' },
-  { id: 'large', credits: 250, price: 20, label: '$20.00' },
+const CREDIT_PACKS = [
+  {
+    id: 'starter',
+    name: 'Starter',
+    credits: 100,
+    price: 10,
+    description: 'Perfect for quick experiments.',
+    popular: false
+  },
+  {
+    id: 'pro',
+    name: 'Pro Pack',
+    credits: 500,
+    price: 40,
+    description: 'Most popular for creators.',
+    popular: true // We will highlight this one
+  },
+  {
+    id: 'master',
+    name: 'Master',
+    credits: 1500,
+    price: 100,
+    description: 'Best value for heavy users.',
+    popular: false
+  }
 ];
 
 export default function TopUpModal({ isOpen, onClose, userId }) {
