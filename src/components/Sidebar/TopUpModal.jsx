@@ -1,8 +1,8 @@
-// src/components/Sidebar/TopUpModal.jsx
 import React from 'react';
 import { X, Zap } from 'lucide-react';
 import './TopUpModal.css';
 
+// 1. You MUST define this array so the .map() has something to read
 const CREDIT_PACKS = [
   {
     id: 'starter',
@@ -18,7 +18,7 @@ const CREDIT_PACKS = [
     credits: 500,
     price: 40,
     description: 'Most popular for creators.',
-    popular: true // We will highlight this one
+    popular: true
   },
   {
     id: 'master',
@@ -30,51 +30,35 @@ const CREDIT_PACKS = [
   }
 ];
 
-export default function TopUpModal({ isOpen, onClose, userId }) {
+export default function TopUpModal({ isOpen, onClose, onSelect }) {
+  // 2. Safety check: If not open, don't even try to render
   if (!isOpen) return null;
-
-  const handleSelectOption = async (option) => {
-    try {
-      // In production, this call should go to your backend/Appwrite Function
-      const response = await fetch('https://api.nowpayments.io/v1/invoice', {
-        method: 'POST',
-        headers: {
-          'x-api-key': 'YOUR_API_KEY', // Swap with your actual key
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          price_amount: option.price,
-          price_currency: 'usd',
-          pay_currency: 'usdc', // As we discussed: USDC
-          order_id: userId,
-          order_description: `${option.credits} Credits Top-up`,
-          success_url: window.location.origin,
-        })
-      });
-
-      const data = await response.json();
-      if (data.invoice_url) window.location.href = data.invoice_url;
-    } catch (err) {
-      console.error("Payment Error:", err);
-    }
-  };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <button className="close-btn" onClick={onClose}><X size={20}/></button>
+        <button className="close-btn" onClick={onClose}>
+          <X size={24} />
+        </button>
         
-        <h2 className="modal-title">Refuel Credits</h2>
-        <p className="modal-subtitle">Select a pack to continue generating.</p>
+        <h2 className="modal-title">Choose your pack</h2>
+        <p className="modal-subtitle">Credits never expire and work with all models.</p>
         
         <div className="options-grid">
-          {CREDIT_OPTIONS.map((opt) => (
-            <div key={opt.id} className="credit-option" onClick={() => handleSelectOption(opt)}>
-              <div className="option-info">
-                <Zap size={18} fill="#FFD700" color="#FFD700" />
-                <span className="option-amount">{opt.credits} Credits</span>
+          {CREDIT_PACKS.map((pack) => (
+            <div 
+              key={pack.id} 
+              className={`credit-pack-card ${pack.popular ? 'popular' : ''}`}
+              onClick={() => onSelect && onSelect(pack)}
+            >
+              {pack.popular && <span className="popular-badge">Best Value</span>}
+              <span className="pack-name">{pack.name}</span>
+              <div className="pack-credits">
+                <Zap size={24} fill="#FFD700" color="#FFD700" />
+                {pack.credits}
               </div>
-              <span className="option-price">{opt.label}</span>
+              <span className="pack-price">${pack.price}</span>
+              <p className="pack-desc">{pack.description}</p>
             </div>
           ))}
         </div>
