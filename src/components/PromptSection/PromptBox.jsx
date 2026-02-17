@@ -14,17 +14,17 @@ export default function PromptBox({
 }) {
   const textareaRef = useRef(null);
 
-  // Auto-resize textarea height based on content
+  // Auto-resize textarea height based on content (works in both expanded & collapsed)
   useEffect(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
     const resize = () => {
-      textarea.style.height = 'auto'; // reset to auto so we can measure scrollHeight
-      textarea.style.height = `${textarea.scrollHeight}px`; // set to exact content height
+      textarea.style.height = 'auto';                    // Reset to measure properly
+      textarea.style.height = `${textarea.scrollHeight}px`; // Grow to fit content
     };
 
-    resize(); // initial resize
+    resize(); // Initial resize on mount or prompt change
 
     textarea.addEventListener('input', resize);
     window.addEventListener('resize', resize);
@@ -33,7 +33,7 @@ export default function PromptBox({
       textarea.removeEventListener('input', resize);
       window.removeEventListener('resize', resize);
     };
-  }, [prompt]); // re-run when prompt changes
+  }, [prompt, collapsed]); // Re-run when prompt or collapsed state changes
 
   return (
     <div className={`prompt-container ${collapsed ? 'collapsed' : ''}`}>
