@@ -247,27 +247,17 @@ body, html {
 
 /* Collapsed header state */
 .top-header.collapsed {
+  padding: 0;
+  margin: 0;
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--bg-app);
-  
-  /* Kill all spacing */
-  padding: 5px 0; /* Tiny bit of breathing room at the very top */
-  margin: 0;
-  
-  /* Ensure it snaps to top */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  
+  background: transparent; /* THIS removes the black background */
+  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: visible;
   height: auto;
   min-height: unset;
-  overflow: visible;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
-
 /* Collapsed header state */
 .top-header.collapsed {
   padding: 0;
