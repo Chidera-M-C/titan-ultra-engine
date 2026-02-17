@@ -248,8 +248,8 @@ body, html {
 /* Collapsed header state */
 .top-header.collapsed {
   padding: 0;
-  margin-top: -10px; /* ADD THIS - pulls it up */
-  margin-bottom: 10px;
+  margin-top: 0px; /* ADD THIS - pulls it up */
+  margin-bottom: -10px;
   position: sticky;
   top: 0;
   z-index: 100;
