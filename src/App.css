@@ -282,6 +282,7 @@ body, html {
   max-width: 850px;
   z-index: 500;
   padding: 0 1rem;
+  background: transparent; /* ADD THIS */
 }
 
 /* Heart Active State */
