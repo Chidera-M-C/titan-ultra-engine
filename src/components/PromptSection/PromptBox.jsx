@@ -14,17 +14,21 @@ export default function PromptBox({
 }) {
   const textareaRef = useRef(null);
 
-  // Auto-resize textarea height based on content (works in both expanded & collapsed)
   useEffect(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
+    // Auto-grow height
     const resize = () => {
-      textarea.style.height = 'auto';                    // Reset to measure properly
-      textarea.style.height = `${textarea.scrollHeight}px`; // Grow to fit content
+      textarea.style.height = 'auto';
+      textarea.style.height = `${textarea.scrollHeight}px`;
     };
 
-    resize(); // Initial resize on mount or prompt change
+    resize();
+
+    // Custom scrollbar force (helps in some browsers)
+    textarea.style.scrollbarWidth = 'thin';
+    textarea.style.scrollbarColor = '#2A2A2A #161616';
 
     textarea.addEventListener('input', resize);
     window.addEventListener('resize', resize);
@@ -33,7 +37,7 @@ export default function PromptBox({
       textarea.removeEventListener('input', resize);
       window.removeEventListener('resize', resize);
     };
-  }, [prompt, collapsed]); // Re-run when prompt or collapsed state changes
+  }, [prompt, collapsed]);
 
   return (
     <div className={`prompt-container ${collapsed ? 'collapsed' : ''}`}>
@@ -54,7 +58,6 @@ export default function PromptBox({
       
       {/* Only show ONE button - either in tools or standalone */}
       {!collapsed ? (
-        // Expanded state - show tools with button
         <div className="prompt-tools">
           <div className="left-tools">
             <ToolPill label="ASPECT RATIO" value={aspectRatio}>
@@ -84,7 +87,6 @@ export default function PromptBox({
           </button>
         </div>
       ) : (
-        // Collapsed state - button inside container (inline with textarea)
         <button
           className="generate-fab"
           onClick={onGenerate}
