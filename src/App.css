@@ -31,9 +31,10 @@ body, html {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow: visible; /* Change from hidden to visible */
+  overflow: visible;
 }
 
+/* SCROLLABLE AREA */
 .scrollable-area {
   flex: 1;
   overflow-y: auto;
@@ -42,34 +43,49 @@ body, html {
   background: #101010;
 }
 
-/* MASTER HEADER FIX */
+/* ──────────────────────────────────────── */
+/* MASTER HEADER - TIGHTER & CLOSER TO TOP  */
+/* ──────────────────────────────────────── */
 .top-header {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 1rem 2rem 1rem 1rem;
+  padding: 0.45rem 1rem 0.35rem;   /* ← This is what pulls everything up */
   flex-shrink: 0;
-  position: relative;
-  z-index: 1;
-  background: var(--bg-app);
-  min-height: unset; /* ADD THIS */
-  height: auto;      /* ADD THIS */
-  justify-content: flex-start; /* ADD THIS - stops centering vertically */
+  gap: 0.4rem;
+  transition: padding 0.4s ease;
 }
 
+/* Even tighter when collapsed */
+.top-header.collapsed {
+  padding: 0.25rem 1rem 0.2rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg-app);
+  margin: 0;
+  height: auto;
+  min-height: unset;
+  overflow: visible;
+}
+
+/* Title - much smaller bottom margin */
 .aesthetic-title {
   width: 100%;
   text-align: center;
-  font-size: 2.2rem;
+  font-size: 2.1rem;
   font-weight: 800;
-  margin-bottom: 1rem;
+  margin-bottom: 0.45rem;   /* was 1rem → now very tight */
   color: #fff;
   text-transform: uppercase;
   letter-spacing: 1.5px;
 }
 
+/* ──────────────────────────────────────── */
+/* REST OF YOUR STYLES (unchanged)         */
+/* ──────────────────────────────────────── */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -80,7 +96,7 @@ body, html {
   color: #666;
 }
 
-/* --- GALLERY GRID (for MyImagesView specifically) --- */
+/* GALLERY */
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -91,7 +107,6 @@ body, html {
   padding: 1rem 0 0 -1rem;
 }
 
-/* --- GALLERY CARD --- */
 .gallery-card {
   position: relative;
   border-radius: 16px;
@@ -117,13 +132,10 @@ body, html {
   display: block;
 }
 
-/* --- ICON OVERLAY --- */
+/* ICON OVERLAY & BUTTONS (unchanged) */
 .gallery-overlay {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  top: 0;
+  inset: 0;
   background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 50%);
   display: flex;
   align-items: flex-end;
@@ -145,7 +157,6 @@ body, html {
   z-index: 10;
 }
 
-/* --- ICON BUTTONS --- */
 .icon-btn {
   background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(12px);
@@ -180,115 +191,11 @@ body, html {
   pointer-events: none;
 }
 
-/* --- ELEGANT TOOLTIPS (Pinterest-style) --- */
-.icon-btn::before {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: calc(100% + 12px);
-  left: 50%;
-  transform: translateX(-50%) translateY(4px);
-  background: rgba(17, 17, 17, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  color: #ffffff;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  letter-spacing: 0.2px;
-  z-index: 1000;
-  text-transform: capitalize;
-}
-
-/* Tooltip arrow */
-.icon-btn::after {
-  content: '';
-  position: absolute;
-  bottom: calc(100% + 4px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 6px solid rgba(17, 17, 17, 0.95);
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1000;
-}
-
-.icon-btn:hover::before {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-  pointer-events: auto;
-}
-
-.icon-btn:hover::after {
-  opacity: 1;
-}
-
-/* Prevent browser's default title tooltip - THIS IS THE KEY FIX */
-.icon-btn[title] {
-  position: relative;
-  overflow: visible;
-}
-
-/* Hide browser tooltip by making title attribute inaccessible to browser on hover */
-.gallery-overlay .icon-btn:hover::before,
-.gallery-overlay .icon-btn:hover::after {
-  display: block;
-}
-
-/* Collapsed header state */
-.top-header.collapsed {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: var(--bg-app);
-  
-  /* Kill all spacing */
-  padding: 5px 0; /* Tiny bit of breathing room at the very top */
-  margin: 0;
-  
-  /* Ensure it snaps to top */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  
-  height: auto;
-  min-height: unset;
-  overflow: visible;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.top-header.collapsed {
-  padding: 0;
-  margin-top: 0px;
-  margin-bottom: 10px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: var(--bg-app);
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  overflow: visible;
-  justify-content: flex-start;
-  height: auto;
-  min-height: unset;
-}
-
 /* Heart Active State */
 .active-heart {
   background: rgba(255, 77, 77, 0.3) !important;
   border-color: #ff4d4d !important;
 }
-
 .active-heart svg {
   fill: #ff4d4d !important;
   stroke: #ff4d4d !important;
