@@ -1,22 +1,26 @@
 import React from 'react';
-import { Zap } from 'lucide-react';
+import { Zap, Plus } from 'lucide-react';
 
-export default function CreditsCard() {
-  // Replace with real data from auth/context
-  const plan = "Pro Plan PRO";
-  const creditsLeft = 120;
-
+export default function CreditsCard({ credits = 0, onTopUp }) {
+  // Use 'credits' prop to show real data from your user state
+  
   return (
     <div className="credits-card">
-      <div className="credits-plan">
-        <span className="plan-tag">{plan}</span>
+      <div className="credits-header">
+        <span className="balance-label">CREDITS BALANCE</span>
+        <div className="credits-display">
+          <Zap size={18} className="zap-icon" fill="currentColor" />
+          <span className="credit-count">{credits}</span>
+        </div>
       </div>
-      <div className="credits-left">
-        {creditsLeft} fast generations left
-      </div>
-      <button className="upgrade-btn">
-        <Zap size={16} />
-        Upgrade
+      
+      <p className="credits-usage-text">
+        Ready for high-speed generation
+      </p>
+
+      <button className="topup-btn" onClick={onTopUp}>
+        <Plus size={16} />
+        Buy Credits
       </button>
     </div>
   );
