@@ -1,91 +1,75 @@
 /* src/components/Sidebar/TopUpModal.css */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(8px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: #111;
-  border: 1px solid #333;
-  border-radius: 24px;
-  padding: 32px;
-  width: 90%;
-  max-width: 500px;
-  position: relative;
-  text-align: center;
-}
-
-.close-btn {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: none;
-  border: none;
-  color: #666;
-  cursor: pointer;
-}
-
-.modal-title {
-  font-size: 24px;
-  font-weight: 800;
-  margin-bottom: 8px;
-  color: #fff;
-}
-
-.modal-subtitle {
-  color: #888;
-  margin-bottom: 24px;
-}
 
 .options-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 columns for the 3 packs */
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.credit-pack-card {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 20px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.credit-option {
-  background: #1a1a1a;
-  border: 1px solid #2a2a2a;
-  padding: 16px 24px;
-  border-radius: 12px;
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.credit-option:hover {
-  border-color: #fff;
+/* Hover Effect */
+.credit-pack-card:hover {
+  transform: translateY(-8px);
+  border-color: #555;
   background: #222;
-  transform: scale(1.02);
 }
 
-.option-info {
+/* Highlighting the Popular Pack */
+.credit-pack-card.popular {
+  border-color: #FFD700;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
+}
+
+.popular-badge {
+  position: absolute;
+  top: -12px;
+  background: #FFD700;
+  color: #000;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 4px 12px;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+.pack-name {
+  color: #888;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.pack-credits {
+  font-size: 32px;
+  font-weight: 800;
+  color: #fff;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 4px;
 }
 
-.option-amount {
+.pack-price {
   font-size: 18px;
+  color: #FFD700;
+  margin: 15px 0;
   font-weight: 700;
-  color: #fff;
 }
 
-.option-price {
-  font-weight: 700;
-  color: #FFD700; /* Gold */
-  background: rgba(255, 215, 0, 0.1);
-  padding: 4px 10px;
-  border-radius: 6px;
+.pack-desc {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
 }
