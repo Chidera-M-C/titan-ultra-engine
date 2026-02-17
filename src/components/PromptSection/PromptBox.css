@@ -144,7 +144,7 @@
   flex-direction: row;
   align-items: center;
   transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
-  margin: -30px auto 0 auto; /* Pulls it up more */
+  margin: -50px auto 0 auto; /* Pulls it up more */
 }
 
 .prompt-container.collapsed .prompt-input {
