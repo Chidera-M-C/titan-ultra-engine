@@ -203,18 +203,18 @@ export default function App() {
 
           {/* Only show full header when NOT collapsed */}
           {!promptCollapsed && (
-            <header className="top-header">
-              <h1 className="aesthetic-title">What will you create?</h1>
-              <PromptBox
-                prompt={prompt}
-                setPrompt={setPrompt}
-                aspectRatio={aspectRatio}
-                setAspectRatio={setAspectRatio}
-                onGenerate={generateImage}
-                loading={loading}
-                collapsed={false}
-              />
-            </header>
+           <header className={`top-header ${promptCollapsed ? 'collapsed' : ''}`}>
+            {!promptCollapsed && <h1 className="aesthetic-title">What will you create?</h1>}
+            <PromptBox
+              prompt={prompt}
+              setPrompt={setPrompt}
+              aspectRatio={aspectRatio}
+              setAspectRatio={setAspectRatio}
+              onGenerate={generateImage}
+              loading={loading}
+              collapsed={promptCollapsed}
+            />
+          </header>
           )}
 
           {/* Floating collapsed prompt - floats over content */}
