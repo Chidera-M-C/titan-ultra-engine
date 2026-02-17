@@ -86,7 +86,7 @@
 .generate-fab {
   position: absolute;
   bottom: 8px;
-  right: 8px;
+  right: 18px;                      /* ← changed from 8px to 18px */
   width: 40px;
   height: 40px;
   border-radius: 16px;
@@ -99,7 +99,7 @@
   transition: all 0.2s ease;
   cursor: pointer;
   flex-shrink: 0;
-  z-index: 10; /* above textarea content */
+  z-index: 10;
 }
 
 .generate-fab:hover:not(:disabled) {
