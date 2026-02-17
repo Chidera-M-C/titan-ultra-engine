@@ -31,7 +31,7 @@ body, html {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  overflow: hidden;
+  overflow: visible; /* Change from hidden to visible */
 }
 
 .scrollable-area {
@@ -247,13 +247,17 @@ body, html {
 
 /* Collapsed header state */
 .top-header.collapsed {
-  padding: 0.5rem 0 0 0; /* Add top padding to move it down from edge */
+  padding: 0.5rem 0 0 0;
   margin-bottom: 10px;
   position: sticky;
   top: 0;
   z-index: 100;
   background: var(--bg-app);
   transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  overflow: visible;
+  justify-content: flex-start;
+  height: auto;
+  min-height: unset;
 }
 
 /* Heart Active State */
