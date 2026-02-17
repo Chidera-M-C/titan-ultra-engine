@@ -260,7 +260,7 @@ body, html {
 }
 /* Collapsed header state */
 .top-header.collapsed {
-  padding: 0;
+  padding: 0.25rem 1rem 0.2rem 2.4rem;
   margin: 0;
   position: sticky;
   top: 0;
