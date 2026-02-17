@@ -4,12 +4,21 @@
   background: #161616;
   border: 1px solid #252525;
   border-radius: 20px;
-  padding: 9px; /* Fixed - was missing semicolon */
+  padding: 9px;
   display: flex;
   flex-direction: column;
   gap: 5px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  
+  /* ── Added for smooth growth in both modes ── */
+  min-height: 58px;
+  height: auto;
+  transition: 
+    min-height 0.5s ease,
+    height 0.5s ease,
+    padding 0.5s ease,
+    border-radius 0.5s ease,
+    background 0.5s ease;
 }
 
 .prompt-input {
@@ -20,15 +29,16 @@
   color: #ECECEC;
   font-size: 1rem;
   font-family: 'Courier New', Courier, monospace;
-  resize: vertical;               /* ← allows vertical resize by user if wanted */
-  padding: 8px 12px;              /* ← better padding for multi-line feel */
+  resize: none;                     /* JS handles resizing now */
+  padding: 8px 12px;
   line-height: 1.5;
-  /* Remove fixed height limits — let it grow */
-  min-height: 40px;               /* starting height (1 line) */
-  max-height: 180px;              /* safety cap so it doesn't grow forever */
-  height: auto;                   /* ← key: auto height based on content */
-  overflow-y: auto;               /* scroll if it hits max-height */
-  transition: height 0.3s ease;   /* smooth height change when typing */
+  
+  /* ── Auto-grow in expanded mode ── */
+  height: auto;
+  min-height: 40px;
+  max-height: 180px;
+  overflow-y: auto;
+  transition: height 0.5s ease;
 }
 
 .prompt-input::placeholder {
@@ -36,6 +46,51 @@
   color: #666;
   opacity: 1;
 }
+
+/* Collapsed state - now also auto-grows (but with lower cap) */
+.prompt-container.collapsed {
+  max-width: 850px;
+  padding: 6px 9px;
+  flex-direction: row;
+  align-items: center;
+  margin: 0 auto 0 5.5rem;
+  background: rgba(22, 22, 22, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  
+  /* ── Allow container to grow with input ── */
+  min-height: 48px;
+  height: auto;
+  transition: 
+    min-height 0.5s ease,
+    height 0.5s ease,
+    padding 0.5s ease,
+    border-radius 0.5s ease,
+    background 0.5s ease;
+}
+
+.prompt-container.collapsed .prompt-input {
+  font-size: 0.9rem;
+  line-height: 1.3;
+  
+  /* ── Auto-grow in collapsed mode too ── */
+  height: auto;
+  min-height: 30px;
+  max-height: 120px;                /* Lower cap so it stays compact when floating */
+  padding: 6px 12px;
+  overflow-y: auto;
+  flex: 1;
+  margin-right: 8px;
+}
+
+/* Generate button in collapsed mode */
+.collapsed-send {
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Keep the rest of your file unchanged ── */
 .prompt-tools {
   display: flex;
   justify-content: space-between;
@@ -133,33 +188,4 @@
   max-width: 20px !important;
   max-height: 20px !important;
   display: block;
-}
-/* Collapsed state */
-.prompt-container.collapsed {
-  max-width: 850px;
-  padding: 6px 9px;
-  flex-direction: row;
-  align-items: center;
-  margin: 0 auto 0 5.5rem; /* keeps it centered */
-  background: rgba(22, 22, 22, 0.7); /* your semi-transparent you love */
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 16px; /* optional: slightly smaller radius looks nicer collapsed */
-}
-
-.prompt-container.collapsed .prompt-input {
-  font-size: 0.9rem;
-  line-height: 1.3;
-  min-height: 30px;
-  max-height: 30px;
-  height: 30px !important;        /* force single line in collapsed mode */
-  padding: 0 12px;
-  overflow-y: hidden;             /* no scroll in collapsed — looks cleaner */
-  resize: none;                   /* disable manual resize when collapsed */
-}
-
-/* Generate button in collapsed mode */
-.collapsed-send {
-  margin-left: 8px;
-  flex-shrink: 0;
 }
