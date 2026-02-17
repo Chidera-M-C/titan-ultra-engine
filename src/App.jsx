@@ -1,4 +1,3 @@
-// Updated src/App.jsx (full file with only the necessary changes)
 import React, { useState, useEffect } from 'react';
 import './App.css';
 // --- APPWRITE & AUTH ---
@@ -31,11 +30,9 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // --- EDIT MODAL STATE ---
+  // --- MODAL STATES ---
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingImage, setEditingImage] = useState(null);
-
-  // --- IMAGE VIEW MODAL STATE ---
   const [viewImageModalOpen, setViewImageModalOpen] = useState(false);
   const [viewingImageUrl, setViewingImageUrl] = useState(null);
 
@@ -93,7 +90,7 @@ export default function App() {
     setLoading(true);
     setError(null);
     setImage(null);
- 
+
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
@@ -102,10 +99,11 @@ export default function App() {
       });
       if (!response.ok) throw new Error(`Server Error: ${response.statusText}`);
       const data = await response.json();
-    
+
       if (data.status === 'COMPLETED' && data.output?.image) {
         const base64Image = data.output.image;
         setImage(base64Image);
+
         if (user) {
           try {
             await saveAiImage(user.$id, base64Image, prompt);
@@ -170,7 +168,7 @@ export default function App() {
     switch (activeTab) {
       case 'explore':
         return (
-          <ExploreView 
+          <ExploreView
             onSelectPrompt={handleSelectPrompt}
             onViewImage={handleViewImage}
             onEditImage={handleEditImage}
@@ -200,24 +198,23 @@ export default function App() {
       <div className="app-shell">
         <Sidebar activeTab={activeTab} onNavigate={handleNavigation} />
         <main className="main-content">
-
-          {/* Only show full header when NOT collapsed */}
+          {/* Full header when NOT collapsed */}
           {!promptCollapsed && (
-           <header className={`top-header ${promptCollapsed ? 'collapsed' : ''}`}>
-            {!promptCollapsed && <h1 className="aesthetic-title">What will you create?</h1>}
-            <PromptBox
-              prompt={prompt}
-              setPrompt={setPrompt}
-              aspectRatio={aspectRatio}
-              setAspectRatio={setAspectRatio}
-              onGenerate={generateImage}
-              loading={loading}
-              collapsed={promptCollapsed}
-            />
-          </header>
+            <header className="top-header">
+              <h1 className="aesthetic-title">What will you create?</h1>
+              <PromptBox
+                prompt={prompt}
+                setPrompt={setPrompt}
+                aspectRatio={aspectRatio}
+                setAspectRatio={setAspectRatio}
+                onGenerate={generateImage}
+                loading={loading}
+                collapsed={false}
+              />
+            </header>
           )}
 
-          {/* Floating collapsed prompt - floats over content */}
+          {/* Floating collapsed prompt when scrolled */}
           {promptCollapsed && (
             <div className="floating-prompt">
               <PromptBox
@@ -236,8 +233,8 @@ export default function App() {
             {renderActiveView()}
           </div>
         </main>
-        
-        {/* Generation Modal - floats everywhere */}
+
+        {/* Modals */}
         {(viewState === 'result' || loading || image || error) && (
           <ResultModal
             image={image}
@@ -261,7 +258,6 @@ export default function App() {
           />
         )}
 
-        {/* Edit Modal */}
         {editModalOpen && (
           <EditModal
             image={editingImage?.url}
@@ -276,7 +272,6 @@ export default function App() {
           />
         )}
 
-        {/* Image View Modal - Full screen */}
         {viewImageModalOpen && (
           <ImageViewModal
             imageUrl={viewingImageUrl}
