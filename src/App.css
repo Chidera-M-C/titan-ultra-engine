@@ -244,6 +244,33 @@ body, html {
   padding: 0 1rem;
   background: transparent;
 }
+
+/* Custom scrollbar for dark theme - subtle dark gray */
+.scrollable-area::-webkit-scrollbar {
+  width: 8px;                    /* Thinner scrollbar */
+}
+
+.scrollable-area::-webkit-scrollbar-track {
+  background: #101010;           /* Matches your --bg-app */
+  border-radius: 10px;
+}
+
+.scrollable-area::-webkit-scrollbar-thumb {
+  background: #2A2A2A;           /* Dark gray thumb (matches --border or --bg-pill) */
+  border-radius: 10px;
+  border: 2px solid #101010;     /* Adds padding effect around thumb */
+}
+
+.scrollable-area::-webkit-scrollbar-thumb:hover {
+  background: #3A3A3A;           /* Slightly lighter on hover for visibility */
+}
+
+/* Firefox support (uses these properties) */
+.scrollable-area {
+  scrollbar-width: thin;
+  scrollbar-color: #2A2A2A #101010; /* thumb | track */
+}
+
 /* Heart Active State */
 .active-heart {
   background: rgba(255, 77, 77, 0.3) !important;
