@@ -155,6 +155,9 @@
   flex-direction: row;
   align-items: center;
   margin: 0 auto;
+  background: rgba(22, 22, 22, 0.85); /* Semi-transparent */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .prompt-container.collapsed .prompt-input {
