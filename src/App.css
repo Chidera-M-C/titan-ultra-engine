@@ -283,6 +283,18 @@ body, html {
   min-height: unset;
 }
 
+/* Floating prompt when scrolled */
+.floating-prompt {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 850px;
+  z-index: 500;
+  padding: 0 1rem;
+}
+
 /* Heart Active State */
 .active-heart {
   background: rgba(255, 77, 77, 0.3) !important;
