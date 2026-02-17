@@ -189,3 +189,29 @@
   max-height: 20px !important;
   display: block;
 }
+
+/* Custom dark scrollbar for the prompt textarea */
+.prompt-input::-webkit-scrollbar {
+  width: 6px;                     /* Thinner for small input area */
+}
+
+.prompt-input::-webkit-scrollbar-track {
+  background: #161616;            /* Matches prompt background */
+  border-radius: 10px;
+}
+
+.prompt-input::-webkit-scrollbar-thumb {
+  background: #2A2A2A;            /* Dark gray thumb */
+  border-radius: 10px;
+  border: 2px solid #161616;      /* Blends with background */
+}
+
+.prompt-input::-webkit-scrollbar-thumb:hover {
+  background: #3A3A3A;            /* Subtle hover lift */
+}
+
+/* Firefox support for textarea scrollbar */
+.prompt-input {
+  scrollbar-width: thin;
+  scrollbar-color: #2A2A2A #161616;
+}
