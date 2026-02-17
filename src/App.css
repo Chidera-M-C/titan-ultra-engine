@@ -57,6 +57,7 @@ body, html {
   min-height: unset; /* ADD THIS */
   height: auto;      /* ADD THIS */
   justify-content: flex-start; /* ADD THIS - stops centering vertically */
+  transition: padding 0.55s ease;
 }
 
 .aesthetic-title {
@@ -253,7 +254,9 @@ body, html {
   top: 0;
   z-index: 100;
   background: transparent;
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: 
+    padding 0.55s ease,
+    background 0.55s ease;
   overflow: visible;
   height: auto;
   min-height: unset;
