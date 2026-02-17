@@ -75,7 +75,7 @@ export default function App() {
       const scrollable = document.querySelector('.scrollable-area');
       if (scrollable) {
         const scrollTop = scrollable.scrollTop;
-        setPromptCollapsed(scrollTop > 100); // Collapse after 100px scroll
+        setPromptCollapsed(scrollTop > 100);
       }
     };
 
@@ -105,25 +105,21 @@ export default function App() {
     
       if (data.status === 'COMPLETED' && data.output?.image) {
         const base64Image = data.output.image;
-        setImage(base64Image); // Show in modal immediately
+        setImage(base64Image);
         if (user) {
           try {
             await saveAiImage(user.$id, base64Image, prompt);
-          
-            // Add to local gallery immediately using the base64 string
             setUserGallery(prev => [{
               id: Date.now(),
               url: base64Image,
               prompt
             }, ...prev]);
-            // Refresh from DB to get permanent URLs
             loadGallery();
           } catch (saveErr) {
             console.error("Database save failed:", saveErr);
             setError("Image generated but failed to save to history.");
           }
         }
-     
       } else {
         throw new Error(data.error || "GPU Generation failed.");
       }
@@ -145,7 +141,6 @@ export default function App() {
     }
   };
 
-  // Updated: only scroll when actually loading a new prompt (not when clearing)
   const handleSelectPrompt = (selectedPrompt) => {
     setPrompt(selectedPrompt);
     if (selectedPrompt) {
@@ -153,13 +148,11 @@ export default function App() {
     }
   };
 
-  // Updated: Open full-screen image view instead of result modal
   const handleViewImage = (img) => {
     setViewingImageUrl(img.url);
     setViewImageModalOpen(true);
   };
 
-  // Handler for opening edit modal
   const handleEditImage = (img) => {
     setEditingImage(img);
     setEditModalOpen(true);
@@ -207,18 +200,38 @@ export default function App() {
       <div className="app-shell">
         <Sidebar activeTab={activeTab} onNavigate={handleNavigation} />
         <main className="main-content">
-          <header className={`top-header ${promptCollapsed ? 'collapsed' : ''}`}>
-            {!promptCollapsed && <h1 className="aesthetic-title">What will you create?</h1>}
-            <PromptBox
-              prompt={prompt}
-              setPrompt={setPrompt}
-              aspectRatio={aspectRatio}
-              setAspectRatio={setAspectRatio}
-              onGenerate={generateImage}
-              loading={loading}
-              collapsed={promptCollapsed}
-            />
-          </header>
+
+          {/* Only show full header when NOT collapsed */}
+          {!promptCollapsed && (
+            <header className="top-header">
+              <h1 className="aesthetic-title">What will you create?</h1>
+              <PromptBox
+                prompt={prompt}
+                setPrompt={setPrompt}
+                aspectRatio={aspectRatio}
+                setAspectRatio={setAspectRatio}
+                onGenerate={generateImage}
+                loading={loading}
+                collapsed={false}
+              />
+            </header>
+          )}
+
+          {/* Floating collapsed prompt - floats over content */}
+          {promptCollapsed && (
+            <div className="floating-prompt">
+              <PromptBox
+                prompt={prompt}
+                setPrompt={setPrompt}
+                aspectRatio={aspectRatio}
+                setAspectRatio={setAspectRatio}
+                onGenerate={generateImage}
+                loading={loading}
+                collapsed={true}
+              />
+            </div>
+          )}
+
           <div className="scrollable-area">
             {renderActiveView()}
           </div>
@@ -259,7 +272,6 @@ export default function App() {
             onRetry={(editPrompt) => {
               console.log('Edit with prompt:', editPrompt);
               console.log('Original image:', editingImage);
-              // You'll connect this to your actual edit/generation API later
             }}
           />
         )}
