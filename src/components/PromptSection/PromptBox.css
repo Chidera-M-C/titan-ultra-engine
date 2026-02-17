@@ -6,7 +6,7 @@
   border: 1px solid 
 #252525;
   border-radius: 20px;
-  padding: 9px;
+  padding: 4px 9px
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -24,7 +24,7 @@
   resize: none;
   padding: 6px 0;
   line-height: 1.5;
-  height: 20px;
+  height: 40px;
   min-height: 40px;
   max-height: 40px;
   overflow: hidden; /* Change from overflow-y: auto to hidden */
