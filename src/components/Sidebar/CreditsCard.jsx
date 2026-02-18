@@ -22,31 +22,40 @@ export default function CreditsCard({ credits, userId }) {
       );
 
       const response = JSON.parse(execution.responseBody);
-
       if (response.url) {
         window.location.href = response.url;
       } else {
-        alert("Payment link generation failed. check function logs.");
+        alert("Payment link generation failed.");
       }
     } catch (err) {
-      alert(`Connection Error: ${err.message}. Your Project ID is likely wrong.`);
+      alert(`Connection Error: ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <>
-      <div className="credits-card">
-        <div className="credits-info">
+    <div className="sidebar-card-container">
+      <div className="credits-display-card">
+        <div className="credits-header">
           <span className="credits-label">Available Credits</span>
-          <span className="credits-value">{credits ?? 0}</span>
+          <span className="credits-count">{credits ?? 0}</span>
         </div>
-        <button className="topup-btn" onClick={() => setShowModal(true)} disabled={loading}>
+        
+        <button 
+          className="premium-topup-button" 
+          onClick={() => setShowModal(true)} 
+          disabled={loading}
+        >
           {loading ? "Connecting..." : "Top Up"}
         </button>
       </div>
-      <TopUpModal isOpen={showModal} onClose={() => setShowModal(false)} onSelect={handlePackSelect} />
-    </>
+
+      <TopUpModal 
+        isOpen={showModal} 
+        onClose={() => setShowModal(false)} 
+        onSelect={handlePackSelect} 
+      />
+    </div>
   );
 }
