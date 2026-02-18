@@ -47,16 +47,18 @@ export default function App() {
       return;
     }
     try {
-      // Wallet sync
+      // --- WALLET INITIALIZATION WITH FREE CREDITS ---
       try {
         const userDoc = await db.getDocument('main_db', 'users', user.$id);
         setCredits(userDoc.credits || 0);
       } catch (err) {
         if (err.code === 404) {
+          // GIVE 10 FREE CREDITS TO NEW USERS
           const newWallet = await db.createDocument('main_db', 'users', user.$id, {
-            credits: 0
+            credits: 10 
           });
           setCredits(newWallet.credits);
+          console.log("🎁 New user detected: 10 free credits granted.");
         }
       }
 
@@ -114,9 +116,9 @@ export default function App() {
       });
     } catch (err) {
       console.error("Database sync failed, reverting UI:", err);
-      // Revert if DB fails
+      // Revert UI state if the database update fails
       setCredits(prev => prev + amount);
-      setError("Failed to sync credits with server.");
+      setError("Server sync failed. Your credits have been restored.");
     }
   };
 
@@ -124,7 +126,7 @@ export default function App() {
   const generateImage = async () => {
     if (!prompt || loading) return;
 
-    // Credit Gate
+    // Credit Gate (Requires 2 credits)
     if (credits < 2) {
       setError("Insufficient credits. You need 2 credits per image.");
       setViewState('result');
@@ -151,7 +153,7 @@ export default function App() {
         setImage(base64Image);
 
         if (user) {
-          // LIVE DEDUCTION HAPPENS HERE
+          // LIVE DEDUCTION: Happening as soon as image is confirmed
           await deductCreditsLive(2);
 
           try {
@@ -247,7 +249,7 @@ export default function App() {
                 onGenerate={generateImage}
                 loading={loading}
                 collapsed={false}
-                credits={credits} // Pass credits to show cost on button if needed
+                credits={credits} 
               />
             </header>
           )}
