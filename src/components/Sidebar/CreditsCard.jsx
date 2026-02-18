@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Functions } from 'appwrite'; 
-import { client } from '../../lib/appwrite'; // Corrected path to src/lib/appwrite.js
+import { client, functions } from '../../lib/appwrite'; // Both come from your lib now
 import TopUpModal from './TopUpModal';
-import './CreditsCard.css'; // Verified path from saved info
+import './CreditsCard.css';
 
 export default function CreditsCard({ credits, userId }) {
   const [showModal, setShowModal] = useState(false);
