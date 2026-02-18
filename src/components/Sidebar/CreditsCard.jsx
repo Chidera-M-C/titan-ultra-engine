@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { client } from '../../appwrite'; // Make sure you have the Appwrite SDK installed
-import { client } from '../../appwrite'; // Import your configured Appwrite client
+import { Functions } from 'appwrite'; 
+import { client } from '../../appwrite'; // Only ONE import for client
 import TopUpModal from './TopUpModal';
+
+// ... rest of your code ...
 
 export default function CreditsCard({ credits, userId }) {
   const [showModal, setShowModal] = useState(false);
