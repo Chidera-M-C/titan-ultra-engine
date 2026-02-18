@@ -1,4 +1,4 @@
-import { Client, Account, Databases, Storage } from 'appwrite';
+import { Client, Account, Databases, Storage, ID, Query, Functions } from 'appwrite';
 
 const client = new Client()
     .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT)
@@ -6,8 +6,10 @@ const client = new Client()
 
 export const account = new Account(client);
 export const storage = new Storage(client);
+export const db = new Databases(client);
 
-// Use 'Databases' - it's compatible with your "Tables" UI
-export const db = new Databases(client); 
+// Add this so you can use it in your CreditsCard
+export const functions = new Functions(client); 
 
-export { client, ID, Query } from 'appwrite';
+// FIX: Export the 'client' you created above, and the helpers from the library
+export { client, ID, Query };
