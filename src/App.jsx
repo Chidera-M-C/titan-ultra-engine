@@ -47,7 +47,7 @@ export default function App() {
       return;
     }
     try {
-      // --- WALLET CHECK: Ensure user exists in 'users' collection ---
+      // Wallet sync
       try {
         const userDoc = await db.getDocument('main_db', 'users', user.$id);
         setCredits(userDoc.credits || 0);
@@ -60,7 +60,6 @@ export default function App() {
         }
       }
 
-      // Existing image fetch logic
       const response = await db.listDocuments(
         'main_db',
         'images',
@@ -98,28 +97,37 @@ export default function App() {
     }
   }, []);
 
-  // --- NEW: DEDUCT CREDITS HELPER ---
-  const deductCredits = async (amount) => {
+  // --- IMPROVED LIVE DEDUCTION HELPER ---
+  const deductCreditsLive = async (amount) => {
     if (!user) return;
+    
+    // 1. Calculate new balance
+    const newBalance = Math.max(0, credits - amount);
+    
+    // 2. OPTIMISTIC UPDATE: Update UI immediately so it feels 'Live'
+    setCredits(newBalance);
+
     try {
-      const newBalance = Math.max(0, credits - amount);
+      // 3. Sync with Database in the background
       await db.updateDocument('main_db', 'users', user.$id, {
         credits: newBalance
       });
-      setCredits(newBalance); // Update UI immediately
     } catch (err) {
-      console.error("Failed to update credits in database:", err);
+      console.error("Database sync failed, reverting UI:", err);
+      // Revert if DB fails
+      setCredits(prev => prev + amount);
+      setError("Failed to sync credits with server.");
     }
   };
 
-  // --- 2. CORE GENERATION & STORAGE LOGIC ---
+  // --- 2. CORE GENERATION LOGIC ---
   const generateImage = async () => {
     if (!prompt || loading) return;
 
-    // A. Check for sufficient credits (Requires 2 per image)
+    // Credit Gate
     if (credits < 2) {
-      setError("Insufficient credits. You need at least 2 credits to generate an image.");
-      setViewState('result'); // Open the modal to show the error
+      setError("Insufficient credits. You need 2 credits per image.");
+      setViewState('result');
       return;
     }
 
@@ -143,8 +151,8 @@ export default function App() {
         setImage(base64Image);
 
         if (user) {
-          // B. Deduct 2 credits only on successful generation
-          await deductCredits(2);
+          // LIVE DEDUCTION HAPPENS HERE
+          await deductCreditsLive(2);
 
           try {
             await saveAiImage(user.$id, base64Image, prompt);
@@ -155,7 +163,6 @@ export default function App() {
             }, ...prev]);
           } catch (saveErr) {
             console.error("Database save failed:", saveErr);
-            setError("Image generated but failed to save to history.");
           }
         }
       } else {
@@ -207,25 +214,11 @@ export default function App() {
     }
     switch (activeTab) {
       case 'explore':
-        return (
-          <ExploreView
-            onSelectPrompt={handleSelectPrompt}
-            onViewImage={handleViewImage}
-            onEditImage={handleEditImage}
-          />
-        );
+        return <ExploreView onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
       case 'character':
         return <CharacterView />;
       case 'gallery':
-        return (
-          <MyImagesView
-            images={userGallery}
-            onSelectPrompt={handleSelectPrompt}
-            onViewImage={handleViewImage}
-            currentPrompt={prompt}
-            onEditImage={handleEditImage}
-          />
-        );
+        return <MyImagesView images={userGallery} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} currentPrompt={prompt} onEditImage={handleEditImage} />;
       case 'style':
         return <StyleView />;
       default:
@@ -254,6 +247,7 @@ export default function App() {
                 onGenerate={generateImage}
                 loading={loading}
                 collapsed={false}
+                credits={credits} // Pass credits to show cost on button if needed
               />
             </header>
           )}
