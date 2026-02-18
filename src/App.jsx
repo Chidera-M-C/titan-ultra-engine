@@ -29,7 +29,6 @@ export default function App() {
   const [userGallery, setUserGallery] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  // NEW: State to track user credits locally
   const [credits, setCredits] = useState(0);
 
   // --- MODAL STATES ---
@@ -54,7 +53,6 @@ export default function App() {
         setCredits(userDoc.credits || 0);
       } catch (err) {
         if (err.code === 404) {
-          // If wallet doesn't exist, create it now
           const newWallet = await db.createDocument('main_db', 'users', user.$id, {
             credits: 0
           });
@@ -100,9 +98,31 @@ export default function App() {
     }
   }, []);
 
+  // --- NEW: DEDUCT CREDITS HELPER ---
+  const deductCredits = async (amount) => {
+    if (!user) return;
+    try {
+      const newBalance = Math.max(0, credits - amount);
+      await db.updateDocument('main_db', 'users', user.$id, {
+        credits: newBalance
+      });
+      setCredits(newBalance); // Update UI immediately
+    } catch (err) {
+      console.error("Failed to update credits in database:", err);
+    }
+  };
+
   // --- 2. CORE GENERATION & STORAGE LOGIC ---
   const generateImage = async () => {
     if (!prompt || loading) return;
+
+    // A. Check for sufficient credits (Requires 2 per image)
+    if (credits < 2) {
+      setError("Insufficient credits. You need at least 2 credits to generate an image.");
+      setViewState('result'); // Open the modal to show the error
+      return;
+    }
+
     setViewState('result');
     setLoading(true);
     setError(null);
@@ -114,6 +134,7 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt })
       });
+      
       if (!response.ok) throw new Error(`Server Error: ${response.statusText}`);
       const data = await response.json();
 
@@ -122,6 +143,9 @@ export default function App() {
         setImage(base64Image);
 
         if (user) {
+          // B. Deduct 2 credits only on successful generation
+          await deductCredits(2);
+
           try {
             await saveAiImage(user.$id, base64Image, prompt);
             setUserGallery(prev => [{
@@ -129,7 +153,6 @@ export default function App() {
               url: base64Image,
               prompt
             }, ...prev]);
-            loadGallery();
           } catch (saveErr) {
             console.error("Database save failed:", saveErr);
             setError("Image generated but failed to save to history.");
@@ -213,7 +236,6 @@ export default function App() {
   return (
     <div className="master-wrapper">
       <div className="app-shell">
-        {/* Pass the real credits to the Sidebar */}
         <Sidebar 
           activeTab={activeTab} 
           onNavigate={handleNavigation} 
