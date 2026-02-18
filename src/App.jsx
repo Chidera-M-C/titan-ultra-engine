@@ -29,6 +29,8 @@ export default function App() {
   const [userGallery, setUserGallery] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  // NEW: State to track user credits locally
+  const [credits, setCredits] = useState(0);
 
   // --- MODAL STATES ---
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -39,13 +41,28 @@ export default function App() {
   // --- PROMPT COLLAPSE STATE ---
   const [promptCollapsed, setPromptCollapsed] = useState(false);
 
-  // --- 1. PERSISTENCE LOGIC ---
+  // --- 1. PERSISTENCE & WALLET LOGIC ---
   const loadGallery = async () => {
     if (!user) {
       setUserGallery([]);
       return;
     }
     try {
+      // --- WALLET CHECK: Ensure user exists in 'users' collection ---
+      try {
+        const userDoc = await db.getDocument('main_db', 'users', user.$id);
+        setCredits(userDoc.credits || 0);
+      } catch (err) {
+        if (err.code === 404) {
+          // If wallet doesn't exist, create it now
+          const newWallet = await db.createDocument('main_db', 'users', user.$id, {
+            credits: 0
+          });
+          setCredits(newWallet.credits);
+        }
+      }
+
+      // Existing image fetch logic
       const response = await db.listDocuments(
         'main_db',
         'images',
@@ -58,7 +75,7 @@ export default function App() {
       }));
       setUserGallery(fetchedImages);
     } catch (err) {
-      console.error("Failed to fetch gallery history:", err);
+      console.error("Sync error:", err);
     }
   };
 
@@ -66,7 +83,7 @@ export default function App() {
     loadGallery();
   }, [user]);
 
-  // --- SCROLL DETECTION FOR PROMPT COLLAPSE ---
+  // --- SCROLL DETECTION ---
   useEffect(() => {
     const handleScroll = () => {
       const scrollable = document.querySelector('.scrollable-area');
@@ -196,9 +213,14 @@ export default function App() {
   return (
     <div className="master-wrapper">
       <div className="app-shell">
-        <Sidebar activeTab={activeTab} onNavigate={handleNavigation} />
+        {/* Pass the real credits to the Sidebar */}
+        <Sidebar 
+          activeTab={activeTab} 
+          onNavigate={handleNavigation} 
+          credits={credits} 
+          userId={user?.$id}
+        />
         <main className="main-content">
-          {/* Full header when NOT collapsed */}
           {!promptCollapsed && (
             <header className="top-header">
               <h1 className="aesthetic-title">What will you create?</h1>
@@ -214,7 +236,6 @@ export default function App() {
             </header>
           )}
 
-          {/* Floating collapsed prompt when scrolled */}
           {promptCollapsed && (
             <div className="floating-prompt">
               <PromptBox
@@ -234,7 +255,6 @@ export default function App() {
           </div>
         </main>
 
-        {/* Modals */}
         {(viewState === 'result' || loading || image || error) && (
           <ResultModal
             image={image}
@@ -262,13 +282,7 @@ export default function App() {
           <EditModal
             image={editingImage?.url}
             originalPrompt={editingImage?.prompt}
-            loading={false}
-            error={null}
             onClose={() => setEditModalOpen(false)}
-            onRetry={(editPrompt) => {
-              console.log('Edit with prompt:', editPrompt);
-              console.log('Original image:', editingImage);
-            }}
           />
         )}
 
