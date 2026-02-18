@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Functions } from 'appwrite'; 
-import { client } from '../../appwrite'; // Only ONE import for client
+import { client } from '../../lib/appwrite'; // Corrected path to src/lib/appwrite.js
 import TopUpModal from './TopUpModal';
-
-// ... rest of your code ...
+import './CreditsCard.css'; // Verified path from saved info
 
 export default function CreditsCard({ credits, userId }) {
   const [showModal, setShowModal] = useState(false);
@@ -14,9 +13,9 @@ export default function CreditsCard({ credits, userId }) {
     const functions = new Functions(client);
 
     try {
-      // This triggers the 'nowpayments-handler' function you just deployed
+      // Triggers the Appwrite function you deployed
       const execution = await functions.createExecution(
-        'nowpayments-handler', // EXACT Function ID from Appwrite
+        'nowpayments-handler', // Ensure this matches your Function ID exactly
         JSON.stringify({
           price: pack.price,
           credits: pack.credits,
@@ -24,17 +23,19 @@ export default function CreditsCard({ credits, userId }) {
         })
       );
 
+      // Parse the response from your Node.js function
       const response = JSON.parse(execution.responseBody);
 
       if (response.url) {
-        // Redirect to NOWPayments Checkout
+        // Redirect the user to the NOWPayments checkout page
         window.location.href = response.url;
       } else {
-        throw new Error("No payment URL received");
+        console.error("No payment URL in response:", response);
+        alert("Could not generate payment link.");
       }
     } catch (err) {
       console.error("Payment trigger failed:", err);
-      alert("System busy. Please try again.");
+      alert("Payment system error. Please check console.");
     } finally {
       setLoading(false);
     }
@@ -43,16 +44,23 @@ export default function CreditsCard({ credits, userId }) {
   return (
     <>
       <div className="credits-card">
-        {/* Your existing CreditsCard UI */}
-        <button className="topup-btn" onClick={() => setShowModal(true)}>
-          {loading ? "Processing..." : "Top Up"}
+        <div className="credits-info">
+          <span className="credits-label">Available Credits</span>
+          <span className="credits-value">{credits ?? 0}</span>
+        </div>
+        <button 
+          className="topup-btn" 
+          onClick={() => setShowModal(true)}
+          disabled={loading}
+        >
+          {loading ? "Redirecting..." : "Top Up Credits"}
         </button>
       </div>
 
       <TopUpModal 
         isOpen={showModal} 
         onClose={() => setShowModal(false)} 
-        onSelect={handlePackSelect} // This links the UI to the function
+        onSelect={handlePackSelect} 
       />
     </>
   );
