@@ -8,7 +8,14 @@ export default function CreditsCard({ credits, userId }) {
   const [loading, setLoading] = useState(false);
 
   const handlePackSelect = async (pack) => {
+    // SECURITY: Ensure user is logged in before initiating payment
+    if (!userId) {
+      alert("Please sign in to purchase credits.");
+      return;
+    }
+
     setLoading(true);
+    // This is your Function ID that generates the NOWPayments invoice
     const FUNCTION_ID = '6994ff8c0026073bc77d'; 
 
     try {
@@ -17,17 +24,23 @@ export default function CreditsCard({ credits, userId }) {
         JSON.stringify({
           price: pack.price,
           credits: pack.credits,
-          userId: userId
+          userId: userId // Correctly passed from App -> Sidebar -> CreditsCard
         })
       );
 
-      const response = JSON.parse(execution.responseBody);
-      if (response.url) {
-        window.location.href = response.url;
+      // Check if execution was successful
+      if (execution.status === 'completed') {
+        const response = JSON.parse(execution.responseBody);
+        if (response.url) {
+          window.location.href = response.url;
+        } else {
+          alert("Payment link generation failed: " + (response.error || "Unknown error"));
+        }
       } else {
-        alert("Payment link generation failed.");
+        throw new Error("Function failed to execute");
       }
     } catch (err) {
+      console.error("Payment error:", err);
       alert(`Connection Error: ${err.message}`);
     } finally {
       setLoading(false);
@@ -39,6 +52,7 @@ export default function CreditsCard({ credits, userId }) {
       <div className="credits-display-card">
         <div className="credits-header">
           <span className="credits-label">Available Credits</span>
+          {/* Displaying the live credits from App.jsx state */}
           <span className="credits-count">{credits ?? 0}</span>
         </div>
         
