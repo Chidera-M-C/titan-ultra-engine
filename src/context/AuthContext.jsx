@@ -23,13 +23,14 @@ export function AuthProvider({ children }) {
   };
 
   const loginWithGoogle = () => {
-    // FIX: Grab the current URL dynamically (localhost OR vercel)
-    const currentOrigin = window.location.origin;
+    // Force the redirect to your production URL if you are testing the live site
+    // Or keep it dynamic but ENSURE both are in Google Cloud Console
+    const redirectUrl = window.location.origin; 
 
     account.createOAuth2Session(
       'google',
-      currentOrigin, // Redirects back to your current site on success
-      currentOrigin  // Redirects back to your current site on failure
+      redirectUrl, 
+      `${redirectUrl}/login` 
     );
   };
 
