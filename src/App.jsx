@@ -1,5 +1,3 @@
-this is the app jsx, you can update it yourself:
-
 import React, { useState, useEffect } from 'react';
 import './App.css';
 // --- APPWRITE & AUTH ---
