@@ -5,7 +5,7 @@ import CreditsCard from './CreditsCard';
 import { useAuth } from '../../context/AuthContext';
 import './Sidebar.css';
 
-export default function Sidebar({ activeTab, onNavigate }) {
+export default function Sidebar({ activeTab, onNavigate, credits, userId }) {
   const { user, loginWithGoogle, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const profileRef = useRef(null);
@@ -22,23 +22,19 @@ export default function Sidebar({ activeTab, onNavigate }) {
   };
 
   const handleSettings = () => {
-    // Add settings logic
     setIsDropdownOpen(false);
   };
 
   const handleSupport = () => {
-    // Add support logic
     setIsDropdownOpen(false);
   };
 
-  // Close dropdown when clicking anywhere outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -84,7 +80,8 @@ export default function Sidebar({ activeTab, onNavigate }) {
       </div>
 
       <div className="sidebar-bottom">
-        <CreditsCard />
+        {/* DATA FLOW: Passing credits and userId down to the card */}
+        <CreditsCard credits={credits} userId={userId} />
         
         {user ? (
           <div className="user-profile" ref={profileRef}>
@@ -97,7 +94,7 @@ export default function Sidebar({ activeTab, onNavigate }) {
               className="more-icon-btn" 
               title="More options"
             >
-              <MoreHorizontal size={18} />
+              < MoreHorizontal size={18} />
             </button>
 
             {isDropdownOpen && (
