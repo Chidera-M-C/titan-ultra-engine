@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Functions } from 'appwrite'; // Make sure you have the Appwrite SDK installed
+import { client } from '../../appwrite'; // Make sure you have the Appwrite SDK installed
 import { client } from '../../appwrite'; // Import your configured Appwrite client
 import TopUpModal from './TopUpModal';
 
