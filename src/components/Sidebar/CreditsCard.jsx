@@ -10,10 +10,14 @@ export default function CreditsCard({ credits, userId }) {
   const handlePackSelect = async (pack) => {
     setLoading(true);
     
+    // TRIPLE CHECK THIS ID in your Appwrite Dashboard Settings tab
+    const FUNCTION_ID = '6994fa7d0028a846c264'; 
+
     try {
-      // Using the exact Function ID from your Appwrite screenshot
+      console.log("Triggering function:", FUNCTION_ID);
+      
       const execution = await functions.createExecution(
-        '6994fa7d0028a846c264', 
+        FUNCTION_ID, 
         JSON.stringify({
           price: pack.price,
           credits: pack.credits,
@@ -21,19 +25,21 @@ export default function CreditsCard({ credits, userId }) {
         })
       );
 
-      // Parse the response from your Node.js function
+      // Log the full execution for debugging if it fails
+      console.log("Execution Response:", execution);
+
       const response = JSON.parse(execution.responseBody);
 
       if (response.url) {
-        // This redirects the user to the NOWPayments checkout page
         window.location.href = response.url;
       } else {
         console.error("No URL in response", response);
-        alert("Failed to generate payment link. Check Appwrite logs.");
+        alert(`Error: ${response.error || 'Failed to generate payment link.'}`);
       }
     } catch (err) {
-      console.error("Payment error:", err);
-      alert("System error. Make sure Function Execute Access is set to 'any'.");
+      console.error("Appwrite Function Error:", err);
+      // This alert will now tell us if it's a 404 (ID issue) or 401 (Permissions issue)
+      alert(`System Error: ${err.message}`);
     } finally {
       setLoading(false);
     }
