@@ -2,7 +2,7 @@ import { Client, Account, Databases, Storage, ID, Query, Functions } from 'appwr
 
 const client = new Client()
     .setEndpoint('https://cloud.appwrite.io/v1') 
-    .setProject('YOUR_ACTUAL_PROJECT_ID_HERE'); // PASTE YOUR PROJECT ID DIRECTLY HERE
+    .setProject('698fbdd100010d73c8a1'); // PASTE YOUR PROJECT ID DIRECTLY HERE
 
 export const account = new Account(client);
 export const storage = new Storage(client);
