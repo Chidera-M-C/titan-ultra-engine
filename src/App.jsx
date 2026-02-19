@@ -48,16 +48,15 @@ export default function App() {
     if (user || authLoading) return;
 
     // 2. CHECK EXCEPTIONS:
-    // We allow clicks if they are on the LoginModal itself, 
-    // the ImageViewModal close components, or an "Allowed" image.
-    const isModalInteraction = e.target.closest('.login-modal-card') || 
-                               e.target.closest('.modal-overlay') || 
-                               e.target.closest('.close-button');
-                               
+    // We allow clicks if they are on the LoginModal, the Image View, or specific allowed areas.
+    const isLoginModal = e.target.closest('.login-modal-card') || e.target.closest('.google-signin-btn');
+    const isOverlay = e.target.closest('.modal-overlay');
+    const isCloseBtn = e.target.closest('.close-button');
+    const isImageView = e.target.closest('.image-view-content') || e.target.closest('.image-view-img');
     const isAllowedImage = e.target.closest('.allow-visitor');
 
-    if (!isModalInteraction && !isAllowedImage) {
-      // 3. STOP the action and show login for anything else (Tabs, Generate, Sidebar)
+    // If it's NONE of these, it's a restricted area (Sidebar, Tabs, Generate button)
+    if (!isLoginModal && !isOverlay && !isCloseBtn && !isImageView && !isAllowedImage) {
       e.preventDefault();
       e.stopPropagation();
       setLoginModalOpen(true);
