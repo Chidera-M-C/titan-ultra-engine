@@ -31,10 +31,19 @@ export default function MasonryGrid({ images, onImageClick, onSelectPrompt, onEd
           className="gallery-card"
           onClick={() => onImageClick(img)}
         >
-          <img src={img.url} alt="Generated AI image" loading="lazy" />
+          {/* ADD 'allow-visitor' HERE: 
+            This tells the App.jsx guard that clicking the image is okay 
+          */}
+          <img 
+            src={img.url} 
+            alt="Generated AI image" 
+            loading="lazy" 
+            className="allow-visitor" 
+          />
+          
           <div className="gallery-overlay">
             <div className="overlay-actions">
-              {/* Load Prompt Button - Reload icon */}
+              {/* Load Prompt Button */}
               <button
                 className="icon-btn"
                 onClick={(e) => {
@@ -55,7 +64,7 @@ export default function MasonryGrid({ images, onImageClick, onSelectPrompt, onEd
                 <Download size={18} color="#ffffff" />
               </button>
 
-              {/* Edit Button - Magic wand icon */}
+              {/* Edit Button */}
               <button
                 className="icon-btn"
                 onClick={(e) => {
