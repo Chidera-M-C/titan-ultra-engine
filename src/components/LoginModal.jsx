@@ -14,11 +14,9 @@ const LoginModal = ({ isOpen, onClose }) => {
     
     setIsRedirecting(true);
     try {
-      // Trigger the Appwrite OAuth redirect
       await loginWithGoogle();
     } catch (err) {
       console.error("Login failed:", err);
-      // We only reset if it fails locally; usually, the browser redirects away
       setIsRedirecting(false);
     }
   };
@@ -44,10 +42,7 @@ const LoginModal = ({ isOpen, onClose }) => {
             disabled={isRedirecting}
           >
             {isRedirecting ? (
-              <>
-                <Loader2 className="spinner" size={20} />
-                Connecting...
-              </>
+              <Loader2 className="spinner-icon" size={20} />
             ) : (
               <>
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
