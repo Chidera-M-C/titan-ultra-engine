@@ -47,11 +47,16 @@ export default function App() {
     // 1. If logged in or still authenticating, ignore this guard
     if (user || authLoading) return;
 
-    // 2. Check if they clicked the Modal itself or an "Allowed" image
-    const isModalClick = e.target.closest('.login-modal-card');
+    // 2. CHECK EXCEPTIONS:
+    // We allow clicks if they are on the LoginModal itself (so they can close it or sign in)
+    // or if the element has our 'allow-visitor' class.
+    const isModalInteraction = e.target.closest('.login-modal-card') || 
+                               e.target.closest('.modal-overlay') || 
+                               e.target.closest('.close-button');
+                               
     const isAllowedImage = e.target.closest('.allow-visitor');
 
-    if (!isModalClick && !isAllowedImage) {
+    if (!isModalInteraction && !isAllowedImage) {
       // 3. STOP the action and show login
       e.preventDefault();
       e.stopPropagation();
@@ -97,7 +102,6 @@ export default function App() {
   useEffect(() => {
     loadGallery();
     
-    // Auto-pop the modal for visitors after a delay
     if (!authLoading && !user) {
       const timer = setTimeout(() => setLoginModalOpen(true), 3000);
       return () => clearTimeout(timer);
@@ -244,7 +248,6 @@ export default function App() {
   };
 
   return (
-    // onClickCapture intercepts ALL clicks in the app
     <div className="master-wrapper" onClickCapture={handleGlobalClick}>
       <div className="app-shell">
         <Sidebar 
