@@ -76,6 +76,7 @@
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s;
+  min-height: 48px; /* Keeps height consistent when switching to spinner */
 }
 
 .google-signin-btn:hover:not(:disabled) {
@@ -87,7 +88,6 @@
   background: #cccccc;
   color: #666;
   cursor: not-allowed;
-  transform: none;
 }
 
 .google-signin-btn img {
@@ -95,12 +95,13 @@
   height: 20px;
 }
 
-/* Spinner Animation */
-.spinner {
-  animation: spin 1s linear infinite;
+/* Specific Spinner Styling */
+.spinner-icon {
+  animation: spin-loading 0.8s linear infinite;
+  color: #000;
 }
 
-@keyframes spin {
+@keyframes spin-loading {
   from {
     transform: rotate(0deg);
   }
