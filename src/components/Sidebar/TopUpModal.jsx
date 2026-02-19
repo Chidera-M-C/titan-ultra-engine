@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Zap, Loader2 } from 'lucide-react';
+import { X, Zap, Check, Loader2 } from 'lucide-react';
 import './TopUpModal.css';
 
 const CREDIT_PACKS = [
@@ -30,81 +30,80 @@ const CREDIT_PACKS = [
 ];
 
 export default function TopUpModal({ isOpen, onClose, onSelect }) {
-  const [processingId, setProcessingId] = useState(null);
+  const [loadingPackId, setLoadingPackId] = useState(null);
 
   if (!isOpen) return null;
 
-  const handleSelect = async (pack) => {
-    if (processingId) return; 
-    setProcessingId(pack.id);
+  const handlePackSelect = async (pack) => {
+    if (loadingPackId) return; // Prevent multiple clicks
     
-    try {
+    setLoadingPackId(pack.id);
+    
+    if (onSelect) {
       await onSelect(pack);
-    } catch (err) {
-      setProcessingId(null);
     }
+    
+    // Reset loading state after operation completes
+    setLoadingPackId(null);
   };
 
   return (
-    <div className="modal-overlay" onClick={processingId ? null : onClose}>
+    <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content glass-effect" onClick={e => e.stopPropagation()}>
-        <button 
-          className="close-btn" 
-          onClick={onClose} 
-          disabled={!!processingId}
-        >
+        <button className="close-btn" onClick={onClose} aria-label="Close modal">
           <X size={20} />
         </button>
         
         <div className="modal-header">
           <h2 className="modal-title">Boost Your Creative Power</h2>
-          <p className="modal-subtitle">Select a pack to continue generating high-fidelity art.</p>
+          <p className="modal-subtitle">Select a credit pack to continue generating high-fidelity art.</p>
         </div>
         
         <div className="options-grid">
-          {CREDIT_PACKS.map((pack) => {
-            const isThisProcessing = processingId === pack.id;
-            const isAnyProcessing = !!processingId;
-
-            return (
-              <div 
-                key={pack.id} 
-                className={`credit-pack-card ${pack.popular ? 'popular' : ''} ${isThisProcessing ? 'is-processing' : ''} ${isAnyProcessing && !isThisProcessing ? 'is-locked' : ''}`}
-                onClick={() => handleSelect(pack)}
-              >
-                {pack.popular && (
-                  <div className="popular-ribbon">
-                    <Zap size={12} fill="currentColor" />
-                    <span>Most Popular</span>
-                  </div>
-                )}
-                
-                <div className="pack-info">
-                  <span className="pack-name">{pack.name}</span>
-                  <div className="pack-credits">
-                    <span className="credit-number">{pack.credits}</span>
-                    <span className="credit-unit">Credits</span>
-                  </div>
+          {CREDIT_PACKS.map((pack) => (
+            <div 
+              key={pack.id} 
+              className={`credit-pack-card ${pack.popular ? 'popular' : ''} ${loadingPackId === pack.id ? 'loading' : ''}`}
+              onClick={() => handlePackSelect(pack)}
+            >
+              {pack.popular && (
+                <div className="popular-ribbon">
+                  <Zap size={12} fill="currentColor" />
+                  <span>Most Popular</span>
                 </div>
-
-                <div className="pack-pricing">
-                  <span className="currency">$</span>
-                  <span className="price-amount">{pack.price}</span>
+              )}
+              
+              <div className="pack-info">
+                <span className="pack-name">{pack.name}</span>
+                <div className="pack-credits">
+                  <span className="credit-number">{pack.credits}</span>
+                  <span className="credit-unit">Credits</span>
                 </div>
-
-                <p className="pack-desc">{pack.description}</p>
-                
-                <button className="select-pack-btn" disabled={isAnyProcessing}>
-                  {isThisProcessing ? (
-                    <Loader2 className="btn-spinner" size={18} />
-                  ) : (
-                    <span>{pack.popular ? 'Get Started' : 'Choose Pack'}</span>
-                  )}
-                </button>
               </div>
-            );
-          })}
+              <div className="pack-pricing">
+                <span className="currency">$</span>
+                <span className="price-amount">{pack.price}</span>
+              </div>
+              <p className="pack-desc">{pack.description}</p>
+              
+              <button 
+                className="select-pack-btn" 
+                disabled={loadingPackId !== null}
+              >
+                {loadingPackId === pack.id ? (
+                  <>
+                    <Loader2 size={16} className="spinner-icon" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  pack.popular ? 'Get Started' : 'Choose Pack'
+                )}
+              </button>
+            </div>
+          ))}
         </div>
+        
+        <p className="modal-footer">Secure payments powered by NOWPayments</p>
       </div>
     </div>
   );
