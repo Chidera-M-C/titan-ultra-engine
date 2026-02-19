@@ -11,7 +11,7 @@ import PromptBox from './components/PromptSection/PromptBox';
 import ResultModal from './components/Shared/ResultModal';
 import EditModal from './components/Shared/EditModal';
 import ImageViewModal from './components/Shared/ImageViewModal';
-import LoginModal from './components/Shared/LoginModal'; // <-- NEW IMPORT
+import LoginModal from './components/LoginModal'; // <-- NEW IMPORT
 // --- VIEWS ---
 import ExploreView from './views/ExploreView';
 import CharacterView from './views/CharacterView';
