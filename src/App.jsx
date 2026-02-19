@@ -39,58 +39,53 @@ export default function App() {
   const [viewingImageUrl, setViewingImageUrl] = useState(null);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
 
-  // --- PROMPT COLLAPSE STATE ---
   const [promptCollapsed, setPromptCollapsed] = useState(false);
 
   // --- GLOBAL CLICK PROTECTION ---
   const handleGlobalClick = (e) => {
+    // If user is logged in, we don't care about clicks
     if (user || authLoading) return;
 
-    // Check if the click target or any parent has an allowed class
-    const isAllowed = e.target.closest('.allow-visitor') || 
-                      e.target.closest('.login-modal-card') || 
-                      e.target.closest('.modal-overlay') || 
-                      e.target.closest('.close-button');
+    // List of classes that are ALLOWED to be clicked by visitors
+    const whitelist = [
+      'allow-visitor', 
+      'modal-overlay', 
+      'close-button', 
+      'login-modal-card', 
+      'google-signin-btn',
+      'image-view-img'
+    ];
+
+    // Check if the click target or any parent is in the whitelist
+    const isAllowed = whitelist.some(cls => e.target.closest(`.${cls}`));
 
     if (!isAllowed) {
-      e.preventDefault();
+      // If it's not allowed (Sidebar, Tabs, Generate, etc), show login
       e.stopPropagation();
       setLoginModalOpen(true);
     }
   };
 
-  // --- 1. PERSISTENCE & WALLET LOGIC ---
   const loadGallery = async () => {
     if (!user) {
       setUserGallery([]);
       return;
     }
     try {
-      try {
-        const userDoc = await db.getDocument('main_db', 'users', user.$id);
-        setCredits(userDoc.credits || 0);
-      } catch (err) {
-        if (err.code === 404) {
-          const newWallet = await db.createDocument('main_db', 'users', user.$id, {
-            credits: 10 
-          });
-          setCredits(newWallet.credits);
-        }
-      }
-
+      const userDoc = await db.getDocument('main_db', 'users', user.$id);
+      setCredits(userDoc.credits || 0);
       const response = await db.listDocuments(
         'main_db',
         'images',
         [Query.equal('userId', user.$id), Query.orderDesc('$createdAt')]
       );
-      const fetchedImages = response.documents.map(doc => ({
+      setUserGallery(response.documents.map(doc => ({
         id: doc.$id,
         url: doc.imageUrl,
         prompt: doc.prompt
-      }));
-      setUserGallery(fetchedImages);
+      })));
     } catch (err) {
-      console.error("Sync error:", err);
+      console.error("Gallery Load Error:", err);
     }
   };
 
@@ -102,80 +97,29 @@ export default function App() {
     }
   }, [user, authLoading]);
 
-  // --- SCROLL DETECTION ---
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollable = document.querySelector('.scrollable-area');
-      if (scrollable) {
-        const scrollTop = scrollable.scrollTop;
-        setPromptCollapsed(scrollTop > 100);
-      }
-    };
-    const scrollable = document.querySelector('.scrollable-area');
-    if (scrollable) {
-      scrollable.addEventListener('scroll', handleScroll);
-      return () => scrollable.removeEventListener('scroll', handleScroll);
-    }
-  }, []);
-
-  const deductCreditsLive = async (amount) => {
-    if (!user) return;
-    const newBalance = Math.max(0, credits - amount);
-    setCredits(newBalance);
-    try {
-      await db.updateDocument('main_db', 'users', user.$id, { credits: newBalance });
-    } catch (err) {
-      setCredits(prev => prev + amount);
-      setError("Server sync failed.");
-    }
-  };
-
-  // --- 2. CORE GENERATION LOGIC ---
   const generateImage = async () => {
-    if (!user) {
-      setLoginModalOpen(true);
-      return;
-    }
+    if (!user) { setLoginModalOpen(true); return; }
     if (!prompt || loading) return;
-    if (credits < 2) {
-      setError("Insufficient credits.");
-      setViewState('result');
-      return;
-    }
     setViewState('result');
     setLoading(true);
-    setError(null);
-    setImage(null);
     try {
-      const response = await fetch('/api/generate', {
+      const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt })
       });
-      if (!response.ok) throw new Error(`Server Error`);
-      const data = await response.json();
-      if (data.status === 'COMPLETED' && data.output?.image) {
-        const base64Image = data.output.image;
-        setImage(base64Image);
-        await deductCreditsLive(2);
-        await saveAiImage(user.$id, base64Image, prompt);
-        setUserGallery(prev => [{ id: Date.now(), url: base64Image, prompt }, ...prev]);
+      const data = await res.json();
+      if (data.output?.image) {
+        setImage(data.output.image);
+        await db.updateDocument('main_db', 'users', user.$id, { credits: credits - 2 });
+        setCredits(prev => prev - 2);
+        await saveAiImage(user.$id, data.output.image, prompt);
       }
     } catch (err) {
-      setError(err.message);
+      setError("Failed to generate");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleNavigation = (tab) => {
-    setActiveTab(tab);
-    setViewState((tab === 'explore' || tab === 'gallery') ? 'gallery' : 'empty');
-  };
-
-  const handleSelectPrompt = (selectedPrompt) => {
-    setPrompt(selectedPrompt);
-    if (selectedPrompt) window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleViewImage = (img) => {
@@ -183,50 +127,26 @@ export default function App() {
     setViewImageModalOpen(true);
   };
 
-  const handleEditImage = (img) => {
-    if (!user) { setLoginModalOpen(true); return; }
-    setEditingImage(img);
-    setEditModalOpen(true);
-  };
-
-  const renderActiveView = () => {
-    if (viewState === 'empty') {
-      return (
-        <div className="empty-state">
-          <h2>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} coming soon</h2>
-        </div>
-      );
-    }
-    switch (activeTab) {
-      case 'explore': return <ExploreView onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
-      case 'character': return <CharacterView />;
-      case 'gallery': return <MyImagesView images={userGallery} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} currentPrompt={prompt} onEditImage={handleEditImage} />;
-      case 'style': return <StyleView />;
-      default: return <ExploreView onSelectPrompt={handleSelectPrompt} />;
-    }
-  };
-
   return (
     <div className="master-wrapper" onClickCapture={handleGlobalClick}>
       <div className="app-shell">
-        <Sidebar activeTab={activeTab} onNavigate={handleNavigation} credits={credits} userId={user?.$id} />
+        <Sidebar activeTab={activeTab} onNavigate={(tab) => setActiveTab(tab)} credits={credits} userId={user?.$id} />
         <main className="main-content">
-          {!promptCollapsed && (
-            <header className="top-header">
-              <h1 className="aesthetic-title">What will you create?</h1>
-              <PromptBox prompt={prompt} setPrompt={setPrompt} aspectRatio={aspectRatio} setAspectRatio={setAspectRatio} onGenerate={generateImage} loading={loading} collapsed={false} credits={credits} />
-            </header>
-          )}
-          {promptCollapsed && (
-            <div className="floating-prompt">
-              <PromptBox prompt={prompt} setPrompt={setPrompt} aspectRatio={aspectRatio} setAspectRatio={setAspectRatio} onGenerate={generateImage} loading={loading} collapsed={true} />
-            </div>
-          )}
-          <div className="scrollable-area">{renderActiveView()}</div>
+          <header className="top-header">
+            <h1 className="aesthetic-title">What will you create?</h1>
+            <PromptBox prompt={prompt} setPrompt={setPrompt} onGenerate={generateImage} loading={loading} credits={credits} />
+          </header>
+          <div className="scrollable-area">
+            <ExploreView 
+              onSelectPrompt={(p) => setPrompt(p)} 
+              onViewImage={handleViewImage} 
+              onEditImage={(img) => { if(!user) setLoginModalOpen(true); else { setEditingImage(img); setEditModalOpen(true); }}} 
+            />
+          </div>
         </main>
         <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
-        {editModalOpen && <EditModal image={editingImage?.url} originalPrompt={editingImage?.prompt} onClose={() => setEditModalOpen(false)} />}
         {viewImageModalOpen && <ImageViewModal imageUrl={viewingImageUrl} onClose={() => setViewImageModalOpen(false)} />}
+        {editModalOpen && <EditModal image={editingImage?.url} originalPrompt={editingImage?.prompt} onClose={() => setEditModalOpen(false)} />}
       </div>
     </div>
   );
