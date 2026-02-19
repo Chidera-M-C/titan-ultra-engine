@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Loader2 } from 'lucide-react'; // Assuming you use lucide-react like in your other files
+import { Loader2 } from 'lucide-react';
 import './LoginModal.css';
 
 const LoginModal = ({ isOpen, onClose }) => {
@@ -18,12 +18,13 @@ const LoginModal = ({ isOpen, onClose }) => {
       await loginWithGoogle();
     } catch (err) {
       console.error("Login failed:", err);
+      // We only reset if it fails locally; usually, the browser redirects away
       setIsRedirecting(false);
     }
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={isRedirecting ? null : onClose}>
       <div className="login-modal-card" onClick={(e) => e.stopPropagation()}>
         <button 
           className="close-button" 
