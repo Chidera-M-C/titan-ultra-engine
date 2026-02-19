@@ -35,7 +35,7 @@ export default function TopUpModal({ isOpen, onClose, onSelect }) {
   if (!isOpen) return null;
 
   const handleSelect = async (pack) => {
-    if (processingId) return; // Prevent spamming
+    if (processingId) return; 
     setProcessingId(pack.id);
     
     try {
@@ -43,8 +43,6 @@ export default function TopUpModal({ isOpen, onClose, onSelect }) {
     } catch (err) {
       setProcessingId(null);
     }
-    // We don't necessarily setProcessingId(null) on success 
-    // because the page is about to redirect to the payment URL
   };
 
   return (
@@ -60,7 +58,7 @@ export default function TopUpModal({ isOpen, onClose, onSelect }) {
         
         <div className="modal-header">
           <h2 className="modal-title">Boost Your Creative Power</h2>
-          <p className="modal-subtitle">Select a pack. You will be redirected to our secure payment provider.</p>
+          <p className="modal-subtitle">Select a pack to continue generating high-fidelity art.</p>
         </div>
         
         <div className="options-grid">
@@ -71,7 +69,7 @@ export default function TopUpModal({ isOpen, onClose, onSelect }) {
             return (
               <div 
                 key={pack.id} 
-                className={`credit-pack-card ${pack.popular ? 'popular' : ''} ${isThisProcessing ? 'processing' : ''} ${isAnyProcessing && !isThisProcessing ? 'disabled' : ''}`}
+                className={`credit-pack-card ${pack.popular ? 'popular' : ''} ${isThisProcessing ? 'is-processing' : ''} ${isAnyProcessing && !isThisProcessing ? 'is-locked' : ''}`}
                 onClick={() => handleSelect(pack)}
               >
                 {pack.popular && (
@@ -100,7 +98,7 @@ export default function TopUpModal({ isOpen, onClose, onSelect }) {
                   {isThisProcessing ? (
                     <Loader2 className="btn-spinner" size={18} />
                   ) : (
-                    pack.popular ? 'Get Started' : 'Choose Pack'
+                    <span>{pack.popular ? 'Get Started' : 'Choose Pack'}</span>
                   )}
                 </button>
               </div>
