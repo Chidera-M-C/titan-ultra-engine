@@ -1,8 +1,7 @@
 import React from 'react';
-import { X, Zap } from 'lucide-react';
+import { X, Zap, Check } from 'lucide-react';
 import './TopUpModal.css';
 
-// 1. You MUST define this array so the .map() has something to read
 const CREDIT_PACKS = [
   {
     id: 'starter',
@@ -31,18 +30,19 @@ const CREDIT_PACKS = [
 ];
 
 export default function TopUpModal({ isOpen, onClose, onSelect }) {
-  // 2. Safety check: If not open, don't even try to render
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
-        <button className="close-btn" onClick={onClose}>
-          <X size={24} />
+      <div className="modal-content glass-effect" onClick={e => e.stopPropagation()}>
+        <button className="close-btn" onClick={onClose} aria-label="Close modal">
+          <X size={20} />
         </button>
         
-        <h2 className="modal-title">Choose your pack</h2>
-        <p className="modal-subtitle">Credits never expire and work with all models.</p>
+        <div className="modal-header">
+          <h2 className="modal-title">Boost Your Creative Power</h2>
+          <p className="modal-subtitle">Select a credit pack to continue generating high-fidelity art.</p>
+        </div>
         
         <div className="options-grid">
           {CREDIT_PACKS.map((pack) => (
@@ -51,17 +51,36 @@ export default function TopUpModal({ isOpen, onClose, onSelect }) {
               className={`credit-pack-card ${pack.popular ? 'popular' : ''}`}
               onClick={() => onSelect && onSelect(pack)}
             >
-              {pack.popular && <span className="popular-badge">Best Value</span>}
-              <span className="pack-name">{pack.name}</span>
-              <div className="pack-credits">
-                <Zap size={24} fill="#FFD700" color="#FFD700" />
-                {pack.credits}
+              {pack.popular && (
+                <div className="popular-ribbon">
+                  <Zap size={12} fill="currentColor" />
+                  <span>Most Popular</span>
+                </div>
+              )}
+              
+              <div className="pack-info">
+                <span className="pack-name">{pack.name}</span>
+                <div className="pack-credits">
+                  <span className="credit-number">{pack.credits}</span>
+                  <span className="credit-unit">Credits</span>
+                </div>
               </div>
-              <span className="pack-price">${pack.price}</span>
+
+              <div className="pack-pricing">
+                <span className="currency">$</span>
+                <span className="price-amount">{pack.price}</span>
+              </div>
+
               <p className="pack-desc">{pack.description}</p>
+              
+              <button className="select-pack-btn">
+                {pack.popular ? 'Get Started' : 'Choose Pack'}
+              </button>
             </div>
           ))}
         </div>
+        
+        <p className="modal-footer">Secure payments powered by NOWPayments</p>
       </div>
     </div>
   );
