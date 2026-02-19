@@ -39,86 +39,174 @@ export default function App() {
   const [viewingImageUrl, setViewingImageUrl] = useState(null);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
 
+  // --- PROMPT COLLAPSE STATE ---
   const [promptCollapsed, setPromptCollapsed] = useState(false);
 
-  // --- GLOBAL CLICK PROTECTION ---
+  // --- GLOBAL CLICK PROTECTION (The Velvet Rope) ---
   const handleGlobalClick = (e) => {
-    // If user is logged in, we don't care about clicks
+    // 1. If logged in or still authenticating, ignore this guard
     if (user || authLoading) return;
 
-    // List of classes that are ALLOWED to be clicked by visitors
-    const whitelist = [
-      'allow-visitor', 
-      'modal-overlay', 
-      'close-button', 
-      'login-modal-card', 
-      'google-signin-btn',
-      'image-view-img'
-    ];
+    // 2. CHECK EXCEPTIONS:
+    // We allow clicks if they are on the LoginModal itself, 
+    // the ImageViewModal close components, or an "Allowed" image.
+    const isModalInteraction = e.target.closest('.login-modal-card') || 
+                               e.target.closest('.modal-overlay') || 
+                               e.target.closest('.close-button');
+                               
+    const isAllowedImage = e.target.closest('.allow-visitor');
 
-    // Check if the click target or any parent is in the whitelist
-    const isAllowed = whitelist.some(cls => e.target.closest(`.${cls}`));
-
-    if (!isAllowed) {
-      // If it's not allowed (Sidebar, Tabs, Generate, etc), show login
+    if (!isModalInteraction && !isAllowedImage) {
+      // 3. STOP the action and show login for anything else (Tabs, Generate, Sidebar)
+      e.preventDefault();
       e.stopPropagation();
       setLoginModalOpen(true);
     }
   };
 
+  // --- 1. PERSISTENCE & WALLET LOGIC ---
   const loadGallery = async () => {
     if (!user) {
       setUserGallery([]);
       return;
     }
     try {
-      const userDoc = await db.getDocument('main_db', 'users', user.$id);
-      setCredits(userDoc.credits || 0);
+      try {
+        const userDoc = await db.getDocument('main_db', 'users', user.$id);
+        setCredits(userDoc.credits || 0);
+      } catch (err) {
+        if (err.code === 404) {
+          const newWallet = await db.createDocument('main_db', 'users', user.$id, {
+            credits: 10 
+          });
+          setCredits(newWallet.credits);
+        }
+      }
+
       const response = await db.listDocuments(
         'main_db',
         'images',
         [Query.equal('userId', user.$id), Query.orderDesc('$createdAt')]
       );
-      setUserGallery(response.documents.map(doc => ({
+      const fetchedImages = response.documents.map(doc => ({
         id: doc.$id,
         url: doc.imageUrl,
         prompt: doc.prompt
-      })));
+      }));
+      setUserGallery(fetchedImages);
     } catch (err) {
-      console.error("Gallery Load Error:", err);
+      console.error("Sync error:", err);
     }
   };
 
   useEffect(() => {
     loadGallery();
+    
     if (!authLoading && !user) {
       const timer = setTimeout(() => setLoginModalOpen(true), 3000);
       return () => clearTimeout(timer);
     }
   }, [user, authLoading]);
 
+  // --- SCROLL DETECTION ---
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollable = document.querySelector('.scrollable-area');
+      if (scrollable) {
+        const scrollTop = scrollable.scrollTop;
+        setPromptCollapsed(scrollTop > 100);
+      }
+    };
+
+    const scrollable = document.querySelector('.scrollable-area');
+    if (scrollable) {
+      scrollable.addEventListener('scroll', handleScroll);
+      return () => scrollable.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
+
+  const deductCreditsLive = async (amount) => {
+    if (!user) return;
+    const newBalance = Math.max(0, credits - amount);
+    setCredits(newBalance);
+
+    try {
+      await db.updateDocument('main_db', 'users', user.$id, {
+        credits: newBalance
+      });
+    } catch (err) {
+      console.error("Database sync failed, reverting UI:", err);
+      setCredits(prev => prev + amount);
+      setError("Server sync failed. Your credits have been restored.");
+    }
+  };
+
+  // --- 2. CORE GENERATION LOGIC ---
   const generateImage = async () => {
-    if (!user) { setLoginModalOpen(true); return; }
+    if (!user) {
+      setLoginModalOpen(true);
+      return;
+    }
     if (!prompt || loading) return;
+
+    if (credits < 2) {
+      setError("Insufficient credits.");
+      setViewState('result');
+      return;
+    }
+
     setViewState('result');
     setLoading(true);
+    setError(null);
+    setImage(null);
+
     try {
-      const res = await fetch('/api/generate', {
+      const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt })
       });
-      const data = await res.json();
-      if (data.output?.image) {
-        setImage(data.output.image);
-        await db.updateDocument('main_db', 'users', user.$id, { credits: credits - 2 });
-        setCredits(prev => prev - 2);
-        await saveAiImage(user.$id, data.output.image, prompt);
+      
+      if (!response.ok) throw new Error(`Server Error`);
+      const data = await response.json();
+
+      if (data.status === 'COMPLETED' && data.output?.image) {
+        const base64Image = data.output.image;
+        setImage(base64Image);
+        await deductCreditsLive(2);
+
+        try {
+          await saveAiImage(user.$id, base64Image, prompt);
+          setUserGallery(prev => [{
+            id: Date.now(),
+            url: base64Image,
+            prompt
+          }, ...prev]);
+        } catch (saveErr) {
+          console.error("Database save failed:", saveErr);
+        }
       }
     } catch (err) {
-      setError("Failed to generate");
+      setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // --- HANDLERS ---
+  const handleNavigation = (tab) => {
+    setActiveTab(tab);
+    if (tab === 'explore' || tab === 'gallery') {
+      setViewState('gallery');
+    } else {
+      setViewState('empty');
+    }
+  };
+
+  const handleSelectPrompt = (selectedPrompt) => {
+    setPrompt(selectedPrompt);
+    if (selectedPrompt) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -127,26 +215,126 @@ export default function App() {
     setViewImageModalOpen(true);
   };
 
+  const handleEditImage = (img) => {
+    if (!user) {
+        setLoginModalOpen(true);
+        return;
+    }
+    setEditingImage(img);
+    setEditModalOpen(true);
+  };
+
+  const renderActiveView = () => {
+    if (viewState === 'empty') {
+      return (
+        <div className="empty-state">
+          <h2>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} coming soon</h2>
+          <p>We're polishing this feature for you!</p>
+        </div>
+      );
+    }
+    switch (activeTab) {
+      case 'explore':
+        return <ExploreView onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
+      case 'character':
+        return <CharacterView />;
+      case 'gallery':
+        return <MyImagesView images={userGallery} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} currentPrompt={prompt} onEditImage={handleEditImage} />;
+      case 'style':
+        return <StyleView />;
+      default:
+        return <ExploreView onSelectPrompt={handleSelectPrompt} />;
+    }
+  };
+
   return (
     <div className="master-wrapper" onClickCapture={handleGlobalClick}>
       <div className="app-shell">
-        <Sidebar activeTab={activeTab} onNavigate={(tab) => setActiveTab(tab)} credits={credits} userId={user?.$id} />
+        <Sidebar 
+          activeTab={activeTab} 
+          onNavigate={handleNavigation} 
+          credits={credits} 
+          userId={user?.$id}
+        />
         <main className="main-content">
-          <header className="top-header">
-            <h1 className="aesthetic-title">What will you create?</h1>
-            <PromptBox prompt={prompt} setPrompt={setPrompt} onGenerate={generateImage} loading={loading} credits={credits} />
-          </header>
+          {!promptCollapsed && (
+            <header className="top-header">
+              <h1 className="aesthetic-title">What will you create?</h1>
+              <PromptBox
+                prompt={prompt}
+                setPrompt={setPrompt}
+                aspectRatio={aspectRatio}
+                setAspectRatio={setAspectRatio}
+                onGenerate={generateImage}
+                loading={loading}
+                collapsed={false}
+                credits={credits} 
+              />
+            </header>
+          )}
+
+          {promptCollapsed && (
+            <div className="floating-prompt">
+              <PromptBox
+                prompt={prompt}
+                setPrompt={setPrompt}
+                aspectRatio={aspectRatio}
+                setAspectRatio={setAspectRatio}
+                onGenerate={generateImage}
+                loading={loading}
+                collapsed={true}
+              />
+            </div>
+          )}
+
           <div className="scrollable-area">
-            <ExploreView 
-              onSelectPrompt={(p) => setPrompt(p)} 
-              onViewImage={handleViewImage} 
-              onEditImage={(img) => { if(!user) setLoginModalOpen(true); else { setEditingImage(img); setEditModalOpen(true); }}} 
-            />
+            {renderActiveView()}
           </div>
         </main>
-        <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
-        {viewImageModalOpen && <ImageViewModal imageUrl={viewingImageUrl} onClose={() => setViewImageModalOpen(false)} />}
-        {editModalOpen && <EditModal image={editingImage?.url} originalPrompt={editingImage?.prompt} onClose={() => setEditModalOpen(false)} />}
+
+        <LoginModal 
+           isOpen={loginModalOpen} 
+           onClose={() => setLoginModalOpen(false)} 
+        />
+
+        {/* --- MODALS --- */}
+        {(viewState === 'result' || loading || image || error) && (
+          <ResultModal
+            image={image}
+            loading={loading}
+            error={error}
+            prompt={prompt}
+            onClose={() => {
+              setViewState('gallery');
+              setImage(null);
+              setError(null);
+            }}
+            onRetry={generateImage}
+            onOpenEdit={(img) => {
+              setEditingImage(img);
+              setEditModalOpen(true);
+            }}
+            onViewFullScreen={(imageUrl) => {
+              setViewingImageUrl(imageUrl);
+              setViewImageModalOpen(true);
+            }}
+          />
+        )}
+
+        {editModalOpen && (
+          <EditModal
+            image={editingImage?.url}
+            originalPrompt={editingImage?.prompt}
+            onClose={() => setEditModalOpen(false)}
+          />
+        )}
+
+        {viewImageModalOpen && (
+          <ImageViewModal
+            imageUrl={viewingImageUrl}
+            onClose={() => setViewImageModalOpen(false)}
+          />
+        )}
       </div>
     </div>
   );
