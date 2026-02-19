@@ -11,7 +11,7 @@ import PromptBox from './components/PromptSection/PromptBox';
 import ResultModal from './components/Shared/ResultModal';
 import EditModal from './components/Shared/EditModal';
 import ImageViewModal from './components/Shared/ImageViewModal';
-import LoginModal from './components/LoginModal'; // Corrected Import
+import LoginModal from './components/LoginModal'; 
 // --- VIEWS ---
 import ExploreView from './views/ExploreView';
 import CharacterView from './views/CharacterView';
@@ -19,7 +19,7 @@ import MyImagesView from './views/MyImagesView';
 import StyleView from './views/StyleView';
 
 export default function App() {
-  const { user, loading: authLoading } = useAuth(); 
+  const { user, loading: authLoading } = useAuth();
 
   // --- GLOBAL STATE ---
   const [activeTab, setActiveTab] = useState('explore');
@@ -37,24 +37,22 @@ export default function App() {
   const [editingImage, setEditingImage] = useState(null);
   const [viewImageModalOpen, setViewImageModalOpen] = useState(false);
   const [viewingImageUrl, setViewingImageUrl] = useState(null);
-  const [loginModalOpen, setLoginModalOpen] = useState(false); 
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
 
   // --- PROMPT COLLAPSE STATE ---
   const [promptCollapsed, setPromptCollapsed] = useState(false);
 
-  // --- NEW: GLOBAL CLICK PROTECTION (VELVET ROPE) ---
+  // --- GLOBAL CLICK PROTECTION (The Velvet Rope) ---
   const handleGlobalClick = (e) => {
-    // If user is logged in or system is loading, let clicks pass
+    // 1. If logged in or still authenticating, ignore this guard
     if (user || authLoading) return;
 
-    // Check if the click is inside the login modal itself (so they can click sign in)
-    const isModalClick = e.target.closest('.login-modal-card') || e.target.closest('.modal-overlay');
-    
-    // Check if the element has the 'allow-visitor' class (for viewing images)
-    const isAllowedAction = e.target.closest('.allow-visitor');
+    // 2. Check if they clicked the Modal itself or an "Allowed" image
+    const isModalClick = e.target.closest('.login-modal-card');
+    const isAllowedImage = e.target.closest('.allow-visitor');
 
-    if (!isModalClick && !isAllowedAction) {
-      // Kill the interaction and show the gate
+    if (!isModalClick && !isAllowedImage) {
+      // 3. STOP the action and show login
       e.preventDefault();
       e.stopPropagation();
       setLoginModalOpen(true);
@@ -99,9 +97,9 @@ export default function App() {
   useEffect(() => {
     loadGallery();
     
-    // Auto-trigger login modal for visitors after 2 seconds
+    // Auto-pop the modal for visitors after a delay
     if (!authLoading && !user) {
-      const timer = setTimeout(() => setLoginModalOpen(true), 2000);
+      const timer = setTimeout(() => setLoginModalOpen(true), 3000);
       return () => clearTimeout(timer);
     }
   }, [user, authLoading]);
@@ -145,11 +143,10 @@ export default function App() {
       setLoginModalOpen(true);
       return;
     }
-
     if (!prompt || loading) return;
 
     if (credits < 2) {
-      setError("Insufficient credits. You need 2 credits per image.");
+      setError("Insufficient credits.");
       setViewState('result');
       return;
     }
@@ -166,13 +163,12 @@ export default function App() {
         body: JSON.stringify({ prompt })
       });
       
-      if (!response.ok) throw new Error(`Server Error: ${response.statusText}`);
+      if (!response.ok) throw new Error(`Server Error`);
       const data = await response.json();
 
       if (data.status === 'COMPLETED' && data.output?.image) {
         const base64Image = data.output.image;
         setImage(base64Image);
-
         await deductCreditsLive(2);
 
         try {
@@ -185,8 +181,6 @@ export default function App() {
         } catch (saveErr) {
           console.error("Database save failed:", saveErr);
         }
-      } else {
-        throw new Error(data.error || "GPU Generation failed.");
       }
     } catch (err) {
       setError(err.message);
@@ -250,7 +244,7 @@ export default function App() {
   };
 
   return (
-    // onClickCapture intercepts clicks before they reach buttons
+    // onClickCapture intercepts ALL clicks in the app
     <div className="master-wrapper" onClickCapture={handleGlobalClick}>
       <div className="app-shell">
         <Sidebar 
@@ -300,6 +294,7 @@ export default function App() {
            onClose={() => setLoginModalOpen(false)} 
         />
 
+        {/* --- MODALS --- */}
         {(viewState === 'result' || loading || image || error) && (
           <ResultModal
             image={image}
