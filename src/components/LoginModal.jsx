@@ -34,7 +34,7 @@ const LoginModal = ({ isOpen, onClose }) => {
         
         <div className="login-content">
           <h2>Sign in to generate your own image</h2>
-          <p className="promo-text">First time?, 10 free credits on us! 😊</p>
+          <p className="promo-text">First time? 10 free credits on us! 😊</p>
           
           <button 
             className={`google-signin-btn ${isRedirecting ? 'loading' : ''}`} 
