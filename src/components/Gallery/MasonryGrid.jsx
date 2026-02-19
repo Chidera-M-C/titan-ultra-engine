@@ -6,18 +6,13 @@ export default function MasonryGrid({ images, onImageClick, onSelectPrompt, onEd
   
   const handleDownload = (e, url, imageId) => {
     e.stopPropagation();
-    
-    // Convert Appwrite view URL to download URL
     let downloadUrl = url;
     if (url.includes('appwrite.io') && url.includes('/view?')) {
       downloadUrl = url.replace('/view?', '/download?');
     }
-    
-    // Create direct download link
     const link = document.createElement('a');
     link.href = downloadUrl;
     link.download = `ai-generated-${imageId || Date.now()}.png`;
-    
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -31,9 +26,7 @@ export default function MasonryGrid({ images, onImageClick, onSelectPrompt, onEd
           className="gallery-card"
           onClick={() => onImageClick(img)}
         >
-          {/* Adding 'allow-visitor' here allows the click to pass through 
-            the App.jsx capture guard so the Image View Modal can open.
-          */}
+          {/* allow-visitor tells App.jsx this click is okay */}
           <img 
             src={img.url} 
             alt="Generated AI image" 
@@ -43,7 +36,6 @@ export default function MasonryGrid({ images, onImageClick, onSelectPrompt, onEd
 
           <div className="gallery-overlay">
             <div className="overlay-actions">
-              {/* Load Prompt Button */}
               <button
                 className="icon-btn"
                 onClick={(e) => {
@@ -55,7 +47,6 @@ export default function MasonryGrid({ images, onImageClick, onSelectPrompt, onEd
                 <RotateCcw size={18} color="#ffffff" />
               </button>
 
-              {/* Download Button */}
               <button
                 className="icon-btn"
                 onClick={(e) => handleDownload(e, img.url, img.id)}
@@ -64,7 +55,6 @@ export default function MasonryGrid({ images, onImageClick, onSelectPrompt, onEd
                 <Download size={18} color="#ffffff" />
               </button>
 
-              {/* Edit Button */}
               <button
                 className="icon-btn"
                 onClick={(e) => {
@@ -76,7 +66,6 @@ export default function MasonryGrid({ images, onImageClick, onSelectPrompt, onEd
                 <Wand2 size={18} color="#ffffff" />
               </button>
 
-              {/* Heart Button */}
               <HeartButton />
             </div>
           </div>
@@ -88,7 +77,6 @@ export default function MasonryGrid({ images, onImageClick, onSelectPrompt, onEd
 
 function HeartButton() {
   const [active, setActive] = useState(false);
-  
   return (
     <button
       className={`icon-btn ${active ? 'active-heart' : ''}`}
@@ -98,11 +86,7 @@ function HeartButton() {
       }}
       data-tooltip={active ? 'Unlike' : 'Like'}
     >
-      <Heart 
-        size={18} 
-        color="#ffffff" 
-        fill={active ? '#ffffff' : 'none'} 
-      />
+      <Heart size={18} color="#ffffff" fill={active ? '#ffffff' : 'none'} />
     </button>
   );
 }
