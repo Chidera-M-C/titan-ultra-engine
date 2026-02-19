@@ -3,7 +3,7 @@ import './ImageViewModal.css';
 
 export default function ImageViewModal({ imageUrl, onClose }) {
   return (
-    /* Added 'modal-overlay' so App.jsx knows this background is safe to click */
+    /* We add modal-overlay so they can click the background to close */
     <div className="image-view-modal modal-overlay" onClick={onClose}>
       <div className="image-view-content" onClick={(e) => e.stopPropagation()}>
         <img 
@@ -13,7 +13,7 @@ export default function ImageViewModal({ imageUrl, onClose }) {
         />
       </div>
       
-      {/* Added 'close-button' so App.jsx allows the close action */}
+      /* We add close-button so the guard allows the 'X' click */
       <button className="image-view-close close-button" onClick={onClose} data-tooltip="Close">
         ✕
       </button>
