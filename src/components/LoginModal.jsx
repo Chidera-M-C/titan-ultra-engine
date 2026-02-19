@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../context/AuthContext'; // Adjust path if needed
+import { useAuth } from '../context/AuthContext';
 import './LoginModal.css';
 
 const LoginModal = ({ isOpen, onClose }) => {
@@ -8,9 +8,19 @@ const LoginModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
+    /* Clicking the overlay will now correctly trigger onClose 
+       because App.jsx recognizes 'modal-overlay' as an exception */
     <div className="modal-overlay" onClick={onClose}>
-      <div className="login-card" onClick={(e) => e.stopPropagation()}>
-        <button className="close-modal" onClick={onClose}>&times;</button>
+      <div 
+        className="login-modal-card" // Updated class to match App.jsx guard
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button 
+          className="close-button" // Updated class to match App.jsx guard
+          onClick={onClose}
+        >
+          &times;
+        </button>
         
         <div className="login-content">
           <h2>Sign in to generate your own image</h2>
