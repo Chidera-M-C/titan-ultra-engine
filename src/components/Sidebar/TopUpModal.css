@@ -1,7 +1,9 @@
+/* src/components/Sidebar/TopUpModal.css */
+
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(12px);
   display: flex;
   justify-content: center;
@@ -18,7 +20,7 @@
   width: 100%;
   max-width: 900px;
   position: relative;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.9);
   animation: modalReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -41,34 +43,25 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
 }
 
 .close-btn:hover:not(:disabled) {
   background: #ff4d4d;
   color: white;
-  border-color: #ff4d4d;
   transform: rotate(90deg);
-}
-
-.close-btn:disabled {
-  opacity: 0.2;
-  cursor: not-allowed;
 }
 
 .modal-title {
   font-size: 32px;
   font-weight: 850;
   color: #fff;
-  letter-spacing: -0.5px;
   margin-bottom: 12px;
 }
 
 .modal-subtitle {
   color: #666;
   font-size: 15px;
-  max-width: 500px;
-  margin: 0 auto;
   margin-bottom: 40px;
 }
 
@@ -78,6 +71,7 @@
   gap: 24px;
 }
 
+/* Base Card Styling - Keeps the color/animation alive */
 .credit-pack-card {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -90,10 +84,10 @@
   position: relative;
 }
 
-.credit-pack-card:hover:not(.disabled-card) {
+.credit-pack-card:hover:not(.is-locked) {
   background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-10px);
+  border-color: rgba(74, 222, 128, 0.4);
+  transform: translateY(-8px);
 }
 
 .credit-pack-card.popular {
@@ -102,16 +96,18 @@
   box-shadow: 0 0 30px rgba(74, 222, 128, 0.1);
 }
 
-.credit-pack-card.processing {
-  border-color: #4ade80;
-  background: rgba(74, 222, 128, 0.1);
+/* LOCK STATE: Just dims it, doesn't kill the design */
+.credit-pack-card.is-locked {
+  opacity: 0.3;
+  pointer-events: none;
+  filter: blur(1px);
 }
 
-.disabled-card {
-  opacity: 0.4;
-  filter: grayscale(0.8);
+/* PROCESSING STATE: Keeps green highlights active */
+.credit-pack-card.is-processing {
+  border-color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
   pointer-events: none;
-  transform: scale(0.98);
 }
 
 .popular-ribbon {
@@ -128,10 +124,6 @@
   display: flex;
   align-items: center;
   gap: 4px;
-}
-
-.pack-credits {
-  margin-bottom: 20px;
 }
 
 .credit-number {
@@ -151,18 +143,20 @@
   margin-bottom: 16px;
   display: flex;
   justify-content: center;
+  align-items: baseline;
   color: #fff;
-}
-
-.price-amount {
   font-size: 36px;
   font-weight: 800;
+}
+
+.currency {
+  font-size: 18px;
+  opacity: 0.6;
 }
 
 .pack-desc {
   font-size: 13px;
   color: #555;
-  line-height: 1.5;
   margin-bottom: 24px;
   min-height: 40px;
 }
@@ -174,14 +168,22 @@
   background: rgba(255, 255, 255, 0.05);
   color: #fff;
   font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
 }
 
+.popular .select-pack-btn {
+  background: #fff;
+  color: #000;
+}
+
+/* Spinner Logic */
 .btn-spinner {
   animation: spin 0.8s linear infinite;
+  color: #4ade80;
 }
 
 @keyframes spin {
