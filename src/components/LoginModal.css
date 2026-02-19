@@ -14,7 +14,6 @@
   z-index: 9999;
 }
 
-/* Updated selector name to match App.jsx guard */
 .login-modal-card {
   background: #1e1e1e;
   border: 1px solid #333;
@@ -27,7 +26,6 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
-/* Updated selector name to match App.jsx guard */
 .close-button {
   position: absolute;
   top: 15px;
@@ -37,11 +35,17 @@
   color: #888;
   font-size: 24px;
   cursor: pointer;
-  line-height: 1; /* Ensures the '×' stays centered */
+  line-height: 1;
+  transition: color 0.2s;
 }
 
-.close-button:hover {
+.close-button:hover:not(:disabled) {
   color: #fff;
+}
+
+.close-button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .login-content h2 {
@@ -71,15 +75,40 @@
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: all 0.2s;
 }
 
-.google-signin-btn:hover {
+.google-signin-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   background: #f1f1f1;
+}
+
+.google-signin-btn:disabled {
+  background: #cccccc;
+  color: #666;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .google-signin-btn img {
   width: 20px;
   height: 20px;
+}
+
+/* Spinner Animation */
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.google-signin-btn.loading {
+  background: #e5e5e5;
 }
