@@ -11,7 +11,7 @@ import PromptBox from './components/PromptSection/PromptBox';
 import ResultModal from './components/Shared/ResultModal';
 import EditModal from './components/Shared/EditModal';
 import ImageViewModal from './components/Shared/ImageViewModal';
-import LoginModal from './components/LoginModal'; // <-- NEW IMPORT
+import LoginModal from './components/LoginModal'; // Corrected Import
 // --- VIEWS ---
 import ExploreView from './views/ExploreView';
 import CharacterView from './views/CharacterView';
@@ -19,7 +19,7 @@ import MyImagesView from './views/MyImagesView';
 import StyleView from './views/StyleView';
 
 export default function App() {
-  const { user, loading: authLoading } = useAuth(); // Added authLoading to prevent flickering
+  const { user, loading: authLoading } = useAuth(); 
 
   // --- GLOBAL STATE ---
   const [activeTab, setActiveTab] = useState('explore');
@@ -37,10 +37,29 @@ export default function App() {
   const [editingImage, setEditingImage] = useState(null);
   const [viewImageModalOpen, setViewImageModalOpen] = useState(false);
   const [viewingImageUrl, setViewingImageUrl] = useState(null);
-  const [loginModalOpen, setLoginModalOpen] = useState(false); // <-- NEW STATE
+  const [loginModalOpen, setLoginModalOpen] = useState(false); 
 
   // --- PROMPT COLLAPSE STATE ---
   const [promptCollapsed, setPromptCollapsed] = useState(false);
+
+  // --- NEW: GLOBAL CLICK PROTECTION (VELVET ROPE) ---
+  const handleGlobalClick = (e) => {
+    // If user is logged in or system is loading, let clicks pass
+    if (user || authLoading) return;
+
+    // Check if the click is inside the login modal itself (so they can click sign in)
+    const isModalClick = e.target.closest('.login-modal-card') || e.target.closest('.modal-overlay');
+    
+    // Check if the element has the 'allow-visitor' class (for viewing images)
+    const isAllowedAction = e.target.closest('.allow-visitor');
+
+    if (!isModalClick && !isAllowedAction) {
+      // Kill the interaction and show the gate
+      e.preventDefault();
+      e.stopPropagation();
+      setLoginModalOpen(true);
+    }
+  };
 
   // --- 1. PERSISTENCE & WALLET LOGIC ---
   const loadGallery = async () => {
@@ -58,7 +77,6 @@ export default function App() {
             credits: 10 
           });
           setCredits(newWallet.credits);
-          console.log("🎁 New user detected: 10 free credits granted.");
         }
       }
 
@@ -81,8 +99,7 @@ export default function App() {
   useEffect(() => {
     loadGallery();
     
-    // TRIGGER LOGIN MODAL FOR VISITORS
-    // We wait 2 seconds so they can see the gallery first (like Ideogram)
+    // Auto-trigger login modal for visitors after 2 seconds
     if (!authLoading && !user) {
       const timer = setTimeout(() => setLoginModalOpen(true), 2000);
       return () => clearTimeout(timer);
@@ -124,7 +141,6 @@ export default function App() {
 
   // --- 2. CORE GENERATION LOGIC ---
   const generateImage = async () => {
-    // GATEKEEPER: If no user, show login modal and stop
     if (!user) {
       setLoginModalOpen(true);
       return;
@@ -173,7 +189,6 @@ export default function App() {
         throw new Error(data.error || "GPU Generation failed.");
       }
     } catch (err) {
-      console.error("RunPod Error:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -235,7 +250,8 @@ export default function App() {
   };
 
   return (
-    <div className="master-wrapper">
+    // onClickCapture intercepts clicks before they reach buttons
+    <div className="master-wrapper" onClickCapture={handleGlobalClick}>
       <div className="app-shell">
         <Sidebar 
           activeTab={activeTab} 
