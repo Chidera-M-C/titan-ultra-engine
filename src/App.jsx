@@ -48,8 +48,8 @@ export default function App() {
     if (user || authLoading) return;
 
     // 2. CHECK EXCEPTIONS:
-    // We allow clicks if they are on the LoginModal itself (so they can close it or sign in)
-    // or if the element has our 'allow-visitor' class.
+    // We allow clicks if they are on the LoginModal itself, 
+    // the ImageViewModal close components, or an "Allowed" image.
     const isModalInteraction = e.target.closest('.login-modal-card') || 
                                e.target.closest('.modal-overlay') || 
                                e.target.closest('.close-button');
@@ -57,7 +57,7 @@ export default function App() {
     const isAllowedImage = e.target.closest('.allow-visitor');
 
     if (!isModalInteraction && !isAllowedImage) {
-      // 3. STOP the action and show login
+      // 3. STOP the action and show login for anything else (Tabs, Generate, Sidebar)
       e.preventDefault();
       e.stopPropagation();
       setLoginModalOpen(true);
