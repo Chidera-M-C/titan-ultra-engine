@@ -126,7 +126,7 @@
 }
 
 .pack-info {
-  text-align: center;
+  text-align: left;
 }
 
 .pack-name {
@@ -161,7 +161,6 @@
   margin-bottom: 16px;
   display: flex;
   align-items: flex-start;
-  justify-content: center;
   color: #fff;
 }
 
@@ -183,7 +182,7 @@
   line-height: 1.5;
   margin-bottom: 24px;
   min-height: 40px;
-  text-align: center;
+  text-align: left;
 }
 
 .select-pack-btn {
