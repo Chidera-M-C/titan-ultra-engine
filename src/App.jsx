@@ -11,6 +11,7 @@ import PromptBox from './components/PromptSection/PromptBox';
 import ResultModal from './components/Shared/ResultModal';
 import EditModal from './components/Shared/EditModal';
 import ImageViewModal from './components/Shared/ImageViewModal';
+import LoginModal from './components/Shared/LoginModal'; // <-- NEW IMPORT
 // --- VIEWS ---
 import ExploreView from './views/ExploreView';
 import CharacterView from './views/CharacterView';
@@ -18,7 +19,7 @@ import MyImagesView from './views/MyImagesView';
 import StyleView from './views/StyleView';
 
 export default function App() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth(); // Added authLoading to prevent flickering
 
   // --- GLOBAL STATE ---
   const [activeTab, setActiveTab] = useState('explore');
@@ -36,6 +37,7 @@ export default function App() {
   const [editingImage, setEditingImage] = useState(null);
   const [viewImageModalOpen, setViewImageModalOpen] = useState(false);
   const [viewingImageUrl, setViewingImageUrl] = useState(null);
+  const [loginModalOpen, setLoginModalOpen] = useState(false); // <-- NEW STATE
 
   // --- PROMPT COLLAPSE STATE ---
   const [promptCollapsed, setPromptCollapsed] = useState(false);
@@ -47,13 +49,11 @@ export default function App() {
       return;
     }
     try {
-      // --- WALLET INITIALIZATION WITH FREE CREDITS ---
       try {
         const userDoc = await db.getDocument('main_db', 'users', user.$id);
         setCredits(userDoc.credits || 0);
       } catch (err) {
         if (err.code === 404) {
-          // GIVE 10 FREE CREDITS TO NEW USERS
           const newWallet = await db.createDocument('main_db', 'users', user.$id, {
             credits: 10 
           });
@@ -80,7 +80,14 @@ export default function App() {
 
   useEffect(() => {
     loadGallery();
-  }, [user]);
+    
+    // TRIGGER LOGIN MODAL FOR VISITORS
+    // We wait 2 seconds so they can see the gallery first (like Ideogram)
+    if (!authLoading && !user) {
+      const timer = setTimeout(() => setLoginModalOpen(true), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [user, authLoading]);
 
   // --- SCROLL DETECTION ---
   useEffect(() => {
@@ -99,24 +106,17 @@ export default function App() {
     }
   }, []);
 
-  // --- IMPROVED LIVE DEDUCTION HELPER ---
   const deductCreditsLive = async (amount) => {
     if (!user) return;
-    
-    // 1. Calculate new balance
     const newBalance = Math.max(0, credits - amount);
-    
-    // 2. OPTIMISTIC UPDATE: Update UI immediately so it feels 'Live'
     setCredits(newBalance);
 
     try {
-      // 3. Sync with Database in the background
       await db.updateDocument('main_db', 'users', user.$id, {
         credits: newBalance
       });
     } catch (err) {
       console.error("Database sync failed, reverting UI:", err);
-      // Revert UI state if the database update fails
       setCredits(prev => prev + amount);
       setError("Server sync failed. Your credits have been restored.");
     }
@@ -124,9 +124,14 @@ export default function App() {
 
   // --- 2. CORE GENERATION LOGIC ---
   const generateImage = async () => {
+    // GATEKEEPER: If no user, show login modal and stop
+    if (!user) {
+      setLoginModalOpen(true);
+      return;
+    }
+
     if (!prompt || loading) return;
 
-    // Credit Gate (Requires 2 credits)
     if (credits < 2) {
       setError("Insufficient credits. You need 2 credits per image.");
       setViewState('result');
@@ -152,20 +157,17 @@ export default function App() {
         const base64Image = data.output.image;
         setImage(base64Image);
 
-        if (user) {
-          // LIVE DEDUCTION: Happening as soon as image is confirmed
-          await deductCreditsLive(2);
+        await deductCreditsLive(2);
 
-          try {
-            await saveAiImage(user.$id, base64Image, prompt);
-            setUserGallery(prev => [{
-              id: Date.now(),
-              url: base64Image,
-              prompt
-            }, ...prev]);
-          } catch (saveErr) {
-            console.error("Database save failed:", saveErr);
-          }
+        try {
+          await saveAiImage(user.$id, base64Image, prompt);
+          setUserGallery(prev => [{
+            id: Date.now(),
+            url: base64Image,
+            prompt
+          }, ...prev]);
+        } catch (saveErr) {
+          console.error("Database save failed:", saveErr);
         }
       } else {
         throw new Error(data.error || "GPU Generation failed.");
@@ -201,6 +203,10 @@ export default function App() {
   };
 
   const handleEditImage = (img) => {
+    if (!user) {
+        setLoginModalOpen(true);
+        return;
+    }
     setEditingImage(img);
     setEditModalOpen(true);
   };
@@ -272,6 +278,11 @@ export default function App() {
             {renderActiveView()}
           </div>
         </main>
+
+        <LoginModal 
+           isOpen={loginModalOpen} 
+           onClose={() => setLoginModalOpen(false)} 
+        />
 
         {(viewState === 'result' || loading || image || error) && (
           <ResultModal
