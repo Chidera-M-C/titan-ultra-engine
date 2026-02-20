@@ -1,8 +1,9 @@
+/* src/components/Gallery/MasonryGrid.jsx */
 import './Gallery.css';
 import React, { useState } from 'react';
 import { Wand2, Download, Heart, RotateCcw } from 'lucide-react';
 
-export default function MasonryGrid({ images, onImageClick, onSelectPrompt, onEditImage }) {
+export default function MasonryGrid({ images, prompt, onImageClick, onSelectPrompt, onEditImage }) {
   
   const handleDownload = (e, url, imageId) => {
     e.stopPropagation();
@@ -26,7 +27,6 @@ export default function MasonryGrid({ images, onImageClick, onSelectPrompt, onEd
           className="gallery-card"
           onClick={() => onImageClick(img)}
         >
-          {/* allow-visitor tells App.jsx this click is okay */}
           <img 
             src={img.url} 
             alt="Generated AI image" 
@@ -40,7 +40,9 @@ export default function MasonryGrid({ images, onImageClick, onSelectPrompt, onEd
                 className="icon-btn"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onSelectPrompt(img.prompt);
+                  // TOGGLE LOGIC: If the current prompt is the same as the image prompt, send empty string to "unload"
+                  const newPrompt = prompt === img.prompt ? '' : img.prompt;
+                  onSelectPrompt(newPrompt);
                 }}
                 data-tooltip="Load prompt"
               >
@@ -86,7 +88,12 @@ function HeartButton() {
       }}
       data-tooltip={active ? 'Unlike' : 'Like'}
     >
-      <Heart size={18} color="#ffffff" fill={active ? '#ffffff' : 'none'} />
+      {/* Updated to use Red color when active */}
+      <Heart 
+        size={18} 
+        color={active ? '#ff4b4b' : '#ffffff'} 
+        fill={active ? '#ff4b4b' : 'none'} 
+      />
     </button>
   );
 }
