@@ -1,7 +1,5 @@
 .aspect-dropdown {
   position: relative;
-  display: inline-block;
-  overflow: visible !important;
 }
 
 .aspect-pill {
@@ -17,30 +15,40 @@
   cursor: pointer;
   transition: all 0.2s ease;
   color: #fff;
-  z-index: 1001;
+}
+
+.aspect-pill:hover {
+  background: #2a2a2a;
+  border-color: #444;
+}
+
+.aspect-pill svg {
+  display: block;
+}
+
+.aspect-value {
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
 .aspect-dropdown-menu {
-  /* TETHERED TO THE PILL */
-  position: absolute;
-  /* Opens UPWARDS to avoid hitting the bottom edge */
-  bottom: calc(100% + 8px); 
-  left: 0;
+  /* Back to fixed as requested */
+  position: fixed; 
   background: #1a1a1a;
   border: 1px solid #333;
   border-radius: 10px;
-  overflow: hidden;
-  /* MASSIVE z-index to stay on top of results */
-  z-index: 999999 !important;
+  padding: 4px 0;
+  z-index: 10000;
   min-width: 60px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
-  animation: dropdownSlide 0.2s ease forwards;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  animation: dropdownSlide 0.2s ease;
 }
 
 @keyframes dropdownSlide {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(-8px);
   }
   to {
     opacity: 1;
@@ -52,23 +60,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 4px;
+  padding: 8px 4px;
   cursor: pointer;
   transition: background 0.15s ease;
   color: #fff;
   font-size: 0.85rem;
   font-weight: 700;
-  border-bottom: 1px solid #222;
-}
-
-.aspect-dropdown-item:last-child {
-  border-bottom: none;
 }
 
 .aspect-dropdown-item:hover {
-  background: #333;
+  background: #252525;
 }
 
 .aspect-dropdown-item.active {
-  background: #444;
+  background: #2a2a2a;
 }
