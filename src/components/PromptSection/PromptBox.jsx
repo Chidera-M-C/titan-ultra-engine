@@ -1,21 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
+import AspectRatioDropdown from './AspectRatioDropdown';
 import './PromptBox.css';
-
-const RatioIcon = ({ ratio }) => {
-  const rectStyle = { fill: '#FFFFFF' };
-  switch (ratio) {
-    case '1:1': 
-      return <svg width="12" height="12" viewBox="0 0 12 12" style={{ flexShrink: 0 }}><rect width="12" height="12" rx="1" style={rectStyle} /></svg>;
-    case '4:5': 
-      return <svg width="10" height="12" viewBox="0 0 10 12" style={{ flexShrink: 0 }}><rect width="10" height="12" rx="1" style={rectStyle} /></svg>;
-    case '16:9': 
-      return <svg width="14" height="8" viewBox="0 0 14 8" style={{ flexShrink: 0 }}><rect width="14" height="8" rx="1" style={rectStyle} /></svg>;
-    case '9:16': 
-      return <svg width="8" height="14" viewBox="0 0 8 14" style={{ flexShrink: 0 }}><rect width="8" height="14" rx="1" style={rectStyle} /></svg>;
-    default: return null;
-  }
-};
 
 export default function PromptBox({
   prompt,
@@ -70,20 +56,10 @@ export default function PromptBox({
       {!collapsed ? (
         <div className="prompt-footer">
           <div className="left-tools">
-            <div className="aspect-pill">
-              <RatioIcon ratio={aspectRatio} />
-              <span className="aspect-value">{aspectRatio}</span>
-              <select
-                className="hidden-select"
-                value={aspectRatio}
-                onChange={(e) => setAspectRatio(e.target.value)}
-              >
-                <option value="1:1">1:1</option>
-                <option value="4:5">4:5</option>
-                <option value="16:9">16:9</option>
-                <option value="9:16">9:16</option>
-              </select>
-            </div>
+            <AspectRatioDropdown 
+              value={aspectRatio} 
+              onChange={setAspectRatio} 
+            />
           </div>
           
           <button
