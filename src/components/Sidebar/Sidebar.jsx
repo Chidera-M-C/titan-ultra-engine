@@ -5,7 +5,7 @@ import CreditsCard from './CreditsCard';
 import { useAuth } from '../../context/AuthContext';
 import './Sidebar.css';
 
-export default function Sidebar({ activeTab, onNavigate, credits, userId }) {
+export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen }) {
   const { user, loginWithGoogle, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const profileRef = useRef(null);
@@ -42,7 +42,7 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId }) {
   }, []);
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-top">
         <div className="brand">
           <div className="brand-logo">N</div>
@@ -80,7 +80,7 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId }) {
       </div>
 
       <div className="sidebar-bottom">
-        {/* DATA FLOW: Passing credits and userId down to the card */}
+        {/* DATA FLOW: Credits and userId remain active */}
         <CreditsCard credits={credits} userId={userId} />
         
         {user ? (
@@ -94,7 +94,7 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId }) {
               className="more-icon-btn" 
               title="More options"
             >
-              < MoreHorizontal size={18} />
+              <MoreHorizontal size={18} />
             </button>
 
             {isDropdownOpen && (
