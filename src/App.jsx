@@ -27,7 +27,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('explore');
   const [viewState, setViewState] = useState('gallery');
   const [prompt, setPrompt] = useState('');
-  const [aspectRatio, setAspectRatio] = useState('2:3');
+  const [aspectRatio, setAspectRatio] = useState('9:16');
   const [image, setImage] = useState(null);
   const [userGallery, setUserGallery] = useState([]);
   const [loading, setLoading] = useState(false);
