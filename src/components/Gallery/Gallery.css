@@ -1,4 +1,4 @@
-/* COMPLETE REWRITE OF GALLERY.CSS */
+/* src/components/Gallery/Gallery.css */
 
 .category-tabs {
   display: flex;
@@ -17,9 +17,7 @@
   -webkit-overflow-scrolling: touch;
 }
 
-.category-tabs::-webkit-scrollbar {
-  display: none;
-}
+.category-tabs::-webkit-scrollbar { display: none; }
 
 .tab {
   font-size: 0.95rem;
@@ -32,9 +30,7 @@
   transition: color 0.2s ease;
 }
 
-.tab.active {
-  color: #fff;
-}
+.tab.active { color: #fff; }
 
 .tab.active::after {
   content: '';
@@ -51,11 +47,13 @@
   width: 100%;
   column-count: 5;
   column-gap: 12px;
-  margin: 0 auto;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box; /* Ensures gap is inside the width */
 }
 
 .gallery-card {
-  break-inside: avoid; /* Prevents image being split across columns */
+  break-inside: avoid;
   margin-bottom: 12px;
   position: relative;
   border-radius: 12px;
@@ -63,7 +61,7 @@
   background: #1a1a1a;
   cursor: pointer;
   border: 1px solid #2a2a2a;
-  display: inline-block; /* Required for column-count to work right */
+  display: inline-block;
   width: 100%;
 }
 
@@ -71,11 +69,6 @@
   width: 100%;
   height: auto;
   display: block;
-  transition: transform 0.4s ease;
-}
-
-.gallery-card:hover img {
-  transform: scale(1.05);
 }
 
 /* OVERLAY LOGIC */
@@ -91,14 +84,9 @@
   padding: 15px;
 }
 
-.gallery-card:hover .gallery-overlay {
-  opacity: 1;
-}
+.gallery-card:hover .gallery-overlay { opacity: 1; }
 
-.overlay-actions {
-  display: flex;
-  gap: 10px;
-}
+.overlay-actions { display: flex; gap: 10px; }
 
 /* RESPONSIVE BREAKPOINTS */
 @media (max-width: 1200px) {
@@ -110,22 +98,15 @@
 }
 
 @media (max-width: 768px) {
-  .category-tabs {
-    justify-content: flex-start;
-  }
+  .category-tabs { justify-content: flex-start; }
   
   .masonry-grid {
-    column-count: 2; /* 2 Column Mobile */
-    column-gap: 8px;
+    column-count: 2; 
+    column-gap: 8px; /* Tighter gap for mobile */
   }
 
   .gallery-card {
     margin-bottom: 8px;
     border-radius: 8px;
   }
-
-  /* Disable hover effects on mobile to prevent "double tap" issues */
-  .gallery-card:hover img { transform: none; }
-  .gallery-overlay { opacity: 1; background: none; pointer-events: none; }
-  .gallery-overlay .overlay-actions { pointer-events: auto; }
 }
