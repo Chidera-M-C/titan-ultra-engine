@@ -7,13 +7,18 @@ const RatioIcon = ({ ratio }) => {
   switch (ratio) {
     case '1:1': 
       return <svg width="12" height="12" viewBox="0 0 12 12" style={{ flexShrink: 0 }}><rect width="12" height="12" rx="1" fill="#FFFFFF" /></svg>;
+    case '2:3': 
+      return <svg width="9" height="13" viewBox="0 0 9 13" style={{ flexShrink: 0 }}><rect width="9" height="13" rx="1" fill="#FFFFFF" /></svg>;
+    case '3:2': 
+      return <svg width="13" height="9" viewBox="0 0 13 9" style={{ flexShrink: 0 }}><rect width="13" height="9" rx="1" fill="#FFFFFF" /></svg>;
     case '4:5': 
       return <svg width="10" height="12" viewBox="0 0 10 12" style={{ flexShrink: 0 }}><rect width="10" height="12" rx="1" fill="#FFFFFF" /></svg>;
     case '16:9': 
       return <svg width="14" height="8" viewBox="0 0 14 8" style={{ flexShrink: 0 }}><rect width="14" height="8" rx="1" fill="#FFFFFF" /></svg>;
     case '9:16': 
       return <svg width="8" height="14" viewBox="0 0 8 14" style={{ flexShrink: 0 }}><rect width="8" height="14" rx="1" fill="#FFFFFF" /></svg>;
-    default: return null;
+    default: 
+      return <svg width="12" height="12" viewBox="0 0 12 12" style={{ flexShrink: 0 }}><rect width="12" height="12" rx="1" fill="#FFFFFF" /></svg>;
   }
 };
 
@@ -78,10 +83,12 @@ export default function PromptBox({
                 value={aspectRatio}
                 onChange={(e) => setAspectRatio(e.target.value)}
               >
-                <option value="1:1">1:1</option>
-                <option value="4:5">4:5</option>
-                <option value="16:9">16:9</option>
-                <option value="9:16">9:16</option>
+                <option value="1:1">1:1 Square</option>
+                <option value="2:3">2:3 Portrait</option>
+                <option value="3:2">3:2 Landscape</option>
+                <option value="4:5">4:5 Tall</option>
+                <option value="16:9">16:9 Wide</option>
+                <option value="9:16">9:16 Story</option>
               </select>
             </div>
           </div>
