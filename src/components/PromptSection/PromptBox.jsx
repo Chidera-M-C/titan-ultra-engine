@@ -24,8 +24,6 @@ export default function PromptBox({
     };
 
     resize();
-    textarea.style.scrollbarWidth = 'thin';
-    textarea.style.scrollbarColor = '#2A2A2A transparent';
 
     textarea.addEventListener('input', resize);
     window.addEventListener('resize', resize);
