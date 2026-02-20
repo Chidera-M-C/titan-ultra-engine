@@ -77,7 +77,6 @@
   font-weight: 700;
 }
 
-/* HIDDEN SELECT BUT DARK MENU */
 .hidden-select {
   position: absolute;
   inset: 0;
@@ -88,6 +87,14 @@
 .hidden-select option {
   background-color: #1a1a1a;
   color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+/* Style the dropdown menu itself when it opens */
+.hidden-select:focus {
+  outline: none;
 }
 
 /* BUTTONS */
