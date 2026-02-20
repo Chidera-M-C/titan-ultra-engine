@@ -3,6 +3,7 @@ import './Gallery.css';
 import React, { useState } from 'react';
 import { Wand2, Download, Heart, RotateCcw } from 'lucide-react';
 
+// Added 'prompt' to the destructured props here
 export default function MasonryGrid({ images, prompt, onImageClick, onSelectPrompt, onEditImage }) {
   
   const handleDownload = (e, url, imageId) => {
@@ -40,9 +41,15 @@ export default function MasonryGrid({ images, prompt, onImageClick, onSelectProm
                 className="icon-btn"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // TOGGLE LOGIC: If the current prompt is the same as the image prompt, send empty string to "unload"
-                  const newPrompt = prompt === img.prompt ? '' : img.prompt;
-                  onSelectPrompt(newPrompt);
+                  // We trim both to ensure white space doesn't break the comparison
+                  const currentPrompt = (prompt || '').trim();
+                  const imagePrompt = (img.prompt || '').trim();
+                  
+                  if (currentPrompt === imagePrompt) {
+                    onSelectPrompt(''); // Unload if it's a match
+                  } else {
+                    onSelectPrompt(img.prompt); // Load if it's different
+                  }
                 }}
                 data-tooltip="Load prompt"
               >
@@ -88,7 +95,6 @@ function HeartButton() {
       }}
       data-tooltip={active ? 'Unlike' : 'Like'}
     >
-      {/* Updated to use Red color when active */}
       <Heart 
         size={18} 
         color={active ? '#ff4b4b' : '#ffffff'} 
