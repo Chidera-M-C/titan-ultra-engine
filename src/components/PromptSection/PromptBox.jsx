@@ -67,9 +67,7 @@ export default function PromptBox({
     <div className={`prompt-container ${collapsed ? 'collapsed' : ''}`}>
       {collapsed ? (
         <>
-          <div className="prompt-input-wrapper">
-            {textarea}
-          </div>
+          {textarea}
           <SendButton />
         </>
       ) : (
