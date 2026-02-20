@@ -1,3 +1,5 @@
+/* src/components/Sidebar/Sidebar.css */
+
 .sidebar {
   position: fixed;
   top: 0;
@@ -8,8 +10,9 @@
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  z-index: 50;
+  z-index: 9999; /* High z-index to stay above content on mobile */
   overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth slide animation */
 }
 
 /* Scrollable top area for nav items */
@@ -284,4 +287,17 @@
 .google-login-btn .google-icon {
   width: 18px;
   height: 18px;
+}
+
+/* --- MOBILE TOGGLE LOGIC --- */
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%); /* Hidden by default on mobile */
+    box-shadow: none;
+  }
+
+  .sidebar.open {
+    transform: translateX(0); /* Slide in */
+    box-shadow: 10px 0 40px rgba(0,0,0,0.8);
+  }
 }
