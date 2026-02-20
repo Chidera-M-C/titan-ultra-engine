@@ -1,5 +1,6 @@
 .aspect-dropdown {
   position: relative;
+  display: inline-block;
   overflow: visible !important;
 }
 
@@ -16,21 +17,35 @@
   cursor: pointer;
   transition: all 0.2s ease;
   color: #fff;
+  z-index: 1001;
 }
 
 .aspect-dropdown-menu {
+  /* TETHERED TO THE PILL */
   position: absolute;
-  /* Opens upwards so it doesn't hit the bottom of the screen */
-  bottom: calc(100% + 10px); 
+  /* Opens UPWARDS to avoid hitting the bottom edge */
+  bottom: calc(100% + 8px); 
   left: 0;
   background: #1a1a1a;
   border: 1px solid #333;
   border-radius: 10px;
-  z-index: 99999 !important; /* Force it to the front */
+  overflow: hidden;
+  /* MASSIVE z-index to stay on top of results */
+  z-index: 999999 !important;
   min-width: 60px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
-  display: block !important; /* Ensure it's not display: none */
-  visibility: visible !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9);
+  animation: dropdownSlide 0.2s ease forwards;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .aspect-dropdown-item {
@@ -39,6 +54,7 @@
   justify-content: center;
   padding: 10px 4px;
   cursor: pointer;
+  transition: background 0.15s ease;
   color: #fff;
   font-size: 0.85rem;
   font-weight: 700;
@@ -50,5 +66,9 @@
 }
 
 .aspect-dropdown-item:hover {
-  background: #252525;
+  background: #333;
+}
+
+.aspect-dropdown-item.active {
+  background: #444;
 }
