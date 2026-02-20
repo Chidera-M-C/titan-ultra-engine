@@ -1,9 +1,7 @@
-/* src/components/Gallery/MasonryGrid.jsx */
 import './Gallery.css';
 import React, { useState } from 'react';
 import { Wand2, Download, Heart, RotateCcw } from 'lucide-react';
 
-// Added 'prompt' to the destructured props here
 export default function MasonryGrid({ images, prompt, onImageClick, onSelectPrompt, onEditImage }) {
   
   const handleDownload = (e, url, imageId) => {
@@ -41,17 +39,11 @@ export default function MasonryGrid({ images, prompt, onImageClick, onSelectProm
                 className="icon-btn"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // We trim both to ensure white space doesn't break the comparison
-                  const currentPrompt = (prompt || '').trim();
-                  const imagePrompt = (img.prompt || '').trim();
-                  
-                  if (currentPrompt === imagePrompt) {
-                    onSelectPrompt(''); // Unload if it's a match
-                  } else {
-                    onSelectPrompt(img.prompt); // Load if it's different
-                  }
+                  // Check if this image's prompt is already in the box
+                  const isLoaded = prompt?.trim() === img.prompt?.trim();
+                  onSelectPrompt(isLoaded ? '' : img.prompt);
                 }}
-                data-tooltip="Load prompt"
+                data-tooltip={prompt?.trim() === img.prompt?.trim() ? "Unload prompt" : "Load prompt"}
               >
                 <RotateCcw size={18} color="#ffffff" />
               </button>
