@@ -26,6 +26,7 @@ const RATIOS = [
 
 export default function AspectRatioDropdown({ value, onChange }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -39,6 +40,17 @@ export default function AspectRatioDropdown({ value, onChange }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleToggle = () => {
+    if (!isOpen && dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.bottom + 4,
+        left: rect.left
+      });
+    }
+    setIsOpen(!isOpen);
+  };
+
   const handleSelect = (ratio) => {
     onChange(ratio);
     setIsOpen(false);
@@ -48,7 +60,7 @@ export default function AspectRatioDropdown({ value, onChange }) {
     <div className="aspect-dropdown" ref={dropdownRef}>
       <div 
         className="aspect-pill" 
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
       >
         <RatioIcon ratio={value} />
         <span className="aspect-value">{value}</span>
@@ -62,7 +74,10 @@ export default function AspectRatioDropdown({ value, onChange }) {
       </div>
 
       {isOpen && (
-        <div className="aspect-dropdown-menu">
+        <div 
+          className="aspect-dropdown-menu"
+          style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
+        >
           {RATIOS.map((ratio) => (
             <div
               key={ratio.value}
