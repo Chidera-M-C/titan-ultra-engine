@@ -53,24 +53,14 @@ export default function PromptBox({
         }}
       />
       
-      {!collapsed ? (
-        <div className="prompt-footer">
-          <div className="left-tools">
-            <AspectRatioDropdown 
-              value={aspectRatio} 
-              onChange={setAspectRatio} 
-            />
-          </div>
-          
-          <button
-            className="generate-fab"
-            onClick={onGenerate}
-            disabled={!prompt.trim() || loading}
-          >
-            {loading ? <div className="spinner"></div> : <Send size={20} />}
-          </button>
+      <div className="prompt-footer">
+        <div className="left-tools">
+          <AspectRatioDropdown 
+            value={aspectRatio} 
+            onChange={setAspectRatio} 
+          />
         </div>
-      ) : (
+        
         <button
           className="generate-fab"
           onClick={onGenerate}
@@ -78,7 +68,7 @@ export default function PromptBox({
         >
           {loading ? <div className="spinner"></div> : <Send size={20} />}
         </button>
-      )}
+      </div>
     </div>
   );
 }
