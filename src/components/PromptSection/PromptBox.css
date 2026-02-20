@@ -27,10 +27,24 @@
   overflow-y: auto;
 }
 
-/* Scrollbar styles preserved */
-.prompt-input::-webkit-scrollbar { width: 6px; }
-.prompt-input::-webkit-scrollbar-track { background: #161616; border-radius: 10px; }
-.prompt-input::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 10px; border: 2px solid #161616; }
+/* CUSTOM SCROLLBAR FIX */
+.prompt-input::-webkit-scrollbar { 
+  width: 6px; 
+}
+
+.prompt-input::-webkit-scrollbar-track { 
+  background: transparent; 
+  border-radius: 10px; 
+  /* Prevents scrollbar from overlapping the Send button */
+  margin-bottom: 50px; 
+  margin-top: 8px;
+}
+
+.prompt-input::-webkit-scrollbar-thumb { 
+  background: #2A2A2A; 
+  border-radius: 10px; 
+  border: 2px solid #161616; 
+}
 
 /* Collapsed State Position */
 .prompt-container.collapsed {
@@ -92,9 +106,7 @@
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 @media (max-width: 768px) {
