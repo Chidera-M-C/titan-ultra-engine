@@ -2,65 +2,66 @@
 
 .category-tabs {
   display: flex;
-  gap: 32px;
+  gap: 20px;
   justify-content: center;
-  padding: 0 1rem 1rem 1rem;
+  /* Reduced padding so it doesn't push the page wide */
+  padding: 0 1rem 1rem 1rem; 
   border-bottom: 1px solid #222;
   margin-bottom: 10px;
+  margin-top: -2px;
   position: sticky;
   top: 0;
   background: #101010;
   z-index: 20;
-  overflow-x: auto; /* Allow swipe on mobile if tabs are too many */
+  /* Crucial for mobile: allows tabs to scroll if they don't fit */
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 
 .category-tabs::-webkit-scrollbar { display: none; }
 
 .tab {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: #666;
   cursor: pointer;
-  white-space: nowrap;
+  position: relative;
   padding: 8px 0;
+  flex-shrink: 0; /* Prevents text squishing */
 }
 
 .tab.active { color: #fff; }
 
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #fff;
+}
+
 .masonry-grid {
   width: 100%;
-  column-count: 5; /* Desktop Default */
+  column-count: 5;
   column-gap: 12px;
 }
 
-/* MOBILE FIX FOR EXPLORE VIEW */
+/* TABLET & MOBILE VIEW */
 @media (max-width: 1024px) {
   .masonry-grid { column-count: 3; }
 }
 
 @media (max-width: 768px) {
-  .masonry-grid { 
-    column-count: 2; /* 2 Columns on Mobile */
-    column-gap: 10px;
-  }
-  
   .category-tabs {
-    justify-content: flex-start; /* Better for swiping tabs */
-    padding-left: 10px;
+    justify-content: flex-start; /* Aligns tabs to left for natural swiping */
   }
-}
 
-.pin-item, .gallery-card {
-  break-inside: avoid;
-  margin-bottom: 12px;
-  display: inline-block;
-  width: 100%;
-}
-
-/* Ensure the image doesn't stretch weirdly */
-.gallery-card img {
-  width: 100%;
-  height: auto;
-  display: block;
+  .masonry-grid { 
+    column-count: 2; /* 2 clean columns */
+    column-gap: 8px; /* Tighter gap for small screens */
+  }
 }
