@@ -1,124 +1,66 @@
 /* src/components/Gallery/Gallery.css */
 
-/* Sticky tabs – Optimized for horizontal scroll on mobile */
 .category-tabs {
   display: flex;
-  gap: 24px;
+  gap: 32px;
   justify-content: center;
-  padding: 0.5rem 1rem 1rem 1rem;
+  padding: 0 1rem 1rem 1rem;
   border-bottom: 1px solid #222;
   margin-bottom: 10px;
-  margin-top: -2px;
   position: sticky;
   top: 0;
   background: #101010;
   z-index: 20;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-  overflow-x: auto; /* Allow scrolling if tabs are too wide */
-  scrollbar-width: none; /* Hide scrollbar Firefox */
+  overflow-x: auto; /* Allow swipe on mobile if tabs are too many */
+  scrollbar-width: none;
 }
 
-.category-tabs::-webkit-scrollbar {
-  display: none; /* Hide scrollbar Chrome/Safari */
-}
+.category-tabs::-webkit-scrollbar { display: none; }
 
 .tab {
   font-size: 0.95rem;
   font-weight: 600;
   color: #666;
   cursor: pointer;
-  position: relative;
   white-space: nowrap;
   padding: 8px 0;
-  flex-shrink: 0; /* Prevent tabs from squishing */
 }
 
-.tab.active { 
-  color: #fff; 
-}
+.tab.active { color: #fff; }
 
-.tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px; /* Snapped to the border-bottom */
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: #fff;
-}
-
-/* Masonry grid – Responsive Column Logic */
 .masonry-grid {
   width: 100%;
-  column-count: 5;
+  column-count: 5; /* Desktop Default */
   column-gap: 12px;
-  padding: 10px 0;
 }
 
-/* BREAKPOINTS */
-@media (max-width: 1200px) {
-  .masonry-grid { column-count: 4; }
-}
-
-@media (max-width: 992px) {
+/* MOBILE FIX FOR EXPLORE VIEW */
+@media (max-width: 1024px) {
   .masonry-grid { column-count: 3; }
 }
 
 @media (max-width: 768px) {
-  .category-tabs {
-    justify-content: flex-start; /* Better for mobile scrolling */
-  }
-  
   .masonry-grid { 
-    column-count: 2; /* THE FIX: Two columns for mobile */
+    column-count: 2; /* 2 Columns on Mobile */
     column-gap: 10px;
   }
+  
+  .category-tabs {
+    justify-content: flex-start; /* Better for swiping tabs */
+    padding-left: 10px;
+  }
 }
 
-@media (max-width: 480px) {
-  /* Optional: keeping it 2 columns even on small phones looks better for AI art */
-  .masonry-grid { column-count: 2; }
-}
-
-/* Grid Item Styles */
 .pin-item, .gallery-card {
-  position: relative;
-  border-radius: 12px;
-  overflow: hidden;
-  cursor: pointer;
-  background: #1a1a1a;
   break-inside: avoid;
-  margin-bottom: 12px; /* Matches gap */
+  margin-bottom: 12px;
   display: inline-block;
   width: 100%;
-  transition: transform 0.3s ease;
-  border: 1px solid var(--border);
 }
 
+/* Ensure the image doesn't stretch weirdly */
 .gallery-card img {
   width: 100%;
   height: auto;
   display: block;
-}
-
-/* Ensure overlay actions don't get too huge on mobile */
-@media (max-width: 768px) {
-  .gallery-overlay {
-    padding: 10px;
-  }
-  
-  .overlay-actions {
-    gap: 6px;
-  }
-  
-  .icon-btn {
-    width: 36px;
-    height: 36px;
-  }
-  
-  /* Disable tooltips on mobile to prevent "ghost clicks" */
-  .icon-btn::before, .icon-btn::after {
-    display: none !important;
-  }
 }
