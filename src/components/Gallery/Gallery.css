@@ -44,24 +44,30 @@
   background: #fff;
 }
 
+/* src/components/Gallery/Gallery.css */
+
 .masonry-grid {
   width: 100%;
+  display: block; /* Ensure it's not fighting grid styles */
   column-count: 5;
   column-gap: 12px;
+  /* Add this to prevent the right-side gap/cutoff */
+  margin: 0 auto;
 }
 
-/* TABLET & MOBILE VIEW */
 @media (max-width: 1024px) {
   .masonry-grid { column-count: 3; }
 }
 
 @media (max-width: 768px) {
-  .category-tabs {
-    justify-content: flex-start; /* Aligns tabs to left for natural swiping */
-  }
-
   .masonry-grid { 
-    column-count: 2; /* 2 clean columns */
-    column-gap: 8px; /* Tighter gap for small screens */
+    column-count: 2; 
+    column-gap: 10px; /* Tighter gap for mobile */
+    width: 100%;
+  }
+  
+  .gallery-card {
+    margin-bottom: 10px; /* Vertical gap between items */
+    break-inside: avoid; /* Essential: prevents cutting images in half */
   }
 }
