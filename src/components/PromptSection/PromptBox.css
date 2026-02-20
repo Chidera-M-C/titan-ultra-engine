@@ -1,3 +1,4 @@
+/* --- CONTAINER & INPUT --- */
 .prompt-container {
   width: 100%;
   max-width: 850px;
@@ -27,29 +28,25 @@
   overflow-y: auto;
 }
 
-/* Slick Dark Scrollbar */
+/* CUSTOM SCROLLBAR */
 .prompt-input::-webkit-scrollbar { width: 6px; }
 .prompt-input::-webkit-scrollbar-track { background: #161616; border-radius: 10px; }
 .prompt-input::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 10px; border: 2px solid #161616; }
 
-/* Collapsed State - RESTORED ORIGINAL POSITIONING */
+/* --- COLLAPSED STATE --- */
 .prompt-container.collapsed {
   max-width: 850px;
   padding: 6px 9px;
   flex-direction: row;
   align-items: center;
-  margin: 0 auto 0 7.5rem; /* Your original margin */
+  margin: 0 auto 0 7.5rem;
   background: rgba(22, 22, 22, 0.7);
   backdrop-filter: blur(12px);
   border-radius: 16px;
   min-height: 48px;
 }
 
-.prompt-container.collapsed .prompt-input {
-  padding: 6px 60px 6px 12px;
-  font-size: 0.9rem;
-}
-
+/* --- TOOLS & PILLS --- */
 .prompt-footer {
   display: flex;
   justify-content: space-between;
@@ -65,33 +62,51 @@
   border: 1px solid #333;
   height: 32px;
   padding: 0 14px;
-  border-radius: 100px;
+  border-radius: 10px; /* Slightly squarer for the slick look */
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  transition: all 0.2s ease;
+}
+
+.aspect-pill:hover {
+  background: #2a2a2a;
+  border-color: #444;
 }
 
 .aspect-value {
   color: #fff;
   font-size: 0.8rem;
   font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
+/* DARK MODE DROPDOWN STYLING */
 .hidden-select {
   position: absolute;
   inset: 0;
   opacity: 0;
   cursor: pointer;
+  appearance: none;
+  background: #1a1a1a;
+  color: #fff;
 }
 
-/* Send Button - Restored fixed positioning logic */
+/* Target the dropdown menu itself for browsers that support it */
+.hidden-select option {
+  background-color: #1a1a1a;
+  color: #fff;
+  padding: 10px;
+}
+
+/* --- BUTTONS --- */
 .generate-fab {
   position: absolute;
   bottom: 8px;
   right: 12px;
   width: 40px;
   height: 40px;
-  border-radius: 14px;
+  border-radius: 12px;
   background: #222;
   border: 1px solid #333;
   display: flex;
@@ -103,18 +118,21 @@
 }
 
 .generate-fab:hover:not(:disabled) {
-  background: #333;
+  background: #fff;
+  color: #000;
+  border-color: #fff;
 }
 
-/* Mobile Fixes */
+.generate-fab:disabled {
+  background: #1a1a1a;
+  opacity: 0.4;
+}
+
+/* --- MOBILE --- */
 @media (max-width: 768px) {
   .prompt-container.collapsed {
-    margin: 0 auto; /* Center on mobile */
+    margin: 0 auto;
     width: calc(100% - 20px);
-  }
-  
-  .prompt-footer {
-    padding-bottom: 5px;
   }
 }
 
