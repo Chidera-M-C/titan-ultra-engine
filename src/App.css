@@ -194,15 +194,36 @@ body, html {
   padding: 0 1rem;
 }
 
+/* --- THE FIX IS HERE --- */
 @media (max-width: 768px) {
   .mobile-menu-toggle { display: flex; }
   .main-content { margin-left: 0; }
-  .top-header { padding-top: 70px; }
-  .aesthetic-title { font-size: 1.5rem; }
-  .scrollable-area { padding: 0 1rem 8rem 1rem !important; }
-  .gallery-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  
+  .top-header { 
+    padding: 70px 10px 10px 10px; /* Reduced side padding */
+  }
+  
+  .aesthetic-title { 
+    font-size: 1.3rem; /* Slightly smaller to fit width */
+    padding: 0 10px;
+  }
+  
+  .scrollable-area { 
+    /* Changed side padding from 1rem to 8px to prevent cutting off images */
+    padding: 0 8px 8rem 8px !important; 
+    width: 100%;
+  }
+  
+  .gallery-grid { 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 8px; /* Tighter gap for mobile */
+    padding: 10px 0;
+  }
 }
 
 @media (max-width: 480px) {
-  .gallery-grid { grid-template-columns: 1fr; }
+  /* Keeps it 2 columns even on small phones so it doesn't look like a giant list */
+  .gallery-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  
+  .scrollable-area { padding: 0 6px 8rem 6px !important; }
 }
