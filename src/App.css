@@ -59,7 +59,8 @@ body, html {
   padding: 1rem 2rem 1rem 1rem;
   flex-shrink: 0;
   position: relative;
-  z-index: 1;
+  /* FIX: Bumped z-index significantly so prompt dropdowns stay ABOVE gallery tabs (z-20) */
+  z-index: 1000; 
   background: var(--bg-app);
 }
 
@@ -72,6 +73,18 @@ body, html {
   color: #fff;
   text-transform: uppercase;
   letter-spacing: 1.5px;
+}
+
+.floating-prompt {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 850px;
+  /* FIX: Ensure prompt stays on top of the header layer */
+  z-index: 1001; 
+  padding: 0 1rem;
 }
 
 .mobile-menu-toggle {
@@ -110,6 +123,7 @@ body, html {
   color: #666;
 }
 
+/* GALLERY STYLES */
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -129,8 +143,19 @@ body, html {
   border: 1px solid var(--border);
 }
 
-.gallery-card:hover { transform: scale(1.02); z-index: 10; box-shadow: 0 20px 40px rgba(0,0,0,0.6); border-color: rgba(255,255,255,0.2); }
-.gallery-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gallery-card:hover { 
+  transform: scale(1.02); 
+  z-index: 10; 
+  box-shadow: 0 20px 40px rgba(0,0,0,0.6); 
+  border-color: rgba(255,255,255,0.2); 
+}
+
+.gallery-card img { 
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover; 
+  display: block; 
+}
 
 .gallery-overlay {
   position: absolute;
@@ -162,7 +187,12 @@ body, html {
   transition: all 0.2s ease;
 }
 
-.icon-btn:hover { background: rgba(255, 255, 255, 0.95); transform: translateY(-2px) scale(1.1); border-color: rgba(255, 255, 255, 0.5); }
+.icon-btn:hover { 
+  background: rgba(255, 255, 255, 0.95); 
+  transform: translateY(-2px) scale(1.1); 
+  border-color: rgba(255, 255, 255, 0.5); 
+}
+
 .icon-btn:hover svg { stroke: #000000; }
 
 .icon-btn::before {
@@ -183,28 +213,13 @@ body, html {
 
 .icon-btn:hover::before { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-.floating-prompt {
-  position: fixed;
-  top: 60px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 850px;
-  z-index: 500;
-  padding: 0 1rem;
-}
-
-/* ... Keep all your root and desktop styles exactly the same ... */
-
+/* RESPONSIVE BREAKPOINTS */
 @media (max-width: 768px) {
   .mobile-menu-toggle { display: flex; }
   .main-content { margin-left: 0; }
   .top-header { padding-top: 70px; }
   .aesthetic-title { font-size: 1.5rem; }
 
-  /* THE ONLY CHANGE: 
-     Reduced padding from 2rem to 8px. 
-     This stops the "cutting off" by giving the grid back its space. */
   .scrollable-area { 
     padding: 0 8px 8rem 8px !important; 
     width: 100%;
@@ -212,7 +227,6 @@ body, html {
     box-sizing: border-box;
   }
 
-  /* Ensure the grid container doesn't have extra margins */
   .gallery-centered-block {
     width: 100%;
     padding: 0;
