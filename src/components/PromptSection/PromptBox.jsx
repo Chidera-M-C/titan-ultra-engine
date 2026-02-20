@@ -2,13 +2,20 @@ import React, { useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import './PromptBox.css';
 
+// Renders the geometric shape representing the ratio
 const RatioIcon = ({ ratio }) => {
-  const baseStyle = { border: '1.5px solid currentColor', borderRadius: '1px', opacity: 0.8 };
+  const baseStyle = { 
+    border: '1.5px solid currentColor', 
+    borderRadius: '2px', 
+    opacity: 0.9,
+    display: 'inline-block'
+  };
+  
   switch (ratio) {
-    case '1:1': return <div style={{ ...baseStyle, width: '11px', height: '11px' }} />;
-    case '4:5': return <div style={{ ...baseStyle, width: '9px', height: '12px' }} />;
-    case '16:9': return <div style={{ ...baseStyle, width: '14px', height: '8px' }} />;
-    case '9:16': return <div style={{ ...baseStyle, width: '8px', height: '14px' }} />;
+    case '1:1': return <div style={{ ...baseStyle, width: '12px', height: '12px' }} />;
+    case '4:5': return <div style={{ ...baseStyle, width: '10px', height: '12.5px' }} />;
+    case '16:9': return <div style={{ ...baseStyle, width: '15px', height: '8.5px' }} />;
+    case '9:16': return <div style={{ ...baseStyle, width: '8.5px', height: '15px' }} />;
     default: return null;
   }
 };
