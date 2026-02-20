@@ -108,6 +108,17 @@
   animation: spin 1s linear infinite;
 }
 
+/* Collapsed state scrollbar spacing */
+.prompt-container.collapsed .prompt-input {
+  padding-right: 60px; /* pushes scrollbar left, away from button */
+}
+
+.prompt-container.collapsed .prompt-input::-webkit-scrollbar-track {
+  border-bottom: none; /* reset the expanded-state bottom offset */
+  margin-bottom: 6px;  /* small gap above button top */
+  margin-top: 6px;
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
