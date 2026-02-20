@@ -49,7 +49,7 @@
   column-gap: 12px;
   margin: 0;
   padding: 0;
-  box-sizing: border-box; 
+  box-sizing: border-box; /* Ensures gap is inside the width */
 }
 
 .gallery-card {
@@ -71,13 +71,12 @@
   display: block;
 }
 
-/* OVERLAY LOGIC (WEB/DESKTOP) */
-.gallery-overlay,
-.pin-overlay {
+/* OVERLAY LOGIC */
+.gallery-overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 60%);
-  opacity: 0; 
+  opacity: 0;
   transition: opacity 0.3s ease;
   display: flex;
   align-items: flex-end;
@@ -85,15 +84,9 @@
   padding: 15px;
 }
 
-.gallery-card:hover .gallery-overlay,
-.pin-item:hover .pin-overlay { 
-  opacity: 1; 
-}
+.gallery-card:hover .gallery-overlay { opacity: 1; }
 
-.overlay-actions { 
-  display: flex; 
-  gap: 10px; 
-}
+.overlay-actions { display: flex; gap: 10px; }
 
 /* RESPONSIVE BREAKPOINTS */
 @media (max-width: 1200px) {
@@ -109,44 +102,11 @@
   
   .masonry-grid {
     column-count: 2; 
-    column-gap: 8px; 
+    column-gap: 8px; /* Tighter gap for mobile */
   }
 
   .gallery-card {
     margin-bottom: 8px;
     border-radius: 8px;
-  }
-
-  /* MOBILE FIX: ALWAYS SHOW BUTTONS & SHRINK THEM */
-  .gallery-overlay,
-  .pin-overlay {
-    opacity: 1; 
-    padding: 8px; 
-    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 40%);
-  }
-
-  .overlay-actions {
-    gap: 4px; /* Tighter gap for small buttons */
-    flex-wrap: wrap; 
-    justify-content: center;
-  }
-
-  /* Target the buttons inside the overlay to shrink them */
-  .icon-btn {
-    width: 32px !important;
-    height: 32px !important;
-    min-width: 32px !important;
-    padding: 0 !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(40, 40, 40, 0.7) !important;
-    border-radius: 8px !important;
-  }
-
-  /* Target the Lucide icons specifically */
-  .icon-btn svg {
-    width: 15px !important;
-    height: 15px !important;
   }
 }
