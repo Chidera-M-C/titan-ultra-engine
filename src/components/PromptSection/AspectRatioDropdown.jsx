@@ -28,7 +28,6 @@ export default function AspectRatioDropdown({ value, onChange }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -70,7 +69,6 @@ export default function AspectRatioDropdown({ value, onChange }) {
               className={`aspect-dropdown-item ${value === ratio.value ? 'active' : ''}`}
               onClick={() => handleSelect(ratio.value)}
             >
-              <RatioIcon ratio={ratio.value} />
               <span>{ratio.label}</span>
             </div>
           ))}
