@@ -2,20 +2,18 @@ import React, { useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import './PromptBox.css';
 
-// Renders the geometric shape representing the ratio
+// SVG-based icons for guaranteed rendering
 const RatioIcon = ({ ratio }) => {
-  const baseStyle = { 
-    border: '1.5px solid currentColor', 
-    borderRadius: '2px', 
-    opacity: 0.9,
-    display: 'inline-block'
-  };
-  
+  const color = "currentColor";
   switch (ratio) {
-    case '1:1': return <div style={{ ...baseStyle, width: '12px', height: '12px' }} />;
-    case '4:5': return <div style={{ ...baseStyle, width: '10px', height: '12.5px' }} />;
-    case '16:9': return <div style={{ ...baseStyle, width: '15px', height: '8.5px' }} />;
-    case '9:16': return <div style={{ ...baseStyle, width: '8.5px', height: '15px' }} />;
+    case '1:1': 
+      return <svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" rx="1" fill={color} /></svg>;
+    case '4:5': 
+      return <svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="1" width="10" height="12" rx="1" fill={color} /></svg>;
+    case '16:9': 
+      return <svg width="14" height="14" viewBox="0 0 14 14"><rect x="0" y="3" width="14" height="8" rx="1" fill={color} /></svg>;
+    case '9:16': 
+      return <svg width="14" height="14" viewBox="0 0 14 14"><rect x="3" y="0" width="8" height="14" rx="1" fill={color} /></svg>;
     default: return null;
   }
 };
