@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+// --- ICONS ---
+import { Menu, X } from 'lucide-react';
 // --- APPWRITE & AUTH ---
 import { useAuth } from './context/AuthContext';
 import { saveAiImage } from './lib/imageService.js';
@@ -32,6 +34,9 @@ export default function App() {
   const [error, setError] = useState(null);
   const [credits, setCredits] = useState(0);
 
+  // --- MOBILE STATE ---
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   // --- MODAL STATES ---
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingImage, setEditingImage] = useState(null);
@@ -42,22 +47,20 @@ export default function App() {
   // --- PROMPT COLLAPSE STATE ---
   const [promptCollapsed, setPromptCollapsed] = useState(false);
 
-  // --- GLOBAL CLICK PROTECTION (The Velvet Rope) ---
+  // --- GLOBAL CLICK PROTECTION ---
   const handleGlobalClick = (e) => {
-    // 1. If logged in or still authenticating, ignore this guard
     if (user || authLoading) return;
 
-    // 2. CHECK EXCEPTIONS:
-    // We allow clicks if they are on the LoginModal itself, 
-    // the ImageViewModal close components, or an "Allowed" image.
     const isModalInteraction = e.target.closest('.login-modal-card') || 
                                e.target.closest('.modal-overlay') || 
                                e.target.closest('.close-button');
                                
     const isAllowedImage = e.target.closest('.allow-visitor');
+    
+    // ALLOW the mobile toggle even if not logged in
+    const isToggleInteraction = e.target.closest('.mobile-menu-toggle');
 
-    if (!isModalInteraction && !isAllowedImage) {
-      // 3. STOP the action and show login for anything else (Tabs, Generate, Sidebar)
+    if (!isModalInteraction && !isAllowedImage && !isToggleInteraction) {
       e.preventDefault();
       e.stopPropagation();
       setLoginModalOpen(true);
@@ -196,6 +199,7 @@ export default function App() {
   // --- HANDLERS ---
   const handleNavigation = (tab) => {
     setActiveTab(tab);
+    setIsSidebarOpen(false); // Close sidebar on navigate (Mobile)
     if (tab === 'explore' || tab === 'gallery') {
       setViewState('gallery');
     } else {
@@ -250,12 +254,32 @@ export default function App() {
   return (
     <div className="master-wrapper" onClickCapture={handleGlobalClick}>
       <div className="app-shell">
+        
+        {/* MOBILE TOGGLE BUTTON */}
+        <button 
+          className="mobile-menu-toggle" 
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          aria-label="Toggle Menu"
+        >
+          {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+
+        {/* MOBILE OVERLAY */}
+        {isSidebarOpen && (
+          <div 
+            className="sidebar-mobile-overlay" 
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
         <Sidebar 
           activeTab={activeTab} 
           onNavigate={handleNavigation} 
           credits={credits} 
           userId={user?.$id}
+          isOpen={isSidebarOpen}
         />
+
         <main className="main-content">
           {!promptCollapsed && (
             <header className="top-header">
