@@ -4,15 +4,15 @@ import './AspectRatioDropdown.css';
 
 const RatioIcon = ({ ratio }) => {
   switch (ratio) {
-    case '1:1': 
+    case '1:1':
       return <svg width="12" height="12" viewBox="0 0 12 12" style={{ flexShrink: 0 }}><rect width="12" height="12" rx="1" fill="currentColor" /></svg>;
-    case '4:5': 
+    case '4:5':
       return <svg width="10" height="12" viewBox="0 0 10 12" style={{ flexShrink: 0 }}><rect width="10" height="12" rx="1" fill="currentColor" /></svg>;
-    case '9:16': 
+    case '9:16':
       return <svg width="8" height="14" viewBox="0 0 8 14" style={{ flexShrink: 0 }}><rect width="8" height="14" rx="1" fill="currentColor" /></svg>;
-    case '16:9': 
+    case '16:9':
       return <svg width="14" height="8" viewBox="0 0 14 8" style={{ flexShrink: 0 }}><rect width="14" height="8" rx="1" fill="currentColor" /></svg>;
-    default: 
+    default:
       return <svg width="12" height="12" viewBox="0 0 12 12" style={{ flexShrink: 0 }}><rect width="12" height="12" rx="1" fill="currentColor" /></svg>;
   }
 };
@@ -26,7 +26,6 @@ const RATIOS = [
 
 export default function AspectRatioDropdown({ value, onChange }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -35,21 +34,9 @@ export default function AspectRatioDropdown({ value, onChange }) {
         setIsOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const handleToggle = () => {
-    if (!isOpen && dropdownRef.current) {
-      const rect = dropdownRef.current.getBoundingClientRect();
-      setMenuPosition({
-        top: rect.bottom + 4,
-        left: rect.left
-      });
-    }
-    setIsOpen(!isOpen);
-  };
 
   const handleSelect = (ratio) => {
     onChange(ratio);
@@ -58,26 +45,23 @@ export default function AspectRatioDropdown({ value, onChange }) {
 
   return (
     <div className="aspect-dropdown" ref={dropdownRef}>
-      <div 
-        className="aspect-pill" 
-        onClick={handleToggle}
+      <div
+        className="aspect-pill"
+        onClick={() => setIsOpen(!isOpen)}
       >
         <RatioIcon ratio={value} />
         <span className="aspect-value">{value}</span>
-        <ChevronDown 
-          size={14} 
-          style={{ 
+        <ChevronDown
+          size={14}
+          style={{
             transition: 'transform 0.2s',
             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)'
-          }} 
+          }}
         />
       </div>
 
       {isOpen && (
-        <div 
-          className="aspect-dropdown-menu"
-          style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
-        >
+        <div className="aspect-dropdown-menu">
           {RATIOS.map((ratio) => (
             <div
               key={ratio.value}
