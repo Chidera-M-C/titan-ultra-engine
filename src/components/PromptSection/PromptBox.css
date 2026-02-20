@@ -10,6 +10,8 @@
   box-shadow: 0 10px 40px rgba(0,0,0,0.6);
   position: relative;
   transition: all 0.3s ease;
+  /* Ensure nothing clips the dropdown */
+  overflow: visible !important; 
 }
 
 .prompt-input {
@@ -34,7 +36,6 @@
 
 .prompt-input::-webkit-scrollbar-track { 
   background: transparent; 
-  /* Visual gap: thumb stops before the footer tools */
   border-bottom: 45px solid transparent; 
   background-clip: content-box;
 }
@@ -45,22 +46,17 @@
   border: 2px solid #161616; 
 }
 
-/* COLLAPSED STATE: STACKED LAYOUT */
+/* COLLAPSED STATE */
 .prompt-container.collapsed {
   max-width: 850px;
   padding: 8px 12px;
-  flex-direction: column; /* Input over Footer */
+  flex-direction: column; 
   margin: 0 auto 0 7.5rem;
   background: rgba(22, 22, 22, 0.8);
   backdrop-filter: blur(12px);
   border-radius: 16px;
   min-height: 48px;
-}
-
-.prompt-container.collapsed .prompt-input {
-  padding: 4px 50px 4px 4px;
-  font-size: 0.95rem;
-  min-height: 24px;
+  overflow: visible !important;
 }
 
 .prompt-footer {
@@ -70,9 +66,12 @@
   margin-top: 10px;
   padding: 10px 4px 0 4px;
   border-top: 1px solid #222;
+  /* Allow dropdown to pop out */
+  position: relative;
+  z-index: 100; 
+  overflow: visible !important;
 }
 
-/* Slimmer footer for collapsed state */
 .collapsed .prompt-footer {
   margin-top: 4px;
   padding-top: 4px;
@@ -82,6 +81,7 @@
 .left-tools {
   display: flex;
   gap: 12px;
+  overflow: visible !important;
 }
 
 /* BUTTONS */
@@ -89,7 +89,7 @@
   position: absolute;
   bottom: 8px;
   right: 12px;
-  width: 38px; /* Slightly smaller for collapsed fit */
+  width: 38px; 
   height: 38px;
   border-radius: 12px;
   background: #222;
@@ -102,34 +102,8 @@
   z-index: 10;
 }
 
-/* Keep original size for expanded state if preferred */
 .prompt-container:not(.collapsed) .generate-fab {
   width: 42px;
   height: 42px;
   bottom: 8px;
-}
-
-.generate-fab:hover:not(:disabled) {
-  background: #fff;
-  color: #000;
-}
-
-.spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid #333;
-  border-top: 2px solid #ECECEC;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-@media (max-width: 768px) {
-  .prompt-container.collapsed {
-    margin: 0 auto;
-    width: calc(100% - 20px);
-  }
 }
