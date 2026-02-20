@@ -1,287 +1,229 @@
-.sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 260px;
-  height: 100vh;
-  background: var(--bg-sidebar);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  z-index: 50;
-  overflow: hidden;
+:root {
+  --bg-app: #101010;
+  --bg-sidebar: #000000;
+  --bg-prompt: #1a1a1a;
+  --bg-pill: #2a2a2a;
+  --accent: #FFFFFF;
+  --text-primary: #ECECEC;
+  --text-secondary: #666666;
+  --border: #2A2A2A;
 }
 
-/* Scrollable top area for nav items */
-.sidebar-top {
-  flex-grow: 1;
-  overflow-y: auto;
-}
-.sidebar-top::-webkit-scrollbar { display: none; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 700;
-  font-size: 1.2rem;
-  padding: 1.5rem 1.25rem;
-  color: #fff;
+body, html {
+  width: 100%; height: 100%;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
 }
 
-.brand-logo {
-  width: 28px;
-  height: 28px;
-  background: #fff;
-  color: #000;
-  border-radius: 6px;
-  display: grid;
-  place-items: center;
-  font-weight: 900;
+.app-shell {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
 }
 
-.side-nav {
-  padding: 0 0.75rem;
+.main-content {
+  margin-left: 260px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: visible;
+  transition: margin-left 0.3s ease;
 }
 
-.side-nav button {
-  width: 100%;
-  background: transparent;
-  border: none;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.95rem;
-  font-weight: 500;
-  transition: 0.2s;
-  margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.scrollable-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 2rem 8rem 2rem !important;
+  background: #101010;
+  scrollbar-width: thin;
+  scrollbar-color: #3A3A3A #101010;
 }
 
-.side-nav button svg {
-  width: 18px;
-  height: 18px;
-  color: #fff;
+.scrollable-area::-webkit-scrollbar { width: 8px; }
+.scrollable-area::-webkit-scrollbar-track { background: #101010; border-radius: 10px; }
+.scrollable-area::-webkit-scrollbar-thumb { background: #3A3A3A; border-radius: 10px; border: 2px solid #101010; }
+.scrollable-area::-webkit-scrollbar-thumb:hover { background: #4A4A4A; }
+
+.top-header {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1rem 2rem 1rem 1rem;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  background: var(--bg-app);
 }
 
-.side-nav button:hover {
-  background: #1a1a1a;
+.aesthetic-title {
+  width: 100%;
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
 }
 
-.side-nav button.active {
-  background: #1a1a1a;
-  color: #fff;
+.mobile-menu-toggle {
+  display: none;
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 10001;
+  background: #1a1a1a;
+  border: 1px solid var(--border);
+  color: #fff;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
 }
 
-/* Sidebar bottom container */
-.sidebar-bottom { 
-  margin-top: auto;
-  padding: 1.25rem;
-  border-top: 1px solid var(--border);
-  background: var(--bg-sidebar);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+.sidebar-mobile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  z-index: 9998;
 }
 
-/* CreditsCard – professional card */
-.credits-card {
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 12px;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: #666;
 }
 
-.credits-plan {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  width: 100%;
+  padding: 1rem 0;
 }
 
-.plan-tag {
-  background: #444;
-  color: #fff;
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 4px 8px;
-  border-radius: 6px;
+.gallery-card {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  aspect-ratio: 2/3;
+  background-color: var(--bg-pill);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  cursor: zoom-in;
+  border: 1px solid var(--border);
 }
 
-.credits-left {
-  font-size: 0.85rem;
-  color: #eee;
+.gallery-card:hover { transform: scale(1.02); z-index: 10; box-shadow: 0 20px 40px rgba(0,0,0,0.6); border-color: rgba(255,255,255,0.2); }
+.gallery-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.gallery-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 50%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-.upgrade-btn {
-  background: #3b82f6;
-  color: #fff;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: 0.2s;
+.gallery-card:hover .gallery-overlay { opacity: 1; }
+.overlay-actions { display: flex; gap: 12px; z-index: 10; }
+
+.icon-btn {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.upgrade-btn:hover {
-  background: #2563eb;
+.icon-btn:hover { background: rgba(255, 255, 255, 0.95); transform: translateY(-2px) scale(1.1); border-color: rgba(255, 255, 255, 0.5); }
+.icon-btn:hover svg { stroke: #000000; }
+
+.icon-btn::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: rgba(17, 17, 17, 0.95);
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  opacity: 0;
+  transition: all 0.25s ease;
+  white-space: nowrap;
 }
 
-/* User profile – perfect horizontal alignment */
-.user-profile {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 40px;
+.icon-btn:hover::before { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+.floating-prompt {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 850px;
+  z-index: 500;
+  padding: 0 1rem;
 }
 
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  height: 40px;
-  margin-top: 4px;
+/* --- THE FIX IS HERE --- */
+@media (max-width: 768px) {
+  .mobile-menu-toggle { display: flex; }
+  .main-content { margin-left: 0; }
+  
+  .top-header { 
+    padding: 70px 10px 10px 10px; /* Reduced side padding */
+  }
+  
+  .aesthetic-title { 
+    font-size: 1.3rem; /* Slightly smaller to fit width */
+    padding: 0 10px;
+  }
+  
+  .scrollable-area { 
+    /* Changed side padding from 1rem to 8px to prevent cutting off images */
+    padding: 0 8px 8rem 8px !important; 
+    width: 100%;
+  }
+  
+  .gallery-grid { 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 8px; /* Tighter gap for mobile */
+    padding: 10px 0;
+  }
 }
 
-.avatar {
-  width: 32px;
-  height: 32px;
-  background: #222;
-  border: 1px solid #333;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #fff;
-  flex-shrink: 0;
-  margin-top: 4px;
-}
-
-.user-name {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #eee;
-  line-height: 40px;
-  margin: 0;
-  padding: 0;
-  margin-top: 4px;
-}
-
-/* More icon button – exact alignment with profile row */
-.more-icon-btn {
-  background: transparent;
-  border: none;
-  color: #666;
-  cursor: pointer;
-  padding: 0;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  transition: 0.2s;
-  margin-top: 5px;
-}
-
-.more-icon-btn:hover {
-  background: #1a1a1a;
-  color: #fff;
-}
-
-/* Profile dropdown – professional card */
-.profile-dropdown {
-  position: absolute;
-  left: 0;
-  bottom: 100%;
-  margin-bottom: 8px;
-  width: 100%;
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-  z-index: 100;
-}
-
-.dropdown-item {
-  width: 100%;
-  background: transparent;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 1.25rem;
-  color: #eee;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: 0.2s;
-  text-align: left;
-}
-
-.dropdown-item:hover {
-  background: #222;
-}
-
-.dropdown-item svg {
-  width: 18px;
-  height: 18px;
-  color: #888;
-}
-
-.logout-item {
-  color: #ff4d4d;
-}
-
-.logout-item:hover {
-  background: rgba(255, 77, 77, 0.1);
-}
-
-.logout-item svg {
-  color: #ff4d4d;
-}
-
-/* Google login button – familiar Google style */
-.google-login-btn {
-  width: 100%;
-  background: #fff;
-  color: #000;
-  border: none;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-}
-
-.google-login-btn:hover {
-  background: #f8f9fa;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-
-.google-login-btn .google-icon {
-  width: 18px;
-  height: 18px;
+@media (max-width: 480px) {
+  /* Keeps it 2 columns even on small phones so it doesn't look like a giant list */
+  .gallery-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  
+  .scrollable-area { padding: 0 6px 8rem 6px !important; }
 }
