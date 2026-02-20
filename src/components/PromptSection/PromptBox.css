@@ -27,41 +27,28 @@
   overflow-y: auto;
 }
 
-/* THE SCROLLBAR FIX */
-.prompt-input::-webkit-scrollbar { 
-  width: 6px; 
+/* SCROLLBAR */
+.prompt-input::-webkit-scrollbar {
+  width: 6px;
 }
 
-.prompt-input::-webkit-scrollbar-track { 
-  background: transparent; 
-  /* This creates a 52px "dead zone" at the bottom of the scroll track */
-  border-bottom: 52px solid transparent; 
+.prompt-input::-webkit-scrollbar-track {
+  background: transparent;
+  border-bottom: 52px solid transparent;
   background-clip: content-box;
 }
 
-.prompt-input::-webkit-scrollbar-thumb { 
-  background: #2A2A2A; 
-  border-radius: 10px; 
-  border: 2px solid #161616; 
+.prompt-input::-webkit-scrollbar-thumb {
+  background: #2A2A2A;
+  border-radius: 10px;
+  border: 2px solid #161616;
 }
 
 .prompt-input::-webkit-scrollbar-thumb:hover {
   background: #3A3A3A;
 }
 
-/* Collapsed State Position */
-.prompt-container.collapsed {
-  max-width: 850px;
-  padding: 6px 9px;
-  flex-direction: row;
-  align-items: center;
-  margin: 0 auto 0 7.5rem;
-  background: rgba(22, 22, 22, 0.7);
-  backdrop-filter: blur(12px);
-  border-radius: 16px;
-  min-height: 48px;
-}
-
+/* FOOTER */
 .prompt-footer {
   display: flex;
   justify-content: space-between;
@@ -76,7 +63,7 @@
   gap: 12px;
 }
 
-/* BUTTONS */
+/* SEND BUTTON - expanded default */
 .generate-fab {
   position: absolute;
   bottom: 8px;
@@ -90,6 +77,7 @@
   align-items: center;
   justify-content: center;
   color: #FFFFFF;
+  cursor: pointer;
   transition: all 0.2s ease;
   z-index: 10;
 }
@@ -99,6 +87,51 @@
   color: #000;
 }
 
+.generate-fab:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* COLLAPSED STATE */
+.prompt-container.collapsed {
+  max-width: 850px;
+  padding: 6px 9px;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 8px;
+  margin: 0 auto 0 7.5rem;
+  background: rgba(22, 22, 22, 0.7);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  min-height: 48px;
+}
+
+.prompt-container.collapsed .prompt-input {
+  padding: 8px 8px 8px 12px;
+  max-height: 120px;
+  flex: 1;
+}
+
+/* Scrollbar in collapsed — track stops before reaching button level */
+.prompt-container.collapsed .prompt-input::-webkit-scrollbar-track {
+  border-bottom: none;
+  background: transparent;
+  background-clip: content-box;
+  /* Inset the track so it ends above the button */
+  margin-bottom: 4px;
+}
+
+/* Button in collapsed — out of absolute flow, sits inline */
+.prompt-container.collapsed .generate-fab {
+  position: relative;
+  bottom: auto;
+  right: auto;
+  flex-shrink: 0;
+  align-self: flex-end;
+  margin-bottom: 2px;
+}
+
+/* SPINNER */
 .spinner {
   width: 20px;
   height: 20px;
@@ -106,17 +139,6 @@
   border-top: 3px solid #ECECEC;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-}
-
-/* Collapsed state scrollbar spacing */
-.prompt-container.collapsed .prompt-input {
-  padding-right: 60px; /* pushes scrollbar left, away from button */
-}
-
-.prompt-container.collapsed .prompt-input::-webkit-scrollbar-track {
-  border-bottom: none; /* reset the expanded-state bottom offset */
-  margin-bottom: 6px;  /* small gap above button top */
-  margin-top: 6px;
 }
 
 @keyframes spin {
