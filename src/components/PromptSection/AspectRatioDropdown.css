@@ -33,13 +33,16 @@
 }
 
 .aspect-dropdown-menu {
-  position: fixed;
+  /* FIX: Changed from fixed to absolute to keep it attached to the pill */
+  position: absolute;
+  /* Positions it right above the pill */
+  bottom: calc(100% + 8px); 
+  left: 0;
   background: #1a1a1a;
   border: 1px solid #333;
   border-radius: 10px;
   overflow: hidden;
   z-index: 10000;
-  /* REDUCED WIDTH: Cut from 120px to 60px */
   min-width: 60px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   animation: dropdownSlide 0.2s ease;
@@ -48,7 +51,7 @@
 @keyframes dropdownSlide {
   from {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -60,7 +63,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 4px; /* Slimmer padding for a narrower menu */
+  padding: 8px 4px;
   cursor: pointer;
   transition: background 0.15s ease;
   color: #fff;
