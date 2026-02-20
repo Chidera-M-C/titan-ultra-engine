@@ -2,14 +2,13 @@ import React, { useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import './PromptBox.css';
 
-// Simple helper to render the visual shape icon based on ratio
 const RatioIcon = ({ ratio }) => {
-  const baseStyle = { border: '1.5px solid currentColor', borderRadius: '2px', opacity: 0.8 };
+  const baseStyle = { border: '1.5px solid currentColor', borderRadius: '1px', opacity: 0.8 };
   switch (ratio) {
-    case '1:1': return <div style={{ ...baseStyle, width: '12px', height: '12px' }} />;
-    case '4:5': return <div style={{ ...baseStyle, width: '10px', height: '13px' }} />;
-    case '16:9': return <div style={{ ...baseStyle, width: '15px', height: '9px' }} />;
-    case '9:16': return <div style={{ ...baseStyle, width: '9px', height: '15px' }} />;
+    case '1:1': return <div style={{ ...baseStyle, width: '11px', height: '11px' }} />;
+    case '4:5': return <div style={{ ...baseStyle, width: '9px', height: '12px' }} />;
+    case '16:9': return <div style={{ ...baseStyle, width: '14px', height: '8px' }} />;
+    case '9:16': return <div style={{ ...baseStyle, width: '8px', height: '14px' }} />;
     default: return null;
   }
 };
@@ -35,6 +34,9 @@ export default function PromptBox({
     };
 
     resize();
+    textarea.style.scrollbarWidth = 'thin';
+    textarea.style.scrollbarColor = '#2A2A2A #161616';
+
     textarea.addEventListener('input', resize);
     window.addEventListener('resize', resize);
 
@@ -61,7 +63,7 @@ export default function PromptBox({
         }}
       />
       
-      {!collapsed && (
+      {!collapsed ? (
         <div className="prompt-footer">
           <div className="left-tools">
             <div className="aspect-pill">
@@ -77,27 +79,24 @@ export default function PromptBox({
                 <option value="16:9">16:9</option>
                 <option value="9:16">9:16</option>
               </select>
-              <span className="chevron">▾</span>
             </div>
           </div>
           
           <button
-            className="generate-btn"
+            className="generate-fab"
             onClick={onGenerate}
             disabled={!prompt.trim() || loading}
           >
-            {loading ? <div className="spinner"></div> : <Send size={18} />}
+            {loading ? <div className="spinner"></div> : <Send size={20} />}
           </button>
         </div>
-      )}
-
-      {collapsed && (
+      ) : (
         <button
-          className="generate-fab-mini"
+          className="generate-fab"
           onClick={onGenerate}
           disabled={!prompt.trim() || loading}
         >
-          {loading ? <div className="spinner"></div> : <Send size={18} />}
+          {loading ? <div className="spinner"></div> : <Send size={20} />}
         </button>
       )}
     </div>
