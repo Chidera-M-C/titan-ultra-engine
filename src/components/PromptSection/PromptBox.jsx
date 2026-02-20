@@ -25,7 +25,7 @@ export default function PromptBox({
 
     resize();
     textarea.style.scrollbarWidth = 'thin';
-    textarea.style.scrollbarColor = '#2A2A2A #161616';
+    textarea.style.scrollbarColor = '#2A2A2A transparent';
 
     textarea.addEventListener('input', resize);
     window.addEventListener('resize', resize);
@@ -36,48 +36,57 @@ export default function PromptBox({
     };
   }, [prompt, collapsed]);
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      onGenerate();
+    }
+  };
+
+  const SendButton = () => (
+    <button
+      className="generate-fab"
+      onClick={onGenerate}
+      disabled={!prompt.trim() || loading}
+    >
+      {loading ? <div className="spinner" /> : <Send size={20} />}
+    </button>
+  );
+
+  const textarea = (
+    <textarea
+      ref={textareaRef}
+      className="prompt-input"
+      placeholder="Describe what you want to see..."
+      value={prompt}
+      onChange={(e) => setPrompt(e.target.value)}
+      disabled={loading}
+      onKeyDown={handleKeyDown}
+    />
+  );
+
   return (
     <div className={`prompt-container ${collapsed ? 'collapsed' : ''}`}>
-      <textarea
-        ref={textareaRef}
-        className="prompt-input"
-        placeholder="Describe what you want to see..."
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-        disabled={loading}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            onGenerate();
-          }
-        }}
-      />
-      
-      {!collapsed ? (
-        <div className="prompt-footer">
-          <div className="left-tools">
-            <AspectRatioDropdown 
-              value={aspectRatio} 
-              onChange={setAspectRatio} 
-            />
+      {collapsed ? (
+        <>
+          <div className="prompt-input-wrapper">
+            {textarea}
           </div>
-          
-          <button
-            className="generate-fab"
-            onClick={onGenerate}
-            disabled={!prompt.trim() || loading}
-          >
-            {loading ? <div className="spinner"></div> : <Send size={20} />}
-          </button>
-        </div>
+          <SendButton />
+        </>
       ) : (
-        <button
-          className="generate-fab"
-          onClick={onGenerate}
-          disabled={!prompt.trim() || loading}
-        >
-          {loading ? <div className="spinner"></div> : <Send size={20} />}
-        </button>
+        <>
+          {textarea}
+          <div className="prompt-footer">
+            <div className="left-tools">
+              <AspectRatioDropdown
+                value={aspectRatio}
+                onChange={setAspectRatio}
+              />
+            </div>
+            <SendButton />
+          </div>
+        </>
       )}
     </div>
   );
