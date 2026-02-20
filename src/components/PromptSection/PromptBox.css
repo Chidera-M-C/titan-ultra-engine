@@ -24,9 +24,15 @@
   padding: 8px 60px 8px 12px;
   line-height: 1.5;
   max-height: 180px;
+  overflow-y: auto;
 }
 
-/* Collapsed State Positioning */
+/* Scrollbar styles preserved */
+.prompt-input::-webkit-scrollbar { width: 6px; }
+.prompt-input::-webkit-scrollbar-track { background: #161616; border-radius: 10px; }
+.prompt-input::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 10px; border: 2px solid #161616; }
+
+/* Collapsed State Position */
 .prompt-container.collapsed {
   max-width: 850px;
   padding: 6px 9px;
@@ -48,44 +54,35 @@
   border-top: 1px solid #222;
 }
 
-/* THE ASPECT PILL REBORN */
+/* THE ASPECT PILL */
 .aspect-pill {
   position: relative;
   background: #252525;
   border: 1px solid #333;
-  height: 36px;
-  padding: 0 14px;
-  border-radius: 12px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  color: #fff;
-  transition: all 0.2s ease;
-}
-
-.aspect-pill:hover {
-  background: #2a2a2a;
-  border-color: #444;
+  gap: 10px; /* Space between shape and text */
 }
 
 .aspect-pill svg {
-  flex-shrink: 0;
-  color: rgba(255, 255, 255, 0.9);
+  display: block;
 }
 
 .aspect-value {
   color: #fff;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 700;
 }
 
-/* CLEAN DARK SELECT */
+/* HIDDEN SELECT BUT DARK MENU */
 .hidden-select {
   position: absolute;
   inset: 0;
-  opacity: 0; /* Fully invisible but clickable */
+  opacity: 0;
   cursor: pointer;
-  width: 100%;
 }
 
 .hidden-select option {
@@ -98,8 +95,8 @@
   position: absolute;
   bottom: 8px;
   right: 12px;
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 14px;
   background: #222;
   border: 1px solid #333;
@@ -107,17 +104,15 @@
   align-items: center;
   justify-content: center;
   color: #FFFFFF;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   z-index: 10;
 }
 
 .generate-fab:hover:not(:disabled) {
   background: #fff;
   color: #000;
-  transform: translateY(-1px);
 }
 
-/* MOBILE */
 @media (max-width: 768px) {
   .prompt-container.collapsed {
     margin: 0 auto;
