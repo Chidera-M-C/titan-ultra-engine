@@ -1,5 +1,6 @@
 .aspect-dropdown {
   position: relative;
+  overflow: visible !important;
 }
 
 .aspect-pill {
@@ -17,64 +18,37 @@
   color: #fff;
 }
 
-.aspect-pill:hover {
-  background: #2a2a2a;
-  border-color: #444;
-}
-
-.aspect-pill svg {
-  display: block;
-}
-
-.aspect-value {
-  color: #fff;
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-
 .aspect-dropdown-menu {
-  /* FIX: Changed from fixed to absolute to keep it attached to the pill */
   position: absolute;
-  /* Positions it right above the pill */
-  bottom: calc(100% + 8px); 
+  /* Opens upwards so it doesn't hit the bottom of the screen */
+  bottom: calc(100% + 10px); 
   left: 0;
   background: #1a1a1a;
   border: 1px solid #333;
   border-radius: 10px;
-  overflow: hidden;
-  z-index: 10000;
+  z-index: 99999 !important; /* Force it to the front */
   min-width: 60px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  animation: dropdownSlide 0.2s ease;
-}
-
-@keyframes dropdownSlide {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+  display: block !important; /* Ensure it's not display: none */
+  visibility: visible !important;
 }
 
 .aspect-dropdown-item {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 4px;
+  padding: 10px 4px;
   cursor: pointer;
-  transition: background 0.15s ease;
   color: #fff;
   font-size: 0.85rem;
   font-weight: 700;
+  border-bottom: 1px solid #222;
+}
+
+.aspect-dropdown-item:last-child {
+  border-bottom: none;
 }
 
 .aspect-dropdown-item:hover {
   background: #252525;
-}
-
-.aspect-dropdown-item.active {
-  background: #2a2a2a;
 }
