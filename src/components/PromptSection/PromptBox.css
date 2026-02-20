@@ -54,47 +54,9 @@
   border-top: 1px solid #222;
 }
 
-/* THE ASPECT PILL */
-.aspect-pill {
-  position: relative;
-  background: #252525;
-  border: 1px solid #333;
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 10px;
+.left-tools {
   display: flex;
-  align-items: center;
-  gap: 10px; /* Space between shape and text */
-}
-
-.aspect-pill svg {
-  display: block;
-}
-
-.aspect-value {
-  color: #fff;
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-
-.hidden-select {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.hidden-select option {
-  background-color: #1a1a1a;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px;
-}
-
-/* Style the dropdown menu itself when it opens */
-.hidden-select:focus {
-  outline: none;
+  gap: 12px;
 }
 
 /* BUTTONS */
@@ -118,6 +80,21 @@
 .generate-fab:hover:not(:disabled) {
   background: #fff;
   color: #000;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid #333;
+  border-top: 3px solid #ECECEC;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {
