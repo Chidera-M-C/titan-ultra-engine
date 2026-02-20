@@ -8,7 +8,8 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-  transition: all 0.4s ease;
+  position: relative;
+  transition: all 0.5s ease;
 }
 
 .prompt-input {
@@ -18,51 +19,62 @@
   outline: none;
   color: #ECECEC;
   font-size: 1rem;
-  font-family: inherit;
+  font-family: 'Courier New', Courier, monospace;
   resize: none;
-  padding: 4px 8px;
+  padding: 8px 60px 8px 12px;
   line-height: 1.5;
-  min-height: 40px;
-  max-height: 200px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+/* Slick Dark Scrollbar */
+.prompt-input::-webkit-scrollbar { width: 6px; }
+.prompt-input::-webkit-scrollbar-track { background: #161616; border-radius: 10px; }
+.prompt-input::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 10px; border: 2px solid #161616; }
+
+/* Collapsed State - RESTORED ORIGINAL POSITIONING */
+.prompt-container.collapsed {
+  max-width: 850px;
+  padding: 6px 9px;
+  flex-direction: row;
+  align-items: center;
+  margin: 0 auto 0 7.5rem; /* Your original margin */
+  background: rgba(22, 22, 22, 0.7);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  min-height: 48px;
+}
+
+.prompt-container.collapsed .prompt-input {
+  padding: 6px 60px 6px 12px;
+  font-size: 0.9rem;
 }
 
 .prompt-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 12px;
-  padding-top: 8px;
+  margin-top: 10px;
+  padding: 8px 4px 0 4px;
   border-top: 1px solid #222;
 }
 
-/* Updated Aspect Ratio Pill */
 .aspect-pill {
   position: relative;
   background: #222;
   border: 1px solid #333;
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 10px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 100px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: #fff;
-  transition: background 0.2s;
-}
-
-.aspect-pill:hover {
-  background: #2a2a2a;
+  gap: 8px;
 }
 
 .aspect-value {
-  font-size: 0.85rem;
+  color: #fff;
+  font-size: 0.8rem;
   font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-.chevron {
-  font-size: 0.7rem;
-  opacity: 0.5;
 }
 
 .hidden-select {
@@ -70,83 +82,48 @@
   inset: 0;
   opacity: 0;
   cursor: pointer;
-  width: 100%;
 }
 
-/* Generation Button */
-.generate-btn {
+/* Send Button - Restored fixed positioning logic */
+.generate-fab {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
   width: 40px;
   height: 40px;
-  border-radius: 12px;
-  background: #FFFFFF;
-  border: none;
+  border-radius: 14px;
+  background: #222;
+  border: 1px solid #333;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #000;
-  cursor: pointer;
-  transition: transform 0.2s, background 0.2s;
+  color: #FFFFFF;
+  transition: all 0.2s ease;
+  z-index: 10;
 }
 
-.generate-btn:hover:not(:disabled) {
-  transform: scale(1.05);
-  background: #eee;
-}
-
-.generate-btn:disabled {
+.generate-fab:hover:not(:disabled) {
   background: #333;
-  color: #666;
-  cursor: not-allowed;
 }
 
-/* Collapsed State (Mini Mode) */
-.prompt-container.collapsed {
-  flex-direction: row;
-  padding: 8px 12px;
-  border-radius: 16px;
-  align-items: center;
-  background: rgba(22, 22, 22, 0.9);
-  backdrop-filter: blur(10px);
-}
-
-.prompt-container.collapsed .prompt-input {
-  min-height: 24px;
-  padding: 4px;
-}
-
-.generate-fab-mini {
-  background: none;
-  border: none;
-  color: #fff;
-  padding: 8px;
-  cursor: pointer;
-}
-
-/* Mobile Adjustments */
-@media (max-width: 600px) {
-  .prompt-container {
-    padding: 10px;
-    border-radius: 16px;
+/* Mobile Fixes */
+@media (max-width: 768px) {
+  .prompt-container.collapsed {
+    margin: 0 auto; /* Center on mobile */
+    width: calc(100% - 20px);
   }
   
-  .aspect-pill {
-    height: 30px;
-    padding: 0 8px;
-    gap: 6px;
-  }
-
-  .aspect-value {
-    font-size: 0.75rem;
+  .prompt-footer {
+    padding-bottom: 5px;
   }
 }
 
 .spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(0,0,0,0.1);
-  border-top: 2px solid currentColor;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #333;
+  border-top: 2px solid #ECECEC;
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin 1s linear infinite;
 }
-
 @keyframes spin { to { transform: rotate(360deg); } }
