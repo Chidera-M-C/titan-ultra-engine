@@ -27,15 +27,14 @@
   overflow-y: auto;
 }
 
-/* SCROLLBAR SEPARATION */
+/* SCROLLBAR FIX: Keeps the thumb away from the footer */
 .prompt-input::-webkit-scrollbar { 
   width: 6px; 
 }
 
 .prompt-input::-webkit-scrollbar-track { 
   background: transparent; 
-  /* Visual gap: thumb stops before the footer tools */
-  border-bottom: 45px solid transparent; 
+  border-bottom: 48px solid transparent; 
   background-clip: content-box;
 }
 
@@ -45,38 +44,31 @@
   border: 2px solid #161616; 
 }
 
-/* COLLAPSED STATE: STACKED LAYOUT */
+/* COLLAPSED STATE */
 .prompt-container.collapsed {
   max-width: 850px;
-  padding: 8px 12px;
-  flex-direction: column; /* Input over Footer */
+  padding: 10px 12px;
+  flex-direction: column; 
   margin: 0 auto 0 7.5rem;
-  background: rgba(22, 22, 22, 0.8);
+  background: rgba(22, 22, 22, 0.85);
   backdrop-filter: blur(12px);
   border-radius: 16px;
-  min-height: 48px;
-}
-
-.prompt-container.collapsed .prompt-input {
-  padding: 4px 50px 4px 4px;
-  font-size: 0.95rem;
-  min-height: 24px;
 }
 
 .prompt-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 10px;
-  padding: 10px 4px 0 4px;
+  margin-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid #222;
 }
 
 /* Slimmer footer for collapsed state */
 .collapsed .prompt-footer {
-  margin-top: 4px;
-  padding-top: 4px;
-  border-top: 1px solid rgba(255,255,255,0.05);
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255,255,255,0.08);
 }
 
 .left-tools {
@@ -87,10 +79,10 @@
 /* BUTTONS */
 .generate-fab {
   position: absolute;
-  bottom: 8px;
+  bottom: 10px;
   right: 12px;
-  width: 38px; /* Slightly smaller for collapsed fit */
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 12px;
   background: #222;
   border: 1px solid #333;
@@ -100,13 +92,6 @@
   color: #FFFFFF;
   transition: all 0.2s ease;
   z-index: 10;
-}
-
-/* Keep original size for expanded state if preferred */
-.prompt-container:not(.collapsed) .generate-fab {
-  width: 42px;
-  height: 42px;
-  bottom: 8px;
 }
 
 .generate-fab:hover:not(:disabled) {
