@@ -57,7 +57,6 @@ export default function App() {
                                
     const isAllowedImage = e.target.closest('.allow-visitor');
     
-    // ALLOW the mobile toggle even if not logged in
     const isToggleInteraction = e.target.closest('.mobile-menu-toggle');
 
     if (!isModalInteraction && !isAllowedImage && !isToggleInteraction) {
@@ -199,7 +198,7 @@ export default function App() {
   // --- HANDLERS ---
   const handleNavigation = (tab) => {
     setActiveTab(tab);
-    setIsSidebarOpen(false); // Close sidebar on navigate (Mobile)
+    setIsSidebarOpen(false); 
     if (tab === 'explore' || tab === 'gallery') {
       setViewState('gallery');
     } else {
@@ -239,15 +238,37 @@ export default function App() {
     }
     switch (activeTab) {
       case 'explore':
-        return <ExploreView onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
+        return (
+          <ExploreView 
+            prompt={prompt} 
+            onSelectPrompt={handleSelectPrompt} 
+            onViewImage={handleViewImage} 
+            onEditImage={handleEditImage} 
+          />
+        );
       case 'character':
         return <CharacterView />;
       case 'gallery':
-        return <MyImagesView images={userGallery} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} currentPrompt={prompt} onEditImage={handleEditImage} />;
+        return (
+          <MyImagesView 
+            images={userGallery} 
+            prompt={prompt} 
+            onSelectPrompt={handleSelectPrompt} 
+            onViewImage={handleViewImage} 
+            onEditImage={handleEditImage} 
+          />
+        );
       case 'style':
         return <StyleView />;
       default:
-        return <ExploreView onSelectPrompt={handleSelectPrompt} />;
+        return (
+          <ExploreView 
+            prompt={prompt} 
+            onSelectPrompt={handleSelectPrompt} 
+            onViewImage={handleViewImage} 
+            onEditImage={handleEditImage} 
+          />
+        );
     }
   };
 
@@ -255,7 +276,6 @@ export default function App() {
     <div className="master-wrapper" onClickCapture={handleGlobalClick}>
       <div className="app-shell">
         
-        {/* MOBILE TOGGLE BUTTON */}
         <button 
           className="mobile-menu-toggle" 
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -264,7 +284,6 @@ export default function App() {
           {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
 
-        {/* MOBILE OVERLAY */}
         {isSidebarOpen && (
           <div 
             className="sidebar-mobile-overlay" 
@@ -321,7 +340,6 @@ export default function App() {
            onClose={() => setLoginModalOpen(false)} 
         />
 
-        {/* --- MODALS --- */}
         {(viewState === 'result' || loading || image || error) && (
           <ResultModal
             image={image}
