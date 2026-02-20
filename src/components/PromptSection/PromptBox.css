@@ -25,9 +25,11 @@
   line-height: 1.5;
   max-height: 180px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #2A2A2A transparent;
 }
 
-/* SCROLLBAR */
+/* SCROLLBAR - expanded */
 .prompt-input::-webkit-scrollbar {
   width: 6px;
 }
@@ -106,13 +108,7 @@
   min-height: 48px;
 }
 
-.prompt-container.collapsed .prompt-input {
-  padding: 8px 8px 8px 12px;
-  max-height: 180px;
-  flex: 1;
-}
-
-/* Wrapper clips the scrollbar so it stops before the button */
+/* Wrapper clips the scrollbar bottom so it stops before the button */
 .prompt-input-wrapper {
   flex: 1;
   position: relative;
@@ -120,18 +116,49 @@
   border-radius: 4px;
 }
 
+/* This block paints over the bottom of the scrollbar track */
 .prompt-input-wrapper::after {
   content: '';
   position: absolute;
   bottom: 0;
   right: 0;
   width: 6px;
-  height: 46px;
+  height: 48px;
   background: rgba(22, 22, 22, 0.7);
   z-index: 2;
   pointer-events: none;
 }
 
+.prompt-container.collapsed .prompt-input {
+  padding: 8px 8px 8px 12px;
+  max-height: 180px;
+  flex: 1;
+  /* Reset scrollbar for collapsed — clean track, no bottom border trick */
+  scrollbar-width: thin;
+  scrollbar-color: #2A2A2A transparent;
+}
+
+/* Collapsed scrollbar — clean, no border-bottom hack */
+.prompt-container.collapsed .prompt-input::-webkit-scrollbar {
+  width: 6px;
+}
+
+.prompt-container.collapsed .prompt-input::-webkit-scrollbar-track {
+  background: transparent;
+  border-bottom: none;
+}
+
+.prompt-container.collapsed .prompt-input::-webkit-scrollbar-thumb {
+  background: #2A2A2A;
+  border-radius: 10px;
+  border: 2px solid #161616;
+}
+
+.prompt-container.collapsed .prompt-input::-webkit-scrollbar-thumb:hover {
+  background: #3A3A3A;
+}
+
+/* Button pulled out of absolute in collapsed */
 .prompt-container.collapsed .generate-fab {
   position: relative;
   bottom: auto;
