@@ -10,8 +10,8 @@
   box-shadow: 0 10px 40px rgba(0,0,0,0.6);
   position: relative;
   transition: all 0.3s ease;
-  /* Ensure nothing clips the dropdown */
-  overflow: visible !important; 
+  /* CRITICAL: Allow dropdown to escape the box */
+  overflow: visible !important;
 }
 
 .prompt-input {
@@ -29,7 +29,7 @@
   overflow-y: auto;
 }
 
-/* SCROLLBAR SEPARATION */
+/* YOUR SCROLLBAR SEPARATION */
 .prompt-input::-webkit-scrollbar { 
   width: 6px; 
 }
@@ -66,9 +66,9 @@
   margin-top: 10px;
   padding: 10px 4px 0 4px;
   border-top: 1px solid #222;
-  /* Allow dropdown to pop out */
   position: relative;
-  z-index: 100; 
+  /* High z-index to stay above background content */
+  z-index: 1000;
   overflow: visible !important;
 }
 
@@ -81,6 +81,116 @@
 .left-tools {
   display: flex;
   gap: 12px;
+  position: relative;
+  overflow: visible !important;
+}
+
+/* BUTTONS */
+.generate-fab {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  width: 38px; 
+  height: 38px;
+  border-radius: 12px;
+  background: #222;
+  border: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.prompt-container:not(.collapsed) .generate-fab {
+  width: 42px;
+  height: 42px;
+  bottom: 8px;
+}.prompt-container {
+  width: 100%;
+  max-width: 850px;
+  background: #161616;
+  border: 1px solid #252525;
+  border-radius: 20px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  position: relative;
+  transition: all 0.3s ease;
+  /* CRITICAL: Allow dropdown to escape the box */
+  overflow: visible !important;
+}
+
+.prompt-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ECECEC;
+  font-size: 1rem;
+  font-family: 'Courier New', Courier, monospace;
+  resize: none;
+  padding: 8px 60px 8px 12px;
+  line-height: 1.5;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+/* YOUR SCROLLBAR SEPARATION */
+.prompt-input::-webkit-scrollbar { 
+  width: 6px; 
+}
+
+.prompt-input::-webkit-scrollbar-track { 
+  background: transparent; 
+  border-bottom: 45px solid transparent; 
+  background-clip: content-box;
+}
+
+.prompt-input::-webkit-scrollbar-thumb { 
+  background: #2A2A2A; 
+  border-radius: 10px; 
+  border: 2px solid #161616; 
+}
+
+/* COLLAPSED STATE */
+.prompt-container.collapsed {
+  max-width: 850px;
+  padding: 8px 12px;
+  flex-direction: column; 
+  margin: 0 auto 0 7.5rem;
+  background: rgba(22, 22, 22, 0.8);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  min-height: 48px;
+  overflow: visible !important;
+}
+
+.prompt-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding: 10px 4px 0 4px;
+  border-top: 1px solid #222;
+  position: relative;
+  /* High z-index to stay above background content */
+  z-index: 1000;
+  overflow: visible !important;
+}
+
+.collapsed .prompt-footer {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.left-tools {
+  display: flex;
+  gap: 12px;
+  position: relative;
   overflow: visible !important;
 }
 
