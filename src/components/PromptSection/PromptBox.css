@@ -27,15 +27,15 @@
   overflow-y: auto;
 }
 
-/* CUSTOM SCROLLBAR - Fixed spacing for collapsed state */
+/* CUSTOM SCROLLBAR FIX */
 .prompt-input::-webkit-scrollbar { 
   width: 6px; 
 }
 
 .prompt-input::-webkit-scrollbar-track { 
-  background: #161616; 
+  background: transparent; 
   border-radius: 10px; 
-  /* Stop the scrollbar track 50px before the bottom to clear the Send button */
+  /* Prevents scrollbar from overlapping the Send button */
   margin-bottom: 50px; 
   margin-top: 8px;
 }
@@ -46,7 +46,7 @@
   border: 2px solid #161616; 
 }
 
-/* COLLAPSED STATE */
+/* Collapsed State Position */
 .prompt-container.collapsed {
   max-width: 850px;
   padding: 6px 9px;
@@ -68,36 +68,12 @@
   border-top: 1px solid #222;
 }
 
-.aspect-pill {
-  position: relative;
-  background: #252525;
-  border: 1px solid #333;
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 10px;
+.left-tools {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
-.aspect-value {
-  color: #fff;
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-
-.hidden-select {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.hidden-select option {
-  background-color: #1a1a1a;
-  color: #fff;
-}
-
+/* BUTTONS */
 .generate-fab {
   position: absolute;
   bottom: 8px;
@@ -120,19 +96,22 @@
   color: #000;
 }
 
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid #333;
+  border-top: 3px solid #ECECEC;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 @media (max-width: 768px) {
   .prompt-container.collapsed {
     margin: 0 auto;
     width: calc(100% - 20px);
   }
 }
-
-.spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #333;
-  border-top: 2px solid #ECECEC;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
