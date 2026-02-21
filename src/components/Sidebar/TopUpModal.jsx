@@ -5,7 +5,7 @@ import './TopUpModal.css';
 
 const CREDIT_PACKS = [
   { id: 'starter', name: 'Starter',  credits: 100,  price: 10,  description: 'Perfect for quick experiments.', popular: false },
-  { id: 'creators',     name: 'Creators', credits: 500,  price: 40,  description: 'Most popular for creators.',     popular: true  },
+  { id: 'creator',     name: 'Creator', credits: 500,  price: 40,  description: 'Most popular for creators.',     popular: true  },
   { id: 'master',  name: 'Master',   credits: 1500, price: 100, description: 'Best value for heavy users.',   popular: false }
 ];
 
