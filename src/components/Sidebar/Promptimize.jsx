@@ -1,38 +1,30 @@
-// src/components/Sidebar/Promptimize.jsx
 import React, { useState } from 'react';
-import { Wand2, Copy, ArrowUpRight, Check, AlertCircle } from 'lucide-react';
+import { Wand2, Copy, ArrowUpRight, Check, AlertCircle, RotateCcw } from 'lucide-react';
 import './Promptimize.css';
 
-export default function Promptimize({ onLoad }) {
-  const [input, setInput]     = useState('');
-  const [output, setOutput]   = useState('');
+export default function Promptimize({ onLoad, currentPrompt }) {
+  const [input, setInput]   = useState('');
+  const [output, setOutput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [copied, setCopied]   = useState(false);
-  const [error, setError]     = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [error, setError]   = useState(null);
 
   const handleRun = async () => {
     if (!input.trim() || loading) return;
-    
     setLoading(true);
     setOutput('');
     setError(null);
 
     try {
-      // Fetching from your Vercel serverless function
       const response = await fetch('/api/promptimize', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userPrompt: input }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to optimize prompt. Please try again.');
-      }
+      if (!response.ok) throw new Error('Failed to optimize prompt. Please try again.');
 
       const data = await response.json();
-      
       if (data.optimized) {
         setOutput(data.optimized);
       } else {
@@ -53,11 +45,16 @@ export default function Promptimize({ onLoad }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleLoad = () => {
+  const isLoaded = output && (currentPrompt || '').trim() === output.trim();
+
+  const handleLoadToggle = () => {
     if (!output || !onLoad) return;
-    onLoad(output);
-    // Optional: Smooth scroll back to top if loading into main prompt box
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (isLoaded) {
+      onLoad(''); // unload
+    } else {
+      onLoad(output); // load
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   return (
@@ -118,11 +115,11 @@ export default function Promptimize({ onLoad }) {
               <span>{copied ? 'Copied' : 'Copy'}</span>
             </button>
             <button
-              className="promptimize-action-btn load"
-              onClick={handleLoad}
+              className={`promptimize-action-btn load ${isLoaded ? 'loaded' : ''}`}
+              onClick={handleLoadToggle}
             >
-              <ArrowUpRight size={13} />
-              <span>Load</span>
+              <RotateCcw size={13} />
+              <span>{isLoaded ? 'Unload' : 'Load'}</span>
             </button>
           </div>
         </div>
