@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { Wand2, Download, Heart, RotateCcw } from 'lucide-react';
 import EmptyState from '../components/Shared/EmptyState';
 
-export default function MyImagesView({ images, onSelectPrompt, onViewImage, currentPrompt, onEditImage }) {
+export default function MyImagesView({ images, onSelectPrompt, onViewImage, prompt, onEditImage }) {
+  // NOTE: Changed 'currentPrompt' to 'prompt' in arguments to match App.jsx
+  
   if (!images || images.length === 0) {
     return <EmptyState title="No images yet" description="Generate something first!" />;
   }
@@ -37,18 +39,19 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, curr
           <img src={img.url} alt="Generated AI image" loading="lazy" />
           <div className="gallery-overlay">
             <div className="overlay-actions">
-              {/* Load Prompt Button - Reload icon */}
+              {/* Load Prompt Button - Fixed Toggle Logic */}
               <button
                 className="icon-btn"
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (img.prompt === currentPrompt) {
+                  // Clean comparison with trim to ensure toggle works
+                  if (img.prompt?.trim() === prompt?.trim()) {
                     onSelectPrompt('');
                   } else {
                     onSelectPrompt(img.prompt);
                   }
                 }}
-                data-tooltip="Load prompt"
+                data-tooltip={img.prompt?.trim() === prompt?.trim() ? "Unload prompt" : "Load prompt"}
               >
                 <RotateCcw size={18} color="#ffffff" />
               </button>
@@ -62,7 +65,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, curr
                 <Download size={18} color="#ffffff" />
               </button>
 
-              {/* Edit Button - Magic wand icon */}
+              {/* Edit Button */}
               <button
                 className="icon-btn"
                 onClick={(e) => {
@@ -74,7 +77,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, curr
                 <Wand2 size={18} color="#ffffff" />
               </button>
 
-              {/* Heart Button */}
+              {/* Heart Button - Now with Red Aesthetic */}
               <HeartButton />
             </div>
           </div>
@@ -98,8 +101,9 @@ function HeartButton() {
     >
       <Heart 
         size={18} 
-        color="#ffffff" 
-        fill={active ? '#ffffff' : 'none'} 
+        // Color turns red when active
+        color={active ? '#ff4b4b' : '#ffffff'} 
+        fill={active ? '#ff4b4b' : 'none'} 
       />
     </button>
   );
