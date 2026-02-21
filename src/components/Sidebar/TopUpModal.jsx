@@ -4,15 +4,14 @@ import { X, Zap, Loader2 } from 'lucide-react';
 import './TopUpModal.css';
 
 const CREDIT_PACKS = [
-  { id: 'starter', name: 'Starter',   credits: 100,  price: 10,  description: 'Perfect for quick experiments.',    popular: false },
-  { id: 'pro',     name: 'Pro Pack',  credits: 500,  price: 40,  description: 'Most popular for creators.',        popular: true  },
-  { id: 'master',  name: 'Master',    credits: 1500, price: 100, description: 'Best value for heavy users.',       popular: false }
+  { id: 'starter', name: 'Starter',  credits: 100,  price: 10,  description: 'Perfect for quick experiments.', popular: false },
+  { id: 'pro',     name: 'Pro Pack', credits: 500,  price: 40,  description: 'Most popular for creators.',     popular: true  },
+  { id: 'master',  name: 'Master',   credits: 1500, price: 100, description: 'Best value for heavy users.',   popular: false }
 ];
 
 export default function TopUpModal({ isOpen, onClose, onSelect }) {
   const [loadingPackId, setLoadingPackId] = useState(null);
 
-  // Lock body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -52,8 +51,8 @@ export default function TopUpModal({ isOpen, onClose, onSelect }) {
             >
               {pack.popular && (
                 <div className="popular-ribbon">
-                  <Zap size={12} fill="currentColor" />
-                  <span>Most Popular</span>
+                  <Zap size={10} fill="currentColor" />
+                  <span>Popular</span>
                 </div>
               )}
 
@@ -78,7 +77,7 @@ export default function TopUpModal({ isOpen, onClose, onSelect }) {
               >
                 {loadingPackId === pack.id ? (
                   <>
-                    <Loader2 size={16} className="spinner-icon" />
+                    <Loader2 size={14} className="spinner-icon" />
                     <span>Processing...</span>
                   </>
                 ) : (
