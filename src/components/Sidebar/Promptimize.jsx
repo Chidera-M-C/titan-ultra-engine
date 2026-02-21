@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Wand2, Copy, ArrowUpRight, Check, AlertCircle, RotateCcw } from 'lucide-react';
+import { Wand2, Copy, ArrowDownToLine, Check, AlertCircle, RotateCcw } from 'lucide-react';
 import './Promptimize.css';
 
 export default function Promptimize({ onLoad, currentPrompt }) {
@@ -118,7 +118,7 @@ export default function Promptimize({ onLoad, currentPrompt }) {
               className={`promptimize-action-btn load ${isLoaded ? 'loaded' : ''}`}
               onClick={handleLoadToggle}
             >
-              <RotateCcw size={13} />
+              <ArrowDownToLine size={13} />
               <span>{isLoaded ? 'Unload' : 'Load'}</span>
             </button>
           </div>
