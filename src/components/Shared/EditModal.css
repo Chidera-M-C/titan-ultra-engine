@@ -315,3 +315,49 @@
     opacity: 0.5;
   }
 }
+
+/* MOBILE RESPONSIVE */
+@media (max-width: 768px) {
+  .edit-modal {
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: 100%;
+    max-width: 100vw;
+    border-radius: 16px 16px 0 0;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .edit-modal.minimized {
+    width: 100%;
+    height: 60px;
+    bottom: 0;
+  }
+
+  .edit-image-stage {
+    aspect-ratio: 4/3;
+  }
+
+  .edit-prompt-section {
+    padding: 12px;
+  }
+
+  .edit-prompt-input {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+@media (max-width: 480px) {
+  .edit-modal {
+    max-height: 85vh;
+  }
+
+  .edit-image-stage {
+    aspect-ratio: 1/1;
+  }
+
+  .edit-status-text {
+    font-size: 12px;
+  }
+}
