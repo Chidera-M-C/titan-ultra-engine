@@ -97,7 +97,7 @@
 .credit-pack-card:hover {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-10px);
+  transform: translateY(-6px);
 }
 
 .credit-pack-card.loading {
@@ -143,7 +143,7 @@
 }
 
 .pack-credits {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .credit-number {
@@ -161,7 +161,7 @@
 }
 
 .pack-pricing {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -184,7 +184,7 @@
   font-size: 13px;
   color: #555;
   line-height: 1.5;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   min-height: 40px;
   text-align: left;
 }
@@ -234,7 +234,7 @@
 }
 
 .modal-footer {
-  margin-top: 40px;
+  margin-top: 32px;
   font-size: 12px;
   color: #444;
   text-transform: uppercase;
@@ -242,56 +242,101 @@
   text-align: center;
 }
 
-/* Mobile */
+/* Mobile — all 3 cards visible at once, no scroll */
 @media (max-width: 768px) {
   .modal-overlay {
-    padding: 0;
-    align-items: flex-end;
+    padding: 16px;
+    align-items: center;
   }
 
   .modal-content {
-    border-radius: 28px 28px 0 0;
-    padding: 32px 20px 40px;
-    max-height: 92vh;
+    border-radius: 24px;
+    padding: 24px 16px 20px;
+    max-height: 96vh;
     width: 100%;
-    overflow-y: auto;
-  }
-
-  .modal-title {
-    font-size: 22px;
-    padding-right: 40px;
-  }
-
-  .modal-subtitle {
-    font-size: 13px;
+    overflow: hidden;
   }
 
   .modal-header {
-    margin-bottom: 24px;
+    margin-bottom: 16px;
   }
 
+  .modal-title {
+    font-size: 18px;
+    padding-right: 44px;
+    margin-bottom: 6px;
+  }
+
+  .modal-subtitle {
+    font-size: 12px;
+  }
+
+  /* Switch to 3 columns on mobile too, compact */
   .options-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
   }
 
   .credit-pack-card {
-    padding: 24px 20px;
+    padding: 16px 12px;
+    border-radius: 16px;
   }
 
   .credit-pack-card:hover {
     transform: none;
   }
 
-  .credit-number {
-    font-size: 32px;
+  .popular-ribbon {
+    font-size: 8px;
+    padding: 3px 6px;
+    top: 10px;
+    right: 10px;
   }
 
-  .price-amount {
+  .pack-name {
+    font-size: 10px;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .credit-number {
     font-size: 28px;
   }
 
+  .credit-unit {
+    font-size: 11px;
+  }
+
+  .pack-credits {
+    margin-bottom: 8px;
+  }
+
+  .pack-pricing {
+    margin-bottom: 8px;
+  }
+
+  .currency {
+    font-size: 13px;
+  }
+
+  .price-amount {
+    font-size: 24px;
+  }
+
   .pack-desc {
+    font-size: 11px;
     min-height: unset;
+    margin-bottom: 12px;
+  }
+
+  .select-pack-btn {
+    padding: 10px 6px;
+    font-size: 11px;
+    border-radius: 10px;
+  }
+
+  .modal-footer {
+    margin-top: 16px;
+    font-size: 10px;
   }
 }
