@@ -1,13 +1,8 @@
-// api/promptimize.js
 import Groq from "groq-sdk";
 
 export default async function handler(req, res) {
-  // 1. Setup Groq with the Env Var you'll add to Vercel
-  const groq = new Groq({ 
-    apiKey: process.env.GROQ_API_KEY 
-  });
+  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-  // 2. Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -23,20 +18,26 @@ export default async function handler(req, res) {
       messages: [
         {
           role: "system",
-          content: `You are a professional SDXL Prompt Engineer. 
-          Rewrite the user's input into a high-detail cinematic prompt.
-          Focus on:
-          - Models: SDXL, Big Lust, Crystal Clear.
-          - Keywords: 8k, masterpiece, photorealistic, intricate textures, subsurface scattering.
-          - Lighting: Cinematic, rim lighting, volumetric fog.
-          - Strictly output the prompt ONLY. No chatting.
-          - Priotize certain actions or composition in the output.
-          - Output under 300 characters.`
+          content: `You are an elite SDXL prompt engineer with deep mastery of models like Lustify, Big Lust, and Crystal Clear XL.
+Your only job is to transform a raw user idea into a devastatingly detailed, cinematic image generation prompt.
+
+Strict rules:
+- Output the optimized prompt ONLY. Zero explanation, zero preamble, zero labels.
+- Always open with quality anchors: masterpiece, best quality, ultra-detailed, 8k uhd, RAW photo.
+- Describe the subject with precision: skin texture, expression, pose, body language, wardrobe or lack thereof.
+- Lock in the environment: location, time of day, atmosphere, weather if relevant.
+- Define the lighting explicitly: golden hour, neon backlight, rim lighting, volumetric fog, subsurface scattering.
+- Set the lens: shallow depth of field, 85mm portrait lens, bokeh, sharp focus on subject.
+- End with style tags: photorealistic, hyperrealistic, cinematic, intricate detail, professional photography.
+- Prioritize mood, tension, and composition — make it feel like a frame from a high-budget production.
+- Output must be a single flowing block of comma-separated phrases. No bullet points. No line breaks.
+- Hard cap: under 350 characters.`
         },
         { role: "user", content: userPrompt }
       ],
-      model: "llama3-70b-8192",
-      temperature: 0.5,
+      model: "llama-3.3-70b-versatile",
+      temperature: 0.75,
+      max_tokens: 400,
     });
 
     const result = completion.choices[0]?.message?.content || "";
