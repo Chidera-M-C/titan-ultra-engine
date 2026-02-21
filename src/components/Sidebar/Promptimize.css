@@ -1,5 +1,4 @@
 /* src/components/Sidebar/Promptimize.css */
-
 .promptimize-wrapper {
   margin-top: 12px;
   border-top: 1px solid #1e1e1e;
@@ -67,6 +66,27 @@
   min-height: 72px;
   box-sizing: border-box;
   transition: border-color 0.2s ease;
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a2a #111;
+}
+
+.promptimize-input::-webkit-scrollbar {
+  width: 6px;
+}
+
+.promptimize-input::-webkit-scrollbar-track {
+  background: #111;
+  border-radius: 10px;
+}
+
+.promptimize-input::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border-radius: 10px;
+  border: 2px solid #111;
+}
+
+.promptimize-input::-webkit-scrollbar-thumb:hover {
+  background: #3a3a3a;
 }
 
 .promptimize-input:focus {
@@ -77,6 +97,7 @@
   color: #444;
 }
 
+/* Run button */
 .promptimize-run-btn {
   width: 100%;
   padding: 10px;
@@ -105,6 +126,16 @@
 .promptimize-run-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+/* Error */
+.promptimize-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: #ff4d4d;
 }
 
 /* Output area */
@@ -189,16 +220,6 @@
   color: #fff;
 }
 
-/* Spinner */
-.promptimize-spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(168, 85, 247, 0.3);
-  border-top: 2px solid #a855f7;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
 .promptimize-action-btn.load.loaded {
   background: rgba(74, 222, 128, 0.1);
   border-color: #4ade80;
@@ -209,6 +230,16 @@
   background: rgba(255, 77, 77, 0.1);
   border-color: #ff4d4d;
   color: #ff4d4d;
+}
+
+/* Spinner */
+.promptimize-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(168, 85, 247, 0.3);
+  border-top: 2px solid #a855f7;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
