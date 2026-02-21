@@ -3,7 +3,6 @@ import { Wand2, Download, Heart, RotateCcw } from 'lucide-react';
 import EmptyState from '../components/Shared/EmptyState';
 
 export default function MyImagesView({ images, onSelectPrompt, onViewImage, prompt, onEditImage }) {
-  // NOTE: Changed 'currentPrompt' to 'prompt' in arguments to match App.jsx
   
   if (!images || images.length === 0) {
     return <EmptyState title="No images yet" description="Generate something first!" />;
@@ -44,14 +43,19 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, prom
                 className="icon-btn"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Clean comparison with trim to ensure toggle works
-                  if (img.prompt?.trim() === prompt?.trim()) {
+                  // Better comparison that handles empty strings
+                  const currentPrompt = prompt || '';
+                  const imagePrompt = img.prompt || '';
+                  
+                  if (currentPrompt.trim() === imagePrompt.trim() && currentPrompt !== '') {
                     onSelectPrompt('');
                   } else {
                     onSelectPrompt(img.prompt);
                   }
                 }}
-                data-tooltip={img.prompt?.trim() === prompt?.trim() ? "Unload prompt" : "Load prompt"}
+                data-tooltip={
+                  (prompt || '').trim() === (img.prompt || '').trim() && prompt ? "Unload prompt" : "Load prompt"
+                }
               >
                 <RotateCcw size={18} color="#ffffff" />
               </button>
