@@ -238,8 +238,94 @@
   text-align: center;
 }
 
-/* Responsiveness */
+/* MOBILE RESPONSIVE */
 @media (max-width: 850px) {
-  .options-grid { grid-template-columns: 1fr; }
-  .modal-content { padding: 40px 24px; max-height: 90vh; overflow-y: auto; }
+  .modal-overlay {
+    padding: 16px;
+  }
+
+  .options-grid { 
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .modal-content { 
+    padding: 32px 20px;
+    max-height: 85vh;
+    overflow-y: auto;
+    border-radius: 24px;
+  }
+
+  .modal-title {
+    font-size: 24px;
+  }
+
+  .modal-subtitle {
+    font-size: 14px;
+  }
+
+  .credit-pack-card {
+    padding: 24px 20px;
+  }
+
+  .credit-number {
+    font-size: 36px;
+  }
+
+  .price-amount {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-overlay {
+    padding: 12px;
+  }
+
+  .modal-content {
+    padding: 24px 16px;
+    border-radius: 20px;
+    max-height: 90vh;
+  }
+
+  .close-btn {
+    width: 36px;
+    height: 36px;
+    top: 16px;
+    right: 16px;
+  }
+
+  .modal-header {
+    margin-bottom: 24px;
+  }
+
+  .modal-title {
+    font-size: 20px;
+  }
+
+  .modal-subtitle {
+    font-size: 13px;
+  }
+
+  .credit-pack-card {
+    padding: 20px 16px;
+  }
+
+  .credit-number {
+    font-size: 32px;
+  }
+
+  .price-amount {
+    font-size: 28px;
+  }
+
+  .pack-desc {
+    font-size: 12px;
+    min-height: auto;
+  }
+
+  .modal-footer {
+    margin-top: 24px;
+    font-size: 10px;
+  }
 }
