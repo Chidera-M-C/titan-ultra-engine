@@ -4,7 +4,7 @@ import { Query } from 'appwrite';
 import CategoryTabs from '../components/Gallery/CategoryTabs';
 import MasonryGrid from '../components/Gallery/MasonryGrid';
 
-export default function ExploreView({ onSelectPrompt, onViewImage, onEditImage }) {
+export default function ExploreView({ prompt, onSelectPrompt, onViewImage, onEditImage }) {
   const [activeCategory, setActiveCategory] = useState('Explore');
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -12,7 +12,6 @@ export default function ExploreView({ onSelectPrompt, onViewImage, onEditImage }
   
   const categories = ['Explore', 'Top', 'People', 'Nature', 'Poster', '3D Render'];
 
-  // Fetch images from Appwrite
   const loadImages = async (isLoadMore = false) => {
     if (loading) return;
     
@@ -21,7 +20,6 @@ export default function ExploreView({ onSelectPrompt, onViewImage, onEditImage }
       const limit = 20;
       const offset = isLoadMore ? images.length : 0;
 
-      // Fetch all users' images, ordered by most recent
       const response = await db.listDocuments(
         'main_db',
         'images',
@@ -46,7 +44,6 @@ export default function ExploreView({ onSelectPrompt, onViewImage, onEditImage }
         setImages(fetchedImages);
       }
 
-      // Check if there are more images to load
       setHasMore(fetchedImages.length === limit);
       
     } catch (err) {
@@ -56,12 +53,10 @@ export default function ExploreView({ onSelectPrompt, onViewImage, onEditImage }
     }
   };
 
-  // Load images on mount and when category changes
   useEffect(() => {
     loadImages();
   }, [activeCategory]);
 
-  // Infinite scroll detection
   useEffect(() => {
     const handleScroll = () => {
       const scrollable = document.querySelector('.scrollable-area');
@@ -71,7 +66,6 @@ export default function ExploreView({ onSelectPrompt, onViewImage, onEditImage }
       const scrollHeight = scrollable.scrollHeight;
       const clientHeight = scrollable.clientHeight;
 
-      // Load more when user scrolls near bottom (200px before end)
       if (scrollHeight - scrollTop - clientHeight < 200 && hasMore && !loading) {
         loadImages(true);
       }
@@ -101,6 +95,7 @@ export default function ExploreView({ onSelectPrompt, onViewImage, onEditImage }
         ) : (
           <MasonryGrid 
             images={images} 
+            prompt={prompt} // PASSING THE PROMPT HERE FIXES THE TOGGLE
             onImageClick={onViewImage}
             onSelectPrompt={onSelectPrompt}
             onEditImage={onEditImage}
