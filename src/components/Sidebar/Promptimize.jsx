@@ -1,6 +1,6 @@
 // src/components/Sidebar/Promptimize.jsx
 import React, { useState } from 'react';
-import { Wand2, Copy, ArrowUpRight, Check } from 'lucide-react';
+import { Wand2, Copy, ArrowUpRight, Check, AlertCircle } from 'lucide-react';
 import './Promptimize.css';
 
 export default function Promptimize({ onLoad }) {
@@ -8,18 +8,42 @@ export default function Promptimize({ onLoad }) {
   const [output, setOutput]   = useState('');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied]   = useState(false);
+  const [error, setError]     = useState(null);
 
   const handleRun = async () => {
     if (!input.trim() || loading) return;
+    
     setLoading(true);
     setOutput('');
+    setError(null);
 
-    // TODO: wire up LLM call here
-    // placeholder so UI is testable
-    await new Promise(r => setTimeout(r, 1200));
-    setOutput('[ optimized prompt will appear here ]');
+    try {
+      // Fetching from your Vercel serverless function
+      const response = await fetch('/api/promptimize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userPrompt: input }),
+      });
 
-    setLoading(false);
+      if (!response.ok) {
+        throw new Error('Failed to optimize prompt. Please try again.');
+      }
+
+      const data = await response.json();
+      
+      if (data.optimized) {
+        setOutput(data.optimized);
+      } else {
+        throw new Error('No optimization returned.');
+      }
+    } catch (err) {
+      console.error("Promptimize Error:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCopy = () => {
@@ -32,6 +56,8 @@ export default function Promptimize({ onLoad }) {
   const handleLoad = () => {
     if (!output || !onLoad) return;
     onLoad(output);
+    // Optional: Smooth scroll back to top if loading into main prompt box
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -71,6 +97,13 @@ export default function Promptimize({ onLoad }) {
           </>
         )}
       </button>
+
+      {error && (
+        <div className="promptimize-error">
+          <AlertCircle size={12} />
+          <span>{error}</span>
+        </div>
+      )}
 
       {output && (
         <div className="promptimize-output">
