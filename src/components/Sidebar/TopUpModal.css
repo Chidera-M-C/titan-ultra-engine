@@ -108,18 +108,19 @@
   background: linear-gradient(180deg, rgba(74, 222, 128, 0.05) 0%, rgba(0, 0, 0, 0) 100%);
   border-color: #4ade80;
   box-shadow: 0 0 30px rgba(74, 222, 128, 0.1);
+  padding-top: 28px;
 }
 
-/* REPLACE this in your @media (max-width: 768px) block */
 .popular-ribbon {
   position: absolute;
-  top: 6px;
+  top: 8px;
   right: 8px;
-  font-size: 7px;
-  padding: 2px 6px;
+  font-size: 7.5px;
+  padding: 3px 6px;
   border-radius: 5px;
   gap: 2px;
   white-space: nowrap;
+  line-height: 1;
 }
 
 .pack-info {
