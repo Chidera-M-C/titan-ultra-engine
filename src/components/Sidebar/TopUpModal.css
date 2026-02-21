@@ -69,10 +69,10 @@
 }
 
 .modal-subtitle {
-  font-size: 12px;
-  max-width: 220px;
+  color: #666;
+  font-size: 15px;
+  max-width: 500px;
   margin: 0 auto;
-  line-height: 1.5;
 }
 
 .options-grid {
