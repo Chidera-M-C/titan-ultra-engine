@@ -91,6 +91,7 @@
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   position: relative;
+  overflow: visible;
 }
 
 .credit-pack-card:hover {
@@ -108,19 +109,22 @@
   background: linear-gradient(180deg, rgba(74, 222, 128, 0.05) 0%, rgba(0, 0, 0, 0) 100%);
   border-color: #4ade80;
   box-shadow: 0 0 30px rgba(74, 222, 128, 0.1);
-  padding-top: 28px;
 }
 
 .popular-ribbon {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  font-size: 7.5px;
-  padding: 3px 6px;
-  border-radius: 5px;
-  gap: 2px;
-  white-space: nowrap;
-  line-height: 1;
+  top: 16px;
+  right: 16px;
+  background: #4ade80;
+  color: #000;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .pack-info {
@@ -272,22 +276,41 @@
     gap: 10px;
   }
 
-  /* Horizontal card — all content in one row */
   .credit-pack-card {
     flex-direction: row;
     align-items: center;
     padding: 14px 16px;
     border-radius: 16px;
     gap: 0;
-    overflow: hidden;
     box-sizing: border-box;
+    /* Extra top padding on all cards so ribbon never clips */
+    padding-top: 14px;
+  }
+
+  /* Popular card gets more top padding to clear the ribbon */
+  .credit-pack-card.popular {
+    padding-top: 30px;
   }
 
   .credit-pack-card:hover {
     transform: none;
   }
 
-  /* Left: name + credits — takes remaining space */
+  /* Ribbon sits at top, fully inside the card */
+  .popular-ribbon {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 8px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 6px;
+    gap: 3px;
+    white-space: nowrap;
+    line-height: 1;
+    z-index: 2;
+  }
+
   .pack-info {
     flex: 1;
     min-width: 0;
@@ -318,7 +341,6 @@
     font-size: 11px;
   }
 
-  /* Centre: price */
   .pack-pricing {
     margin-bottom: 0;
     flex-shrink: 0;
@@ -334,12 +356,10 @@
     font-size: 24px;
   }
 
-  /* Hidden on mobile */
   .pack-desc {
     display: none;
   }
 
-  /* Right: button — fixed width so it never pushes outside */
   .select-pack-btn {
     width: 96px;
     flex-shrink: 0;
@@ -348,13 +368,6 @@
     border-radius: 10px;
     margin-top: 0;
     white-space: nowrap;
-  }
-
-  .popular-ribbon {
-    top: -10px;
-    right: 10px;
-    font-size: 8px;
-    padding: 3px 7px;
   }
 
   .modal-footer {
