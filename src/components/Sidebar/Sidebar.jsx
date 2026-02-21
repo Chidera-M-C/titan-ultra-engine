@@ -2,10 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Compass, User, History, Sparkles, MoreHorizontal, Settings, HelpCircle, LogOut } from 'lucide-react';
 import NavItem from './NavItem';
 import CreditsCard from './CreditsCard';
+import Promptimize from './Promptimize';
 import { useAuth } from '../../context/AuthContext';
 import './Sidebar.css';
 
-export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen }) {
+export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen, onPromptLoad }) {
   const { user, loginWithGoogle, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const profileRef = useRef(null);
@@ -21,13 +22,8 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
     setIsDropdownOpen(false);
   };
 
-  const handleSettings = () => {
-    setIsDropdownOpen(false);
-  };
-
-  const handleSupport = () => {
-    setIsDropdownOpen(false);
-  };
+  const handleSettings = () => setIsDropdownOpen(false);
+  const handleSupport = () => setIsDropdownOpen(false);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -36,9 +32,7 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   return (
@@ -48,55 +42,58 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
           <div className="brand-logo">N</div>
           <span>Nudely</span>
         </div>
-        
+
         <nav className="side-nav">
-          <NavItem 
-            icon={Compass} 
-            label="Explore" 
-            isActive={activeTab === 'explore'} 
-            onClick={() => onNavigate('explore')} 
+          <NavItem
+            icon={Compass}
+            label="Explore"
+            isActive={activeTab === 'explore'}
+            onClick={() => onNavigate('explore')}
           />
-          <NavItem 
-            icon={User} 
-            label="Character" 
-            isActive={activeTab === 'character'} 
-            onClick={() => onNavigate('character')} 
+          <NavItem
+            icon={User}
+            label="Character"
+            isActive={activeTab === 'character'}
+            onClick={() => onNavigate('character')}
           />
           {user && (
-            <NavItem 
-              icon={History} 
-              label="My Images" 
-              isActive={activeTab === 'gallery'} 
-              onClick={() => onNavigate('gallery')} 
+            <NavItem
+              icon={History}
+              label="My Images"
+              isActive={activeTab === 'gallery'}
+              onClick={() => onNavigate('gallery')}
             />
           )}
-          <NavItem 
-            icon={Sparkles} 
-            label="Style" 
-            isActive={activeTab === 'style'} 
-            onClick={() => onNavigate('style')} 
+          <NavItem
+            icon={Sparkles}
+            label="Style"
+            isActive={activeTab === 'style'}
+            onClick={() => onNavigate('style')}
           />
         </nav>
+
+        {/* Promptimize lives in the scrollable top area */}
+        <div className="sidebar-promptimize">
+          <Promptimize onLoad={onPromptLoad} />
+        </div>
       </div>
 
       <div className="sidebar-bottom">
-        {/* DATA FLOW: Credits and userId remain active */}
         <CreditsCard credits={credits} userId={userId} />
-        
+
         {user ? (
           <div className="user-profile" ref={profileRef}>
             <div className="user-info">
               <div className="avatar">{getInitial()}</div>
               <span className="user-name">User</span>
             </div>
-            <button 
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)} 
-              className="more-icon-btn" 
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="more-icon-btn"
               title="More options"
             >
               <MoreHorizontal size={18} />
             </button>
-
             {isDropdownOpen && (
               <div className="profile-dropdown">
                 <button onClick={handleSettings} className="dropdown-item">
