@@ -110,20 +110,16 @@
   box-shadow: 0 0 30px rgba(74, 222, 128, 0.1);
 }
 
+/* REPLACE this in your @media (max-width: 768px) block */
 .popular-ribbon {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  background: #4ade80;
-  color: #000;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  top: 6px;
+  right: 8px;
+  font-size: 7px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  gap: 2px;
+  white-space: nowrap;
 }
 
 .pack-info {
