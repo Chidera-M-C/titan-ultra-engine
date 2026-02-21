@@ -70,7 +70,7 @@ export default function Promptimize({ onLoad, currentPrompt }) {
       <div className="promptimize-input-wrapper">
         <textarea
           className="promptimize-input"
-          placeholder="Describe a scene or idea... e.g. woman in rain at night"
+          placeholder="Imagine any scene... we'll turn it into a prompt"
           value={input}
           onChange={e => setInput(e.target.value)}
           disabled={loading}
