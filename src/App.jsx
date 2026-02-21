@@ -1,20 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-// --- ICONS ---
 import { Menu, X } from 'lucide-react';
-// --- APPWRITE & AUTH ---
 import { useAuth } from './context/AuthContext';
 import { saveAiImage } from './lib/imageService.js';
 import { db } from './lib/appwrite.js';
 import { Query } from 'appwrite';
-// --- COMPONENTS ---
 import Sidebar from './components/Sidebar/Sidebar';
 import PromptBox from './components/PromptSection/PromptBox';
 import ResultModal from './components/Shared/ResultModal';
 import EditModal from './components/Shared/EditModal';
 import ImageViewModal from './components/Shared/ImageViewModal';
-import LoginModal from './components/LoginModal'; 
-// --- VIEWS ---
+import LoginModal from './components/LoginModal';
 import ExploreView from './views/ExploreView';
 import CharacterView from './views/CharacterView';
 import MyImagesView from './views/MyImagesView';
@@ -23,7 +19,6 @@ import StyleView from './views/StyleView';
 export default function App() {
   const { user, loading: authLoading } = useAuth();
 
-  // --- GLOBAL STATE ---
   const [activeTab, setActiveTab] = useState('explore');
   const [viewState, setViewState] = useState('gallery');
   const [prompt, setPrompt] = useState('');
@@ -33,32 +28,21 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [credits, setCredits] = useState(0);
-
-  // --- MOBILE STATE ---
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  // --- MODAL STATES ---
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingImage, setEditingImage] = useState(null);
   const [viewImageModalOpen, setViewImageModalOpen] = useState(false);
   const [viewingImageUrl, setViewingImageUrl] = useState(null);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
-
-  // --- PROMPT COLLAPSE STATE ---
   const [promptCollapsed, setPromptCollapsed] = useState(false);
 
-  // --- GLOBAL CLICK PROTECTION ---
   const handleGlobalClick = (e) => {
     if (user || authLoading) return;
-
-    const isModalInteraction = e.target.closest('.login-modal-card') || 
-                               e.target.closest('.modal-overlay') || 
+    const isModalInteraction = e.target.closest('.login-modal-card') ||
+                               e.target.closest('.modal-overlay') ||
                                e.target.closest('.close-button');
-                               
     const isAllowedImage = e.target.closest('.allow-visitor');
-    
     const isToggleInteraction = e.target.closest('.mobile-menu-toggle');
-
     if (!isModalInteraction && !isAllowedImage && !isToggleInteraction) {
       e.preventDefault();
       e.stopPropagation();
@@ -66,7 +50,6 @@ export default function App() {
     }
   };
 
-  // --- 1. PERSISTENCE & WALLET LOGIC ---
   const loadGallery = async () => {
     if (!user) {
       setUserGallery([]);
@@ -78,18 +61,14 @@ export default function App() {
         setCredits(userDoc.credits || 0);
       } catch (err) {
         if (err.code === 404) {
-          const newWallet = await db.createDocument('main_db', 'users', user.$id, {
-            credits: 10 
-          });
+          const newWallet = await db.createDocument('main_db', 'users', user.$id, { credits: 10 });
           setCredits(newWallet.credits);
         }
       }
-
-      const response = await db.listDocuments(
-        'main_db',
-        'images',
-        [Query.equal('userId', user.$id), Query.orderDesc('$createdAt')]
-      );
+      const response = await db.listDocuments('main_db', 'images', [
+        Query.equal('userId', user.$id),
+        Query.orderDesc('$createdAt')
+      ]);
       const fetchedImages = response.documents.map(doc => ({
         id: doc.$id,
         url: doc.imageUrl,
@@ -103,23 +82,17 @@ export default function App() {
 
   useEffect(() => {
     loadGallery();
-    
     if (!authLoading && !user) {
       const timer = setTimeout(() => setLoginModalOpen(true), 3000);
       return () => clearTimeout(timer);
     }
   }, [user, authLoading]);
 
-  // --- SCROLL DETECTION ---
   useEffect(() => {
     const handleScroll = () => {
       const scrollable = document.querySelector('.scrollable-area');
-      if (scrollable) {
-        const scrollTop = scrollable.scrollTop;
-        setPromptCollapsed(scrollTop > 100);
-      }
+      if (scrollable) setPromptCollapsed(scrollable.scrollTop > 100);
     };
-
     const scrollable = document.querySelector('.scrollable-area');
     if (scrollable) {
       scrollable.addEventListener('scroll', handleScroll);
@@ -131,11 +104,8 @@ export default function App() {
     if (!user) return;
     const newBalance = Math.max(0, credits - amount);
     setCredits(newBalance);
-
     try {
-      await db.updateDocument('main_db', 'users', user.$id, {
-        credits: newBalance
-      });
+      await db.updateDocument('main_db', 'users', user.$id, { credits: newBalance });
     } catch (err) {
       console.error("Database sync failed, reverting UI:", err);
       setCredits(prev => prev + amount);
@@ -143,47 +113,33 @@ export default function App() {
     }
   };
 
-  // --- 2. CORE GENERATION LOGIC ---
   const generateImage = async () => {
-    if (!user) {
-      setLoginModalOpen(true);
-      return;
-    }
+    if (!user) { setLoginModalOpen(true); return; }
     if (!prompt || loading) return;
-
     if (credits < 2) {
       setError("Insufficient credits.");
       setViewState('result');
       return;
     }
-
     setViewState('result');
     setLoading(true);
     setError(null);
     setImage(null);
-
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt })
       });
-      
-      if (!response.ok) throw new Error(`Server Error`);
+      if (!response.ok) throw new Error('Server Error');
       const data = await response.json();
-
       if (data.status === 'COMPLETED' && data.output?.image) {
         const base64Image = data.output.image;
         setImage(base64Image);
         await deductCreditsLive(2);
-
         try {
           await saveAiImage(user.$id, base64Image, prompt);
-          setUserGallery(prev => [{
-            id: Date.now(),
-            url: base64Image,
-            prompt
-          }, ...prev]);
+          setUserGallery(prev => [{ id: Date.now(), url: base64Image, prompt }, ...prev]);
         } catch (saveErr) {
           console.error("Database save failed:", saveErr);
         }
@@ -195,22 +151,22 @@ export default function App() {
     }
   };
 
-  // --- HANDLERS ---
   const handleNavigation = (tab) => {
     setActiveTab(tab);
-    setIsSidebarOpen(false); 
-    if (tab === 'explore' || tab === 'gallery') {
-      setViewState('gallery');
-    } else {
-      setViewState('empty');
-    }
+    setIsSidebarOpen(false);
+    if (tab === 'explore' || tab === 'gallery') setViewState('gallery');
+    else setViewState('empty');
   };
 
   const handleSelectPrompt = (selectedPrompt) => {
     setPrompt(selectedPrompt);
-    if (selectedPrompt) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    if (selectedPrompt) window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Promptimize load/unload — mirrors gallery card logic
+  const handlePromptLoad = (val) => {
+    setPrompt(val);
+    if (val) window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleViewImage = (img) => {
@@ -219,10 +175,7 @@ export default function App() {
   };
 
   const handleEditImage = (img) => {
-    if (!user) {
-        setLoginModalOpen(true);
-        return;
-    }
+    if (!user) { setLoginModalOpen(true); return; }
     setEditingImage(img);
     setEditModalOpen(true);
   };
@@ -238,46 +191,24 @@ export default function App() {
     }
     switch (activeTab) {
       case 'explore':
-        return (
-          <ExploreView 
-            prompt={prompt} 
-            onSelectPrompt={handleSelectPrompt} 
-            onViewImage={handleViewImage} 
-            onEditImage={handleEditImage} 
-          />
-        );
+        return <ExploreView prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
       case 'character':
         return <CharacterView />;
       case 'gallery':
-        return (
-          <MyImagesView 
-            images={userGallery} 
-            prompt={prompt} 
-            onSelectPrompt={handleSelectPrompt} 
-            onViewImage={handleViewImage} 
-            onEditImage={handleEditImage} 
-          />
-        );
+        return <MyImagesView images={userGallery} prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
       case 'style':
         return <StyleView />;
       default:
-        return (
-          <ExploreView 
-            prompt={prompt} 
-            onSelectPrompt={handleSelectPrompt} 
-            onViewImage={handleViewImage} 
-            onEditImage={handleEditImage} 
-          />
-        );
+        return <ExploreView prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
     }
   };
 
   return (
     <div className="master-wrapper" onClickCapture={handleGlobalClick}>
       <div className="app-shell">
-        
-        <button 
-          className="mobile-menu-toggle" 
+
+        <button
+          className="mobile-menu-toggle"
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           aria-label="Toggle Menu"
         >
@@ -285,18 +216,17 @@ export default function App() {
         </button>
 
         {isSidebarOpen && (
-          <div 
-            className="sidebar-mobile-overlay" 
-            onClick={() => setIsSidebarOpen(false)}
-          />
+          <div className="sidebar-mobile-overlay" onClick={() => setIsSidebarOpen(false)} />
         )}
 
-        <Sidebar 
-          activeTab={activeTab} 
-          onNavigate={handleNavigation} 
-          credits={credits} 
+        <Sidebar
+          activeTab={activeTab}
+          onNavigate={handleNavigation}
+          credits={credits}
           userId={user?.$id}
           isOpen={isSidebarOpen}
+          currentPrompt={prompt}
+          onPromptLoad={handlePromptLoad}
         />
 
         <main className="main-content">
@@ -311,7 +241,7 @@ export default function App() {
                 onGenerate={generateImage}
                 loading={loading}
                 collapsed={false}
-                credits={credits} 
+                credits={credits}
               />
             </header>
           )}
@@ -335,10 +265,7 @@ export default function App() {
           </div>
         </main>
 
-        <LoginModal 
-           isOpen={loginModalOpen} 
-           onClose={() => setLoginModalOpen(false)} 
-        />
+        <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
 
         {(viewState === 'result' || loading || image || error) && (
           <ResultModal
@@ -346,36 +273,19 @@ export default function App() {
             loading={loading}
             error={error}
             prompt={prompt}
-            onClose={() => {
-              setViewState('gallery');
-              setImage(null);
-              setError(null);
-            }}
+            onClose={() => { setViewState('gallery'); setImage(null); setError(null); }}
             onRetry={generateImage}
-            onOpenEdit={(img) => {
-              setEditingImage(img);
-              setEditModalOpen(true);
-            }}
-            onViewFullScreen={(imageUrl) => {
-              setViewingImageUrl(imageUrl);
-              setViewImageModalOpen(true);
-            }}
+            onOpenEdit={(img) => { setEditingImage(img); setEditModalOpen(true); }}
+            onViewFullScreen={(imageUrl) => { setViewingImageUrl(imageUrl); setViewImageModalOpen(true); }}
           />
         )}
 
         {editModalOpen && (
-          <EditModal
-            image={editingImage?.url}
-            originalPrompt={editingImage?.prompt}
-            onClose={() => setEditModalOpen(false)}
-          />
+          <EditModal image={editingImage?.url} originalPrompt={editingImage?.prompt} onClose={() => setEditModalOpen(false)} />
         )}
 
         {viewImageModalOpen && (
-          <ImageViewModal
-            imageUrl={viewingImageUrl}
-            onClose={() => setViewImageModalOpen(false)}
-          />
+          <ImageViewModal imageUrl={viewingImageUrl} onClose={() => setViewImageModalOpen(false)} />
         )}
       </div>
     </div>
