@@ -32,18 +32,25 @@ export default function MasonryGrid({ images, prompt, onImageClick, onSelectProm
             loading="lazy" 
             className="allow-visitor" 
           />
-
           <div className="gallery-overlay">
             <div className="overlay-actions">
               <button
                 className="icon-btn"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Check if this image's prompt is already in the box
-                  const isLoaded = prompt?.trim() === img.prompt?.trim();
-                  onSelectPrompt(isLoaded ? '' : img.prompt);
+                  // Better comparison that handles empty strings
+                  const currentPrompt = prompt || '';
+                  const imagePrompt = img.prompt || '';
+                  
+                  if (currentPrompt.trim() === imagePrompt.trim() && currentPrompt !== '') {
+                    onSelectPrompt('');
+                  } else {
+                    onSelectPrompt(img.prompt);
+                  }
                 }}
-                data-tooltip={prompt?.trim() === img.prompt?.trim() ? "Unload prompt" : "Load prompt"}
+                data-tooltip={
+                  (prompt || '').trim() === (img.prompt || '').trim() && prompt ? "Unload prompt" : "Load prompt"
+                }
               >
                 <RotateCcw size={18} color="#ffffff" />
               </button>
