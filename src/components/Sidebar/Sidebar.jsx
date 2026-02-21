@@ -6,7 +6,7 @@ import Promptimize from './Promptimize';
 import { useAuth } from '../../context/AuthContext';
 import './Sidebar.css';
 
-export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen, onPromptLoad }) {
+export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen, onPromptLoad, currentPrompt }) {
   const { user, loginWithGoogle, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const profileRef = useRef(null);
@@ -17,11 +17,7 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
     return 'U';
   };
 
-  const handleLogout = () => {
-    logout();
-    setIsDropdownOpen(false);
-  };
-
+  const handleLogout = () => { logout(); setIsDropdownOpen(false); };
   const handleSettings = () => setIsDropdownOpen(false);
   const handleSupport = () => setIsDropdownOpen(false);
 
@@ -44,37 +40,16 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
         </div>
 
         <nav className="side-nav">
-          <NavItem
-            icon={Compass}
-            label="Explore"
-            isActive={activeTab === 'explore'}
-            onClick={() => onNavigate('explore')}
-          />
-          <NavItem
-            icon={User}
-            label="Character"
-            isActive={activeTab === 'character'}
-            onClick={() => onNavigate('character')}
-          />
+          <NavItem icon={Compass} label="Explore" isActive={activeTab === 'explore'} onClick={() => onNavigate('explore')} />
+          <NavItem icon={User} label="Character" isActive={activeTab === 'character'} onClick={() => onNavigate('character')} />
           {user && (
-            <NavItem
-              icon={History}
-              label="My Images"
-              isActive={activeTab === 'gallery'}
-              onClick={() => onNavigate('gallery')}
-            />
+            <NavItem icon={History} label="My Images" isActive={activeTab === 'gallery'} onClick={() => onNavigate('gallery')} />
           )}
-          <NavItem
-            icon={Sparkles}
-            label="Style"
-            isActive={activeTab === 'style'}
-            onClick={() => onNavigate('style')}
-          />
+          <NavItem icon={Sparkles} label="Style" isActive={activeTab === 'style'} onClick={() => onNavigate('style')} />
         </nav>
 
-        {/* Promptimize lives in the scrollable top area */}
         <div className="sidebar-promptimize">
-          <Promptimize onLoad={onPromptLoad} />
+          <Promptimize onLoad={onPromptLoad} currentPrompt={currentPrompt} />
         </div>
       </div>
 
@@ -87,27 +62,14 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
               <div className="avatar">{getInitial()}</div>
               <span className="user-name">User</span>
             </div>
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="more-icon-btn"
-              title="More options"
-            >
+            <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="more-icon-btn" title="More options">
               <MoreHorizontal size={18} />
             </button>
             {isDropdownOpen && (
               <div className="profile-dropdown">
-                <button onClick={handleSettings} className="dropdown-item">
-                  <Settings size={18} />
-                  <span>Settings</span>
-                </button>
-                <button onClick={handleSupport} className="dropdown-item">
-                  <HelpCircle size={18} />
-                  <span>Support</span>
-                </button>
-                <button onClick={handleLogout} className="dropdown-item logout-item">
-                  <LogOut size={18} />
-                  <span>Log out</span>
-                </button>
+                <button onClick={handleSettings} className="dropdown-item"><Settings size={18} /><span>Settings</span></button>
+                <button onClick={handleSupport} className="dropdown-item"><HelpCircle size={18} /><span>Support</span></button>
+                <button onClick={handleLogout} className="dropdown-item logout-item"><LogOut size={18} /><span>Log out</span></button>
               </div>
             )}
           </div>
