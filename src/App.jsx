@@ -36,7 +36,6 @@ export default function App() {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [promptCollapsed, setPromptCollapsed] = useState(false);
 
-  // Helper for polling delay
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
   const handleGlobalClick = (e) => {
@@ -130,7 +129,6 @@ export default function App() {
     setImage(null);
     
     try {
-      // 1. Trigger job and get jobId
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -142,10 +140,13 @@ export default function App() {
 
       if (!jobId) throw new Error('Failed to start generation job');
 
-      // 2. Poll status checker
       let completed = false;
       let attempts = 0;
-      while (!completed && attempts < 60) { // 2 minute max
+      // EXTENDED TIMEOUT: 150 attempts * 2s = 300 seconds (5 minutes)
+      // This is necessary if the GPU pod is starting from scratch.
+      const maxAttempts = 150; 
+
+      while (!completed && attempts < maxAttempts) {
         attempts++;
         const statusRes = await fetch('/api/check-status', {
           method: 'POST',
@@ -166,12 +167,16 @@ export default function App() {
           }
           completed = true;
         } else if (statusData.status === 'FAILED') {
-          throw new Error('RunPod generation failed');
+          throw new Error('RunPod generation failed: ' + (statusData.error || 'Unknown Error'));
         } else {
-          await delay(2000); // Wait 2 seconds before next check
+          // Status is likely 'IN_QUEUE' or 'IN_PROGRESS'
+          await delay(2000); 
         }
       }
-      if (!completed) throw new Error('Generation timed out');
+
+      if (!completed) {
+        throw new Error('The GPU is taking too long to wake up. Please try hitting retry in a few seconds once it is warm.');
+      }
 
     } catch (err) {
       setError(err.message);
@@ -187,13 +192,11 @@ export default function App() {
     else setViewState('empty');
   };
 
-  // RESTORED: Original load/unload logic
   const handleSelectPrompt = (selectedPrompt) => {
     setPrompt(selectedPrompt);
     if (selectedPrompt) window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // RESTORED: Original Promptimize load logic
   const handlePromptLoad = (val) => {
     setPrompt(val);
     if (val) window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -236,7 +239,6 @@ export default function App() {
   return (
     <div className="master-wrapper" onClickCapture={handleGlobalClick}>
       <div className="app-shell">
-
         <button
           className="mobile-menu-toggle"
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
