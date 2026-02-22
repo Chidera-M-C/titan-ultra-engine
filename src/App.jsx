@@ -36,7 +36,7 @@ export default function App() {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [promptCollapsed, setPromptCollapsed] = useState(false);
 
-  // Helper for polling delay
+  // Utility for polling delay
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
   const handleGlobalClick = (e) => {
@@ -131,7 +131,7 @@ export default function App() {
     setImage(null);
 
     try {
-      // 1. START THE JOB
+      // 1. Send Job to RunPod via Vercel (Fast Request)
       const startResponse = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -144,10 +144,10 @@ export default function App() {
 
       if (!jobId) throw new Error('No Job ID received from server');
 
-      // 2. POLL FOR RESULTS
+      // 2. Poll the status checker until COMPLETED
       let completed = false;
       let attempts = 0;
-      const maxAttempts = 45; // ~90 seconds total timeout
+      const maxAttempts = 50; // Roughly 100 seconds max wait
 
       while (!completed && attempts < maxAttempts) {
         attempts++;
@@ -165,7 +165,6 @@ export default function App() {
           const base64Image = statusData.output.image;
           setImage(base64Image);
           
-          // Only deduct credits and save when actually finished
           await deductCreditsLive(2);
           try {
             await saveAiImage(user.$id, base64Image, prompt);
@@ -177,12 +176,12 @@ export default function App() {
         } else if (statusData.status === 'FAILED') {
           throw new Error(statusData.error || 'GPU generation failed');
         } else {
-          // Still in queue or processing, wait 2 seconds before checking again
+          // Still processing, wait 2 seconds
           await delay(2000);
         }
       }
 
-      if (!completed) throw new Error('Generation timed out. Please try again.');
+      if (!completed) throw new Error('Generation timed out. The GPU is taking too long to warm up.');
 
     } catch (err) {
       console.error("Generation error:", err);
@@ -199,14 +198,21 @@ export default function App() {
     else setViewState('empty');
   };
 
+  // Logic for Explore/MyImages - Toggles on/off
   const handleSelectPrompt = (selectedPrompt) => {
-    // If selecting the same prompt, toggle it off (unload)
-    if (selectedPrompt === prompt) {
+    if (selectedPrompt?.trim() === prompt?.trim()) {
       setPrompt('');
     } else {
       setPrompt(selectedPrompt);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  };
+
+  // Logic for Promptimize - Always loads/overwrites
+  const handlePromptLoad = (val) => {
+    if (!val) return;
+    setPrompt(val);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleViewImage = (img) => {
@@ -265,8 +271,8 @@ export default function App() {
           credits={credits}
           userId={user?.$id}
           isOpen={isSidebarOpen}
-          prompt={prompt}
-          onSelectPrompt={handleSelectPrompt}
+          currentPrompt={prompt}
+          onPromptLoad={handlePromptLoad} 
         />
 
         <main className="main-content">
