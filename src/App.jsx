@@ -36,7 +36,7 @@ export default function App() {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [promptCollapsed, setPromptCollapsed] = useState(false);
 
-  // Utility for polling delay
+  // Helper for polling delay
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
   const handleGlobalClick = (e) => {
@@ -124,47 +124,39 @@ export default function App() {
       setViewState('result');
       return;
     }
-
     setViewState('result');
     setLoading(true);
     setError(null);
     setImage(null);
-
+    
     try {
-      // 1. Send Job to RunPod via Vercel (Fast Request)
-      const startResponse = await fetch('/api/generate', {
+      // 1. Trigger job and get jobId
+      const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt })
       });
-
-      if (!startResponse.ok) throw new Error('Failed to initiate generation');
-      const startData = await startResponse.json();
+      if (!response.ok) throw new Error('Server Error');
+      const startData = await response.json();
       const jobId = startData.jobId;
 
-      if (!jobId) throw new Error('No Job ID received from server');
+      if (!jobId) throw new Error('Failed to start generation job');
 
-      // 2. Poll the status checker until COMPLETED
+      // 2. Poll status checker
       let completed = false;
       let attempts = 0;
-      const maxAttempts = 50; // Roughly 100 seconds max wait
-
-      while (!completed && attempts < maxAttempts) {
+      while (!completed && attempts < 60) { // 2 minute max
         attempts++;
-        
-        const statusResponse = await fetch('/api/check-status', {
+        const statusRes = await fetch('/api/check-status', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ jobId })
         });
-
-        if (!statusResponse.ok) throw new Error('Status check failed');
-        const statusData = await statusResponse.json();
+        const statusData = await statusRes.json();
 
         if (statusData.status === 'COMPLETED') {
           const base64Image = statusData.output.image;
           setImage(base64Image);
-          
           await deductCreditsLive(2);
           try {
             await saveAiImage(user.$id, base64Image, prompt);
@@ -174,17 +166,14 @@ export default function App() {
           }
           completed = true;
         } else if (statusData.status === 'FAILED') {
-          throw new Error(statusData.error || 'GPU generation failed');
+          throw new Error('RunPod generation failed');
         } else {
-          // Still processing, wait 2 seconds
-          await delay(2000);
+          await delay(2000); // Wait 2 seconds before next check
         }
       }
-
-      if (!completed) throw new Error('Generation timed out. The GPU is taking too long to warm up.');
+      if (!completed) throw new Error('Generation timed out');
 
     } catch (err) {
-      console.error("Generation error:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -198,21 +187,16 @@ export default function App() {
     else setViewState('empty');
   };
 
-  // Logic for Explore/MyImages - Toggles on/off
+  // RESTORED: Original load/unload logic
   const handleSelectPrompt = (selectedPrompt) => {
-    if (selectedPrompt?.trim() === prompt?.trim()) {
-      setPrompt('');
-    } else {
-      setPrompt(selectedPrompt);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    setPrompt(selectedPrompt);
+    if (selectedPrompt) window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Logic for Promptimize - Always loads/overwrites
+  // RESTORED: Original Promptimize load logic
   const handlePromptLoad = (val) => {
-    if (!val) return;
     setPrompt(val);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (val) window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleViewImage = (img) => {
@@ -272,7 +256,7 @@ export default function App() {
           userId={user?.$id}
           isOpen={isSidebarOpen}
           currentPrompt={prompt}
-          onPromptLoad={handlePromptLoad} 
+          onPromptLoad={handlePromptLoad}
         />
 
         <main className="main-content">
