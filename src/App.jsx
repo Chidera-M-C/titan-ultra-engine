@@ -36,6 +36,9 @@ export default function App() {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [promptCollapsed, setPromptCollapsed] = useState(false);
 
+  // Helper for polling delay
+  const delay = (ms) => new Promise(res => setTimeout(res, ms));
+
   const handleGlobalClick = (e) => {
     if (user || authLoading) return;
     const isModalInteraction = e.target.closest('.login-modal-card') ||
@@ -121,30 +124,68 @@ export default function App() {
       setViewState('result');
       return;
     }
+
     setViewState('result');
     setLoading(true);
     setError(null);
     setImage(null);
+
     try {
-      const response = await fetch('/api/generate', {
+      // 1. START THE JOB
+      const startResponse = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt })
       });
-      if (!response.ok) throw new Error('Server Error');
-      const data = await response.json();
-      if (data.status === 'COMPLETED' && data.output?.image) {
-        const base64Image = data.output.image;
-        setImage(base64Image);
-        await deductCreditsLive(2);
-        try {
-          await saveAiImage(user.$id, base64Image, prompt);
-          setUserGallery(prev => [{ id: Date.now(), url: base64Image, prompt }, ...prev]);
-        } catch (saveErr) {
-          console.error("Database save failed:", saveErr);
+
+      if (!startResponse.ok) throw new Error('Failed to initiate generation');
+      const startData = await startResponse.json();
+      const jobId = startData.jobId;
+
+      if (!jobId) throw new Error('No Job ID received from server');
+
+      // 2. POLL FOR RESULTS
+      let completed = false;
+      let attempts = 0;
+      const maxAttempts = 45; // ~90 seconds total timeout
+
+      while (!completed && attempts < maxAttempts) {
+        attempts++;
+        
+        const statusResponse = await fetch('/api/check-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobId })
+        });
+
+        if (!statusResponse.ok) throw new Error('Status check failed');
+        const statusData = await statusResponse.json();
+
+        if (statusData.status === 'COMPLETED') {
+          const base64Image = statusData.output.image;
+          setImage(base64Image);
+          
+          // Only deduct credits and save when actually finished
+          await deductCreditsLive(2);
+          try {
+            await saveAiImage(user.$id, base64Image, prompt);
+            setUserGallery(prev => [{ id: Date.now(), url: base64Image, prompt }, ...prev]);
+          } catch (saveErr) {
+            console.error("Database save failed:", saveErr);
+          }
+          completed = true;
+        } else if (statusData.status === 'FAILED') {
+          throw new Error(statusData.error || 'GPU generation failed');
+        } else {
+          // Still in queue or processing, wait 2 seconds before checking again
+          await delay(2000);
         }
       }
+
+      if (!completed) throw new Error('Generation timed out. Please try again.');
+
     } catch (err) {
+      console.error("Generation error:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -159,14 +200,13 @@ export default function App() {
   };
 
   const handleSelectPrompt = (selectedPrompt) => {
-    setPrompt(selectedPrompt);
-    if (selectedPrompt) window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Promptimize load/unload — mirrors gallery card logic
-  const handlePromptLoad = (val) => {
-    setPrompt(val);
-    if (val) window.scrollTo({ top: 0, behavior: 'smooth' });
+    // If selecting the same prompt, toggle it off (unload)
+    if (selectedPrompt === prompt) {
+      setPrompt('');
+    } else {
+      setPrompt(selectedPrompt);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   const handleViewImage = (img) => {
@@ -225,8 +265,8 @@ export default function App() {
           credits={credits}
           userId={user?.$id}
           isOpen={isSidebarOpen}
-          currentPrompt={prompt}
-          onPromptLoad={handlePromptLoad}
+          prompt={prompt}
+          onSelectPrompt={handleSelectPrompt}
         />
 
         <main className="main-content">
