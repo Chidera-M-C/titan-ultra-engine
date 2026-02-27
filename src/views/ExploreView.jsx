@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../lib/appwrite.js';
-import { Query } from 'appwrite';
+import { supabase } from '../lib/supabase.js'; // Use Supabase now
 import CategoryTabs from '../components/Gallery/CategoryTabs';
 import MasonryGrid from '../components/Gallery/MasonryGrid';
 
@@ -20,22 +19,28 @@ export default function ExploreView({ prompt, onSelectPrompt, onViewImage, onEdi
       const limit = 20;
       const offset = isLoadMore ? images.length : 0;
 
-      const response = await db.listDocuments(
-        'main_db',
-        'images',
-        [
-          Query.orderDesc('$createdAt'),
-          Query.limit(limit),
-          Query.offset(offset)
-        ]
-      );
+      // Supabase Query Logic
+      let query = supabase
+        .from('images')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
 
-      const fetchedImages = response.documents.map(doc => ({
-        id: doc.$id,
-        url: doc.imageUrl,
+      // Filter by category if not 'Explore'
+      if (activeCategory !== 'Explore') {
+        query = query.eq('category', activeCategory);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      const fetchedImages = data.map(doc => ({
+        id: doc.id,
+        url: doc.image_url,
         prompt: doc.prompt,
-        userId: doc.userId,
-        createdAt: doc.$createdAt
+        userId: doc.user_id,
+        createdAt: doc.created_at
       }));
 
       if (isLoadMore) {
@@ -47,7 +52,7 @@ export default function ExploreView({ prompt, onSelectPrompt, onViewImage, onEdi
       setHasMore(fetchedImages.length === limit);
       
     } catch (err) {
-      console.error("Failed to fetch explore images:", err);
+      console.error("Failed to fetch explore images from Supabase:", err);
     } finally {
       setLoading(false);
     }
@@ -95,7 +100,7 @@ export default function ExploreView({ prompt, onSelectPrompt, onViewImage, onEdi
         ) : (
           <MasonryGrid 
             images={images} 
-            prompt={prompt} // PASSING THE PROMPT HERE FIXES THE TOGGLE
+            prompt={prompt}
             onImageClick={onViewImage}
             onSelectPrompt={onSelectPrompt}
             onEditImage={onEditImage}
