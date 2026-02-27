@@ -250,8 +250,8 @@ export default function App() {
   };
 
   return (
-    <>
-      <div className="master-wrapper" onClickCapture={handleGlobalClick}>
+    <div onClickCapture={handleGlobalClick}>
+      <div className="master-wrapper">
         <div className="app-shell">
           <button
             className="mobile-menu-toggle"
@@ -334,8 +334,8 @@ export default function App() {
         </div>
       </div>
 
-      {/* LoginModal rendered OUTSIDE app-shell to avoid container constraints */}
+      {/* LoginModal rendered OUTSIDE app-shell to avoid sidebar constraints */}
       <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
-    </>
+    </div>
   );
 }
