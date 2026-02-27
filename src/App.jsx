@@ -3,8 +3,7 @@ import './App.css';
 import { Menu, X } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { saveAiImage } from './lib/imageService.js';
-import { db } from './lib/appwrite.js';
-import { Query } from 'appwrite';
+import { supabase } from './lib/supabase.js'; // Switched to Supabase
 import Sidebar from './components/Sidebar/Sidebar';
 import PromptBox from './components/PromptSection/PromptBox';
 import ResultModal from './components/Shared/ResultModal';
@@ -58,27 +57,42 @@ export default function App() {
       return;
     }
     try {
-      try {
-        const userDoc = await db.getDocument('main_db', 'users', user.$id);
-        setCredits(userDoc.credits || 0);
-      } catch (err) {
-        if (err.code === 404) {
-          const newWallet = await db.createDocument('main_db', 'users', user.$id, { credits: 10 });
-          setCredits(newWallet.credits);
-        }
+      // 1. Fetch or Create User Profile (Credits)
+      const { data: profile, error: profileError } = await supabase
+        .from('users')
+        .select('credits')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError && profileError.code === 'PGRST116') {
+        // User doesn't exist in our table yet, create them
+        const { data: newProfile } = await supabase
+          .from('users')
+          .insert([{ id: user.id, credits: 10 }])
+          .select()
+          .single();
+        setCredits(newProfile?.credits || 10);
+      } else {
+        setCredits(profile?.credits || 0);
       }
-      const response = await db.listDocuments('main_db', 'images', [
-        Query.equal('userId', user.$id),
-        Query.orderDesc('$createdAt')
-      ]);
-      const fetchedImages = response.documents.map(doc => ({
-        id: doc.$id,
-        url: doc.imageUrl,
+
+      // 2. Fetch User Images
+      const { data: images, error: imagesError } = await supabase
+        .from('images')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (imagesError) throw imagesError;
+
+      const fetchedImages = images.map(doc => ({
+        id: doc.id,
+        url: doc.image_url,
         prompt: doc.prompt
       }));
       setUserGallery(fetchedImages);
     } catch (err) {
-      console.error("Sync error:", err);
+      console.error("Supabase Sync error:", err);
     }
   };
 
@@ -107,9 +121,14 @@ export default function App() {
     const newBalance = Math.max(0, credits - amount);
     setCredits(newBalance);
     try {
-      await db.updateDocument('main_db', 'users', user.$id, { credits: newBalance });
+      const { error } = await supabase
+        .from('users')
+        .update({ credits: newBalance })
+        .eq('id', user.id);
+      
+      if (error) throw error;
     } catch (err) {
-      console.error("Database sync failed, reverting UI:", err);
+      console.error("Supabase update failed, reverting UI:", err);
       setCredits(prev => prev + amount);
       setError("Server sync failed. Your credits have been restored.");
     }
@@ -142,8 +161,6 @@ export default function App() {
 
       let completed = false;
       let attempts = 0;
-      // EXTENDED TIMEOUT: 150 attempts * 2s = 300 seconds (5 minutes)
-      // This is necessary if the GPU pod is starting from scratch.
       const maxAttempts = 150; 
 
       while (!completed && attempts < maxAttempts) {
@@ -160,22 +177,21 @@ export default function App() {
           setImage(base64Image);
           await deductCreditsLive(2);
           try {
-            await saveAiImage(user.$id, base64Image, prompt);
-            setUserGallery(prev => [{ id: Date.now(), url: base64Image, prompt }, ...prev]);
+            const publicUrl = await saveAiImage(user.id, base64Image, prompt);
+            setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt }, ...prev]);
           } catch (saveErr) {
-            console.error("Database save failed:", saveErr);
+            console.error("Supabase storage save failed:", saveErr);
           }
           completed = true;
         } else if (statusData.status === 'FAILED') {
           throw new Error('RunPod generation failed: ' + (statusData.error || 'Unknown Error'));
         } else {
-          // Status is likely 'IN_QUEUE' or 'IN_PROGRESS'
           await delay(2000); 
         }
       }
 
       if (!completed) {
-        throw new Error('The GPU is taking too long to wake up. Please try hitting retry in a few seconds once it is warm.');
+        throw new Error('The GPU is taking too long to wake up. Please try hitting retry in a few seconds.');
       }
 
     } catch (err) {
@@ -255,7 +271,7 @@ export default function App() {
           activeTab={activeTab}
           onNavigate={handleNavigation}
           credits={credits}
-          userId={user?.$id}
+          userId={user?.id}
           isOpen={isSidebarOpen}
           currentPrompt={prompt}
           onPromptLoad={handlePromptLoad}
