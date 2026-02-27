@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { account } from '../lib/appwrite';
+import { supabase } from '../lib/supabase'; // Pointing to your new Supabase client
 
 const AuthContext = createContext();
 
@@ -8,38 +8,49 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkUserStatus();
+    // 1. Check active sessions on mount
+    const initializeAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+      setLoading(false);
+    };
+
+    initializeAuth();
+
+    // 2. Listen for auth changes (login, logout, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const checkUserStatus = async () => {
+  const loginWithGoogle = async () => {
     try {
-      const sessionUser = await account.get();
-      setUser(sessionUser);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          // Supabase handles the redirect back to your Site URL automatically
+          // but you can specify a precise URL if needed:
+          redirectTo: window.location.origin,
+        },
+      });
+      if (error) throw error;
     } catch (error) {
-      setUser(null);
-    } finally {
-      setLoading(false);
+      console.error("Login failed:", error.message);
     }
-  };
-
-  const loginWithGoogle = () => {
-    // Force the redirect to your production URL if you are testing the live site
-    // Or keep it dynamic but ENSURE both are in Google Cloud Console
-    const redirectUrl = window.location.origin; 
-
-    account.createOAuth2Session(
-      'google',
-      redirectUrl, 
-      `${redirectUrl}/login` 
-    );
   };
 
   const logout = async () => {
     try {
-      await account.deleteSession('current');
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       setUser(null);
     } catch (error) {
-      console.error("Logout failed", error);
+      console.error("Logout failed:", error.message);
     }
   };
 
