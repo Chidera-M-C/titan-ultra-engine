@@ -3,7 +3,7 @@ import './App.css';
 import { Menu, X } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
 import { saveAiImage } from './lib/imageService.js';
-import { supabase } from './lib/supabase.js'; // Switched to Supabase
+import { supabase } from './lib/supabase.js';
 import Sidebar from './components/Sidebar/Sidebar';
 import PromptBox from './components/PromptSection/PromptBox';
 import ResultModal from './components/Shared/ResultModal';
@@ -57,7 +57,6 @@ export default function App() {
       return;
     }
     try {
-      // 1. Fetch or Create User Profile (Credits)
       const { data: profile, error: profileError } = await supabase
         .from('users')
         .select('credits')
@@ -65,7 +64,6 @@ export default function App() {
         .single();
 
       if (profileError && profileError.code === 'PGRST116') {
-        // User doesn't exist in our table yet, create them
         const { data: newProfile } = await supabase
           .from('users')
           .insert([{ id: user.id, credits: 10 }])
@@ -76,7 +74,6 @@ export default function App() {
         setCredits(profile?.credits || 0);
       }
 
-      // 2. Fetch User Images
       const { data: images, error: imagesError } = await supabase
         .from('images')
         .select('*')
@@ -253,89 +250,92 @@ export default function App() {
   };
 
   return (
-    <div className="master-wrapper" onClickCapture={handleGlobalClick}>
-      <div className="app-shell">
-        <button
-          className="mobile-menu-toggle"
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          aria-label="Toggle Menu"
-        >
-          {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
-        </button>
+    <>
+      <div className="master-wrapper" onClickCapture={handleGlobalClick}>
+        <div className="app-shell">
+          <button
+            className="mobile-menu-toggle"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            aria-label="Toggle Menu"
+          >
+            {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
 
-        {isSidebarOpen && (
-          <div className="sidebar-mobile-overlay" onClick={() => setIsSidebarOpen(false)} />
-        )}
-
-        <Sidebar
-          activeTab={activeTab}
-          onNavigate={handleNavigation}
-          credits={credits}
-          userId={user?.id}
-          isOpen={isSidebarOpen}
-          currentPrompt={prompt}
-          onPromptLoad={handlePromptLoad}
-        />
-
-        <main className="main-content">
-          {!promptCollapsed && (
-            <header className="top-header">
-              <h1 className="aesthetic-title">What will you create?</h1>
-              <PromptBox
-                prompt={prompt}
-                setPrompt={setPrompt}
-                aspectRatio={aspectRatio}
-                setAspectRatio={setAspectRatio}
-                onGenerate={generateImage}
-                loading={loading}
-                collapsed={false}
-                credits={credits}
-              />
-            </header>
+          {isSidebarOpen && (
+            <div className="sidebar-mobile-overlay" onClick={() => setIsSidebarOpen(false)} />
           )}
 
-          {promptCollapsed && (
-            <div className="floating-prompt">
-              <PromptBox
-                prompt={prompt}
-                setPrompt={setPrompt}
-                aspectRatio={aspectRatio}
-                setAspectRatio={setAspectRatio}
-                onGenerate={generateImage}
-                loading={loading}
-                collapsed={true}
-              />
-            </div>
-          )}
-
-          <div className="scrollable-area">
-            {renderActiveView()}
-          </div>
-        </main>
-
-        <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
-
-        {(viewState === 'result' || loading || image || error) && (
-          <ResultModal
-            image={image}
-            loading={loading}
-            error={error}
-            prompt={prompt}
-            onClose={() => { setViewState('gallery'); setImage(null); setError(null); }}
-            onRetry={generateImage}
-            onOpenEdit={(img) => { setEditingImage(img); setEditModalOpen(true); }}
-            onViewFullScreen={(imageUrl) => { setViewingImageUrl(imageUrl); setViewImageModalOpen(true); }}
+          <Sidebar
+            activeTab={activeTab}
+            onNavigate={handleNavigation}
+            credits={credits}
+            userId={user?.id}
+            isOpen={isSidebarOpen}
+            currentPrompt={prompt}
+            onPromptLoad={handlePromptLoad}
           />
-        )}
 
-        {editModalOpen && (
-          <EditModal image={editingImage?.url} originalPrompt={editingImage?.prompt} onClose={() => setEditModalOpen(false)} />
-        )}
+          <main className="main-content">
+            {!promptCollapsed && (
+              <header className="top-header">
+                <h1 className="aesthetic-title">What will you create?</h1>
+                <PromptBox
+                  prompt={prompt}
+                  setPrompt={setPrompt}
+                  aspectRatio={aspectRatio}
+                  setAspectRatio={setAspectRatio}
+                  onGenerate={generateImage}
+                  loading={loading}
+                  collapsed={false}
+                  credits={credits}
+                />
+              </header>
+            )}
 
-        {viewImageModalOpen && (
-          <ImageViewModal imageUrl={viewingImageUrl} onClose={() => setViewImageModalOpen(false)} />
-        )}
+            {promptCollapsed && (
+              <div className="floating-prompt">
+                <PromptBox
+                  prompt={prompt}
+                  setPrompt={setPrompt}
+                  aspectRatio={aspectRatio}
+                  setAspectRatio={setAspectRatio}
+                  onGenerate={generateImage}
+                  loading={loading}
+                  collapsed={true}
+                />
+              </div>
+            )}
+
+            <div className="scrollable-area">
+              {renderActiveView()}
+            </div>
+          </main>
+
+          {(viewState === 'result' || loading || image || error) && (
+            <ResultModal
+              image={image}
+              loading={loading}
+              error={error}
+              prompt={prompt}
+              onClose={() => { setViewState('gallery'); setImage(null); setError(null); }}
+              onRetry={generateImage}
+              onOpenEdit={(img) => { setEditingImage(img); setEditModalOpen(true); }}
+              onViewFullScreen={(imageUrl) => { setViewingImageUrl(imageUrl); setViewImageModalOpen(true); }}
+            />
+          )}
+
+          {editModalOpen && (
+            <EditModal image={editingImage?.url} originalPrompt={editingImage?.prompt} onClose={() => setEditModalOpen(false)} />
+          )}
+
+          {viewImageModalOpen && (
+            <ImageViewModal imageUrl={viewingImageUrl} onClose={() => setViewImageModalOpen(false)} />
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* LoginModal rendered OUTSIDE app-shell to avoid container constraints */}
+      <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
+    </>
   );
 }
