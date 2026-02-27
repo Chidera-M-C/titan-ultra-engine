@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { functions } from '../../lib/appwrite';
 import TopUpModal from './TopUpModal';
 import { Zap, Plus } from 'lucide-react';
 import './CreditsCard.css';
@@ -13,22 +12,30 @@ export default function CreditsCard({ credits, userId }) {
       alert("Please sign in to purchase credits.");
       return;
     }
+    
     setLoading(true);
-    const FUNCTION_ID = '6994ff8c0026073bc77d';
+
     try {
-      const execution = await functions.createExecution(
-        FUNCTION_ID,
-        JSON.stringify({ price: pack.price, credits: pack.credits, userId })
-      );
-      if (execution.status === 'completed') {
-        const response = JSON.parse(execution.responseBody);
-        if (response.url) {
-          window.location.href = response.url;
-        } else {
-          alert("Payment link generation failed: " + (response.error || "Unknown error"));
-        }
+      // Pointing to your NEW Vercel API endpoint instead of Appwrite Functions
+      const response = await fetch('/api/payment-webhook', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          price: pack.price, 
+          credits: pack.credits, 
+          userId: userId 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.url) {
+        // Redirect to NOWPayments invoice
+        window.location.href = data.url;
       } else {
-        throw new Error("Function failed to execute");
+        throw new Error(data.error || "Payment link generation failed");
       }
     } catch (err) {
       console.error("Payment error:", err);
