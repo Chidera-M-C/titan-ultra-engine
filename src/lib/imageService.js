@@ -1,43 +1,51 @@
-// src/lib/imageService.js
-import { storage, db, ID } from './appwrite.js';
+import { supabase } from './supabase';
 
 export const saveAiImage = async (userId, base64String, prompt) => {
   try {
-    // 1. Handle JPEG base64 from RunPod
+    // 1. Clean the Base64 (Handling JPEG from RunPod)
     const base64Data = base64String.replace(/^data:image\/\w+;base64,/, "");
     
+    // 2. Convert to Blob
     const byteCharacters = atob(base64Data);
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
       byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
     const byteArray = new Uint8Array(byteNumbers);
-    
-    // 2. Save as JPEG
     const blob = new Blob([byteArray], { type: 'image/jpeg' });
-    const file = new File([blob], `gen-${Date.now()}.jpg`, { type: 'image/jpeg' });
 
-    // 3. Upload
-    const uploadedFile = await storage.createFile(
-      'generated_images',
-      'unique()', // Use 'unique()' helper or ID.unique()
-      file
-    );
+    const fileName = `${userId}/${Date.now()}.jpg`;
 
-    // 4. Get URL
-    const fileUrl = storage.getFileView('generated_images', uploadedFile.$id);
+    // 3. Upload to Supabase Storage (Bucket: 'generated_images')
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('generated_images')
+      .upload(fileName, blob, { 
+        contentType: 'image/jpeg',
+        upsert: true 
+      });
 
-    // 5. Save Metadata
-    await db.createDocument('main_db', 'images', 'unique()', {
-      userId: userId,
-      imageUrl: fileUrl.toString(),
-      prompt: prompt,
-      category: 'Explore'
-    });
+    if (uploadError) throw uploadError;
 
-    return fileUrl.toString();
+    // 4. Get the Public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('generated_images')
+      .getPublicUrl(fileName);
+
+    // 5. Save Metadata to Database (Table: 'images')
+    const { error: dbError } = await supabase
+      .from('images')
+      .insert([{
+        user_id: userId,
+        image_url: publicUrl,
+        prompt: prompt,
+        category: 'Explore'
+      }]);
+
+    if (dbError) throw dbError;
+
+    return publicUrl;
   } catch (error) {
-    console.error("New Project Save Failed:", error);
+    console.error("Supabase Save Error:", error);
     throw error;
   }
 };
