@@ -1,156 +1,332 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import React, { useState, useEffect } from 'react';
+import './App.css';
+import { Menu, X } from 'lucide-react';
+import { useAuth } from './context/AuthContext';
+import { saveAiImage } from './lib/imageService.js';
+import { supabase } from './lib/supabase.js';
+import Sidebar from './components/Sidebar/Sidebar';
+import PromptBox from './components/PromptSection/PromptBox';
+import ResultModal from './components/Shared/ResultModal';
+import EditModal from './components/Shared/EditModal';
+import ImageViewModal from './components/Shared/ImageViewModal';
+import LoginModal from './components/LoginModal';
+import ExploreView from './views/ExploreView';
+import CharacterView from './views/CharacterView';
+import MyImagesView from './views/MyImagesView';
+import StyleView from './views/StyleView';
 
-const AuthContext = createContext();
+export default function App() {
+  const { user, credits, loading: authLoading } = useAuth();
+  const [activeTab, setActiveTab] = useState('explore');
+  const [viewState, setViewState] = useState('gallery');
+  const [prompt, setPrompt] = useState('');
+  const [aspectRatio, setAspectRatio] = useState('9:16');
+  const [image, setImage] = useState(null);
+  const [userGallery, setUserGallery] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingImage, setEditingImage] = useState(null);
+  const [viewImageModalOpen, setViewImageModalOpen] = useState(false);
+  const [viewingImageUrl, setViewingImageUrl] = useState(null);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [promptCollapsed, setPromptCollapsed] = useState(false);
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [credits, setCredits] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
-  const fetchOrCreateUser = async (authUser) => {
+  const handleGlobalClick = (e) => {
+    if (user || authLoading) return;
+
+    const allowed =
+      e.target.closest('.auth-card') ||
+      e.target.closest('.auth-overlay') ||
+      e.target.closest('.auth-close') ||
+      e.target.closest('.allow-visitor') ||
+      e.target.closest('.mobile-menu-toggle') ||
+      e.target.closest('.sidebar') ||
+      e.target.closest('.login-modal') ||
+      e.target.closest('[data-allow]');
+
+    if (allowed) return;
+
+    const isMainContent =
+      e.target.closest('.main-content') ||
+      e.target.closest('.scrollable-area') ||
+      e.target.closest('.top-header') ||
+      e.target.closest('.floating-prompt');
+
+    if (isMainContent) {
+      e.preventDefault();
+      e.stopPropagation();
+      setLoginModalOpen(true);
+    }
+  };
+
+  const loadGallery = async () => {
+    if (!user) { setUserGallery([]); return; }
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('credits')
-        .eq('id', authUser.id)
-        .single();
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('Session at gallery load:', session?.user?.id);
 
-      if (error && error.code === 'PGRST116') {
-        const { data: newUser, error: createError } = await supabase
-          .from('users')
-          .insert({ id: authUser.id, credits: 10 })
-          .select('credits')
-          .single();
-        if (createError) throw createError;
-        if (newUser) setCredits(newUser.credits);
-      } else if (error) {
-        throw error;
-      } else if (data) {
-        setCredits(data.credits);
-      }
+      const { data: images, error: imagesError } = await supabase
+        .from('images')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      console.log('Images result:', images, 'Error:', imagesError);
+
+      if (imagesError) throw imagesError;
+      setUserGallery(images.map(doc => ({
+        id: doc.id,
+        url: doc.image_url,
+        prompt: doc.prompt
+      })));
     } catch (err) {
-      console.error("Error fetching/creating user:", err.message);
+      console.error("Supabase Sync error:", err);
     }
   };
 
   useEffect(() => {
-    let realtimeChannel = null;
+    if (authLoading) return;
 
-    // CRITICAL: onAuthStateChange fires immediately with the
-    // current session on mount — this is the correct way to
-    // restore session on page reload with Supabase
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth event:', event, session?.user?.id);
-        const currentUser = session?.user ?? null;
-        setUser(currentUser);
+    if (user) {
+      loadGallery();
+    } else {
+      setUserGallery([]);
+      const timer = setTimeout(() => setLoginModalOpen(true), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [user, authLoading]);
 
-        if (realtimeChannel) {
-          supabase.removeChannel(realtimeChannel);
-          realtimeChannel = null;
-        }
-
-        if (currentUser) {
-          await fetchOrCreateUser(currentUser);
-
-          realtimeChannel = supabase
-            .channel(`credits-${currentUser.id}`)
-            .on(
-              'postgres_changes',
-              {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'users',
-                filter: `id=eq.${currentUser.id}`
-              },
-              (payload) => {
-                setCredits(payload.new.credits);
-              }
-            )
-            .subscribe();
-        } else {
-          setCredits(0);
-        }
-
-        // Only set loading false after INITIAL_SESSION event
-        // so we don't flash the login modal before session restores
-        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-          setLoading(false);
-        }
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-      if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollable = document.querySelector('.scrollable-area');
+      if (scrollable) setPromptCollapsed(scrollable.scrollTop > 100);
     };
+    const scrollable = document.querySelector('.scrollable-area');
+    if (scrollable) {
+      scrollable.addEventListener('scroll', handleScroll);
+      return () => scrollable.removeEventListener('scroll', handleScroll);
+    }
   }, []);
 
-  const loginWithGoogle = async () => {
+  const deductCreditsLive = async (amount) => {
+    if (!user) return;
+    const newBalance = Math.max(0, credits - amount);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin,
-          queryParams: {
-            prompt: 'select_account',
-            access_type: 'offline',
-          },
-        },
+      const { error } = await supabase
+        .from('users')
+        .update({ credits: newBalance })
+        .eq('id', user.id);
+      if (error) throw error;
+    } catch (err) {
+      console.error("Supabase update failed:", err);
+      setError("Server sync failed. Your credits were not deducted.");
+    }
+  };
+
+  const generateImage = async () => {
+    if (!user) { setLoginModalOpen(true); return; }
+    if (!prompt || loading) return;
+    if (credits < 2) {
+      setError("Insufficient credits.");
+      setViewState('result');
+      return;
+    }
+    setViewState('result');
+    setLoading(true);
+    setError(null);
+    setImage(null);
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
       });
-      if (error) throw error;
-    } catch (error) {
-      console.error("Login failed:", error.message);
+      if (!response.ok) throw new Error('Server Error');
+      const startData = await response.json();
+      const jobId = startData.jobId;
+      if (!jobId) throw new Error('Failed to start generation job');
+
+      let completed = false;
+      let attempts = 0;
+      const maxAttempts = 150;
+
+      while (!completed && attempts < maxAttempts) {
+        attempts++;
+        const statusRes = await fetch('/api/check-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobId })
+        });
+        const statusData = await statusRes.json();
+        if (statusData.status === 'COMPLETED') {
+          const base64Image = statusData.output.image;
+          setImage(base64Image);
+          await deductCreditsLive(2);
+          try {
+            const publicUrl = await saveAiImage(user.id, base64Image, prompt);
+            setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt }, ...prev]);
+          } catch (saveErr) {
+            console.error("Supabase storage save failed:", saveErr);
+          }
+          completed = true;
+        } else if (statusData.status === 'FAILED') {
+          throw new Error('RunPod generation failed');
+        } else {
+          await delay(2000);
+        }
+      }
+      if (!completed) throw new Error('The GPU is taking too long to wake up.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const signUpWithEmail = async (email, password) => {
-    try {
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error("Signup error:", error.message);
-      throw error;
-    }
+  const handleNavigation = (tab) => {
+    setActiveTab(tab);
+    setIsSidebarOpen(false);
+    if (tab === 'explore' || tab === 'gallery') setViewState('gallery');
+    else setViewState('empty');
   };
 
-  const signInWithEmail = async (email, password) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error("Login error:", error.message);
-      throw error;
-    }
+  const handleSelectPrompt = (selectedPrompt) => {
+    setPrompt(selectedPrompt);
+    if (selectedPrompt) window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const logout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      setUser(null);
-      setCredits(0);
-    } catch (error) {
-      console.error("Logout failed:", error.message);
+  const handlePromptLoad = (val) => {
+    setPrompt(val);
+    if (val) window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleViewImage = (img) => {
+    setViewingImageUrl(img.url);
+    setViewImageModalOpen(true);
+  };
+
+  const handleEditImage = (img) => {
+    if (!user) { setLoginModalOpen(true); return; }
+    setEditingImage(img);
+    setEditModalOpen(true);
+  };
+
+  const renderActiveView = () => {
+    if (viewState === 'empty') {
+      return (
+        <div className="empty-state">
+          <h2>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} coming soon</h2>
+          <p>We're polishing this feature for you!</p>
+        </div>
+      );
+    }
+    switch (activeTab) {
+      case 'explore':
+        return <ExploreView prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
+      case 'character':
+        return <CharacterView />;
+      case 'gallery':
+        return <MyImagesView images={userGallery} prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
+      case 'style':
+        return <StyleView />;
+      default:
+        return <ExploreView prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
     }
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      credits,
-      loginWithGoogle,
-      signUpWithEmail,
-      signInWithEmail,
-      logout,
-      loading
-    }}>
-      {!loading && children}
-    </AuthContext.Provider>
+    <div className="master-wrapper" onClickCapture={handleGlobalClick}>
+      <div className="app-shell">
+
+        <button
+          className="mobile-menu-toggle"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          aria-label="Toggle Menu"
+        >
+          {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+
+        {isSidebarOpen && (
+          <div className="sidebar-mobile-overlay" onClick={() => setIsSidebarOpen(false)} />
+        )}
+
+        <Sidebar
+          activeTab={activeTab}
+          onNavigate={handleNavigation}
+          credits={credits}
+          userId={user?.id}
+          isOpen={isSidebarOpen}
+          currentPrompt={prompt}
+          onPromptLoad={handlePromptLoad}
+        />
+
+        <main className="main-content">
+          {!promptCollapsed && (
+            <header className="top-header">
+              <h1 className="aesthetic-title">What will you create?</h1>
+              <PromptBox
+                prompt={prompt}
+                setPrompt={setPrompt}
+                aspectRatio={aspectRatio}
+                setAspectRatio={setAspectRatio}
+                onGenerate={generateImage}
+                loading={loading}
+                collapsed={false}
+                credits={credits}
+              />
+            </header>
+          )}
+
+          {promptCollapsed && (
+            <div className="floating-prompt">
+              <PromptBox
+                prompt={prompt}
+                setPrompt={setPrompt}
+                aspectRatio={aspectRatio}
+                setAspectRatio={setAspectRatio}
+                onGenerate={generateImage}
+                loading={loading}
+                collapsed={true}
+                credits={credits}
+              />
+            </div>
+          )}
+
+          <div className="scrollable-area">
+            {renderActiveView()}
+          </div>
+        </main>
+
+        <LoginModal
+          isOpen={loginModalOpen}
+          onClose={() => setLoginModalOpen(false)}
+        />
+
+        {(viewState === 'result' || loading || image || error) && (
+          <ResultModal
+            image={image}
+            loading={loading}
+            error={error}
+            prompt={prompt}
+            onClose={() => { setViewState('gallery'); setImage(null); setError(null); }}
+            onRetry={generateImage}
+            onOpenEdit={(img) => { setEditingImage(img); setEditModalOpen(true); }}
+            onViewFullScreen={(imageUrl) => { setViewingImageUrl(imageUrl); setViewImageModalOpen(true); }}
+          />
+        )}
+
+        {editModalOpen && (
+          <EditModal image={editingImage?.url} originalPrompt={editingImage?.prompt} onClose={() => setEditModalOpen(false)} />
+        )}
+
+        {viewImageModalOpen && (
+          <ImageViewModal imageUrl={viewingImageUrl} onClose={() => setViewImageModalOpen(false)} />
+        )}
+      </div>
+    </div>
   );
 }
-
-export const useAuth = () => useContext(AuthContext);
