@@ -32,6 +32,7 @@ export default function App() {
   const [viewingImageUrl, setViewingImageUrl] = useState(null);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [promptCollapsed, setPromptCollapsed] = useState(false);
+  const [exploreRefreshKey, setExploreRefreshKey] = useState(0);
 
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
@@ -106,7 +107,6 @@ export default function App() {
     }
   }, []);
 
-  // Reads fresh credits from DB then deducts — avoids stale closure
   const deductCreditsLive = async (amount) => {
     if (!user) return;
     const { data, error: fetchError } = await supabase
@@ -181,18 +181,20 @@ export default function App() {
           setLoading(false);
           completed = true;
 
-          // Run sequentially in background so sessions don't race
+          // Run sequentially in background
           (async () => {
             try {
-              // 1. Deduct credits first
               await deductCreditsLive(2);
 
-              // 2. Then save image
               const publicUrl = await saveAiImage(user.id, base64Image, prompt);
               console.log('✅ Image saved to Supabase:', publicUrl);
 
-              // 3. Update gallery locally
+              // Update my images gallery
               setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt }, ...prev]);
+
+              // Trigger explore view to re-fetch so new image appears there too
+              setExploreRefreshKey(k => k + 1);
+
             } catch (err) {
               console.error('❌ Post-generation save failed:', err);
             }
@@ -251,7 +253,7 @@ export default function App() {
     }
     switch (activeTab) {
       case 'explore':
-        return <ExploreView prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
+        return <ExploreView key={exploreRefreshKey} prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
       case 'character':
         return <CharacterView />;
       case 'gallery':
@@ -259,7 +261,7 @@ export default function App() {
       case 'style':
         return <StyleView />;
       default:
-        return <ExploreView prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
+        return <ExploreView key={exploreRefreshKey} prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
     }
   };
 
