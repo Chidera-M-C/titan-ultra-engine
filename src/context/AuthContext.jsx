@@ -5,101 +5,174 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [credits, setCredits] = useState(0); 
+  const [credits, setCredits] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const fetchCredits = async (userId) => {
+  const fetchOrCreateUser = async (authUser) => {
     try {
+      // Try to get existing user row
       const { data, error } = await supabase
         .from('users')
         .select('credits')
-        .eq('id', userId)
+        .eq('id', authUser.id)
         .single();
-      if (error) throw error;
-      if (data) setCredits(data.credits);
+
+      if (error && error.code === 'PGRST116') {
+        // Row doesn't exist — create it with 10 starter credits
+        const { data: newUser, error: createError } = await supabase
+          .from('users')
+          .insert({ id: authUser.id, credits: 10 })
+          .select('credits')
+          .single();
+
+        if (createError) throw createError;
+        if (newUser) setCredits(newUser.credits);
+      } else if (error) {
+        throw error;
+      } else if (data) {
+        setCredits(data.credits);
+      }
     } catch (err) {
-      console.error("Error fetching credits:", err.message);
+      console.error("Error fetching/creating user:", err.message);
     }
   };
 
   useEffect(() => {
-    let channel;
+    let realtimeChannel = null;
 
     const initializeAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       const currentUser = session?.user ?? null;
       setUser(currentUser);
-      
+
       if (currentUser) {
-        await fetchCredits(currentUser.id);
-        // Start Realtime only after we have a user
-        channel = supabase
-          .channel(`user-changes-${currentUser.id}`)
+        await fetchOrCreateUser(currentUser);
+        // Subscribe to realtime AFTER we have the user
+        realtimeChannel = supabase
+          .channel(`credits-${currentUser.id}`)
           .on(
             'postgres_changes',
-            { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${currentUser.id}` },
-            (payload) => setCredits(payload.new.credits)
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'users',
+              filter: `id=eq.${currentUser.id}`
+            },
+            (payload) => {
+              setCredits(payload.new.credits);
+            }
           )
           .subscribe();
       }
+
       setLoading(false);
     };
 
     initializeAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
-      
+
+      // Clean up old channel
+      if (realtimeChannel) {
+        supabase.removeChannel(realtimeChannel);
+        realtimeChannel = null;
+      }
+
       if (currentUser) {
-        await fetchCredits(currentUser.id);
+        await fetchOrCreateUser(currentUser);
+        // Re-subscribe with new user
+        realtimeChannel = supabase
+          .channel(`credits-${currentUser.id}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'users',
+              filter: `id=eq.${currentUser.id}`
+            },
+            (payload) => {
+              setCredits(payload.new.credits);
+            }
+          )
+          .subscribe();
       } else {
         setCredits(0);
-        if (channel) supabase.removeChannel(channel);
       }
+
       setLoading(false);
     });
 
     return () => {
       subscription.unsubscribe();
-      if (channel) supabase.removeChannel(channel);
+      if (realtimeChannel) supabase.removeChannel(realtimeChannel);
     };
-  }, []); // Empty dependency array to prevent re-subscription loops
+  }, []); // Empty deps — runs once on mount only
 
   const loginWithGoogle = async () => {
     try {
-      await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: window.location.origin,
-          queryParams: { prompt: 'select_account', access_type: 'offline' },
+          queryParams: {
+            prompt: 'select_account',
+            access_type: 'offline',
+          },
         },
       });
+      if (error) throw error;
     } catch (error) {
       console.error("Login failed:", error.message);
     }
   };
 
   const signUpWithEmail = async (email, password) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
-    return data;
+    try {
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error("Signup error:", error.message);
+      throw error;
+    }
   };
 
   const signInWithEmail = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    return data;
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error("Login error:", error.message);
+      throw error;
+    }
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setCredits(0);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setUser(null);
+      setCredits(0);
+    } catch (error) {
+      console.error("Logout failed:", error.message);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, credits, loginWithGoogle, signUpWithEmail, signInWithEmail, logout, loading }}>
+    <AuthContext.Provider value={{
+      user,
+      credits,
+      loginWithGoogle,
+      signUpWithEmail,
+      signInWithEmail,
+      logout,
+      loading
+    }}>
       {children}
     </AuthContext.Provider>
   );
