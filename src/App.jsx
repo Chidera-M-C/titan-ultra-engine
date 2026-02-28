@@ -16,7 +16,7 @@ import MyImagesView from './views/MyImagesView';
 import StyleView from './views/StyleView';
 
 export default function App() {
-  const { user, credits, loading: authLoading } = useAuth();
+  const { user, credits, setCredits, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('explore');
   const [viewState, setViewState] = useState('gallery');
   const [prompt, setPrompt] = useState('');
@@ -107,6 +107,7 @@ export default function App() {
     }
   }, []);
 
+  // Fetches fresh credits from DB, deducts, and updates UI immediately
   const deductCreditsLive = async (amount) => {
     if (!user) return;
     const { data, error: fetchError } = await supabase
@@ -121,6 +122,8 @@ export default function App() {
       .update({ credits: safeBalance })
       .eq('id', user.id);
     if (updateError) throw updateError;
+    // Update UI immediately without waiting for realtime
+    setCredits(safeBalance);
     console.log(`✅ Credits deducted. New balance: ${safeBalance}`);
   };
 
@@ -189,12 +192,8 @@ export default function App() {
               const publicUrl = await saveAiImage(user.id, base64Image, prompt);
               console.log('✅ Image saved to Supabase:', publicUrl);
 
-              // Update my images gallery
               setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt }, ...prev]);
-
-              // Trigger explore view to re-fetch so new image appears there too
               setExploreRefreshKey(k => k + 1);
-
             } catch (err) {
               console.error('❌ Post-generation save failed:', err);
             }
