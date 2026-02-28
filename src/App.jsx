@@ -16,9 +16,7 @@ import MyImagesView from './views/MyImagesView';
 import StyleView from './views/StyleView';
 
 export default function App() {
-  // Pulling user AND credits from the new AuthContext
   const { user, credits, loading: authLoading } = useAuth();
-
   const [activeTab, setActiveTab] = useState('explore');
   const [viewState, setViewState] = useState('gallery');
   const [prompt, setPrompt] = useState('');
@@ -38,15 +36,30 @@ export default function App() {
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
   const handleGlobalClick = (e) => {
+    // Always allow if logged in or still loading auth
     if (user || authLoading) return;
-    
-    const isModalInteraction = e.target.closest('.auth-card') || 
-                               e.target.closest('.auth-overlay') || 
-                               e.target.closest('.auth-close');
-    const isAllowedImage = e.target.closest('.allow-visitor');
-    const isToggleInteraction = e.target.closest('.mobile-menu-toggle');
 
-    if (!isModalInteraction && !isAllowedImage && !isToggleInteraction) {
+    // Always allow these interactions regardless of auth state
+    const allowed =
+      e.target.closest('.auth-card') ||
+      e.target.closest('.auth-overlay') ||
+      e.target.closest('.auth-close') ||
+      e.target.closest('.allow-visitor') ||
+      e.target.closest('.mobile-menu-toggle') ||
+      e.target.closest('.sidebar') ||
+      e.target.closest('.login-modal') ||
+      e.target.closest('[data-allow]');
+
+    if (allowed) return;
+
+    // Only block and show modal for main content interactions
+    const isMainContent =
+      e.target.closest('.main-content') ||
+      e.target.closest('.scrollable-area') ||
+      e.target.closest('.top-header') ||
+      e.target.closest('.floating-prompt');
+
+    if (isMainContent) {
       e.preventDefault();
       e.stopPropagation();
       setLoginModalOpen(true);
@@ -54,26 +67,19 @@ export default function App() {
   };
 
   const loadGallery = async () => {
-    if (!user) {
-      setUserGallery([]);
-      return;
-    }
+    if (!user) { setUserGallery([]); return; }
     try {
-      // Images fetch
       const { data: images, error: imagesError } = await supabase
         .from('images')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-
       if (imagesError) throw imagesError;
-
-      const fetchedImages = images.map(doc => ({
+      setUserGallery(images.map(doc => ({
         id: doc.id,
         url: doc.image_url,
         prompt: doc.prompt
-      }));
-      setUserGallery(fetchedImages);
+      })));
     } catch (err) {
       console.error("Supabase Sync error:", err);
     }
@@ -102,15 +108,11 @@ export default function App() {
   const deductCreditsLive = async (amount) => {
     if (!user) return;
     const newBalance = Math.max(0, credits - amount);
-    
     try {
-      // We update Supabase. The AuthContext Realtime listener will automatically 
-      // update the 'credits' variable we got from useAuth().
       const { error } = await supabase
         .from('users')
         .update({ credits: newBalance })
         .eq('id', user.id);
-      
       if (error) throw error;
     } catch (err) {
       console.error("Supabase update failed:", err);
@@ -126,12 +128,10 @@ export default function App() {
       setViewState('result');
       return;
     }
-
     setViewState('result');
     setLoading(true);
     setError(null);
     setImage(null);
-    
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
@@ -141,12 +141,11 @@ export default function App() {
       if (!response.ok) throw new Error('Server Error');
       const startData = await response.json();
       const jobId = startData.jobId;
-
       if (!jobId) throw new Error('Failed to start generation job');
 
       let completed = false;
       let attempts = 0;
-      const maxAttempts = 150; 
+      const maxAttempts = 150;
 
       while (!completed && attempts < maxAttempts) {
         attempts++;
@@ -156,12 +155,9 @@ export default function App() {
           body: JSON.stringify({ jobId })
         });
         const statusData = await statusRes.json();
-
         if (statusData.status === 'COMPLETED') {
           const base64Image = statusData.output.image;
           setImage(base64Image);
-          
-          // Deduct credits and save image
           await deductCreditsLive(2);
           try {
             const publicUrl = await saveAiImage(user.id, base64Image, prompt);
@@ -173,12 +169,10 @@ export default function App() {
         } else if (statusData.status === 'FAILED') {
           throw new Error('RunPod generation failed');
         } else {
-          await delay(2000); 
+          await delay(2000);
         }
       }
-
       if (!completed) throw new Error('The GPU is taking too long to wake up.');
-
     } catch (err) {
       setError(err.message);
     } finally {
@@ -238,92 +232,94 @@ export default function App() {
   };
 
   return (
-    <div className="click-wrapper" onClickCapture={handleGlobalClick}>
-      <div className="master-wrapper">
-        <div className="app-shell">
-          <button
-            className="mobile-menu-toggle"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            aria-label="Toggle Menu"
-          >
-            {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
+    <div className="master-wrapper" onClickCapture={handleGlobalClick}>
+      <div className="app-shell">
 
-          {isSidebarOpen && (
-            <div className="sidebar-mobile-overlay" onClick={() => setIsSidebarOpen(false)} />
+        <button
+          className="mobile-menu-toggle"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          aria-label="Toggle Menu"
+        >
+          {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
+        </button>
+
+        {isSidebarOpen && (
+          <div className="sidebar-mobile-overlay" onClick={() => setIsSidebarOpen(false)} />
+        )}
+
+        <Sidebar
+          activeTab={activeTab}
+          onNavigate={handleNavigation}
+          credits={credits}
+          userId={user?.id}
+          isOpen={isSidebarOpen}
+          currentPrompt={prompt}
+          onPromptLoad={handlePromptLoad}
+        />
+
+        <main className="main-content">
+          {!promptCollapsed && (
+            <header className="top-header">
+              <h1 className="aesthetic-title">What will you create?</h1>
+              <PromptBox
+                prompt={prompt}
+                setPrompt={setPrompt}
+                aspectRatio={aspectRatio}
+                setAspectRatio={setAspectRatio}
+                onGenerate={generateImage}
+                loading={loading}
+                collapsed={false}
+                credits={credits}
+              />
+            </header>
           )}
 
-          <Sidebar
-            activeTab={activeTab}
-            onNavigate={handleNavigation}
-            credits={credits}
-            userId={user?.id}
-            isOpen={isSidebarOpen}
-            currentPrompt={prompt}
-            onPromptLoad={handlePromptLoad}
-          />
-
-          <main className="main-content">
-            {!promptCollapsed && (
-              <header className="top-header">
-                <h1 className="aesthetic-title">What will you create?</h1>
-                <PromptBox
-                  prompt={prompt}
-                  setPrompt={setPrompt}
-                  aspectRatio={aspectRatio}
-                  setAspectRatio={setAspectRatio}
-                  onGenerate={generateImage}
-                  loading={loading}
-                  collapsed={false}
-                  credits={credits}
-                />
-              </header>
-            )}
-
-            {promptCollapsed && (
-              <div className="floating-prompt">
-                <PromptBox
-                  prompt={prompt}
-                  setPrompt={setPrompt}
-                  aspectRatio={aspectRatio}
-                  setAspectRatio={setAspectRatio}
-                  onGenerate={generateImage}
-                  loading={loading}
-                  collapsed={true}
-                  credits={credits}
-                />
-              </div>
-            )}
-
-            <div className="scrollable-area">
-              {renderActiveView()}
+          {promptCollapsed && (
+            <div className="floating-prompt">
+              <PromptBox
+                prompt={prompt}
+                setPrompt={setPrompt}
+                aspectRatio={aspectRatio}
+                setAspectRatio={setAspectRatio}
+                onGenerate={generateImage}
+                loading={loading}
+                collapsed={true}
+                credits={credits}
+              />
             </div>
-          </main>
-
-          {(viewState === 'result' || loading || image || error) && (
-            <ResultModal
-              image={image}
-              loading={loading}
-              error={error}
-              prompt={prompt}
-              onClose={() => { setViewState('gallery'); setImage(null); setError(null); }}
-              onRetry={generateImage}
-              onOpenEdit={(img) => { setEditingImage(img); setEditModalOpen(true); }}
-              onViewFullScreen={(imageUrl) => { setViewingImageUrl(imageUrl); setViewImageModalOpen(true); }}
-            />
           )}
 
-          {editModalOpen && (
-            <EditModal image={editingImage?.url} originalPrompt={editingImage?.prompt} onClose={() => setEditModalOpen(false)} />
-          )}
+          <div className="scrollable-area">
+            {renderActiveView()}
+          </div>
+        </main>
 
-          {viewImageModalOpen && (
-            <ImageViewModal imageUrl={viewingImageUrl} onClose={() => setViewImageModalOpen(false)} />
-          )}
-        </div>
+        <LoginModal
+          isOpen={loginModalOpen}
+          onClose={() => setLoginModalOpen(false)}
+        />
+
+        {(viewState === 'result' || loading || image || error) && (
+          <ResultModal
+            image={image}
+            loading={loading}
+            error={error}
+            prompt={prompt}
+            onClose={() => { setViewState('gallery'); setImage(null); setError(null); }}
+            onRetry={generateImage}
+            onOpenEdit={(img) => { setEditingImage(img); setEditModalOpen(true); }}
+            onViewFullScreen={(imageUrl) => { setViewingImageUrl(imageUrl); setViewImageModalOpen(true); }}
+          />
+        )}
+
+        {editModalOpen && (
+          <EditModal image={editingImage?.url} originalPrompt={editingImage?.prompt} onClose={() => setEditModalOpen(false)} />
+        )}
+
+        {viewImageModalOpen && (
+          <ImageViewModal imageUrl={viewingImageUrl} onClose={() => setViewImageModalOpen(false)} />
+        )}
       </div>
-
-      <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
     </div>
   );
 }
