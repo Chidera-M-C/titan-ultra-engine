@@ -123,7 +123,6 @@ export default function App() {
       if (error) throw error;
     } catch (err) {
       console.error("Supabase update failed:", err);
-      setError("Server sync failed. Your credits were not deducted.");
     }
   };
 
@@ -161,13 +160,14 @@ export default function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ jobId })
         });
-        const statusData = await statusRes.json();
 
-        // Log exact RunPod output so we can see the real structure
+        if (!statusRes.ok) throw new Error(`Status check failed: ${statusRes.status}`);
+        const statusData = await statusRes.json();
+        if (statusData.error) throw new Error(`RunPod error: ${statusData.error}`);
+
         console.log('RunPod status:', statusData.status, 'Output:', JSON.stringify(statusData.output));
 
         if (statusData.status === 'COMPLETED') {
-          // Handle all possible RunPod output structures
           const output = statusData.output;
           const base64Image =
             output?.image ||
@@ -176,19 +176,21 @@ export default function App() {
             output?.[0] ||
             null;
 
-          if (!base64Image) {
-            throw new Error('Image data not found in RunPod response');
-          }
+          if (!base64Image) throw new Error('Image data not found in RunPod response');
 
+          // Show image immediately — don't wait for Supabase
           setImage(base64Image);
-          await deductCreditsLive(2);
-          try {
-            const publicUrl = await saveAiImage(user.id, base64Image, prompt);
-            setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt }, ...prev]);
-          } catch (saveErr) {
-            console.error("Supabase storage save failed:", saveErr);
-          }
+          setLoading(false);
           completed = true;
+
+          // Save to Supabase in the background
+          deductCreditsLive(2).catch(console.error);
+          saveAiImage(user.id, base64Image, prompt)
+            .then(publicUrl => {
+              setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt }, ...prev]);
+            })
+            .catch(err => console.error("Supabase storage save failed:", err));
+
         } else if (statusData.status === 'FAILED') {
           throw new Error('RunPod generation failed');
         } else {
