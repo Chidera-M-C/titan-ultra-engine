@@ -10,6 +10,7 @@ import ResultModal from './components/Shared/ResultModal';
 import EditModal from './components/Shared/EditModal';
 import ImageViewModal from './components/Shared/ImageViewModal';
 import LoginModal from './components/LoginModal';
+import TopUpModal from './components/TopUpModal'; // Added import
 import ExploreView from './views/ExploreView';
 import CharacterView from './views/CharacterView';
 import MyImagesView from './views/MyImagesView';
@@ -31,6 +32,7 @@ export default function App() {
   const [viewImageModalOpen, setViewImageModalOpen] = useState(false);
   const [viewingImageUrl, setViewingImageUrl] = useState(null);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [topUpModalOpen, setTopUpModalOpen] = useState(false); // Added state
   const [promptCollapsed, setPromptCollapsed] = useState(false);
   const [exploreRefreshKey, setExploreRefreshKey] = useState(0);
 
@@ -107,7 +109,6 @@ export default function App() {
     }
   }, []);
 
-  // Fetches fresh credits from DB, deducts, and updates UI immediately
   const deductCreditsLive = async (amount) => {
     if (!user) return;
     const { data, error: fetchError } = await supabase
@@ -122,9 +123,39 @@ export default function App() {
       .update({ credits: safeBalance })
       .eq('id', user.id);
     if (updateError) throw updateError;
-    // Update UI immediately without waiting for realtime
     setCredits(safeBalance);
     console.log(`✅ Credits deducted. New balance: ${safeBalance}`);
+  };
+
+  // Added handleTopUpPurchase for NowPayments integration
+  const handleTopUpPurchase = async (pack) => {
+    if (!user) {
+      setLoginModalOpen(true);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          price: pack.price,
+          userId: user.id,
+          credits: pack.credits
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || "Payment link generation failed");
+      }
+    } catch (err) {
+      console.error("Payment Error:", err);
+      alert("Connection Error: " + err.message);
+    }
   };
 
   const generateImage = async () => {
@@ -179,19 +210,15 @@ export default function App() {
 
           if (!base64Image) throw new Error('Image data not found in RunPod response');
 
-          // Show image immediately
           setImage(base64Image);
           setLoading(false);
           completed = true;
 
-          // Run sequentially in background
           (async () => {
             try {
               await deductCreditsLive(2);
-
               const publicUrl = await saveAiImage(user.id, base64Image, prompt);
               console.log('✅ Image saved to Supabase:', publicUrl);
-
               setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt }, ...prev]);
               setExploreRefreshKey(k => k + 1);
             } catch (err) {
@@ -288,6 +315,7 @@ export default function App() {
           isOpen={isSidebarOpen}
           currentPrompt={prompt}
           onPromptLoad={handlePromptLoad}
+          onTopUpClick={() => setTopUpModalOpen(true)} // Connected to Sidebar
         />
 
         <main className="main-content">
@@ -330,6 +358,13 @@ export default function App() {
         <LoginModal
           isOpen={loginModalOpen}
           onClose={() => setLoginModalOpen(false)}
+        />
+
+        {/* Added TopUpModal */}
+        <TopUpModal 
+          isOpen={topUpModalOpen} 
+          onClose={() => setTopUpModalOpen(false)}
+          onSelect={handleTopUpPurchase}
         />
 
         {(viewState === 'result' || loading || image || error) && (
