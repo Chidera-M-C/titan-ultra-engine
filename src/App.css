@@ -269,6 +269,17 @@ body, html {
   stroke: #ff4d4d !important;
 }
 
+.click-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.master-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
 /* RESPONSIVE BREAKPOINTS */
 @media (max-width: 768px) {
   .mobile-menu-toggle { display: flex; }
