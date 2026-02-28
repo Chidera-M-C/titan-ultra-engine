@@ -1,18 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
-  // Use the exact names visible in your Vercel Dashboard
-  const supabaseUrl = process.env.VITE_SUPABASE_URL; 
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY; 
-
-  if (!supabaseUrl || !supabaseKey) {
-    console.error("Missing Env Vars. Found:", { url: !!supabaseUrl, key: !!supabaseKey });
-    return res.status(500).json({ error: "Server configuration missing" });
-  }
-
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const supabase = createClient(supabaseUrl, supabaseKey);
+
   const body = req.body;
 
+  // STEP A: User clicked a button (Generating the Link)
   if (req.method === 'POST' && body.price && !body.payment_status) {
     try {
       const response = await fetch('https://api.nowpayments.io/v1/invoice', {
@@ -24,8 +19,8 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           price_amount: body.price,
           price_currency: 'usd',
-          order_id: body.userId,
-          order_description: `${body.credits}`, 
+          order_id: body.userId, // Storing User ID here
+          order_description: `${body.credits}`, // Storing Credit Count here
           success_url: 'https://titan-ultra-engine.vercel.app/', 
           cancel_url: 'https://titan-ultra-engine.vercel.app/',
         })
@@ -38,11 +33,38 @@ export default async function handler(req, res) {
     }
   }
 
-  // Handle NowPayments finished event
+  // STEP B: NowPayments is calling us (Payment Finished!)
   if (req.method === 'POST' && body.payment_status === 'finished') {
-     // ... (your existing credit update logic)
-     return res.status(200).json({ status: 'ok' });
+    const userId = body.order_id;
+    const creditsToAdd = parseInt(body.order_description);
+
+    try {
+      // 1. Get current credits
+      const { data: userData, error: fetchError } = await supabase
+        .from('users')
+        .select('credits')
+        .eq('id', userId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // 2. Add new credits
+      const newBalance = (userData.credits || 0) + creditsToAdd;
+
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ credits: newBalance })
+        .eq('id', userId);
+
+      if (updateError) throw updateError;
+
+      console.log(`✅ Success: Added ${creditsToAdd} credits to user ${userId}`);
+      return res.status(200).json({ received: true });
+    } catch (err) {
+      console.error("Webhook Update Error:", err.message);
+      return res.status(500).json({ error: "Failed to update credits" });
+    }
   }
 
-  return res.status(200).json({ message: "Ping received" });
+  return res.status(200).json({ message: "Default response" });
 }
