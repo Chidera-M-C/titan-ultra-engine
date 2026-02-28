@@ -66,12 +66,18 @@ export default function App() {
   const loadGallery = async () => {
     if (!user) { setUserGallery([]); return; }
     try {
+      // Ensure session is active before querying
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
       const { data: images, error: imagesError } = await supabase
         .from('images')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
+
       if (imagesError) throw imagesError;
+
       setUserGallery(images.map(doc => ({
         id: doc.id,
         url: doc.image_url,
