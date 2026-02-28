@@ -10,7 +10,7 @@ import ResultModal from './components/Shared/ResultModal';
 import EditModal from './components/Shared/EditModal';
 import ImageViewModal from './components/Shared/ImageViewModal';
 import LoginModal from './components/LoginModal';
-import TopUpModal from './components/TopUpModal'; // Added import
+import TopUpModal from './components/Sidebar/TopUpModal'; // Added import
 import ExploreView from './views/ExploreView';
 import CharacterView from './views/CharacterView';
 import MyImagesView from './views/MyImagesView';
