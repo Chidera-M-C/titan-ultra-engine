@@ -43,8 +43,7 @@ export function AuthProvider({ children }) {
         console.log('Auth event:', event, session?.user?.id);
         const currentUser = session?.user ?? null;
 
-        // Ignore duplicate SIGNED_IN for the same user — prevents
-        // credit reset when Supabase re-fires auth after a DB update
+        // Ignore duplicate SIGNED_IN for the same user
         if (event === 'SIGNED_IN' && currentUser?.id === initializedUserRef.current) {
           console.log('Auth event: duplicate SIGNED_IN ignored');
           return;
@@ -150,6 +149,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{
       user,
       credits,
+      setCredits,
       loginWithGoogle,
       signUpWithEmail,
       signInWithEmail,
