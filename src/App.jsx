@@ -148,11 +148,12 @@ export default function App() {
       if (data.url) {
         window.location.href = data.url;
       } else {
+        console.error("Payment generation failed detail:", data);
         throw new Error(data.error || "Payment link generation failed");
       }
     } catch (err) {
       console.error("Payment Error:", err);
-      alert("Payment Error: " + err.message);
+      alert("Error: " + err.message);
     }
   };
 
