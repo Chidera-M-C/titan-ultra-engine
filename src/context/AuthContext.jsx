@@ -5,7 +5,7 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [credits, setCredits] = useState(0); // Added credits state
+  const [credits, setCredits] = useState(0); 
   const [loading, setLoading] = useState(true);
 
   // Function to fetch credits from the public.users table
@@ -52,7 +52,7 @@ export function AuthProvider({ children }) {
       setLoading(false);
     });
 
-    // 3. Listen for REAL-TIME credit updates (Topping up/Deductions)
+    // 3. Listen for REAL-TIME credit updates
     const channel = supabase
       .channel('schema-db-changes')
       .on(
@@ -78,6 +78,11 @@ export function AuthProvider({ children }) {
         provider: 'google',
         options: {
           redirectTo: window.location.origin,
+          // THE FIX: This forces Google to show the account selection screen
+          queryParams: {
+            prompt: 'select_account',
+            access_type: 'offline',
+          },
         },
       });
       if (error) throw error;
@@ -86,7 +91,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // NEW: Email Signup
   const signUpWithEmail = async (email, password) => {
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -101,7 +105,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // NEW: Email Login
   const signInWithEmail = async (email, password) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
