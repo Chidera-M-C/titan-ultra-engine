@@ -2,22 +2,25 @@ import './Gallery.css';
 import React, { useState } from 'react';
 import { Wand2, Download, Heart, RotateCcw } from 'lucide-react';
 
-export default function MasonryGrid({ images, prompt, onImageClick, onSelectPrompt, onEditImage }) {
-  
-  const handleDownload = (e, url, imageId) => {
-    e.stopPropagation();
-    let downloadUrl = url;
-    if (url.includes('appwrite.io') && url.includes('/view?')) {
-      downloadUrl = url.replace('/view?', '/download?');
-    }
+const downloadImage = async (e, url, imageId) => {
+  e.stopPropagation();
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = `ai-generated-${imageId || Date.now()}.png`;
+    link.href = objectUrl;
+    link.download = `ai-generated-${imageId || Date.now()}.jpg`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
+    URL.revokeObjectURL(objectUrl);
+  } catch (err) {
+    console.error('Download failed:', err);
+  }
+};
 
+export default function MasonryGrid({ images, prompt, onImageClick, onSelectPrompt, onEditImage }) {
   return (
     <div className="masonry-grid">
       {images.map((img) => (
@@ -38,10 +41,8 @@ export default function MasonryGrid({ images, prompt, onImageClick, onSelectProm
                 className="icon-btn"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Better comparison that handles empty strings
                   const currentPrompt = prompt || '';
                   const imagePrompt = img.prompt || '';
-                  
                   if (currentPrompt.trim() === imagePrompt.trim() && currentPrompt !== '') {
                     onSelectPrompt('');
                   } else {
@@ -54,15 +55,13 @@ export default function MasonryGrid({ images, prompt, onImageClick, onSelectProm
               >
                 <RotateCcw size={18} color="#ffffff" />
               </button>
-
               <button
                 className="icon-btn"
-                onClick={(e) => handleDownload(e, img.url, img.id)}
+                onClick={(e) => downloadImage(e, img.url, img.id)}
                 data-tooltip="Download image"
               >
                 <Download size={18} color="#ffffff" />
               </button>
-
               <button
                 className="icon-btn"
                 onClick={(e) => {
@@ -73,7 +72,6 @@ export default function MasonryGrid({ images, prompt, onImageClick, onSelectProm
               >
                 <Wand2 size={18} color="#ffffff" />
               </button>
-
               <HeartButton />
             </div>
           </div>
