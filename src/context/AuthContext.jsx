@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext();
@@ -7,6 +7,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [credits, setCredits] = useState(0);
   const [loading, setLoading] = useState(true);
+  const initializedUserRef = useRef(null);
 
   const fetchOrCreateUser = async (authUser) => {
     try {
@@ -37,13 +38,18 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let realtimeChannel = null;
 
-    // CRITICAL: onAuthStateChange fires immediately with the
-    // current session on mount — this is the correct way to
-    // restore session on page reload with Supabase
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth event:', event, session?.user?.id);
         const currentUser = session?.user ?? null;
+
+        // Ignore duplicate SIGNED_IN for the same user — prevents
+        // credit reset when Supabase re-fires auth after a DB update
+        if (event === 'SIGNED_IN' && currentUser?.id === initializedUserRef.current) {
+          console.log('Auth event: duplicate SIGNED_IN ignored');
+          return;
+        }
+
         setUser(currentUser);
 
         if (realtimeChannel) {
@@ -52,6 +58,7 @@ export function AuthProvider({ children }) {
         }
 
         if (currentUser) {
+          initializedUserRef.current = currentUser.id;
           await fetchOrCreateUser(currentUser);
 
           realtimeChannel = supabase
@@ -65,16 +72,16 @@ export function AuthProvider({ children }) {
                 filter: `id=eq.${currentUser.id}`
               },
               (payload) => {
+                console.log('💳 Credits updated via realtime:', payload.new.credits);
                 setCredits(payload.new.credits);
               }
             )
             .subscribe();
         } else {
+          initializedUserRef.current = null;
           setCredits(0);
         }
 
-        // Only set loading false after INITIAL_SESSION event
-        // so we don't flash the login modal before session restores
         if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
           setLoading(false);
         }
@@ -133,6 +140,7 @@ export function AuthProvider({ children }) {
       if (error) throw error;
       setUser(null);
       setCredits(0);
+      initializedUserRef.current = null;
     } catch (error) {
       console.error("Logout failed:", error.message);
     }
