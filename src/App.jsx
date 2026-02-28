@@ -10,7 +10,7 @@ import ResultModal from './components/Shared/ResultModal';
 import EditModal from './components/Shared/EditModal';
 import ImageViewModal from './components/Shared/ImageViewModal';
 import LoginModal from './components/LoginModal';
-import TopUpModal from './components/TopUpModal'; 
+import TopUpModal from './components/Shared/TopUpModal'; 
 import ExploreView from './views/ExploreView';
 import CharacterView from './views/CharacterView';
 import MyImagesView from './views/MyImagesView';
@@ -126,7 +126,6 @@ export default function App() {
     setCredits(safeBalance);
   };
 
-  // Fixed fetch path to match your actual filename /api/payment-webhook
   const handleTopUpPurchase = async (pack) => {
     if (!user) {
       setLoginModalOpen(true);
@@ -143,14 +142,6 @@ export default function App() {
           credits: pack.credits
         })
       });
-
-      // Added check to catch the HTML error before JSON parsing
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text();
-        console.error("Server returned non-JSON response:", text);
-        throw new Error("Server configuration error (Check API logs)");
-      }
 
       const data = await response.json();
 
