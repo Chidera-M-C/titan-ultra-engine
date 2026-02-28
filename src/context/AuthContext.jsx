@@ -10,7 +10,6 @@ export function AuthProvider({ children }) {
 
   const fetchOrCreateUser = async (authUser) => {
     try {
-      // Try to get existing user row
       const { data, error } = await supabase
         .from('users')
         .select('credits')
@@ -18,13 +17,11 @@ export function AuthProvider({ children }) {
         .single();
 
       if (error && error.code === 'PGRST116') {
-        // Row doesn't exist — create it with 10 starter credits
         const { data: newUser, error: createError } = await supabase
           .from('users')
           .insert({ id: authUser.id, credits: 10 })
           .select('credits')
           .single();
-
         if (createError) throw createError;
         if (newUser) setCredits(newUser.credits);
       } else if (error) {
@@ -40,77 +37,55 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let realtimeChannel = null;
 
-    const initializeAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
+    // CRITICAL: onAuthStateChange fires immediately with the
+    // current session on mount — this is the correct way to
+    // restore session on page reload with Supabase
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth event:', event, session?.user?.id);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
 
-      if (currentUser) {
-        await fetchOrCreateUser(currentUser);
-        // Subscribe to realtime AFTER we have the user
-        realtimeChannel = supabase
-          .channel(`credits-${currentUser.id}`)
-          .on(
-            'postgres_changes',
-            {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'users',
-              filter: `id=eq.${currentUser.id}`
-            },
-            (payload) => {
-              setCredits(payload.new.credits);
-            }
-          )
-          .subscribe();
+        if (realtimeChannel) {
+          supabase.removeChannel(realtimeChannel);
+          realtimeChannel = null;
+        }
+
+        if (currentUser) {
+          await fetchOrCreateUser(currentUser);
+
+          realtimeChannel = supabase
+            .channel(`credits-${currentUser.id}`)
+            .on(
+              'postgres_changes',
+              {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'users',
+                filter: `id=eq.${currentUser.id}`
+              },
+              (payload) => {
+                setCredits(payload.new.credits);
+              }
+            )
+            .subscribe();
+        } else {
+          setCredits(0);
+        }
+
+        // Only set loading false after INITIAL_SESSION event
+        // so we don't flash the login modal before session restores
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+          setLoading(false);
+        }
       }
-
-      setLoading(false);
-    };
-
-    initializeAuth();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-
-      // Clean up old channel
-      if (realtimeChannel) {
-        supabase.removeChannel(realtimeChannel);
-        realtimeChannel = null;
-      }
-
-      if (currentUser) {
-        await fetchOrCreateUser(currentUser);
-        // Re-subscribe with new user
-        realtimeChannel = supabase
-          .channel(`credits-${currentUser.id}`)
-          .on(
-            'postgres_changes',
-            {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'users',
-              filter: `id=eq.${currentUser.id}`
-            },
-            (payload) => {
-              setCredits(payload.new.credits);
-            }
-          )
-          .subscribe();
-      } else {
-        setCredits(0);
-      }
-
-      setLoading(false);
-    });
+    );
 
     return () => {
       subscription.unsubscribe();
       if (realtimeChannel) supabase.removeChannel(realtimeChannel);
     };
-  }, []); // Empty deps — runs once on mount only
+  }, []);
 
   const loginWithGoogle = async () => {
     try {
@@ -173,7 +148,7 @@ export function AuthProvider({ children }) {
       logout,
       loading
     }}>
-      {children}
+      {!loading && children}
     </AuthContext.Provider>
   );
 }
