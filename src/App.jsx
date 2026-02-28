@@ -85,7 +85,6 @@ export default function App() {
 
   useEffect(() => {
     if (authLoading) return;
-
     if (user) {
       loadGallery();
     } else {
@@ -107,26 +106,22 @@ export default function App() {
     }
   }, []);
 
-  // Reads fresh credits from DB before deducting — avoids stale closure bug
+  // Reads fresh credits from DB then deducts — avoids stale closure
   const deductCreditsLive = async (amount) => {
     if (!user) return;
-    try {
-      const { data, error: fetchError } = await supabase
-        .from('users')
-        .select('credits')
-        .eq('id', user.id)
-        .single();
-      if (fetchError) throw fetchError;
-      const safeBalance = Math.max(0, (data.credits ?? 0) - amount);
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ credits: safeBalance })
-        .eq('id', user.id);
-      if (updateError) throw updateError;
-      console.log(`✅ Credits deducted. New balance: ${safeBalance}`);
-    } catch (err) {
-      console.error("Credit deduction failed:", err);
-    }
+    const { data, error: fetchError } = await supabase
+      .from('users')
+      .select('credits')
+      .eq('id', user.id)
+      .single();
+    if (fetchError) throw fetchError;
+    const safeBalance = Math.max(0, (data.credits ?? 0) - amount);
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ credits: safeBalance })
+      .eq('id', user.id);
+    if (updateError) throw updateError;
+    console.log(`✅ Credits deducted. New balance: ${safeBalance}`);
   };
 
   const generateImage = async () => {
@@ -186,15 +181,22 @@ export default function App() {
           setLoading(false);
           completed = true;
 
-          // Deduct credits and save image in background
-          deductCreditsLive(2).catch(console.error);
+          // Run sequentially in background so sessions don't race
+          (async () => {
+            try {
+              // 1. Deduct credits first
+              await deductCreditsLive(2);
 
-          saveAiImage(user.id, base64Image, prompt)
-            .then(publicUrl => {
+              // 2. Then save image
+              const publicUrl = await saveAiImage(user.id, base64Image, prompt);
               console.log('✅ Image saved to Supabase:', publicUrl);
+
+              // 3. Update gallery locally
               setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt }, ...prev]);
-            })
-            .catch(err => console.error('❌ Supabase storage save failed:', err));
+            } catch (err) {
+              console.error('❌ Post-generation save failed:', err);
+            }
+          })();
 
         } else if (statusData.status === 'FAILED') {
           throw new Error('RunPod generation failed');
