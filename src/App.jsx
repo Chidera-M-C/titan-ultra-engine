@@ -16,7 +16,8 @@ import MyImagesView from './views/MyImagesView';
 import StyleView from './views/StyleView';
 
 export default function App() {
-  const { user, loading: authLoading } = useAuth();
+  // Pulling user AND credits from the new AuthContext
+  const { user, credits, loading: authLoading } = useAuth();
 
   const [activeTab, setActiveTab] = useState('explore');
   const [viewState, setViewState] = useState('gallery');
@@ -26,7 +27,6 @@ export default function App() {
   const [userGallery, setUserGallery] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [credits, setCredits] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingImage, setEditingImage] = useState(null);
@@ -39,11 +39,13 @@ export default function App() {
 
   const handleGlobalClick = (e) => {
     if (user || authLoading) return;
-    const isModalInteraction = e.target.closest('.login-modal-card') ||
-                               e.target.closest('.modal-overlay') ||
-                               e.target.closest('.close-button');
+    
+    const isModalInteraction = e.target.closest('.auth-card') || 
+                               e.target.closest('.auth-overlay') || 
+                               e.target.closest('.auth-close');
     const isAllowedImage = e.target.closest('.allow-visitor');
     const isToggleInteraction = e.target.closest('.mobile-menu-toggle');
+
     if (!isModalInteraction && !isAllowedImage && !isToggleInteraction) {
       e.preventDefault();
       e.stopPropagation();
@@ -57,23 +59,7 @@ export default function App() {
       return;
     }
     try {
-      const { data: profile, error: profileError } = await supabase
-        .from('users')
-        .select('credits')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError && profileError.code === 'PGRST116') {
-        const { data: newProfile } = await supabase
-          .from('users')
-          .insert([{ id: user.id, credits: 10 }])
-          .select()
-          .single();
-        setCredits(newProfile?.credits || 10);
-      } else {
-        setCredits(profile?.credits || 0);
-      }
-
+      // Images fetch
       const { data: images, error: imagesError } = await supabase
         .from('images')
         .select('*')
@@ -116,8 +102,10 @@ export default function App() {
   const deductCreditsLive = async (amount) => {
     if (!user) return;
     const newBalance = Math.max(0, credits - amount);
-    setCredits(newBalance);
+    
     try {
+      // We update Supabase. The AuthContext Realtime listener will automatically 
+      // update the 'credits' variable we got from useAuth().
       const { error } = await supabase
         .from('users')
         .update({ credits: newBalance })
@@ -125,9 +113,8 @@ export default function App() {
       
       if (error) throw error;
     } catch (err) {
-      console.error("Supabase update failed, reverting UI:", err);
-      setCredits(prev => prev + amount);
-      setError("Server sync failed. Your credits have been restored.");
+      console.error("Supabase update failed:", err);
+      setError("Server sync failed. Your credits were not deducted.");
     }
   };
 
@@ -139,6 +126,7 @@ export default function App() {
       setViewState('result');
       return;
     }
+
     setViewState('result');
     setLoading(true);
     setError(null);
@@ -172,6 +160,8 @@ export default function App() {
         if (statusData.status === 'COMPLETED') {
           const base64Image = statusData.output.image;
           setImage(base64Image);
+          
+          // Deduct credits and save image
           await deductCreditsLive(2);
           try {
             const publicUrl = await saveAiImage(user.id, base64Image, prompt);
@@ -181,15 +171,13 @@ export default function App() {
           }
           completed = true;
         } else if (statusData.status === 'FAILED') {
-          throw new Error('RunPod generation failed: ' + (statusData.error || 'Unknown Error'));
+          throw new Error('RunPod generation failed');
         } else {
           await delay(2000); 
         }
       }
 
-      if (!completed) {
-        throw new Error('The GPU is taking too long to wake up. Please try hitting retry in a few seconds.');
-      }
+      if (!completed) throw new Error('The GPU is taking too long to wake up.');
 
     } catch (err) {
       setError(err.message);
@@ -250,7 +238,7 @@ export default function App() {
   };
 
   return (
-    <div onClickCapture={handleGlobalClick}>
+    <div className="click-wrapper" onClickCapture={handleGlobalClick}>
       <div className="master-wrapper">
         <div className="app-shell">
           <button
@@ -302,6 +290,7 @@ export default function App() {
                   onGenerate={generateImage}
                   loading={loading}
                   collapsed={true}
+                  credits={credits}
                 />
               </div>
             )}
@@ -334,7 +323,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* LoginModal rendered OUTSIDE app-shell to avoid sidebar constraints */}
       <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
     </div>
   );
