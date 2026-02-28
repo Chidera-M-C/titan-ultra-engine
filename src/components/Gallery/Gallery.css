@@ -1,5 +1,4 @@
 /* src/components/Gallery/Gallery.css */
-
 .category-tabs {
   display: flex;
   gap: 24px;
@@ -16,9 +15,7 @@
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
-
 .category-tabs::-webkit-scrollbar { display: none; }
-
 .tab {
   font-size: 0.95rem;
   font-weight: 600;
@@ -29,9 +26,7 @@
   flex-shrink: 0;
   transition: color 0.2s ease;
 }
-
 .tab.active { color: #fff; }
-
 .tab.active::after {
   content: '';
   position: absolute;
@@ -42,29 +37,28 @@
   background: #fff;
 }
 
-/* MASONRY CORE */
+/* MASONRY CORE — grid fills row by row, images keep natural aspect ratio */
 .masonry-grid {
   width: 100%;
-  column-count: 5;
-  column-gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: masonry;
+  gap: 12px;
+  align-items: start;
   margin: 0;
   padding: 0;
-  box-sizing: border-box; 
+  box-sizing: border-box;
 }
 
 .gallery-card {
-  break-inside: avoid;
-  margin-bottom: 12px;
   position: relative;
   border-radius: 12px;
   overflow: hidden;
   background: #1a1a1a;
   cursor: pointer;
   border: 1px solid #2a2a2a;
-  display: inline-block;
   width: 100%;
 }
-
 .gallery-card img {
   width: 100%;
   height: auto;
@@ -77,61 +71,52 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 60%);
-  opacity: 0; 
+  opacity: 0;
   transition: opacity 0.3s ease;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   padding: 15px;
 }
-
 .gallery-card:hover .gallery-overlay,
-.pin-item:hover .pin-overlay { 
-  opacity: 1; 
+.pin-item:hover .pin-overlay {
+  opacity: 1;
 }
-
-.overlay-actions { 
-  display: flex; 
-  gap: 10px; 
+.overlay-actions {
+  display: flex;
+  gap: 10px;
 }
 
 /* RESPONSIVE BREAKPOINTS */
 @media (max-width: 1200px) {
-  .masonry-grid { column-count: 4; }
+  .masonry-grid { grid-template-columns: repeat(4, 1fr); }
 }
-
 @media (max-width: 992px) {
-  .masonry-grid { column-count: 3; }
+  .masonry-grid { grid-template-columns: repeat(3, 1fr); }
 }
-
 @media (max-width: 768px) {
   .category-tabs { justify-content: flex-start; }
-  
-  .masonry-grid {
-    column-count: 2; 
-    column-gap: 8px; 
-  }
 
+  .masonry-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
   .gallery-card {
-    margin-bottom: 8px;
     border-radius: 8px;
   }
 
-  /* MOBILE FIX: ALWAYS SHOW BUTTONS & SHRINK THEM */
+  /* MOBILE: always show buttons */
   .gallery-overlay,
   .pin-overlay {
-    opacity: 1; 
-    padding: 8px; 
+    opacity: 1;
+    padding: 8px;
     background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 40%);
   }
-
   .overlay-actions {
-    gap: 4px; /* Tighter gap for small buttons */
-    flex-wrap: wrap; 
+    gap: 4px;
+    flex-wrap: wrap;
     justify-content: center;
   }
-
-  /* Target the buttons inside the overlay to shrink them */
   .icon-btn {
     width: 32px !important;
     height: 32px !important;
@@ -143,8 +128,6 @@
     background: rgba(40, 40, 40, 0.7) !important;
     border-radius: 8px !important;
   }
-
-  /* Target the Lucide icons specifically */
   .icon-btn svg {
     width: 15px !important;
     height: 15px !important;
