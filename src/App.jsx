@@ -66,16 +66,11 @@ export default function App() {
   const loadGallery = async () => {
     if (!user) { setUserGallery([]); return; }
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('Session at gallery load:', session?.user?.id);
-
       const { data: images, error: imagesError } = await supabase
         .from('images')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-
-      console.log('Images result:', images, 'Error:', imagesError);
 
       if (imagesError) throw imagesError;
       setUserGallery(images.map(doc => ({
@@ -112,17 +107,25 @@ export default function App() {
     }
   }, []);
 
+  // Reads fresh credits from DB before deducting — avoids stale closure bug
   const deductCreditsLive = async (amount) => {
     if (!user) return;
-    const newBalance = Math.max(0, credits - amount);
     try {
-      const { error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('users')
-        .update({ credits: newBalance })
+        .select('credits')
+        .eq('id', user.id)
+        .single();
+      if (fetchError) throw fetchError;
+      const safeBalance = Math.max(0, (data.credits ?? 0) - amount);
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ credits: safeBalance })
         .eq('id', user.id);
-      if (error) throw error;
+      if (updateError) throw updateError;
+      console.log(`✅ Credits deducted. New balance: ${safeBalance}`);
     } catch (err) {
-      console.error("Supabase update failed:", err);
+      console.error("Credit deduction failed:", err);
     }
   };
 
@@ -165,7 +168,7 @@ export default function App() {
         const statusData = await statusRes.json();
         if (statusData.error) throw new Error(`RunPod error: ${statusData.error}`);
 
-        console.log('RunPod status:', statusData.status, 'Output:', JSON.stringify(statusData.output));
+        console.log('RunPod status:', statusData.status);
 
         if (statusData.status === 'COMPLETED') {
           const output = statusData.output;
@@ -178,18 +181,20 @@ export default function App() {
 
           if (!base64Image) throw new Error('Image data not found in RunPod response');
 
-          // Show image immediately — don't wait for Supabase
+          // Show image immediately
           setImage(base64Image);
           setLoading(false);
           completed = true;
 
-          // Save to Supabase in the background
+          // Deduct credits and save image in background
           deductCreditsLive(2).catch(console.error);
+
           saveAiImage(user.id, base64Image, prompt)
             .then(publicUrl => {
+              console.log('✅ Image saved to Supabase:', publicUrl);
               setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt }, ...prev]);
             })
-            .catch(err => console.error("Supabase storage save failed:", err));
+            .catch(err => console.error('❌ Supabase storage save failed:', err));
 
         } else if (statusData.status === 'FAILED') {
           throw new Error('RunPod generation failed');
