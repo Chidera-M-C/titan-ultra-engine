@@ -8,5 +8,10 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+    lock: async (name, acquireTimeout, fn) => {
+      // Bypass the Web Locks API entirely — fixes the lock conflict
+      // caused by Vercel serverless + Vite HMR double-initialization
+      return await fn();
+    },
   },
 });
