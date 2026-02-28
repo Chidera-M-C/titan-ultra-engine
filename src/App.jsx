@@ -162,8 +162,24 @@ export default function App() {
           body: JSON.stringify({ jobId })
         });
         const statusData = await statusRes.json();
+
+        // Log exact RunPod output so we can see the real structure
+        console.log('RunPod status:', statusData.status, 'Output:', JSON.stringify(statusData.output));
+
         if (statusData.status === 'COMPLETED') {
-          const base64Image = statusData.output.image;
+          // Handle all possible RunPod output structures
+          const output = statusData.output;
+          const base64Image =
+            output?.image ||
+            output?.images?.[0] ||
+            output?.[0]?.image ||
+            output?.[0] ||
+            null;
+
+          if (!base64Image) {
+            throw new Error('Image data not found in RunPod response');
+          }
+
           setImage(base64Image);
           await deductCreditsLive(2);
           try {
