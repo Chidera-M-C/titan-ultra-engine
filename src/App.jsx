@@ -10,7 +10,7 @@ import ResultModal from './components/Shared/ResultModal';
 import EditModal from './components/Shared/EditModal';
 import ImageViewModal from './components/Shared/ImageViewModal';
 import LoginModal from './components/LoginModal';
-import TopUpModal from './components/Sidebar/TopUpModal'; // Added import
+import TopUpModal from './components/TopUpModal'; 
 import ExploreView from './views/ExploreView';
 import CharacterView from './views/CharacterView';
 import MyImagesView from './views/MyImagesView';
@@ -32,7 +32,7 @@ export default function App() {
   const [viewImageModalOpen, setViewImageModalOpen] = useState(false);
   const [viewingImageUrl, setViewingImageUrl] = useState(null);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
-  const [topUpModalOpen, setTopUpModalOpen] = useState(false); // Added state
+  const [topUpModalOpen, setTopUpModalOpen] = useState(false); 
   const [promptCollapsed, setPromptCollapsed] = useState(false);
   const [exploreRefreshKey, setExploreRefreshKey] = useState(0);
 
@@ -124,10 +124,9 @@ export default function App() {
       .eq('id', user.id);
     if (updateError) throw updateError;
     setCredits(safeBalance);
-    console.log(`✅ Credits deducted. New balance: ${safeBalance}`);
   };
 
-  // Added handleTopUpPurchase for NowPayments integration
+  // Fixed fetch path to match your actual filename /api/payment-webhook
   const handleTopUpPurchase = async (pack) => {
     if (!user) {
       setLoginModalOpen(true);
@@ -135,7 +134,7 @@ export default function App() {
     }
 
     try {
-      const response = await fetch('/api/webhook', {
+      const response = await fetch('/api/payment-webhook', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -144,6 +143,14 @@ export default function App() {
           credits: pack.credits
         })
       });
+
+      // Added check to catch the HTML error before JSON parsing
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Server returned non-JSON response:", text);
+        throw new Error("Server configuration error (Check API logs)");
+      }
 
       const data = await response.json();
 
@@ -154,7 +161,7 @@ export default function App() {
       }
     } catch (err) {
       console.error("Payment Error:", err);
-      alert("Connection Error: " + err.message);
+      alert("Payment Error: " + err.message);
     }
   };
 
@@ -197,18 +204,10 @@ export default function App() {
         const statusData = await statusRes.json();
         if (statusData.error) throw new Error(`RunPod error: ${statusData.error}`);
 
-        console.log('RunPod status:', statusData.status);
-
         if (statusData.status === 'COMPLETED') {
           const output = statusData.output;
-          const base64Image =
-            output?.image ||
-            output?.images?.[0] ||
-            output?.[0]?.image ||
-            output?.[0] ||
-            null;
-
-          if (!base64Image) throw new Error('Image data not found in RunPod response');
+          const base64Image = output?.image || output?.images?.[0] || output?.[0]?.image || output?.[0] || null;
+          if (!base64Image) throw new Error('Image data not found');
 
           setImage(base64Image);
           setLoading(false);
@@ -218,7 +217,6 @@ export default function App() {
             try {
               await deductCreditsLive(2);
               const publicUrl = await saveAiImage(user.id, base64Image, prompt);
-              console.log('✅ Image saved to Supabase:', publicUrl);
               setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt }, ...prev]);
               setExploreRefreshKey(k => k + 1);
             } catch (err) {
@@ -252,11 +250,6 @@ export default function App() {
     if (selectedPrompt) window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handlePromptLoad = (val) => {
-    setPrompt(val);
-    if (val) window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const handleViewImage = (img) => {
     setViewingImageUrl(img.url);
     setViewImageModalOpen(true);
@@ -280,12 +273,10 @@ export default function App() {
     switch (activeTab) {
       case 'explore':
         return <ExploreView key={exploreRefreshKey} prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
-      case 'character':
-        return <CharacterView />;
+      case 'character': return <CharacterView />;
       case 'gallery':
         return <MyImagesView images={userGallery} prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
-      case 'style':
-        return <StyleView />;
+      case 'style': return <StyleView />;
       default:
         return <ExploreView key={exploreRefreshKey} prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
     }
@@ -294,18 +285,11 @@ export default function App() {
   return (
     <div className="master-wrapper" onClickCapture={handleGlobalClick}>
       <div className="app-shell">
-
-        <button
-          className="mobile-menu-toggle"
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          aria-label="Toggle Menu"
-        >
+        <button className="mobile-menu-toggle" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
           {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
 
-        {isSidebarOpen && (
-          <div className="sidebar-mobile-overlay" onClick={() => setIsSidebarOpen(false)} />
-        )}
+        {isSidebarOpen && <div className="sidebar-mobile-overlay" onClick={() => setIsSidebarOpen(false)} />}
 
         <Sidebar
           activeTab={activeTab}
@@ -314,58 +298,30 @@ export default function App() {
           userId={user?.id}
           isOpen={isSidebarOpen}
           currentPrompt={prompt}
-          onPromptLoad={handlePromptLoad}
-          onTopUpClick={() => setTopUpModalOpen(true)} // Connected to Sidebar
+          onPromptLoad={setPrompt}
+          onTopUpClick={() => setTopUpModalOpen(true)}
         />
 
         <main className="main-content">
           {!promptCollapsed && (
             <header className="top-header">
               <h1 className="aesthetic-title">What will you create?</h1>
-              <PromptBox
-                prompt={prompt}
-                setPrompt={setPrompt}
-                aspectRatio={aspectRatio}
-                setAspectRatio={setAspectRatio}
-                onGenerate={generateImage}
-                loading={loading}
-                collapsed={false}
-                credits={credits}
-              />
+              <PromptBox prompt={prompt} setPrompt={setPrompt} aspectRatio={aspectRatio} setAspectRatio={setAspectRatio} onGenerate={generateImage} loading={loading} credits={credits} />
             </header>
           )}
 
           {promptCollapsed && (
             <div className="floating-prompt">
-              <PromptBox
-                prompt={prompt}
-                setPrompt={setPrompt}
-                aspectRatio={aspectRatio}
-                setAspectRatio={setAspectRatio}
-                onGenerate={generateImage}
-                loading={loading}
-                collapsed={true}
-                credits={credits}
-              />
+              <PromptBox prompt={prompt} setPrompt={setPrompt} aspectRatio={aspectRatio} setAspectRatio={setAspectRatio} onGenerate={generateImage} loading={loading} collapsed={true} credits={credits} />
             </div>
           )}
 
-          <div className="scrollable-area">
-            {renderActiveView()}
-          </div>
+          <div className="scrollable-area">{renderActiveView()}</div>
         </main>
 
-        <LoginModal
-          isOpen={loginModalOpen}
-          onClose={() => setLoginModalOpen(false)}
-        />
-
-        {/* Added TopUpModal */}
-        <TopUpModal 
-          isOpen={topUpModalOpen} 
-          onClose={() => setTopUpModalOpen(false)}
-          onSelect={handleTopUpPurchase}
-        />
+        <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
+        
+        <TopUpModal isOpen={topUpModalOpen} onClose={() => setTopUpModalOpen(false)} onSelect={handleTopUpPurchase} />
 
         {(viewState === 'result' || loading || image || error) && (
           <ResultModal
@@ -375,18 +331,13 @@ export default function App() {
             prompt={prompt}
             onClose={() => { setViewState('gallery'); setImage(null); setError(null); }}
             onRetry={generateImage}
-            onOpenEdit={(img) => { setEditingImage(img); setEditModalOpen(true); }}
-            onViewFullScreen={(imageUrl) => { setViewingImageUrl(imageUrl); setViewImageModalOpen(true); }}
+            onOpenEdit={handleEditImage}
+            onViewFullScreen={handleViewImage}
           />
         )}
 
-        {editModalOpen && (
-          <EditModal image={editingImage?.url} originalPrompt={editingImage?.prompt} onClose={() => setEditModalOpen(false)} />
-        )}
-
-        {viewImageModalOpen && (
-          <ImageViewModal imageUrl={viewingImageUrl} onClose={() => setViewImageModalOpen(false)} />
-        )}
+        {editModalOpen && <EditModal image={editingImage?.url} originalPrompt={editingImage?.prompt} onClose={() => setEditModalOpen(false)} />}
+        {viewImageModalOpen && <ImageViewModal imageUrl={viewingImageUrl} onClose={() => setViewImageModalOpen(false)} />}
       </div>
     </div>
   );
