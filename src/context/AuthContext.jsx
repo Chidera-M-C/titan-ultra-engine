@@ -8,7 +8,6 @@ export function AuthProvider({ children }) {
   const [credits, setCredits] = useState(0); 
   const [loading, setLoading] = useState(true);
 
-  // Function to fetch credits from the public.users table
   const fetchCredits = async (userId) => {
     try {
       const { data, error } = await supabase
@@ -16,7 +15,6 @@ export function AuthProvider({ children }) {
         .select('credits')
         .eq('id', userId)
         .single();
-
       if (error) throw error;
       if (data) setCredits(data.credits);
     } catch (err) {
@@ -25,7 +23,8 @@ export function AuthProvider({ children }) {
   };
 
   useEffect(() => {
-    // 1. Check active sessions on mount
+    let channel;
+
     const initializeAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       const currentUser = session?.user ?? null;
@@ -33,14 +32,22 @@ export function AuthProvider({ children }) {
       
       if (currentUser) {
         await fetchCredits(currentUser.id);
+        // Start Realtime only after we have a user
+        channel = supabase
+          .channel(`user-changes-${currentUser.id}`)
+          .on(
+            'postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${currentUser.id}` },
+            (payload) => setCredits(payload.new.credits)
+          )
+          .subscribe();
       }
       setLoading(false);
     };
 
     initializeAuth();
 
-    // 2. Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       
@@ -48,98 +55,51 @@ export function AuthProvider({ children }) {
         await fetchCredits(currentUser.id);
       } else {
         setCredits(0);
+        if (channel) supabase.removeChannel(channel);
       }
       setLoading(false);
     });
 
-    // 3. Listen for REAL-TIME credit updates
-    const channel = supabase
-      .channel('schema-db-changes')
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'users' },
-        (payload) => {
-          if (user && payload.new.id === user.id) {
-            setCredits(payload.new.credits);
-          }
-        }
-      )
-      .subscribe();
-
     return () => {
       subscription.unsubscribe();
-      supabase.removeChannel(channel);
+      if (channel) supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, []); // Empty dependency array to prevent re-subscription loops
 
   const loginWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: window.location.origin,
-          // THE FIX: This forces Google to show the account selection screen
-          queryParams: {
-            prompt: 'select_account',
-            access_type: 'offline',
-          },
+          queryParams: { prompt: 'select_account', access_type: 'offline' },
         },
       });
-      if (error) throw error;
     } catch (error) {
       console.error("Login failed:", error.message);
     }
   };
 
   const signUpWithEmail = async (email, password) => {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error("Signup error:", error.message);
-      throw error;
-    }
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) throw error;
+    return data;
   };
 
   const signInWithEmail = async (email, password) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error("Login error:", error.message);
-      throw error;
-    }
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    return data;
   };
 
   const logout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      setUser(null);
-      setCredits(0);
-    } catch (error) {
-      console.error("Logout failed:", error.message);
-    }
+    await supabase.auth.signOut();
+    setUser(null);
+    setCredits(0);
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      credits, 
-      loginWithGoogle, 
-      signUpWithEmail, 
-      signInWithEmail, 
-      logout, 
-      loading 
-    }}>
+    <AuthContext.Provider value={{ user, credits, loginWithGoogle, signUpWithEmail, signInWithEmail, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
