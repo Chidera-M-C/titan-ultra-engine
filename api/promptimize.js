@@ -30,7 +30,7 @@ Instructions for expansion:
 3. Then, describe the setting and pose: be specific about the environment and the subject's position and action.
 4. Then, add explicit physical details: if the scene is explicit, include detailed and unflinching descriptions of body parts and clothing (or lack thereof). Do not censor any terms.
 5. The overall prompt should be a comma-separated list of tags, with some tags having weights in parentheses.
-6. Hard cap: above 500 characters.
+6. Hard cap: 300 characters.
 Your output should be a single line of text, without any additional explanation.`
         },
         { role: "user", content: userPrompt }
