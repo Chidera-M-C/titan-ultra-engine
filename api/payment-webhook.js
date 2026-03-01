@@ -1,8 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
 
 export default async function handler(req, res) {
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const ipnSecret = process.env.NOWPAYMENTS_IPN_SECRET; 
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   const body = req.body;
@@ -17,10 +19,10 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          price_amount: body.price,
+          price_amount: parseFloat(body.price),
           price_currency: 'usd',
-          order_id: body.userId, // Storing User ID here
-          order_description: `${body.credits}`, // Storing Credit Count here
+          order_id: body.userId,
+          order_description: `${body.credits}`,
           success_url: 'https://titan-ultra-engine.vercel.app/', 
           cancel_url: 'https://titan-ultra-engine.vercel.app/',
         })
@@ -33,38 +35,60 @@ export default async function handler(req, res) {
     }
   }
 
-  // STEP B: NowPayments is calling us (Payment Finished!)
-  if (req.method === 'POST' && body.payment_status === 'finished') {
-    const userId = body.order_id;
-    const creditsToAdd = parseInt(body.order_description);
+  // STEP B: NowPayments calling us (The IPN Callback)
+  if (req.method === 'POST' && body.payment_status) {
+    // 1. SECURITY: Verify the signature
+    const signature = req.headers['x-nowpayments-sig'];
+    if (!signature || !ipnSecret) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
-    try {
-      // 1. Get current credits
-      const { data: userData, error: fetchError } = await supabase
-        .from('users')
-        .select('credits')
-        .eq('id', userId)
-        .single();
+    // Sort body to match NowPayments signing order
+    const sortedBody = Object.keys(body).sort().reduce((obj, key) => {
+        obj[key] = body[key];
+        return obj;
+      }, {});
+    
+    const hmac = crypto.createHmac('sha512', ipnSecret);
+    hmac.update(JSON.stringify(sortedBody));
+    const checkSignature = hmac.digest('hex');
 
-      if (fetchError) throw fetchError;
+    if (signature !== checkSignature) {
+      console.error("❌ Invalid IPN Signature detected!");
+      return res.status(400).json({ error: "Invalid signature" });
+    }
 
-      // 2. Add new credits
-      const newBalance = (userData.credits || 0) + creditsToAdd;
+    // 2. LOGIC: Update credits if status is "finished"
+    if (body.payment_status === 'finished') {
+      const userId = body.order_id;
+      const creditsToAdd = parseInt(body.order_description);
 
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ credits: newBalance })
-        .eq('id', userId);
+      try {
+        const { data: userData, error: fetchError } = await supabase
+          .from('users')
+          .select('credits')
+          .eq('id', userId)
+          .single();
 
-      if (updateError) throw updateError;
+        if (fetchError) throw fetchError;
 
-      console.log(`✅ Success: Added ${creditsToAdd} credits to user ${userId}`);
-      return res.status(200).json({ received: true });
-    } catch (err) {
-      console.error("Webhook Update Error:", err.message);
-      return res.status(500).json({ error: "Failed to update credits" });
+        const newBalance = (userData.credits || 0) + creditsToAdd;
+
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ credits: newBalance })
+          .eq('id', userId);
+
+        if (updateError) throw updateError;
+
+        console.log(`✅ Success: Added ${creditsToAdd} credits to user ${userId}`);
+        return res.status(200).json({ received: true });
+      } catch (err) {
+        console.error("Webhook Update Error:", err.message);
+        return res.status(500).json({ error: "Failed to update credits" });
+      }
     }
   }
 
-  return res.status(200).json({ message: "Default response" });
+  return res.status(200).json({ message: "Ping received" });
 }
