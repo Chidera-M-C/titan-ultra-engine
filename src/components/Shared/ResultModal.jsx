@@ -7,12 +7,9 @@ import './ResultModal.css';
 export default function ResultModal({ image, loading, error, onClose, onRetry, prompt, onOpenEdit, onViewFullScreen }) {
   const [isMinimized, setIsMinimized] = useState(false);
 
-  // Only allow closing when NOT loading
   const handleClose = (e) => {
     e.stopPropagation();
-    if (!loading) {
-      onClose();
-    }
+    if (!loading) onClose();
   };
 
   const toggleMinimize = (e) => {
@@ -20,37 +17,47 @@ export default function ResultModal({ image, loading, error, onClose, onRetry, p
     setIsMinimized(!isMinimized);
   };
 
-  const handleDownload = () => {
-    // Convert base64 or URL to download
-    const link = document.createElement('a');
-    link.href = image;
-    link.download = `ai-generated-${Date.now()}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async () => {
+    try {
+      // Works for both base64 and external URLs
+      const response = await fetch(image);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = `ai-generated-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      // Fallback for base64
+      const link = document.createElement('a');
+      link.href = image;
+      link.download = `ai-generated-${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   return (
     <div className={`result-modal ${isMinimized ? 'minimized' : ''}`}>
       <div className="result-content">
-        
-        {/* Header with status - clickable to expand/collapse */}
+
         <div className="result-header" onClick={toggleMinimize}>
           <div className="status-text">
             <span className={`status-dot ${loading ? 'generating' : ''}`}></span>
             {loading ? 'Image generating' : error ? 'Generation failed' : 'Generation complete'}
           </div>
           <div className="header-actions">
-            {/* Minimize/Expand button - CSS icon */}
-            <button 
+            <button
               className={`minimize-btn ${isMinimized ? 'expand' : ''}`}
-              onClick={toggleMinimize} 
+              onClick={toggleMinimize}
               data-tooltip={isMinimized ? 'Expand' : 'Minimize'}
             >
               {isMinimized ? '▲' : '−'}
             </button>
-            
-            {/* Close button - CSS icon - only show when NOT loading */}
             {!loading && (
               <button className="close-result" onClick={handleClose} data-tooltip="Close">
                 ✕
@@ -59,10 +66,8 @@ export default function ResultModal({ image, loading, error, onClose, onRetry, p
           </div>
         </div>
 
-        {/* Image area - hidden when minimized */}
         {!isMinimized && (
           <div className="image-stage">
-            {/* LOADING STATE */}
             {loading && (
               <div className="loading-wrapper">
                 <PulseLoader />
@@ -70,43 +75,35 @@ export default function ResultModal({ image, loading, error, onClose, onRetry, p
               </div>
             )}
 
-            {/* ERROR STATE */}
             {error && !loading && (
               <div className="error-wrapper">
                 <AlertCircle size={32} color="#ff4444" />
                 <p className="error-title">Generation Failed</p>
                 <p className="error-message">{error}</p>
-                <button className="retry-btn" onClick={onRetry}>
-                  Try Again
-                </button>
+                <button className="retry-btn" onClick={onRetry}>Try Again</button>
               </div>
             )}
 
-            {/* SUCCESS STATE - Image with overlay buttons */}
             {image && !loading && !error && (
               <>
-                <img 
-                  src={image} 
-                  alt="Generated result" 
+                <img
+                  src={image}
+                  alt="Generated result"
                   className="gen-result"
                   onClick={() => {
                     if (onViewFullScreen) {
-                      onViewFullScreen(image);
+                      // Pass as object so App.jsx handleViewImage can read .url
+                      onViewFullScreen({ url: image });
                     }
                   }}
                   style={{ cursor: 'zoom-in' }}
                 />
-                
-                {/* Action Buttons Overlay - appears on hover */}
                 <div className="result-action-overlay">
                   <ActionButtons
                     image={image}
                     onDownload={handleDownload}
                     onEdit={() => {
-                      // Open EditModal with current image and prompt
-                      if (onOpenEdit) {
-                        onOpenEdit({ url: image, prompt: prompt });
-                      }
+                      if (onOpenEdit) onOpenEdit({ url: image, prompt });
                     }}
                     compact={true}
                   />
