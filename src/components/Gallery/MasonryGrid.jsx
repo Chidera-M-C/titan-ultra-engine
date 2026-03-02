@@ -1,5 +1,5 @@
 import './Gallery.css';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Wand2, Download, Heart, RotateCcw } from 'lucide-react';
 
 const downloadImage = async (e, url, imageId) => {
@@ -21,19 +21,33 @@ const downloadImage = async (e, url, imageId) => {
 };
 
 export default function MasonryGrid({ images, prompt, onImageClick, onSelectPrompt, onEditImage }) {
+
+  // Shuffle images randomly every time the images prop changes
+  const shuffledImages = useMemo(() => {
+    if (!images || images.length === 0) return [];
+    
+    // Proper Fisher-Yates shuffle (true random)
+    const shuffled = [...images];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }, [images]);
+
   return (
     <div className="masonry-grid">
-      {images.map((img) => (
+      {shuffledImages.map((img) => (
         <div
           key={img.id}
           className="gallery-card"
           onClick={() => onImageClick(img)}
         >
-          <img 
-            src={img.url} 
-            alt="Generated AI image" 
-            loading="lazy" 
-            className="allow-visitor" 
+          <img
+            src={img.url}
+            alt="Generated AI image"
+            loading="lazy"
+            className="allow-visitor"
           />
           <div className="gallery-overlay">
             <div className="overlay-actions">
@@ -92,10 +106,10 @@ function HeartButton() {
       }}
       data-tooltip={active ? 'Unlike' : 'Like'}
     >
-      <Heart 
-        size={18} 
-        color={active ? '#ff4b4b' : '#ffffff'} 
-        fill={active ? '#ff4b4b' : 'none'} 
+      <Heart
+        size={18}
+        color={active ? '#ff4b4b' : '#ffffff'}
+        fill={active ? '#ff4b4b' : 'none'}
       />
     </button>
   );
