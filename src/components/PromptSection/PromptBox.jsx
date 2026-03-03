@@ -41,7 +41,7 @@ export default function PromptBox({
       <textarea
         ref={textareaRef}
         className="prompt-input"
-        placeholder="Describe what you want to see..."
+        placeholder="PLAIN WORDS DOESN'T WORK! Use the PROMPTIMIZE feature by the left."
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
         disabled={loading}
