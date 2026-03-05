@@ -133,7 +133,8 @@ Build order for the final prompt (comma-separated tags only):
 
 Output Rules:
 - The overall output should be a comma-separated list of tags, with relevant tags having weights in parentheses.
-- Single line only. No explanation, no category name, no quotes, no extra text.
+- DO NOT FUCKING INCLUDE CATEGORY NAMES or any phrase with underscore, only the category list(s) is required
+- Single line only. No explanation, no quotes, no extra text.
 - Stay 100% faithful to core theme.
 - Hard cap ~500-520 characters.
 - Never add anything not in the user's input or database.`
