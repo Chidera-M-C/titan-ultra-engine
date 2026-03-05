@@ -86,35 +86,7 @@ const settings = {
   "hospital": ["hospital room", "medical bed", "doctor patient fantasy", "clinical white room", "hospital gown", "monitor beeps background", "sterile hospital lighting", "bedridden scene"]
 };
 
-export default async function handler(req, res) {
-  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const { userPrompt } = req.body;
-  if (!userPrompt) {
-    return res.status(400).json({ error: 'Missing input' });
-  }
-
-  const database = JSON.stringify({
-    styleCategories,
-    camera_angle,
-    camera_perspective,
-    camera_lens_length,
-    genderCategories,
-    raceCategories,
-    settings
-  });
-
-  try {
-    // Use streaming to capture the full response including think tags
-    const stream = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert SDXL/Flux prompt engineer with a trained Composition Database.
+const SYSTEM_PROMPT = (database) => `You are an expert SDXL/Flux prompt engineer with a trained Composition Database.
 
 DATABASE (use ONLY this data):
 ${database}
@@ -123,7 +95,7 @@ You MUST use this exact format — no exceptions:
 
 <think>
 Your internal reasoning here. Work through:
-1. STYLE IS KING — First identify the SINGLE core theme the user wants (non-negotiable). Example: "cute girl getting ass fucked" → core = anal penetration (dick in ass). Choose the SINGLE best category from styleCategories that fits the input core composition. Pick 3-5 terms RANDOMLY from that category ONLY.
+1. STYLE IS KING — First identify the SINGLE core theme the user wants (non-negotiable). Example: "cute girl getting ass fucked" → core = anal penetration (dick in ass). Choose the SINGLE best category from styleCategories that fits the input core composition. Pick 3-5 strongest terms from that category ONLY.
 2. Camera angle: Choose the SINGLE best category from camera_angle that fits the mental image. Pick 1 most relevant term from it.
 3. Camera perspective: Choose the SINGLE best category from camera_perspective. Pick exactly 1 term from it.
 4. Camera lens length: Choose the SINGLE best category from camera_lens_length that controls closeness. Pick exactly 1 relevant term from it.
@@ -149,53 +121,92 @@ Output Rules:
 - Single line only. No explanation, no quotes, no extra text.
 - Stay 100% faithful to core theme.
 - Hard cap ~480-500 characters.
-- Never add anything not in the user's input or database.`
-        },
-        { role: "user", content: userPrompt }
-      ],
-      model: "llama-3.3-70b-versatile",
-      temperature: 0.65,
-      max_tokens: 1200,
-      stream: true,
-    });
+- Never add anything not in the user's input or database.`;
 
-    // Set SSE headers so the client can read chunks as they arrive
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+async function runWithModel(groq, model, messages) {
+  return groq.chat.completions.create({
+    messages,
+    model,
+    temperature: 0.65,
+    max_tokens: 1200,
+    stream: true,
+  });
+}
 
-    let fullText = '';
+export default async function handler(req, res) {
+  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-    for await (const chunk of stream) {
-      const delta = chunk.choices[0]?.delta?.content || '';
-      if (!delta) continue;
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-      fullText += delta;
+  const { userPrompt } = req.body;
+  if (!userPrompt) {
+    return res.status(400).json({ error: 'Missing input' });
+  }
 
-      // Stream the raw chunk to client so it can show thinking live
-      res.write(`data: ${JSON.stringify({ chunk: delta })}\n\n`);
-    }
+  const database = JSON.stringify({
+    styleCategories,
+    camera_angle,
+    camera_perspective,
+    camera_lens_length,
+    genderCategories,
+    raceCategories,
+    settings
+  });
 
-    // Once stream is done, parse think vs final output
-    const thinkMatch = fullText.match(/<think>([\s\S]*?)<\/think>/i);
-    const thinking = thinkMatch ? thinkMatch[1].trim() : '';
+  const messages = [
+    { role: "system", content: SYSTEM_PROMPT(database) },
+    { role: "user", content: userPrompt }
+  ];
 
-    // Everything after </think> is the final prompt
-    const afterThink = fullText.replace(/<think>[\s\S]*?<\/think>/i, '').trim();
-    const optimized = afterThink.replace(/^["']|["']$/g, '').trim();
+  // SSE headers — set before any streaming starts
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
 
-    // Send the final parsed result
-    res.write(`data: ${JSON.stringify({ done: true, thinking, optimized })}\n\n`);
-    res.end();
+  const models = ['llama-3.3-70b-versatile', 'qwen/qwen3-32b'];
 
-  } catch (error) {
-    console.error("Groq Error:", error);
-    // If headers already sent, end the stream with error event
-    if (res.headersSent) {
-      res.write(`data: ${JSON.stringify({ error: "Failed to optimize prompt" })}\n\n`);
+  for (let i = 0; i < models.length; i++) {
+    const model = models[i];
+    try {
+      console.log(`Trying model: ${model}`);
+      const stream = await runWithModel(groq, model, messages);
+
+      let fullText = '';
+
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta?.content || '';
+        if (!delta) continue;
+        fullText += delta;
+        res.write(`data: ${JSON.stringify({ chunk: delta })}\n\n`);
+      }
+
+      // Parse think block vs final output
+      const thinkMatch = fullText.match(/<think>([\s\S]*?)<\/think>/i);
+      const thinking = thinkMatch ? thinkMatch[1].trim() : '';
+      const afterThink = fullText.replace(/<think>[\s\S]*?<\/think>/i, '').trim();
+      const optimized = afterThink.replace(/^["']|["']$/g, '').trim();
+
+      res.write(`data: ${JSON.stringify({ done: true, thinking, optimized })}\n\n`);
       res.end();
-    } else {
-      res.status(500).json({ error: "Failed to optimize prompt" });
+      return; // success — stop here
+
+    } catch (error) {
+      const is429 = error?.status === 429 || error?.message?.includes('rate_limit_exceeded') || error?.message?.includes('429');
+
+      if (is429 && i < models.length - 1) {
+        // Rate limited — silently try next model, no error sent to client
+        console.warn(`Rate limit hit on ${model}, falling back to ${models[i + 1]}`);
+        continue;
+      }
+
+      // Either not a 429, or we've exhausted all models
+      console.error(`Groq Error on ${model}:`, error);
+      res.write(`data: ${JSON.stringify({ error: "Failed to optimize prompt. Please try again." })}\n\n`);
+      res.end();
+      return;
     }
   }
+}
 }
