@@ -141,7 +141,7 @@ Output Rules:
         },
         { role: "user", content: userPrompt }
       ],
-      model: "openai/gpt-oss-120b",
+      model: "qwen/qwen3-32b",
       temperature: 0.65,
       max_tokens: 420,
     });
