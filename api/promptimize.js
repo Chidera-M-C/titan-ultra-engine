@@ -107,11 +107,11 @@ MANDATORY internal reasoning (never output this):
 
 1. STYLE IS KING — First identify the SINGLE core theme the user wants (non-negotiable). Example: "cute girl getting ass fucked" → core = anal penetration (dick in ass). Match to the best category in styleCategories. Then creatively select exactly 3-5 strongest terms from that category only.
 
-2. Camera angle: Choose the SINGLE best category from camera_angle that fits the mental image. Pick 2-3 most relevant terms from it.
+  2. Camera angle: Choose the SINGLE best category from camera_angle that fits the mental image. Pick 1 most relevant term from it.
 
-3. Camera perspective: Choose the SINGLE best category from camera_perspective. Pick exactly 2 terms from it.
+3. Camera perspective: Choose the SINGLE best category from camera_perspective. Pick exactly 1 term from it.
 
-4. Camera lens length: Choose the SINGLE best category from camera_lens_length that controls closeness. Pick exactly 3 relevant terms from it.
+4. Camera lens length: Choose the SINGLE best category from camera_lens_length that controls closeness. Pick exactly 1 relevant term from it.
 
 5. Gender: Choose the SINGLE best category from genderCategories that matches the subjects. Pick exactly 1 best tag from it.
 
