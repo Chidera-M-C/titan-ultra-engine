@@ -5,7 +5,7 @@ import './Promptimize.css';
 export default function Promptimize({ onLoad, currentPrompt }) {
   const [input, setInput] = useState('');
   const [output, setOutput] = useState('');
-  const [thinking, setThinking] = useState('');   // ← New state
+  const [thinking, setThinking] = useState('');   // ← new: shows model's internal reasoning
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState(null);
@@ -28,11 +28,9 @@ export default function Promptimize({ onLoad, currentPrompt }) {
 
       const data = await response.json();
 
-      if (data.error) {
-        throw new Error(data.error);
-      }
+      if (data.error) throw new Error(data.error);
 
-      setThinking(data.thinking || 'No thinking trace available.');
+      setThinking(data.thinking || 'No reasoning trace available.');
       setOutput(data.optimized || '');
 
       if (!data.optimized) {
@@ -67,7 +65,41 @@ export default function Promptimize({ onLoad, currentPrompt }) {
 
   return (
     <div className="promptimize-wrapper">
-      {/* ... header, input, run button stay the same ... */}
+      <div className="promptimize-header">
+        <div className="promptimize-icon">
+          <Wand2 size={14} color="#fff" />
+        </div>
+        <span className="promptimize-title">Promptimize</span>
+        <span className="promptimize-badge">Beta</span>
+      </div>
+
+      <div className="promptimize-input-wrapper">
+        <textarea
+          className="promptimize-input"
+          placeholder="Imagine any scene... we'll turn it into a prompt"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          disabled={loading}
+        />
+      </div>
+
+      <button
+        className="promptimize-run-btn"
+        onClick={handleRun}
+        disabled={!input.trim() || loading}
+      >
+        {loading ? (
+          <>
+            <div className="promptimize-spinner" />
+            <span>Optimizing...</span>
+          </>
+        ) : (
+          <>
+            <Wand2 size={13} />
+            <span>Promptimize It</span>
+          </>
+        )}
+      </button>
 
       {error && (
         <div className="promptimize-error">
@@ -78,7 +110,7 @@ export default function Promptimize({ onLoad, currentPrompt }) {
 
       {output && (
         <div className="promptimize-output">
-          {/* New Thinking Box */}
+          {/* === THINKING BOX (small internal dialogue) === */}
           {thinking && (
             <div className="promptimize-thinking">
               <div className="promptimize-thinking-label">Model Thinking Process</div>
@@ -92,7 +124,20 @@ export default function Promptimize({ onLoad, currentPrompt }) {
           <p className="promptimize-output-text">{output}</p>
 
           <div className="promptimize-output-actions">
-            {/* copy & load buttons stay the same */}
+            <button
+              className={`promptimize-action-btn copy ${copied ? 'copied' : ''}`}
+              onClick={handleCopy}
+            >
+              {copied ? <Check size={13} /> : <Copy size={13} />}
+              <span>{copied ? 'Copied' : 'Copy'}</span>
+            </button>
+            <button
+              className={`promptimize-action-btn load ${isLoaded ? 'loaded' : ''}`}
+              onClick={handleLoadToggle}
+            >
+              <ArrowUpRight size={13} />
+              <span>{isLoaded ? 'Unload' : 'Load'}</span>
+            </button>
           </div>
         </div>
       )}
