@@ -71,8 +71,6 @@ const settings = {
   "hospital": ["hospital room", "medical bed", "doctor patient fantasy", "clinical white room", "hospital gown", "monitor beeps background", "sterile hospital lighting", "bedridden scene"]
 };
 
-// ←←← KEEP ALL YOUR CONST OBJECTS HERE (styleCategories, camera_angle, etc.) EXACTLY AS THEY ARE ←←←
-
 export default async function handler(req, res) {
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -96,7 +94,8 @@ export default async function handler(req, res) {
   });
 
   try {
-    const completion = await groq.chat.completions.create({
+    // Use streaming to capture the full response including think tags
+    const stream = await groq.chat.completions.create({
       messages: [
         {
           role: "system",
@@ -105,66 +104,66 @@ export default async function handler(req, res) {
 DATABASE (use ONLY this data):
 ${database}
 
-MANDATORY PROCESS — THINK STEP BY STEP FIRST (this will be shown in the small thinking box):
+You MUST use this exact format — no exceptions:
 
-1. STYLE IS KING — Identify the core theme (non-negotiable). Match to ONE category in styleCategories and pick 3-5 terms.
-2. Camera angle → pick 1 best term
-3. Camera perspective → pick 1 term
-4. Camera lens length → pick 1 term
-5. Gender → pick 1 tag
-6. Race → pick 3-5 features from ONE category
-7. Settings → pick 5-7 terms from ONE category
-8. Quality → pick 3-5 from the list
-
-Then output EXACTLY in this format (nothing else):
-
-THINKING:
-[full step-by-step reasoning here]
-
-FINAL_PROMPT:
-[only the clean comma-separated prompt here — no extra text, ~500 chars max]`
+<think>
+Your internal reasoning here. Work through:
+1. STYLE IS KING — identify the single core theme. Choose the SINGLE best styleCategories category. Pick 3-5 strongest terms.
+2. Camera angle — choose the SINGLE best camera_angle category. Pick 1 most relevant term.
+3. Camera perspective — choose the SINGLE best camera_perspective category. Pick exactly 1 term.
+4. Camera lens length — choose the SINGLE best camera_lens_length category. Pick exactly 1 relevant term.
+5. Gender — choose the SINGLE best genderCategories category. Pick exactly 1 best tag.
+6. Race — choose the SINGLE best raceCategories category. Pick 3-5 most relevant features.
+7. Settings — choose the SINGLE best settings category. Pick 5-7 relevant terms.
+8. Quality — pick exactly 3-5 terms from: masterpiece, best quality, ultra detailed, photorealistic, 8k raw photo, sharp focus, cinematic lighting, depth of field, intricate details, hyperrealistic.
+</think>
+[FINAL PROMPT HERE — comma-separated tags only, single line, no explanation, no quotes, ~500 chars max]`
         },
         { role: "user", content: userPrompt }
       ],
-      model: "qwen/qwen3-32b",
-      temperature: 0.6,
-      max_tokens: 550,
+      model: "llama-3.3-70b-versatile",
+      temperature: 0.65,
+      max_tokens: 1200,
+      stream: true,
     });
 
-    const rawOutput = completion.choices[0]?.message?.content || "";
+    // Set SSE headers so the client can read chunks as they arrive
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
 
-    // Debug log so you can see what Groq actually returned
-    console.log("=== GROQ RAW OUTPUT ===", rawOutput.substring(0, 400));
+    let fullText = '';
 
-    // Parse the two sections
-    let thinking = "No reasoning trace available.";
-    let optimized = "";
+    for await (const chunk of stream) {
+      const delta = chunk.choices[0]?.delta?.content || '';
+      if (!delta) continue;
 
-    const thinkingMatch = rawOutput.match(/THINKING:[\s\S]*?FINAL_PROMPT:/i);
-    const promptMatch = rawOutput.match(/FINAL_PROMPT:[\s\S]*$/i);
+      fullText += delta;
 
-    if (promptMatch) {
-      optimized = promptMatch[0].replace(/FINAL_PROMPT:/i, '').trim();
-    }
-    if (thinkingMatch) {
-      thinking = thinkingMatch[0].replace(/FINAL_PROMPT:/i, '').replace(/THINKING:/i, '').trim();
+      // Stream the raw chunk to client so it can show thinking live
+      res.write(`data: ${JSON.stringify({ chunk: delta })}\n\n`);
     }
 
-    return res.status(200).json({
-      thinking: thinking,
-      optimized: optimized || "masterpiece, best quality, ultra detailed, explicit scene" // fallback
-    });
+    // Once stream is done, parse think vs final output
+    const thinkMatch = fullText.match(/<think>([\s\S]*?)<\/think>/i);
+    const thinking = thinkMatch ? thinkMatch[1].trim() : '';
+
+    // Everything after </think> is the final prompt
+    const afterThink = fullText.replace(/<think>[\s\S]*?<\/think>/i, '').trim();
+    const optimized = afterThink.replace(/^["']|["']$/g, '').trim();
+
+    // Send the final parsed result
+    res.write(`data: ${JSON.stringify({ done: true, thinking, optimized })}\n\n`);
+    res.end();
 
   } catch (error) {
-    console.error("=== GROQ CRASH ===");
-    console.error("Message:", error.message);
-    if (error.response) {
-      console.error("Status:", error.response.status);
-      console.error("Data:", JSON.stringify(error.response.data, null, 2));
+    console.error("Groq Error:", error);
+    // If headers already sent, end the stream with error event
+    if (res.headersSent) {
+      res.write(`data: ${JSON.stringify({ error: "Failed to optimize prompt" })}\n\n`);
+      res.end();
+    } else {
+      res.status(500).json({ error: "Failed to optimize prompt" });
     }
-    return res.status(500).json({ 
-      error: "Failed to optimize prompt",
-      details: error.message 
-    });
   }
 }
