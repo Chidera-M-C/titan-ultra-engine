@@ -123,14 +123,14 @@ Output Rules:
 - Hard cap ~480-500 characters.
 - Never add anything not in the user's input or database.`;
 
-async function runWithModel(groq, model, messages) {
-  return groq.chat.completions.create({
-    messages,
-    model,
-    temperature: 0.65,
-    max_tokens: 1200,
-    stream: true,
-  });
+// Detect 429 rate limit from Groq SDK error — check every possible location
+function isRateLimit(error) {
+  if (error?.status === 429) return true;
+  if (error?.code === 'rate_limit_exceeded') return true;
+  if (error?.error?.error?.code === 'rate_limit_exceeded') return true;
+  if (typeof error?.message === 'string' && error.message.includes('429')) return true;
+  if (typeof error?.message === 'string' && error.message.includes('rate_limit_exceeded')) return true;
+  return false;
 }
 
 export default async function handler(req, res) {
@@ -160,7 +160,7 @@ export default async function handler(req, res) {
     { role: "user", content: userPrompt }
   ];
 
-  // SSE headers — set before any streaming starts
+  // SSE headers
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
@@ -170,8 +170,15 @@ export default async function handler(req, res) {
   for (let i = 0; i < models.length; i++) {
     const model = models[i];
     try {
-      console.log(`Trying model: ${model}`);
-      const stream = await runWithModel(groq, model, messages);
+      console.log(`Promptimize: trying model ${model}`);
+
+      const stream = await groq.chat.completions.create({
+        messages,
+        model,
+        temperature: 0.65,
+        max_tokens: 1200,
+        stream: true,
+      });
 
       let fullText = '';
 
@@ -190,23 +197,22 @@ export default async function handler(req, res) {
 
       res.write(`data: ${JSON.stringify({ done: true, thinking, optimized })}\n\n`);
       res.end();
-      return; // success — stop here
+      return;
 
     } catch (error) {
-      const is429 = error?.status === 429 || error?.message?.includes('rate_limit_exceeded') || error?.message?.includes('429');
+      console.warn(`Promptimize error on ${model}:`, error?.status, error?.error?.error?.code);
 
-      if (is429 && i < models.length - 1) {
-        // Rate limited — silently try next model, no error sent to client
-        console.warn(`Rate limit hit on ${model}, falling back to ${models[i + 1]}`);
+      if (isRateLimit(error) && i < models.length - 1) {
+        console.log(`Rate limited on ${model} — falling back to ${models[i + 1]}`);
+        // Send a neutral chunk so the client knows we're still working
+        res.write(`data: ${JSON.stringify({ chunk: '' })}\n\n`);
         continue;
       }
 
-      // Either not a 429, or we've exhausted all models
-      console.error(`Groq Error on ${model}:`, error);
+      console.error(`Promptimize failed on all models:`, error);
       res.write(`data: ${JSON.stringify({ error: "Failed to optimize prompt. Please try again." })}\n\n`);
       res.end();
       return;
     }
   }
-}
 }
