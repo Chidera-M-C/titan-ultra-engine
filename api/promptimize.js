@@ -71,6 +71,8 @@ const settings = {
   "hospital": ["hospital room", "medical bed", "doctor patient fantasy", "clinical white room", "hospital gown", "monitor beeps background", "sterile hospital lighting", "bedridden scene"]
 };
 
+// ←←← KEEP ALL YOUR CONST OBJECTS HERE (styleCategories, camera_angle, etc.) EXACTLY AS THEY ARE ←←←
+
 export default async function handler(req, res) {
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -98,80 +100,71 @@ export default async function handler(req, res) {
       messages: [
         {
           role: "system",
-          content: `You are an expert SDXL/Flux prompt engineer.
+          content: `You are an expert SDXL/Flux prompt engineer with a trained Composition Database.
 
 DATABASE (use ONLY this data):
 ${database}
 
-MANDATORY PROCESS — THINK STEP BY STEP IN DETAIL FIRST:
+MANDATORY PROCESS — THINK STEP BY STEP FIRST (this will be shown in the small thinking box):
 
-1. STYLE IS KING — Identify the SINGLE non-negotiable core theme (e.g. "cute girl getting ass fucked" → dick in ass, anal penetration). Match to ONE category in styleCategories. Select exactly 3-5 strongest terms from it.
+1. STYLE IS KING — Identify the core theme (non-negotiable). Match to ONE category in styleCategories and pick 3-5 terms.
+2. Camera angle → pick 1 best term
+3. Camera perspective → pick 1 term
+4. Camera lens length → pick 1 term
+5. Gender → pick 1 tag
+6. Race → pick 3-5 features from ONE category
+7. Settings → pick 5-7 terms from ONE category
+8. Quality → pick 3-5 from the list
 
-2. Camera angle: Pick ONE best category from camera_angle. Select 1-2 most fitting terms.
+Then output EXACTLY in this format (nothing else):
 
-3. Camera perspective: Pick ONE best category from camera_perspective. Select exactly 1 term.
+THINKING:
+[full step-by-step reasoning here]
 
-4. Camera lens length: Pick ONE best category from camera_lens_length. Select exactly 1 term.
-
-5. Gender: Pick ONE best category from genderCategories. Select exactly 1 tag.
-
-6. Race: Pick ONE best category from raceCategories. Select 3-5 relevant features.
-
-7. Settings: Pick ONE best category from settings. Select 5-7 relevant terms.
-
-8. Quality: Select exactly 3-5 from: masterpiece, best quality, ultra detailed, photorealistic, 8k raw photo, sharp focus, cinematic lighting, depth of field, intricate details, hyperrealistic.
-
-Build the final prompt in this exact order (comma-separated tags):
-- Camera angle terms
-- Camera perspective term
-- Camera lens length term
-- Gender tag
-- Race features
-- The 3-5 style terms (central & dominant)
-- The 5-7 setting terms
-- The 3-5 quality terms
-
-Use weights like (feature:1.2) where it makes sense for emphasis.
-
-Output Rules — IMPORTANT:
-- Think step-by-step in detail first (this goes into "thinking").
-- Then output ONLY valid JSON with exactly these two keys:
-{
-  "thinking": "your full detailed reasoning here\\nStep 1: ...\\nStep 2: ... etc. Use \\n for new lines.",
-  "final_prompt": "the clean comma-separated prompt string ONLY. No quotes around it, no extra text."
-}
-- Do NOT output anything else before or after the JSON.
-- final_prompt must be single line, ~500 chars max.
-- Stay 100% faithful to user input and database.`
+FINAL_PROMPT:
+[only the clean comma-separated prompt here — no extra text, ~500 chars max]`
         },
         { role: "user", content: userPrompt }
       ],
       model: "qwen/qwen3-32b",
-      temperature: 0.6,          // Slightly lower → more reliable structure
-      max_tokens: 600,
-      response_format: { type: "json_object" }   // ← This is the key line
+      temperature: 0.6,
+      max_tokens: 550,
     });
 
-    const rawContent = completion.choices[0]?.message?.content || '{}';
-    let parsed;
+    const rawOutput = completion.choices[0]?.message?.content || "";
 
-    try {
-      parsed = JSON.parse(rawContent);
-    } catch (parseErr) {
-      console.error("JSON parse error:", parseErr, rawContent);
-      return res.status(200).json({
-        thinking: "Model output was invalid JSON. Using fallback reasoning.",
-        optimized: "masterpiece, best quality, ultra detailed, explicit nsfw scene"
-      });
+    // Debug log so you can see what Groq actually returned
+    console.log("=== GROQ RAW OUTPUT ===", rawOutput.substring(0, 400));
+
+    // Parse the two sections
+    let thinking = "No reasoning trace available.";
+    let optimized = "";
+
+    const thinkingMatch = rawOutput.match(/THINKING:[\s\S]*?FINAL_PROMPT:/i);
+    const promptMatch = rawOutput.match(/FINAL_PROMPT:[\s\S]*$/i);
+
+    if (promptMatch) {
+      optimized = promptMatch[0].replace(/FINAL_PROMPT:/i, '').trim();
+    }
+    if (thinkingMatch) {
+      thinking = thinkingMatch[0].replace(/FINAL_PROMPT:/i, '').replace(/THINKING:/i, '').trim();
     }
 
     return res.status(200).json({
-      thinking: parsed.thinking || "No detailed reasoning provided.",
-      optimized: (parsed.final_prompt || "").trim()
+      thinking: thinking,
+      optimized: optimized || "masterpiece, best quality, ultra detailed, explicit scene" // fallback
     });
 
   } catch (error) {
-    console.error("Groq Error:", error);
-    return res.status(500).json({ error: "Failed to optimize prompt" });
+    console.error("=== GROQ CRASH ===");
+    console.error("Message:", error.message);
+    if (error.response) {
+      console.error("Status:", error.response.status);
+      console.error("Data:", JSON.stringify(error.response.data, null, 2));
+    }
+    return res.status(500).json({ 
+      error: "Failed to optimize prompt",
+      details: error.message 
+    });
   }
 }
