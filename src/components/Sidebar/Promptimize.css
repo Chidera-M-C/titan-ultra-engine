@@ -1,247 +1,37 @@
-/* src/components/Sidebar/Promptimize.css */
-.promptimize-wrapper {
-  margin-top: 12px;
-  border-top: 1px solid #1e1e1e;
-  padding-top: 16px;
+.promptimize-thinking {
+  margin-bottom: 16px;
+  background: #0a0a0a;
+  border: 1px solid #1e1e1e;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 0.78rem;
 }
 
-.promptimize-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.promptimize-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #a855f7, #6366f1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.promptimize-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #ccc;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-}
-
-.promptimize-badge {
+.promptimize-thinking-label {
   font-size: 9px;
   font-weight: 800;
-  color: #a855f7;
-  background: rgba(168, 85, 247, 0.1);
-  border: 1px solid rgba(168, 85, 247, 0.2);
-  border-radius: 4px;
-  padding: 2px 6px;
+  color: #6366f1;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
 }
 
-/* Input area */
-.promptimize-input-wrapper {
-  position: relative;
-  margin-bottom: 8px;
-}
-
-.promptimize-input {
-  width: 100%;
-  background: #111;
-  border: 1px solid #252525;
-  border-radius: 12px;
-  padding: 10px 12px;
-  color: #ececec;
-  font-size: 0.82rem;
-  font-family: 'Courier New', Courier, monospace;
-  resize: none;
-  outline: none;
-  line-height: 1.5;
-  min-height: 72px;
-  box-sizing: border-box;
-  transition: border-color 0.2s ease;
+.promptimize-thinking-content {
+  color: #aaa;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 4px;
   scrollbar-width: thin;
-  scrollbar-color: #2a2a2a #111;
+  scrollbar-color: #2a2a2a #0a0a0a;
 }
 
-.promptimize-input::-webkit-scrollbar {
-  width: 6px;
+.promptimize-thinking-content::-webkit-scrollbar {
+  width: 5px;
 }
 
-.promptimize-input::-webkit-scrollbar-track {
-  background: #111;
-  border-radius: 10px;
-}
-
-.promptimize-input::-webkit-scrollbar-thumb {
+.promptimize-thinking-content::-webkit-scrollbar-thumb {
   background: #2a2a2a;
   border-radius: 10px;
-  border: 2px solid #111;
-}
-
-.promptimize-input::-webkit-scrollbar-thumb:hover {
-  background: #3a3a3a;
-}
-
-.promptimize-input:focus {
-  border-color: #a855f7;
-}
-
-.promptimize-input::placeholder {
-  color: #444;
-}
-
-/* Run button */
-.promptimize-run-btn {
-  width: 100%;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(168, 85, 247, 0.3);
-  background: rgba(168, 85, 247, 0.1);
-  color: #a855f7;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.2s ease;
-}
-
-.promptimize-run-btn:hover:not(:disabled) {
-  background: #a855f7;
-  color: #fff;
-  border-color: #a855f7;
-}
-
-.promptimize-run-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* Error */
-.promptimize-error {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
-  font-size: 11px;
-  color: #ff4d4d;
-}
-
-/* Output area */
-.promptimize-output {
-  margin-top: 12px;
-  background: #0d0d0d;
-  border: 1px solid #252525;
-  border-radius: 12px;
-  padding: 12px;
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.promptimize-output-label {
-  font-size: 9px;
-  font-weight: 800;
-  color: #a855f7;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  margin-bottom: 8px;
-}
-
-.promptimize-output-text {
-  font-size: 0.8rem;
-  font-family: 'Courier New', Courier, monospace;
-  color: #ccc;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-word;
-  margin-bottom: 12px;
-}
-
-.promptimize-output-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.promptimize-action-btn {
-  flex: 1;
-  padding: 8px 10px;
-  border-radius: 8px;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: all 0.2s ease;
-  letter-spacing: 0.5px;
-}
-
-.promptimize-action-btn.copy {
-  background: transparent;
-  border: 1px solid #333;
-  color: #888;
-}
-
-.promptimize-action-btn.copy:hover {
-  border-color: #555;
-  color: #fff;
-}
-
-.promptimize-action-btn.copy.copied {
-  border-color: #4ade80;
-  color: #4ade80;
-}
-
-.promptimize-action-btn.load {
-  background: rgba(168, 85, 247, 0.1);
-  border: 1px solid rgba(168, 85, 247, 0.3);
-  color: #a855f7;
-}
-
-.promptimize-action-btn.load:hover {
-  background: #a855f7;
-  border-color: #a855f7;
-  color: #fff;
-}
-
-.promptimize-action-btn.load.loaded {
-  background: rgba(74, 222, 128, 0.1);
-  border-color: #4ade80;
-  color: #4ade80;
-}
-
-.promptimize-action-btn.load.loaded:hover {
-  background: rgba(255, 77, 77, 0.1);
-  border-color: #ff4d4d;
-  color: #ff4d4d;
-}
-
-/* Spinner */
-.promptimize-spinner {
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(168, 85, 247, 0.3);
-  border-top: 2px solid #a855f7;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
