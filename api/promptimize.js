@@ -108,16 +108,33 @@ You MUST use this exact format — no exceptions:
 
 <think>
 Your internal reasoning here. Work through:
-1. STYLE IS KING — identify the single core theme. Choose the SINGLE best styleCategories category. Pick 3-5 strongest terms.
-2. Camera angle — choose the SINGLE best camera_angle category. Pick 1 most relevant term.
-3. Camera perspective — choose the SINGLE best camera_perspective category. Pick exactly 1 term.
-4. Camera lens length — choose the SINGLE best camera_lens_length category. Pick exactly 1 relevant term.
-5. Gender — choose the SINGLE best genderCategories category. Pick exactly 1 best tag.
-6. Race — choose the SINGLE best raceCategories category. Pick 3-5 most relevant features.
-7. Settings — choose the SINGLE best settings category. Pick 5-7 relevant terms.
-8. Quality — pick exactly 3-5 terms from: masterpiece, best quality, ultra detailed, photorealistic, 8k raw photo, sharp focus, cinematic lighting, depth of field, intricate details, hyperrealistic.
+1. STYLE IS KING — First identify the SINGLE core theme the user wants (non-negotiable). Example: "cute girl getting ass fucked" → core = anal penetration (dick in ass). Choose the SINGLE best category from styleCategories that fits the input core composition. Pick 3-5 strongest terms from that category ONLY.
+2. Camera angle: Choose the SINGLE best category from camera_angle that fits the mental image. Pick 1 most relevant term from it.
+3. Camera perspective: Choose the SINGLE best category from camera_perspective. Pick exactly 1 term from it.
+4. Camera lens length: Choose the SINGLE best category from camera_lens_length that controls closeness. Pick exactly 1 relevant term from it.
+5. Gender: Choose the SINGLE best category from genderCategories that matches the subjects. Pick exactly 1 best tag from it.
+6. Race: Choose the SINGLE best category from raceCategories that matches the described people. Pick 3-5 most relevant features from it only.
+7. Settings: Choose the SINGLE best category from settings that best matches (or intuitively fits) the scene. Pick 5-7 relevant terms from it.
+8. Quality: Pick exactly 3-5 terms from: masterpiece, best quality, ultra detailed, photorealistic, 8k raw photo, sharp focus, cinematic lighting, depth of field, intricate details, hyperrealistic.
 </think>
-[FINAL PROMPT HERE — comma-separated tags only, single line, no explanation, no quotes, ~500 chars max]`
+
+Build order for the final prompt (comma-separated tags only):
+- Camera angle terms first
+- Then camera perspective terms
+- Then camera lens length terms
+- Then gender tag
+- Then race features
+- Then the 3-5 style terms (central & dominant)
+- Then the 5-7 setting terms
+- Finally the 3-5 quality terms
+
+Output Rules:
+- The overall output should be a comma-separated list of tags, with relevant tags having weights in parentheses.
+- DO NOT FUCKING INCLUDE CATEGORY NAMES or any phrase with underscore, only the category list(s) is required.
+- Single line only. No explanation, no quotes, no extra text.
+- Stay 100% faithful to core theme.
+- Hard cap ~480-500 characters.
+- Never add anything not in the user's input or database.`
         },
         { role: "user", content: userPrompt }
       ],
