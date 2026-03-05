@@ -98,58 +98,78 @@ export default async function handler(req, res) {
       messages: [
         {
           role: "system",
-          content: `You are an expert SDXL/Flux prompt engineer with a trained Composition Database.
+          content: `You are an expert SDXL/Flux prompt engineer.
 
 DATABASE (use ONLY this data):
 ${database}
 
-MANDATORY internal reasoning (never output this):
+MANDATORY PROCESS — THINK STEP BY STEP IN DETAIL FIRST:
 
-1. STYLE IS KING — First identify the SINGLE core theme the user wants (non-negotiable). Example: "cute girl getting ass fucked" → core = anal penetration (dick in ass). Choose the SINGLE best category from styleCategories that fits the input core composition. Pick 3-5 strongest term from that category ONLY.
+1. STYLE IS KING — Identify the SINGLE non-negotiable core theme (e.g. "cute girl getting ass fucked" → dick in ass, anal penetration). Match to ONE category in styleCategories. Select exactly 3-5 strongest terms from it.
 
-  2. Camera angle: Choose the SINGLE best category from camera_angle that fits the mental image. Pick 1 most relevant term from it.
+2. Camera angle: Pick ONE best category from camera_angle. Select 1-2 most fitting terms.
 
-3. Camera perspective: Choose the SINGLE best category from camera_perspective. Pick exactly 1 term from it.
+3. Camera perspective: Pick ONE best category from camera_perspective. Select exactly 1 term.
 
-4. Camera lens length: Choose the SINGLE best category from camera_lens_length that controls closeness. Pick exactly 1 relevant term from it.
+4. Camera lens length: Pick ONE best category from camera_lens_length. Select exactly 1 term.
 
-5. Gender: Choose the SINGLE best category from genderCategories that matches the subjects. Pick exactly 1 best tag from it.
+5. Gender: Pick ONE best category from genderCategories. Select exactly 1 tag.
 
-6. Race: Choose the SINGLE best category from raceCategories that matches the described people. Pick 3-5 most relevant features from it only.
+6. Race: Pick ONE best category from raceCategories. Select 3-5 relevant features.
 
-7. Settings: Choose the SINGLE best category from settings that best matches (or intuitively fits) the scene. Pick 5-7 relevant terms from it.
+7. Settings: Pick ONE best category from settings. Select 5-7 relevant terms.
 
-8. Quality: Pick exactly 3-5 terms from: masterpiece, best quality, ultra detailed, photorealistic, 8k raw photo, sharp focus, cinematic lighting, depth of field, intricate details, hyperrealistic.
+8. Quality: Select exactly 3-5 from: masterpiece, best quality, ultra detailed, photorealistic, 8k raw photo, sharp focus, cinematic lighting, depth of field, intricate details, hyperrealistic.
 
-Build order for the final prompt (comma-separated tags only):
-- Camera angle terms first
-- Then camera perspective terms
-- Then camera lens length terms
-- Then gender tag
-- Then race features
-- Then the 3-5 style terms (central & dominant)
-- Then the 5-7 setting terms
-- Finally the 3-5 quality terms
+Build the final prompt in this exact order (comma-separated tags):
+- Camera angle terms
+- Camera perspective term
+- Camera lens length term
+- Gender tag
+- Race features
+- The 3-5 style terms (central & dominant)
+- The 5-7 setting terms
+- The 3-5 quality terms
 
-Output Rules:
-- The overall output should be a comma-separated list of tags, with relevant tags having weights in parentheses.
-- DO NOT FUCKING INCLUDE CATEGORY NAMES or any phrase with underscore, only the category list(s) is required
-- Single line only. No explanation, no quotes, no extra text.
-- Stay 100% faithful to core theme.
-- Hard cap ~500-520 characters.
-- Never add anything not in the user's input or database.`
+Use weights like (feature:1.2) where it makes sense for emphasis.
+
+Output Rules — IMPORTANT:
+- Think step-by-step in detail first (this goes into "thinking").
+- Then output ONLY valid JSON with exactly these two keys:
+{
+  "thinking": "your full detailed reasoning here\\nStep 1: ...\\nStep 2: ... etc. Use \\n for new lines.",
+  "final_prompt": "the clean comma-separated prompt string ONLY. No quotes around it, no extra text."
+}
+- Do NOT output anything else before or after the JSON.
+- final_prompt must be single line, ~500 chars max.
+- Stay 100% faithful to user input and database.`
         },
         { role: "user", content: userPrompt }
       ],
       model: "qwen/qwen3-32b",
-      temperature: 0.65,
-      max_tokens: 420,
+      temperature: 0.6,          // Slightly lower → more reliable structure
+      max_tokens: 600,
+      response_format: { type: "json_object" }   // ← This is the key line
     });
 
-    const result = completion.choices[0]?.message?.content || "";
-    return res.status(200).json({ 
-      optimized: result.replace(/^["']|["']$/g, '').trim() 
+    const rawContent = completion.choices[0]?.message?.content || '{}';
+    let parsed;
+
+    try {
+      parsed = JSON.parse(rawContent);
+    } catch (parseErr) {
+      console.error("JSON parse error:", parseErr, rawContent);
+      return res.status(200).json({
+        thinking: "Model output was invalid JSON. Using fallback reasoning.",
+        optimized: "masterpiece, best quality, ultra detailed, explicit nsfw scene"
+      });
+    }
+
+    return res.status(200).json({
+      thinking: parsed.thinking || "No detailed reasoning provided.",
+      optimized: (parsed.final_prompt || "").trim()
     });
+
   } catch (error) {
     console.error("Groq Error:", error);
     return res.status(500).json({ error: "Failed to optimize prompt" });
