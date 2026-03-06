@@ -137,7 +137,7 @@ Output your reasoning as natural flowing thought. Be thorough. Do NOT output the
 const OUTPUT_PROMPT = `You are an SDXL/Flux prompt builder. You will receive a reasoning analysis and must convert it into a final prompt.
 
 Rules — STRICT:
-- Output a single line of comma-separated tags ONLY.
+- Output a single line of comma-separated tags ONLY. DO NOT FUCKING OUTPUT THE REASONING ANALYSIS, ONLY THE FINAL PROMPT
 - No explanation, no intro, no labels, no quotes, no numbering, no category names.
 - Build order: camera angle term, camera perspective term, camera lens term, gender term, race terms, style terms, setting terms, quality terms.
 - Wrap key style tags in parentheses for emphasis e.g. (deep anal penetration).
