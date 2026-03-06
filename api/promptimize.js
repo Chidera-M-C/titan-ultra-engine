@@ -117,7 +117,7 @@ Build order for the final prompt (comma-separated tags only):
 
 Output Rules:
 - The overall output should be a comma-separated list of tags, with relevant tags having weights in parentheses.
-- DO NOT FUCKING INCLUDE CATEGORY NAMES or any phrase with underscore, only the category list(s) is required.
+- NEVER INCLUDE CATEGORY TITLE, for example "doggy_style," "low_angle," "cameraman_perspective." No underscore(_), only the category list(s) is required.
 - Single line only. No explanation, no quotes, no extra text.
 - Stay 100% faithful to core theme.
 - Hard cap ~480-500 characters.
