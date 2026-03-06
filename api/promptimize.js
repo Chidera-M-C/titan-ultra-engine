@@ -86,7 +86,7 @@ const settings = {
   "hospital": ["hospital room", "medical bed", "doctor patient fantasy", "clinical white room", "hospital gown", "monitor beeps background", "sterile hospital lighting", "bedridden scene"]
 };
 
-// Strip all object keys — send only arrays of values so the model never sees category names
+// Strip all object keys — model never sees category names with underscores
 function buildAnonymousDatabase(obj) {
   return Object.values(obj).map(v => Array.isArray(v) ? v : Object.values(v));
 }
@@ -114,41 +114,36 @@ SETTING OPTIONS (pick one group, 5-7 terms):
 ${buildAnonymousDatabase(settings).map((g, i) => `[${i + 1}] ${g.join(', ')}`).join('\n')}`;
 }
 
-const SYSTEM_PROMPT = () => `You are an expert SDXL/Flux prompt engineer with a trained Composition Database.
+// ─── CALL 1 SYSTEM PROMPT: pure reasoning only ───────────────────────────────
+const REASONING_PROMPT = () => `You are an expert SDXL/Flux prompt engineer analyzing a scene request.
 
-DATABASE (use ONLY terms from these numbered groups — never output a group number or group label):
+You have access to this composition database (numbered groups — never output group numbers in any result):
 ${formatDatabaseForPrompt()}
 
-You MUST use this exact format — no exceptions:
+Your job is to THINK THROUGH the scene and decide which terms to use. Work through each step:
 
-<think>
-Your internal reasoning here only, do not include the final result. Work through:
-1. STYLE IS KING — First identify the SINGLE core theme the user wants (non-negotiable). Example: "cute girl getting ass fucked" → core = anal penetration (dick in ass). Choose the SINGLE best category from styleCategories that fits the input core composition. Pick 3-5 strongest terms from that category ONLY.
-2. Camera angle: Choose the SINGLE best category from camera_angle that fits the mental image. Pick 1 most relevant term from it.
-3. Camera perspective: Choose the SINGLE best category from camera_perspective. Pick exactly 1 term from it.
-4. Camera lens length: Choose the SINGLE best category from camera_lens_length that controls closeness. Pick exactly 1 relevant term from it.
-5. Gender: Choose the SINGLE best category from genderCategories that matches the subjects. Pick exactly 1 best tag from it.
-6. Race: Choose the SINGLE best category from raceCategories that matches the described people. Pick 3-5 most relevant features from it only.
-7. Settings: Choose the SINGLE best category from settings that best matches (or intuitively fits) the scene. Pick 5-7 relevant terms from it.
-8. Quality: Pick exactly 3-5 terms from: masterpiece, best quality, ultra detailed, photorealistic, 8k raw photo, sharp focus, cinematic lighting, depth of field, intricate details, hyperrealistic.
-</think>
+1. STYLE IS KING — identify the single core theme. Which group from STYLE OPTIONS fits best? Pick 3-5 strongest terms from it.
+2. CAMERA ANGLE — which group from CAMERA ANGLE OPTIONS fits the mental image? Pick 1 term.
+3. CAMERA PERSPECTIVE — which group from CAMERA PERSPECTIVE OPTIONS? Pick 1 term.
+4. CAMERA LENS — which group from CAMERA LENS OPTIONS controls the closeness best? Pick 1 term.
+5. GENDER — which group from GENDER OPTIONS matches the subjects? Pick 1 term.
+6. RACE — which group from RACE OPTIONS matches? Pick 3-5 terms.
+7. SETTING — which group from SETTING OPTIONS fits the scene? Pick 5-7 terms.
+8. QUALITY — pick 3-5 from: masterpiece, best quality, ultra detailed, photorealistic, 8k raw photo, sharp focus, cinematic lighting, depth of field, intricate details, hyperrealistic.
 
-Build order for the final prompt (comma-separated tags only):
-- Camera angle terms first
-- Then camera perspective terms
-- Then camera lens length terms
-- Then gender tag
-- Then race features
-- Then the 3-5 style terms (central & dominant)
-- Then the 5-7 setting terms
-- Finally the 3-5 quality terms
+Output your reasoning as natural flowing thought. Be thorough. Do NOT output the final prompt here — reasoning only.`;
 
-Output Rules:
-- The overall output should be a comma-separated list of tags.
-- Single line only. No explanation, no quotes, no extra text.
-- Stay 100% faithful to core theme.
-- Hard cap ~480-500 characters.
-- Never add anything not in the user's input or database.`;
+// ─── CALL 2 SYSTEM PROMPT: final prompt only ─────────────────────────────────
+const OUTPUT_PROMPT = `You are an SDXL/Flux prompt builder. You will receive a reasoning analysis and must convert it into a final prompt.
+
+Rules — STRICT:
+- Output a single line of comma-separated tags ONLY.
+- No explanation, no intro, no labels, no quotes, no numbering, no category names.
+- Build order: camera angle term, camera perspective term, camera lens term, gender term, race terms, style terms, setting terms, quality terms.
+- Wrap key style tags in parentheses for emphasis e.g. (deep anal penetration).
+- Hard cap: 480-500 characters total.
+- Use ONLY the terms mentioned in the reasoning — do not invent new ones.
+- Your entire response must be the prompt and nothing else.`;
 
 function isRateLimit(error) {
   if (error?.status === 429) return true;
@@ -157,6 +152,22 @@ function isRateLimit(error) {
   if (typeof error?.message === 'string' && error.message.includes('429')) return true;
   if (typeof error?.message === 'string' && error.message.includes('rate_limit_exceeded')) return true;
   return false;
+}
+
+async function tryModels(groq, messages, stream = false) {
+  const models = ['llama-3.3-70b-versatile', 'qwen/qwen3-32b'];
+  for (let i = 0; i < models.length; i++) {
+    try {
+      console.log(`Trying model: ${models[i]}`);
+      return await groq.chat.completions.create({ messages, model: models[i], temperature: 0.65, max_tokens: 800, stream });
+    } catch (err) {
+      if (isRateLimit(err) && i < models.length - 1) {
+        console.warn(`Rate limited on ${models[i]}, falling back to ${models[i + 1]}`);
+        continue;
+      }
+      throw err;
+    }
+  }
 }
 
 export default async function handler(req, res) {
@@ -171,61 +182,51 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing input' });
   }
 
-  const messages = [
-    { role: "system", content: SYSTEM_PROMPT() },
-    { role: "user", content: userPrompt }
-  ];
-
+  // SSE headers
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
 
-  const models = ['llama-3.3-70b-versatile', 'qwen/qwen3-32b'];
+  try {
+    // ── CALL 1: Stream the reasoning (thinking box) ──────────────────────────
+    const reasoningMessages = [
+      { role: 'system', content: REASONING_PROMPT() },
+      { role: 'user', content: userPrompt }
+    ];
 
-  for (let i = 0; i < models.length; i++) {
-    const model = models[i];
-    try {
-      console.log(`Promptimize: trying model ${model}`);
+    const reasoningStream = await tryModels(groq, reasoningMessages, true);
+    let reasoningText = '';
 
-      const stream = await groq.chat.completions.create({
-        messages,
-        model,
-        temperature: 0.65,
-        max_tokens: 1200,
-        stream: true,
-      });
-
-      let fullText = '';
-
-      for await (const chunk of stream) {
-        const delta = chunk.choices[0]?.delta?.content || '';
-        if (!delta) continue;
-        fullText += delta;
-        res.write(`data: ${JSON.stringify({ chunk: delta })}\n\n`);
-      }
-
-      const thinkMatch = fullText.match(/<think>([\s\S]*?)<\/think>/i);
-      const thinking = thinkMatch ? thinkMatch[1].trim() : '';
-      const afterThink = fullText.replace(/<think>[\s\S]*?<\/think>/i, '').trim();
-      const optimized = afterThink.replace(/^["']|["']$/g, '').trim();
-
-      res.write(`data: ${JSON.stringify({ done: true, thinking, optimized })}\n\n`);
-      res.end();
-      return;
-
-    } catch (error) {
-      console.warn(`Promptimize error on ${model}:`, error?.status, error?.error?.error?.code);
-
-      if (isRateLimit(error) && i < models.length - 1) {
-        console.log(`Rate limited on ${model} — falling back to ${models[i + 1]}`);
-        res.write(`data: ${JSON.stringify({ chunk: '' })}\n\n`);
-        continue;
-      }
-
-      console.error(`Promptimize failed on all models:`, error);
-      res.write(`data: ${JSON.stringify({ error: "Failed to optimize prompt. Please try again." })}\n\n`);
-      res.end();
-      return;
+    for await (const chunk of reasoningStream) {
+      const delta = chunk.choices[0]?.delta?.content || '';
+      if (!delta) continue;
+      reasoningText += delta;
+      // Send chunks tagged as 'thinking' so client knows which box to fill
+      res.write(`data: ${JSON.stringify({ type: 'thinking', chunk: delta })}\n\n`);
     }
+
+    // Signal thinking is done
+    res.write(`data: ${JSON.stringify({ type: 'thinking_done' })}\n\n`);
+
+    // ── CALL 2: Generate final prompt from reasoning (no stream — clean output) ──
+    const outputMessages = [
+      { role: 'system', content: OUTPUT_PROMPT },
+      {
+        role: 'user',
+        content: `Here is the reasoning analysis for the scene "${userPrompt}":\n\n${reasoningText}\n\nNow output the final comma-separated prompt. Single line only, nothing else.`
+      }
+    ];
+
+    const outputResponse = await tryModels(groq, outputMessages, false);
+    const optimized = outputResponse.choices[0]?.message?.content?.trim().replace(/^["']|["']$/g, '') || '';
+
+    // Send final result
+    res.write(`data: ${JSON.stringify({ type: 'result', optimized })}\n\n`);
+    res.end();
+
+  } catch (error) {
+    console.error('Promptimize fatal error:', error);
+    res.write(`data: ${JSON.stringify({ error: 'Failed to optimize prompt. Please try again.' })}\n\n`);
+    res.end();
   }
 }
