@@ -3,17 +3,17 @@ import { Wand2, Copy, ArrowUpRight, Check, AlertCircle, Brain } from 'lucide-rea
 import './Promptimize.css';
 
 export default function Promptimize({ onLoad, currentPrompt }) {
-  const [input, setInput]       = useState('');
-  const [output, setOutput]     = useState('');
-  const [thinking, setThinking] = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [copied, setCopied]     = useState(false);
-  const [error, setError]       = useState(null);
+  const [input, setInput]         = useState('');
+  const [output, setOutput]       = useState('');
+  const [thinking, setThinking]   = useState('');
+  const [loading, setLoading]     = useState(false);
+  const [copied, setCopied]       = useState(false);
+  const [error, setError]         = useState(null);
   const [thinkDone, setThinkDone] = useState(false);
 
   const thinkBoxRef = useRef(null);
 
-  // Auto-scroll the think box as new content streams in
+  // Auto-scroll think box as content streams in
   useEffect(() => {
     if (thinkBoxRef.current) {
       thinkBoxRef.current.scrollTop = thinkBoxRef.current.scrollHeight;
@@ -40,7 +40,6 @@ export default function Promptimize({ onLoad, currentPrompt }) {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
-      let rawAccumulated = '';
 
       while (true) {
         const { done, value } = await reader.read();
@@ -48,48 +47,43 @@ export default function Promptimize({ onLoad, currentPrompt }) {
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
-        buffer = lines.pop(); // keep incomplete line in buffer
+        buffer = lines.pop(); // hold incomplete line
 
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
           const jsonStr = line.slice(6).trim();
           if (!jsonStr) continue;
 
+          let parsed;
           try {
-            const parsed = JSON.parse(jsonStr);
+            parsed = JSON.parse(jsonStr);
+          } catch {
+            console.warn('SSE parse error, skipping line:', jsonStr);
+            continue;
+          }
 
-            if (parsed.error) {
-              throw new Error(parsed.error);
-            }
+          if (parsed.error) {
+            throw new Error(parsed.error);
+          }
 
-            if (parsed.done) {
-              // Final parsed result from server
-              setThinking(parsed.thinking || rawAccumulated);
-              setOutput(parsed.optimized || '');
-              setThinkDone(true);
-            } else if (parsed.chunk) {
-              // Stream raw chunks — show thinking content live
-              rawAccumulated += parsed.chunk;
+          // type: 'thinking' — stream reasoning chunks into think box
+          if (parsed.type === 'thinking' && parsed.chunk) {
+            setThinking(prev => prev + parsed.chunk);
+          }
 
-              // Extract and display only the <think> portion live
-              const thinkMatch = rawAccumulated.match(/<think>([\s\S]*)/i);
-              if (thinkMatch) {
-                // Remove closing tag if present
-                const thinkContent = thinkMatch[1].replace(/<\/think>[\s\S]*/i, '');
-                setThinking(thinkContent);
-              }
-            }
-          } catch (parseErr) {
-            if (parseErr.message !== 'Failed to optimize prompt. Please try again.') {
-              console.warn('SSE parse error:', parseErr);
-            } else {
-              throw parseErr;
-            }
+          // type: 'thinking_done' — Call 1 finished, Call 2 is running
+          if (parsed.type === 'thinking_done') {
+            setThinkDone(true);
+          }
+
+          // type: 'result' — Call 2 finished, show final prompt
+          if (parsed.type === 'result') {
+            setOutput(parsed.optimized || '');
           }
         }
       }
     } catch (err) {
-      console.error("Promptimize Error:", err);
+      console.error('Promptimize Error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -115,7 +109,11 @@ export default function Promptimize({ onLoad, currentPrompt }) {
     }
   };
 
+  // Think box visible while loading OR after if thinking content exists
   const showThinkBox = loading || (thinkDone && thinking);
+
+  // Loading has two phases now — thinking (Call 1) and building (Call 2)
+  const loadingLabel = loading && thinkDone ? 'Building prompt...' : 'Thinking...';
 
   return (
     <div className="promptimize-wrapper">
@@ -145,7 +143,7 @@ export default function Promptimize({ onLoad, currentPrompt }) {
         {loading ? (
           <>
             <div className="promptimize-spinner" />
-            <span>Thinking...</span>
+            <span>{loadingLabel}</span>
           </>
         ) : (
           <>
@@ -162,12 +160,12 @@ export default function Promptimize({ onLoad, currentPrompt }) {
         </div>
       )}
 
-      {/* THINKING BOX — visible while loading or after if thinking content exists */}
+      {/* THINKING BOX — streams Call 1 live */}
       {showThinkBox && (
         <div className={`promptimize-think-box ${thinkDone ? 'think-done' : 'think-active'}`}>
           <div className="think-box-header">
-            <Brain size={11} className={loading ? 'brain-pulse' : ''} />
-            <span>{loading ? 'Thinking...' : 'Thought process'}</span>
+            <Brain size={11} className={!thinkDone ? 'brain-pulse' : ''} />
+            <span>{!thinkDone ? 'Thinking...' : 'Thought process'}</span>
             {thinkDone && <span className="think-done-badge">✓ done</span>}
           </div>
           <div className="think-box-content" ref={thinkBoxRef}>
@@ -176,8 +174,8 @@ export default function Promptimize({ onLoad, currentPrompt }) {
         </div>
       )}
 
-      {/* OUTPUT — only shown when fully done */}
-      {output && thinkDone && (
+      {/* OUTPUT — only shown after Call 2 returns result */}
+      {output && (
         <div className="promptimize-output">
           <div className="promptimize-output-label">Optimized Prompt</div>
           <p className="promptimize-output-text">{output}</p>
