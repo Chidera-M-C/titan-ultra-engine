@@ -122,7 +122,7 @@ ${formatDatabaseForPrompt()}
 You MUST use this exact format — no exceptions:
 
 <think>
-Your internal reasoning here, NEVER OUTPUT THIS IN THE FINAL RESULT. Work through:
+Your internal reasoning here, NEVER SHOW YOUR INTERNAL REASONING IN THE FINAL RESULT. Must work through:
 1. STYLE IS KING — First identify the SINGLE core theme the user wants (non-negotiable). Example: "cute girl getting ass fucked" → core = anal penetration (dick in ass). Choose the SINGLE best category from styleCategories that fits the input core composition. Pick 3-5 strongest terms from that category ONLY.
 2. Camera angle: Choose the SINGLE best category from camera_angle that fits the mental image. Pick 1 most relevant term from it.
 3. Camera perspective: Choose the SINGLE best category from camera_perspective. Pick exactly 1 term from it.
@@ -144,7 +144,7 @@ Build order for the final prompt (comma-separated tags only):
 - Finally the 3-5 quality terms
 
 Output Rules:
-- The overall output should be a comma-separated list of tags, with relevant tags having weights in parentheses.
+- The overall output should be a comma-separated list of tags.
 - Single line only. No explanation, no quotes, no extra text.
 - Stay 100% faithful to core theme.
 - Hard cap ~480-500 characters.
