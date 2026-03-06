@@ -86,44 +86,64 @@ const settings = {
   "hospital": ["hospital room", "medical bed", "doctor patient fantasy", "clinical white room", "hospital gown", "monitor beeps background", "sterile hospital lighting", "bedridden scene"]
 };
 
-const SYSTEM_PROMPT = (database) => `You are an expert SDXL/Flux prompt engineer with a trained Composition Database.
+// Strip all object keys — send only arrays of values so the model never sees category names
+function buildAnonymousDatabase(obj) {
+  return Object.values(obj).map(v => Array.isArray(v) ? v : Object.values(v));
+}
 
-DATABASE (use ONLY this data):
-${database}
+function formatDatabaseForPrompt() {
+  return `STYLE OPTIONS (pick one group, 3-5 terms):
+${buildAnonymousDatabase(styleCategories).map((g, i) => `[${i + 1}] ${g.join(', ')}`).join('\n')}
+
+CAMERA ANGLE OPTIONS (pick one group, 1 term):
+${buildAnonymousDatabase(camera_angle).map((g, i) => `[${i + 1}] ${g.join(', ')}`).join('\n')}
+
+CAMERA PERSPECTIVE OPTIONS (pick one group, 1 term):
+${buildAnonymousDatabase(camera_perspective).map((g, i) => `[${i + 1}] ${g.join(', ')}`).join('\n')}
+
+CAMERA LENS OPTIONS (pick one group, 1 term):
+${buildAnonymousDatabase(camera_lens_length).map((g, i) => `[${i + 1}] ${g.join(', ')}`).join('\n')}
+
+GENDER OPTIONS (pick one group, 1 term):
+${buildAnonymousDatabase(genderCategories).map((g, i) => `[${i + 1}] ${g.join(', ')}`).join('\n')}
+
+RACE OPTIONS (pick one group, 3-5 terms):
+${buildAnonymousDatabase(raceCategories).map((g, i) => `[${i + 1}] ${g.join(', ')}`).join('\n')}
+
+SETTING OPTIONS (pick one group, 5-7 terms):
+${buildAnonymousDatabase(settings).map((g, i) => `[${i + 1}] ${g.join(', ')}`).join('\n')}`;
+}
+
+const SYSTEM_PROMPT = () => `You are an expert SDXL/Flux prompt engineer with a trained Composition Database.
+
+DATABASE (use ONLY terms from these numbered groups — never output a group number or group label):
+${formatDatabaseForPrompt()}
 
 You MUST use this exact format — no exceptions:
 
 <think>
-Your internal reasoning here, NEVER OUTPUT THIS IN THE FINAL RESULT. Work through:
-1. STYLE IS KING — First identify the SINGLE core theme the user wants (non-negotiable). Example: "cute girl getting ass fucked" → core = anal penetration (dick in ass). Choose the SINGLE best category from styleCategories that fits the input core composition. Pick 3-5 strongest terms from that category ONLY.
-2. Camera angle: Choose the SINGLE best category from camera_angle that fits the mental image. Pick 1 most relevant term from it.
-3. Camera perspective: Choose the SINGLE best category from camera_perspective. Pick exactly 1 term from it.
-4. Camera lens length: Choose the SINGLE best category from camera_lens_length that controls closeness. Pick exactly 1 relevant term from it.
-5. Gender: Choose the SINGLE best category from genderCategories that matches the subjects. Pick exactly 1 best tag from it.
-6. Race: Choose the SINGLE best category from raceCategories that matches the described people. Pick 3-5 most relevant features from it only.
-7. Settings: Choose the SINGLE best category from settings that best matches (or intuitively fits) the scene. Pick 5-7 relevant terms from it.
-8. Quality: Pick exactly 3-5 terms from: masterpiece, best quality, ultra detailed, photorealistic, 8k raw photo, sharp focus, cinematic lighting, depth of field, intricate details, hyperrealistic.
+Work through each section internally. NEVER output your thinking, group numbers or labels in the final result:
+1. STYLE IS KING — identify the SINGLE core theme. Pick the one group from STYLE OPTIONS that best fits. Select 3-5 strongest terms from it ONLY.
+2. Camera angle — pick the best group from CAMERA ANGLE OPTIONS. Select 1 term.
+3. Camera perspective — pick the best group from CAMERA PERSPECTIVE OPTIONS. Select 1 term.
+4. Camera lens — pick the best group from CAMERA LENS OPTIONS. Select 1 term.
+5. Gender — pick the best group from GENDER OPTIONS. Select 1 term.
+6. Race — pick the best group from RACE OPTIONS. Select 3-5 terms.
+7. Setting — pick the best group from SETTING OPTIONS. Select 5-7 terms.
+8. Quality — pick 3-5 from: masterpiece, best quality, ultra detailed, photorealistic, 8k raw photo, sharp focus, cinematic lighting, depth of field, intricate details, hyperrealistic.
 </think>
 
-Build order for the final prompt (comma-separated tags only):
-- Camera angle terms first
-- Then camera perspective terms
-- Then camera lens length terms
-- Then gender tag
-- Then race features
-- Then the 3-5 style terms (central & dominant)
-- Then the 5-7 setting terms
-- Finally the 3-5 quality terms
+Build the final prompt in this order (comma-separated tags, single line):
+camera angle term, camera perspective term, camera lens term, gender term, race terms, style terms, setting terms, quality terms
 
 Output Rules:
-- The overall output should be a comma-separated list of tags, with relevant tags having weights in parentheses.
-- NEVER INCLUDE CATEGORY TITLE, for example "doggy_style," "low_angle," "cameraman_perspective." No underscore(_), only the category list(s) is required.
+- Comma-separated tags only. No labels, no numbers, no group names, no underscores.
+- Wrap important tags in parentheses for weight e.g. (deep anal penetration).
 - Single line only. No explanation, no quotes, no extra text.
 - Stay 100% faithful to core theme.
 - Hard cap ~480-500 characters.
-- Never add anything not in the user's input or database.`;
+- Never invent terms not found in the database above.`;
 
-// Detect 429 rate limit from Groq SDK error — check every possible location
 function isRateLimit(error) {
   if (error?.status === 429) return true;
   if (error?.code === 'rate_limit_exceeded') return true;
@@ -145,22 +165,11 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing input' });
   }
 
-  const database = JSON.stringify({
-    styleCategories,
-    camera_angle,
-    camera_perspective,
-    camera_lens_length,
-    genderCategories,
-    raceCategories,
-    settings
-  });
-
   const messages = [
-    { role: "system", content: SYSTEM_PROMPT(database) },
+    { role: "system", content: SYSTEM_PROMPT() },
     { role: "user", content: userPrompt }
   ];
 
-  // SSE headers
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
@@ -189,7 +198,6 @@ export default async function handler(req, res) {
         res.write(`data: ${JSON.stringify({ chunk: delta })}\n\n`);
       }
 
-      // Parse think block vs final output
       const thinkMatch = fullText.match(/<think>([\s\S]*?)<\/think>/i);
       const thinking = thinkMatch ? thinkMatch[1].trim() : '';
       const afterThink = fullText.replace(/<think>[\s\S]*?<\/think>/i, '').trim();
@@ -204,7 +212,6 @@ export default async function handler(req, res) {
 
       if (isRateLimit(error) && i < models.length - 1) {
         console.log(`Rate limited on ${model} — falling back to ${models[i + 1]}`);
-        // Send a neutral chunk so the client knows we're still working
         res.write(`data: ${JSON.stringify({ chunk: '' })}\n\n`);
         continue;
       }
