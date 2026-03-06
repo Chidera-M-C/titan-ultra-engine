@@ -122,14 +122,14 @@ ${formatDatabaseForPrompt()}
 
 Your job is to THINK THROUGH the scene and decide which terms to use. Work through each step:
 
-1. STYLE IS KING — identify the single core theme. Which group from STYLE OPTIONS fits best? Pick 3-5 strongest terms from it.
-2. CAMERA ANGLE — which group from CAMERA ANGLE OPTIONS fits the mental image? Pick 1 term.
-3. CAMERA PERSPECTIVE — which group from CAMERA PERSPECTIVE OPTIONS? Pick 1 term.
-4. CAMERA LENS — which group from CAMERA LENS OPTIONS controls the closeness best? Pick 1 term.
-5. GENDER — which group from GENDER OPTIONS matches the subjects? Pick 1 term.
-6. RACE — which group from RACE OPTIONS matches? Pick 3-5 terms.
-7. SETTING — which group from SETTING OPTIONS fits the scene? Pick 5-7 terms.
-8. QUALITY — pick 3-5 from: masterpiece, best quality, ultra detailed, photorealistic, 8k raw photo, sharp focus, cinematic lighting, depth of field, intricate details, hyperrealistic.
+1. STYLE IS KING — First identify the SINGLE core theme the user wants (non-negotiable). Example: "cute girl getting ass fucked" → core = anal penetration (dick in ass). Choose the SINGLE best category from styleCategories that fits the input core composition. Pick 3-5 strongest terms from that category ONLY.
+2. Camera angle: Choose the SINGLE best category from camera_angle that fits the mental image. Pick 1 most relevant term from it.
+3. Camera perspective: Choose the SINGLE best category from camera_perspective. Pick exactly 1 term from it.
+4. Camera lens length: Choose the SINGLE best category from camera_lens_length that controls closeness. Pick exactly 1 relevant term from it.
+5. Gender: Choose the SINGLE best category from genderCategories that matches the subjects. Pick exactly 1 best tag from it.
+6. Race: Choose the SINGLE best category from raceCategories that matches the described people. Pick 3-5 most relevant features from it only.
+7. Settings: Choose the SINGLE best category from settings that best matches (or intuitively fits) the scene. Pick 5-7 relevant terms from it.
+8. Quality: Pick exactly 3-5 terms from: masterpiece, best quality, ultra detailed, photorealistic, 8k raw photo, sharp focus, cinematic lighting, depth of field, intricate details, hyperrealistic.
 
 Output your reasoning as natural flowing thought. Be thorough. Do NOT output the final prompt here — reasoning only.`;
 
