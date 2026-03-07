@@ -118,6 +118,7 @@ function TabContent({ details, pack, onSuccess }) {
 
   const handleSubmit = async () => {
     const userId = user?.id;
+    const userEmail = user?.email;
     console.log('handleSubmit fired', { receiptFile, userId, submitting });
     if (!receiptFile || !userId || submitting) return;
     console.log('passed guards, calling API...');
@@ -127,6 +128,7 @@ function TabContent({ details, pack, onSuccess }) {
       const form = new FormData();
       form.append('receipt', receiptFile);
       form.append('userId',  userId);
+      form.append('email',   userEmail);
       form.append('credits', pack.credits);
       form.append('price',   pack.price);
       form.append('pack',    pack.name);
