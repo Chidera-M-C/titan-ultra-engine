@@ -160,7 +160,7 @@ export default function App() {
 
   // Bank transfer handler — NEW
   const handleBankTransfer = (pack) => {
-    console.log('Bank transfer clicked', pack);
+    setTopUpModalOpen(false);
     setBankTransferPack(pack);
     setBankTransferOpen(true);
   };
