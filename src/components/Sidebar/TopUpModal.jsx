@@ -11,6 +11,7 @@ const CREDIT_PACKS = [
 ];
 
 export default function TopUpModal({ isOpen, onClose, onSelect, userId, onCreditsUpdated }) {
+  console.log('TopUpModal props:', { isOpen, userId });
   const [loadingPackId, setLoadingPackId] = useState(null);
   const [bankPack, setBankPack] = useState(null);
 
