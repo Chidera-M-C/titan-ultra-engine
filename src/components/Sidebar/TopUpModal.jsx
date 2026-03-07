@@ -89,7 +89,7 @@ export default function TopUpModal({ isOpen, onClose, onSelect }) {
                     <span>Processing...</span>
                   </>
                 ) : (
-                  pack.popular ? 'Get Started' : 'Choose Pack'
+                  pack.popular ? 'Pay via Crypto' : 'Pay via Crypto'
                 )}
               </button>
 
