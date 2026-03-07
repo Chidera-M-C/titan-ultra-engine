@@ -463,13 +463,3 @@
     border-radius: 20px;
   }
 }
-
-/* Dark scrollbar */
-.modal-content {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(168, 85, 247, 0.3) transparent;
-}
-.modal-content::-webkit-scrollbar { width: 4px; }
-.modal-content::-webkit-scrollbar-track { background: transparent; }
-.modal-content::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.3); border-radius: 999px; }
-.modal-content::-webkit-scrollbar-thumb:hover { background: rgba(168, 85, 247, 0.5); }
