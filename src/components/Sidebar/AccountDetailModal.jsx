@@ -8,7 +8,7 @@ export default function AccountDetailModal({ isOpen, onClose, selectedPack }) {
   return createPortal(
     <div className="account-detail-overlay" onClick={onClose}>
       <div className="account-detail-content" onClick={e => e.stopPropagation()}>
-        {/* Content coming soon */}
+        <p style={{ color: 'white' }}>Modal works — {selectedPack?.name}</p>
       </div>
     </div>,
     document.body
