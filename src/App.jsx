@@ -11,7 +11,7 @@ import EditModal from './components/Shared/EditModal';
 import ImageViewModal from './components/Shared/ImageViewModal';
 import LoginModal from './components/LoginModal';
 import TopUpModal from './components/Sidebar/TopUpModal';
-import AccountDetailModal from './components/Shared/AccountDetailModal'; // NEW
+import AccountDetailModal from './components/Sidebar/AccountDetailModal'; // NEW
 import ExploreView from './views/ExploreView';
 import CharacterView from './views/CharacterView';
 import MyImagesView from './views/MyImagesView';
