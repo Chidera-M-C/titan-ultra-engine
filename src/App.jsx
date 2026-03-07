@@ -10,7 +10,8 @@ import ResultModal from './components/Shared/ResultModal';
 import EditModal from './components/Shared/EditModal';
 import ImageViewModal from './components/Shared/ImageViewModal';
 import LoginModal from './components/LoginModal';
-import TopUpModal from './components/Sidebar/TopUpModal'; 
+import TopUpModal from './components/Sidebar/TopUpModal';
+import AccountDetailModal from './components/Shared/AccountDetailModal'; // NEW
 import ExploreView from './views/ExploreView';
 import CharacterView from './views/CharacterView';
 import MyImagesView from './views/MyImagesView';
@@ -32,9 +33,13 @@ export default function App() {
   const [viewImageModalOpen, setViewImageModalOpen] = useState(false);
   const [viewingImageUrl, setViewingImageUrl] = useState(null);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
-  const [topUpModalOpen, setTopUpModalOpen] = useState(false); 
+  const [topUpModalOpen, setTopUpModalOpen] = useState(false);
   const [promptCollapsed, setPromptCollapsed] = useState(false);
   const [exploreRefreshKey, setExploreRefreshKey] = useState(0);
+
+  // Bank transfer state — NEW
+  const [bankTransferPack, setBankTransferPack] = useState(null);
+  const [bankTransferOpen, setBankTransferOpen] = useState(false);
 
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
@@ -127,11 +132,7 @@ export default function App() {
   };
 
   const handleTopUpPurchase = async (pack) => {
-    if (!user) {
-      setLoginModalOpen(true);
-      return;
-    }
-
+    if (!user) { setLoginModalOpen(true); return; }
     try {
       const response = await fetch('/api/payment-webhook', {
         method: 'POST',
@@ -142,9 +143,7 @@ export default function App() {
           credits: pack.credits
         })
       });
-
       const data = await response.json();
-
       if (data.url) {
         window.location.href = data.url;
       } else {
@@ -155,6 +154,12 @@ export default function App() {
       console.error("Payment Error:", err);
       alert("Error: " + err.message);
     }
+  };
+
+  // Bank transfer handler — NEW
+  const handleBankTransfer = (pack) => {
+    setBankTransferPack(pack);
+    setBankTransferOpen(true);
   };
 
   const generateImage = async () => {
@@ -312,8 +317,21 @@ export default function App() {
         </main>
 
         <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
-        
-        <TopUpModal isOpen={topUpModalOpen} onClose={() => setTopUpModalOpen(false)} onSelect={handleTopUpPurchase} />
+
+        {/* Crypto payment modal */}
+        <TopUpModal
+          isOpen={topUpModalOpen}
+          onClose={() => setTopUpModalOpen(false)}
+          onSelect={handleTopUpPurchase}
+          onBankTransfer={handleBankTransfer}  {/* NEW */}
+        />
+
+        {/* Bank transfer modal — NEW */}
+        <AccountDetailModal
+          isOpen={bankTransferOpen}
+          onClose={() => setBankTransferOpen(false)}
+          selectedPack={bankTransferPack}
+        />
 
         {(viewState === 'result' || loading || image || error) && (
           <ResultModal
