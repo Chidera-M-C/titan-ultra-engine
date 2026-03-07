@@ -11,7 +11,6 @@ import EditModal from './components/Shared/EditModal';
 import ImageViewModal from './components/Shared/ImageViewModal';
 import LoginModal from './components/LoginModal';
 import TopUpModal from './components/Sidebar/TopUpModal';
-import AccountDetailModal from './components/Sidebar/AccountDetailModal'; // NEW
 import ExploreView from './views/ExploreView';
 import CharacterView from './views/CharacterView';
 import MyImagesView from './views/MyImagesView';
@@ -157,13 +156,6 @@ export default function App() {
       alert("Error: " + err.message);
     }
   };
-
-  // Bank transfer handler — NEW
-const handleBankTransfer = (pack) => {
-  setTopUpModalOpen(false);
-  setBankTransferPack(pack);
-  setBankTransferOpen(true);
-};
 
   const generateImage = async () => {
     if (!user) { setLoginModalOpen(true); return; }
@@ -326,7 +318,6 @@ const handleBankTransfer = (pack) => {
           isOpen={topUpModalOpen}
           onClose={() => setTopUpModalOpen(false)}
           onSelect={handleTopUpPurchase}
-          onBankTransfer={handleBankTransfer}
           userId={user?.id}
           onCreditsUpdated={setCredits}
         />
