@@ -115,7 +115,7 @@ export default function TopUpModal({ isOpen, onClose, onSelect, userId, onCredit
       <AccountDetailModal
         pack={bankPack}
         onClose={() => setBankPack(null)}
-        userId={userId}
+        userId={bankPack?.userId}
         onCreditsUpdated={onCreditsUpdated}
       />
 
