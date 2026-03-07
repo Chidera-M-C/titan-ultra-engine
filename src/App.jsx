@@ -296,7 +296,7 @@ export default function App() {
           isOpen={topUpModalOpen}
           onClose={() => setTopUpModalOpen(false)}
           onSelect={handleTopUpPurchase}
-          userId={user?.id}
+          userId={user?.id ?? null}
           onCreditsUpdated={setCredits}
         />
 
