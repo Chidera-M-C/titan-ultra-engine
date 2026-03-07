@@ -30,12 +30,6 @@ export default function TopUpModal({ isOpen, onClose, onSelect, onBankTransfer }
     setLoadingPackId(null);
   };
 
-  const handleBankTransfer = (e, pack) => {
-    e.stopPropagation(); // prevent card click from also triggering crypto flow
-    if (onBankTransfer) onBankTransfer(pack);
-    onClose();
-  };
-
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -92,11 +86,16 @@ export default function TopUpModal({ isOpen, onClose, onSelect, onBankTransfer }
                 )}
               </button>
 
-              {/* Secondary: Bank transfer */}
+              {/* Secondary: Bank transfer — fully inlined to guarantee stopPropagation fires first */}
               <button
                 className="bank-transfer-btn"
                 disabled={loadingPackId !== null}
-                onClick={(e) => handleBankTransfer(e, pack)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  if (onBankTransfer) onBankTransfer(pack);
+                  onClose();
+                }}
               >
                 <Building2 size={12} />
                 <span>Pay via Bank Transfer</span>
