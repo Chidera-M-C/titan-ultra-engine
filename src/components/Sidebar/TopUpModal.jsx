@@ -10,7 +10,7 @@ const CREDIT_PACKS = [
   { id: 'master',  name: 'Master',   credits: 1500, price: 100, description: 'Best value for heavy users.',   popular: false }
 ];
 
-export default function TopUpModal({ isOpen, onClose, onSelect }) {
+export default function TopUpModal({ isOpen, onClose, onSelect, userId, onCreditsUpdated }) {
   const [loadingPackId, setLoadingPackId] = useState(null);
   const [bankPack, setBankPack] = useState(null);
 
@@ -115,6 +115,8 @@ export default function TopUpModal({ isOpen, onClose, onSelect }) {
       <AccountDetailModal
         pack={bankPack}
         onClose={() => setBankPack(null)}
+        userId={userId}
+        onCreditsUpdated={onCreditsUpdated}
       />
 
     </div>,
