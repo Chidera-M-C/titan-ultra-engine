@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Zap, Loader2, Building2 } from 'lucide-react';
 import './TopUpModal.css';
+import AccountDetailModal from './AccountDetailModal';
 
 const CREDIT_PACKS = [
   { id: 'starter', name: 'Starter',  credits: 100,  price: 10,  description: 'Perfect for quick experiments.', popular: false },
@@ -9,29 +10,16 @@ const CREDIT_PACKS = [
   { id: 'master',  name: 'Master',   credits: 1500, price: 100, description: 'Best value for heavy users.',   popular: false }
 ];
 
-function AccountDetailModal({ pack, onClose }) {
-  return (
-    <div className="account-detail-overlay" onClick={onClose}>
-      <div className="account-detail-box" onClick={e => e.stopPropagation()}>
-        <button className="account-detail-close" onClick={onClose} aria-label="Close">
-          <X size={16} />
-        </button>
-        <p style={{ color: 'white' }}>Account details for {pack.name} — ${pack.price}</p>
-      </div>
-    </div>
-  );
-}
-
 export default function TopUpModal({ isOpen, onClose, onSelect }) {
   const [loadingPackId, setLoadingPackId] = useState(null);
-  const [bankPack, setBankPack] = useState(null); // which pack triggered bank transfer
+  const [bankPack, setBankPack] = useState(null);
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
-      setBankPack(null); // reset on close
+      setBankPack(null);
     }
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
@@ -47,7 +35,8 @@ export default function TopUpModal({ isOpen, onClose, onSelect }) {
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      {/* Main TopUpModal — blurred when account detail is open */}
+
+      {/* TopUpModal — blurs when AccountDetailModal is open */}
       <div
         className={`modal-content ${bankPack ? 'modal-content--blurred' : ''}`}
         onClick={e => e.stopPropagation()}
@@ -122,13 +111,12 @@ export default function TopUpModal({ isOpen, onClose, onSelect }) {
         <p className="modal-footer">Secure payments powered by NOWPayments</p>
       </div>
 
-      {/* AccountDetailModal — floats on top, TopUpModal stays blurred behind */}
-      {bankPack && (
-        <AccountDetailModal
-          pack={bankPack}
-          onClose={() => setBankPack(null)}
-        />
-      )}
+      {/* AccountDetailModal floats on top */}
+      <AccountDetailModal
+        pack={bankPack}
+        onClose={() => setBankPack(null)}
+      />
+
     </div>,
     document.body
   );
