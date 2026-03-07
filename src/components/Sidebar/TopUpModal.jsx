@@ -70,7 +70,6 @@ export default function TopUpModal({ isOpen, onClose, onSelect, onBankTransfer }
 
               <p className="pack-desc">{pack.description}</p>
 
-              {/* Primary: Crypto payment */}
               <button
                 className="select-pack-btn"
                 disabled={loadingPackId !== null}
@@ -86,11 +85,10 @@ export default function TopUpModal({ isOpen, onClose, onSelect, onBankTransfer }
                 )}
               </button>
 
-              {/* Secondary: Bank transfer — TEMPORARY ALERT TO PROVE CLICK WORKS */}
               <button
                 className="bank-transfer-btn"
+                disabled={loadingPackId !== null}
                 onClick={() => {
-                  alert(`Bank transfer clicked for ${pack.name}!`); // ← REMOVE THIS LINE AFTER TEST
                   if (onBankTransfer) onBankTransfer(pack);
                 }}
               >
