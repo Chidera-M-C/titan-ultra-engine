@@ -118,11 +118,11 @@ export default function TopUpModal({ isOpen, onClose, onSelect, userId, onCredit
 
       {/* AccountDetailModal floats on top */}
       <AccountDetailModal
-        pack={bankPack}
-        onClose={() => setBankPack(null)}
-        userId={userIdRef.current}
-        onCreditsUpdated={onCreditsUpdated}
-      />
+      pack={bankPack}
+      onClose={() => setBankPack(null)}
+      userId={bankPack?.capturedUserId}
+      onCreditsUpdated={onCreditsUpdated}
+    />
 
     </div>,
     document.body
