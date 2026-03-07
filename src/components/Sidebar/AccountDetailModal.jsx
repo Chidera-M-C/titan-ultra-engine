@@ -7,8 +7,8 @@ export default function AccountDetailModal({ isOpen, onClose, selectedPack }) {
   if (!isOpen || !selectedPack) return null;
 
   return createPortal(
-    <div className="account-detail-overlay" onClick={onClose}>
-      <div className="account-detail-content" onClick={e => e.stopPropagation()}>
+    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-content" onClick={e => e.stopPropagation()}>
         <p style={{ color: 'white' }}>Modal works — {selectedPack?.name}</p>
       </div>
     </div>,
