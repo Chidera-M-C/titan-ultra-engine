@@ -159,11 +159,15 @@ export default function App() {
   };
 
   // Bank transfer handler — NEW
-  const handleBankTransfer = (pack) => {
-    setTopUpModalOpen(false);
-    setBankTransferPack(pack);
+const handleBankTransfer = (pack) => {
+  setTopUpModalOpen(false);           // close TopUp instantly
+  setBankTransferPack(pack);
+  
+  // Tiny delay fixes the modal race condition on Vercel/production
+  setTimeout(() => {
     setBankTransferOpen(true);
-  };
+  }, 50);
+};
 
   const generateImage = async () => {
     if (!user) { setLoginModalOpen(true); return; }
