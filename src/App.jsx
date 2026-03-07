@@ -323,7 +323,7 @@ export default function App() {
           isOpen={topUpModalOpen}
           onClose={() => setTopUpModalOpen(false)}
           onSelect={handleTopUpPurchase}
-          onBankTransfer={handleBankTransfer}  {/* NEW */}
+          onBankTransfer={handleBankTransfer}
         />
 
         {/* Bank transfer modal — NEW */}
