@@ -1,36 +1,18 @@
 import React from 'react';
-import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
 import './AccountDetailModal.css';
 
-export default function AccountDetailModal({ isOpen, onClose, selectedPack }) {
-  if (!isOpen) return null;
+export default function AccountDetailModal({ pack, onClose }) {
+  if (!pack) return null;
 
-  return createPortal(
+  return (
     <div className="account-detail-overlay" onClick={onClose}>
-      <div className="account-detail-content" onClick={e => e.stopPropagation()}>
-        <h2 style={{ color: '#00ff00', textAlign: 'center', fontSize: '28px' }}>
-          ✅ BANK MODAL OPENED!
-        </h2>
-        <p style={{ color: 'white', textAlign: 'center', fontSize: '20px' }}>
-          Pack: {selectedPack?.name || 'NO PACK'}
-        </p>
-        <button 
-          onClick={onClose}
-          style={{ 
-            marginTop: '30px', 
-            padding: '12px 30px', 
-            background: '#a855f7', 
-            color: 'white', 
-            border: 'none', 
-            borderRadius: '12px',
-            fontSize: '16px',
-            cursor: 'pointer'
-          }}
-        >
-          Close Modal
+      <div className="account-detail-box" onClick={e => e.stopPropagation()}>
+        <button className="account-detail-close" onClick={onClose} aria-label="Close">
+          <X size={16} />
         </button>
+        <p style={{ color: 'white' }}>Account details for {pack.name} — ${pack.price}</p>
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }
