@@ -91,11 +91,11 @@ export default function TopUpModal({ isOpen, onClose, onSelect, onBankTransfer }
                 className="bank-transfer-btn"
                 disabled={loadingPackId !== null}
                 onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  if (onBankTransfer) onBankTransfer(pack);
-                  onClose();
-                }}
+                e.stopPropagation();
+                e.preventDefault();
+                if (onBankTransfer) onBankTransfer(pack);
+                setTimeout(onClose, 0);
+              }}
               >
                 <Building2 size={12} />
                 <span>Pay via Bank Transfer</span>
