@@ -94,7 +94,6 @@ export default function TopUpModal({ isOpen, onClose, onSelect, onBankTransfer }
                 e.stopPropagation();
                 e.preventDefault();
                 if (onBankTransfer) onBankTransfer(pack);
-                setTimeout(onClose, 0);
               }}
               >
                 <Building2 size={12} />
