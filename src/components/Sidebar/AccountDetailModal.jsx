@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Copy, Check, Share2, Upload, ImagePlus, FileCheck } from 'lucide-react';
+import { X, Copy, Check, Share2, Upload, ImagePlus, FileCheck, CheckCircle } from 'lucide-react';
 import './AccountDetailModal.css';
 
 const US_DETAILS = [
@@ -54,30 +54,20 @@ function UploadBox({ file, onFileChange }) {
     if (dropped) onFileChange(dropped);
   };
 
-  const handleDragOver = (e) => { e.preventDefault(); setDragging(true); };
-  const handleDragLeave = () => setDragging(false);
-
-  const handleClick = () => inputRef.current?.click();
-
-  const handleInput = (e) => {
-    const selected = e.target.files[0];
-    if (selected) onFileChange(selected);
-  };
-
   return (
     <div
       className={`ad-upload-box ${dragging ? 'dragging' : ''} ${file ? 'has-file' : ''}`}
-      onClick={handleClick}
+      onClick={() => inputRef.current?.click()}
       onDrop={handleDrop}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
+      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+      onDragLeave={() => setDragging(false)}
     >
       <input
         ref={inputRef}
         type="file"
         accept="image/*,application/pdf"
         className="ad-upload-input"
-        onChange={handleInput}
+        onChange={(e) => { if (e.target.files[0]) onFileChange(e.target.files[0]); }}
       />
       {file ? (
         <div className="ad-upload-preview">
@@ -100,9 +90,11 @@ function UploadBox({ file, onFileChange }) {
   );
 }
 
-function TabContent({ details, pack }) {
-  const [allCopied, setAllCopied] = useState(false);
+function TabContent({ details, pack, userId, onSuccess }) {
+  const [allCopied, setAllCopied]     = useState(false);
   const [receiptFile, setReceiptFile] = useState(null);
+  const [submitting, setSubmitting]   = useState(false);
+  const [error, setError]             = useState(null);
 
   const fullText = details.map(d => `${d.label}: ${d.value}`).join('\n');
 
@@ -118,6 +110,32 @@ function TabContent({ details, pack }) {
       try { await navigator.share({ title: 'Bank Transfer Details', text: shareText }); } catch {}
     } else {
       navigator.clipboard.writeText(shareText);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!receiptFile || !userId || submitting) return;
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      const form = new FormData();
+      form.append('receipt', receiptFile);
+      form.append('userId',  userId);
+      form.append('credits', pack.credits);
+      form.append('price',   pack.price);
+      form.append('pack',    pack.name);
+
+      const res = await fetch('/api/bank-transfer', { method: 'POST', body: form });
+      const data = await res.json();
+
+      if (!res.ok || !data.success) throw new Error(data.error || 'Submission failed');
+
+      onSuccess(data.newBalance);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -150,7 +168,6 @@ function TabContent({ details, pack }) {
         </button>
       </div>
 
-      {/* Receipt upload */}
       <div className="ad-upload-section">
         <p className="ad-upload-section-label">
           <Upload size={11} />
@@ -159,17 +176,46 @@ function TabContent({ details, pack }) {
         <UploadBox file={receiptFile} onFileChange={setReceiptFile} />
       </div>
 
-      <button className={`ad-paid-btn ${!receiptFile ? 'disabled' : ''}`} disabled={!receiptFile}>
-        I Have Made This Payment
+      {error && <p className="ad-submit-error">{error}</p>}
+
+      <button
+        className={`ad-paid-btn ${!receiptFile || submitting ? 'disabled' : ''}`}
+        disabled={!receiptFile || submitting}
+        onClick={handleSubmit}
+      >
+        {submitting ? 'Processing...' : 'I Have Made This Payment'}
       </button>
     </div>
   );
 }
 
-export default function AccountDetailModal({ pack, onClose }) {
+function SuccessScreen({ pack, onClose }) {
+  return (
+    <div className="ad-success">
+      <div className="ad-success-icon">
+        <CheckCircle size={36} />
+      </div>
+      <h4 className="ad-success-title">Payment Confirmed!</h4>
+      <p className="ad-success-msg">
+        <span>{pack.credits} credits</span> have been added to your account.
+      </p>
+      <button className="ad-paid-btn" onClick={onClose}>Done</button>
+    </div>
+  );
+}
+
+export default function AccountDetailModal({ pack, onClose, userId, onCreditsUpdated }) {
   const [activeTab, setActiveTab] = useState('us');
+  const [success, setSuccess]     = useState(false);
+  const [newBalance, setNewBalance] = useState(null);
 
   if (!pack) return null;
+
+  const handleSuccess = (balance) => {
+    setNewBalance(balance);
+    setSuccess(true);
+    if (onCreditsUpdated) onCreditsUpdated(balance);
+  };
 
   return (
     <div className="account-detail-overlay" onClick={(e) => { e.stopPropagation(); onClose(); }}>
@@ -179,29 +225,34 @@ export default function AccountDetailModal({ pack, onClose }) {
           <X size={16} />
         </button>
 
-        <h3 className="ad-title">Bank Transfer Details</h3>
+        {success ? (
+          <SuccessScreen pack={pack} onClose={onClose} />
+        ) : (
+          <>
+            <h3 className="ad-title">Bank Transfer Details</h3>
 
-        <div className="ad-tabs">
-          <button className={`ad-tab ${activeTab === 'us' ? 'active' : ''}`} onClick={() => setActiveTab('us')}>
-            Within US <span className="ad-tab-sub">Wire / ACH</span>
-          </button>
-          <button className={`ad-tab ${activeTab === 'intl' ? 'active' : ''}`} onClick={() => setActiveTab('intl')}>
-            Outside US <span className="ad-tab-sub">Wire / SWIFT</span>
-          </button>
-        </div>
+            <div className="ad-tabs">
+              <button className={`ad-tab ${activeTab === 'us' ? 'active' : ''}`} onClick={() => setActiveTab('us')}>
+                Within US <span className="ad-tab-sub">Wire / ACH</span>
+              </button>
+              <button className={`ad-tab ${activeTab === 'intl' ? 'active' : ''}`} onClick={() => setActiveTab('intl')}>
+                Outside US <span className="ad-tab-sub">Wire / SWIFT</span>
+              </button>
+            </div>
 
-        {activeTab === 'us'
-          ? <TabContent details={US_DETAILS} pack={pack} />
-          : <TabContent details={INTL_DETAILS} pack={pack} />
-        }
+            {activeTab === 'us'
+              ? <TabContent details={US_DETAILS} pack={pack} userId={userId} onSuccess={handleSuccess} />
+              : <TabContent details={INTL_DETAILS} pack={pack} userId={userId} onSuccess={handleSuccess} />
+            }
 
-        <div className="ad-notes">
-          <p className="ad-notes-title">Please Note</p>
-          <ul className="ad-notes-list">
-            {NOTES.map((note, i) => <li key={i}>{note}</li>)}
-          </ul>
-        </div>
-
+            <div className="ad-notes">
+              <p className="ad-notes-title">Please Note</p>
+              <ul className="ad-notes-list">
+                {NOTES.map((note, i) => <li key={i}>{note}</li>)}
+              </ul>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
