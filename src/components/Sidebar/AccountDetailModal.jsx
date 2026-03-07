@@ -116,6 +116,7 @@ function TabContent({ details, pack, userId, onSuccess }) {
   const handleSubmit = async () => {
     console.log('handleSubmit fired', { receiptFile, userId, submitting });
     if (!receiptFile || !userId || submitting) return;
+    console.log('passed guards, calling API...');
     setSubmitting(true);
     setError(null);
 
