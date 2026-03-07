@@ -22,7 +22,6 @@ const INTL_DETAILS = [
 ];
 
 const NOTES = [
-  'Bank transfer is only available for U.S. residents. If you\'re outside the U.S., please use Crypto Pay.',
   'After completing the transfer, click "I Have Made This Payment" — your credits will be added instantly.',
   'If no payment is received within 30 minutes, the credits will be reversed.',
   'A confirmation receipt will be sent to your email.',
