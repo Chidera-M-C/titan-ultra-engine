@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Zap, Loader2 } from 'lucide-react';
+import { X, Zap, Loader2, Building2 } from 'lucide-react';
 import './TopUpModal.css';
 
 const CREDIT_PACKS = [
   { id: 'starter', name: 'Starter',  credits: 100,  price: 10,  description: 'Perfect for quick experiments.', popular: false },
-  { id: 'creator',     name: 'Creator', credits: 500,  price: 40,  description: 'Most popular for creators.',     popular: true  },
+  { id: 'creator', name: 'Creator',  credits: 500,  price: 40,  description: 'Most popular for creators.',     popular: true  },
   { id: 'master',  name: 'Master',   credits: 1500, price: 100, description: 'Best value for heavy users.',   popular: false }
 ];
 
-export default function TopUpModal({ isOpen, onClose, onSelect }) {
+export default function TopUpModal({ isOpen, onClose, onSelect, onBankTransfer }) {
   const [loadingPackId, setLoadingPackId] = useState(null);
 
   useEffect(() => {
@@ -28,6 +28,12 @@ export default function TopUpModal({ isOpen, onClose, onSelect }) {
     setLoadingPackId(pack.id);
     if (onSelect) await onSelect(pack);
     setLoadingPackId(null);
+  };
+
+  const handleBankTransfer = (e, pack) => {
+    e.stopPropagation(); // prevent card click from also triggering crypto flow
+    if (onBankTransfer) onBankTransfer(pack);
+    onClose();
   };
 
   return createPortal(
@@ -71,6 +77,7 @@ export default function TopUpModal({ isOpen, onClose, onSelect }) {
 
               <p className="pack-desc">{pack.description}</p>
 
+              {/* Primary: Crypto payment */}
               <button
                 className="select-pack-btn"
                 disabled={loadingPackId !== null}
@@ -83,6 +90,16 @@ export default function TopUpModal({ isOpen, onClose, onSelect }) {
                 ) : (
                   pack.popular ? 'Get Started' : 'Choose Pack'
                 )}
+              </button>
+
+              {/* Secondary: Bank transfer */}
+              <button
+                className="bank-transfer-btn"
+                disabled={loadingPackId !== null}
+                onClick={(e) => handleBankTransfer(e, pack)}
+              >
+                <Building2 size={12} />
+                <span>Pay via Bank Transfer</span>
               </button>
             </div>
           ))}
