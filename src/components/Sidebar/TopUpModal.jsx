@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Zap, Loader2, Building2 } from 'lucide-react';
+import { X, Zap, Loader2, Building2, Bitcoin } from 'lucide-react';
 import './TopUpModal.css';
 import AccountDetailModal from './AccountDetailModal';
 
@@ -89,7 +89,7 @@ export default function TopUpModal({ isOpen, onClose, onSelect }) {
                     <span>Processing...</span>
                   </>
                 ) : (
-                  pack.popular ? 'Pay via Crypto' : 'Pay via Crypto'
+                  <><Bitcoin size={12} /><span>Pay via Crypto</span></>
                 )}
               </button>
 
