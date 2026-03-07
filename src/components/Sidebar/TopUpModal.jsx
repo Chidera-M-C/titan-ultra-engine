@@ -9,14 +9,29 @@ const CREDIT_PACKS = [
   { id: 'master',  name: 'Master',   credits: 1500, price: 100, description: 'Best value for heavy users.',   popular: false }
 ];
 
-export default function TopUpModal({ isOpen, onClose, onSelect, onBankTransfer }) {
+function AccountDetailModal({ pack, onClose }) {
+  return (
+    <div className="account-detail-overlay" onClick={onClose}>
+      <div className="account-detail-box" onClick={e => e.stopPropagation()}>
+        <button className="account-detail-close" onClick={onClose} aria-label="Close">
+          <X size={16} />
+        </button>
+        <p style={{ color: 'white' }}>Account details for {pack.name} — ${pack.price}</p>
+      </div>
+    </div>
+  );
+}
+
+export default function TopUpModal({ isOpen, onClose, onSelect }) {
   const [loadingPackId, setLoadingPackId] = useState(null);
+  const [bankPack, setBankPack] = useState(null); // which pack triggered bank transfer
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
+      setBankPack(null); // reset on close
     }
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
@@ -32,7 +47,11 @@ export default function TopUpModal({ isOpen, onClose, onSelect, onBankTransfer }
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={e => e.stopPropagation()}>
+      {/* Main TopUpModal — blurred when account detail is open */}
+      <div
+        className={`modal-content ${bankPack ? 'modal-content--blurred' : ''}`}
+        onClick={e => e.stopPropagation()}
+      >
         <button className="close-btn" onClick={onClose} aria-label="Close modal">
           <X size={20} />
         </button>
@@ -47,6 +66,7 @@ export default function TopUpModal({ isOpen, onClose, onSelect, onBankTransfer }
             <div
               key={pack.id}
               className={`credit-pack-card ${pack.popular ? 'popular' : ''} ${loadingPackId === pack.id ? 'loading' : ''}`}
+              onClick={() => handlePackSelect(pack)}
             >
               {pack.popular && (
                 <div className="popular-ribbon">
@@ -73,7 +93,6 @@ export default function TopUpModal({ isOpen, onClose, onSelect, onBankTransfer }
               <button
                 className="select-pack-btn"
                 disabled={loadingPackId !== null}
-                onClick={() => handlePackSelect(pack)}
               >
                 {loadingPackId === pack.id ? (
                   <>
@@ -88,8 +107,9 @@ export default function TopUpModal({ isOpen, onClose, onSelect, onBankTransfer }
               <button
                 className="bank-transfer-btn"
                 disabled={loadingPackId !== null}
-                onClick={() => {
-                  if (onBankTransfer) onBankTransfer(pack);
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setBankPack(pack);
                 }}
               >
                 <Building2 size={12} />
@@ -101,6 +121,14 @@ export default function TopUpModal({ isOpen, onClose, onSelect, onBankTransfer }
 
         <p className="modal-footer">Secure payments powered by NOWPayments</p>
       </div>
+
+      {/* AccountDetailModal — floats on top, TopUpModal stays blurred behind */}
+      {bankPack && (
+        <AccountDetailModal
+          pack={bankPack}
+          onClose={() => setBankPack(null)}
+        />
+      )}
     </div>,
     document.body
   );
