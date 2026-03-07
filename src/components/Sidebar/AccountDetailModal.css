@@ -334,8 +334,137 @@
 /* Dark scrollbar */
 .account-detail-box {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+  scrollbar-color: rgba(168, 85, 247, 0.3) transparent;
 }
 .account-detail-box::-webkit-scrollbar { width: 4px; }
 .account-detail-box::-webkit-scrollbar-track { background: transparent; }
-.account-detail-box::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 999px; }
+.account-detail-box::-webkit-scrollbar-thumb { background: rgba(168, 85, 247, 0.3); border-radius: 999px; }
+.account-detail-box::-webkit-scrollbar-thumb:hover { background: rgba(168, 85, 247, 0.5); }
+
+/* ── Upload Section ─────────────────────────────────────────────────────────── */
+.ad-upload-section {
+  margin-bottom: 12px;
+}
+
+.ad-upload-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #555;
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.ad-upload-input {
+  display: none;
+}
+
+.ad-upload-box {
+  border: 1.5px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 20px 16px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  background: rgba(255, 255, 255, 0.02);
+  text-align: center;
+}
+
+.ad-upload-box:hover {
+  border-color: rgba(168, 85, 247, 0.35);
+  background: rgba(168, 85, 247, 0.04);
+}
+
+.ad-upload-box.dragging {
+  border-color: #a855f7;
+  background: rgba(168, 85, 247, 0.08);
+  transform: scale(1.01);
+}
+
+.ad-upload-box.has-file {
+  border-style: solid;
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.04);
+}
+
+.ad-upload-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.ad-upload-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(168, 85, 247, 0.08);
+  border: 1px solid rgba(168, 85, 247, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a855f7;
+  margin-bottom: 4px;
+}
+
+.ad-upload-label {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+}
+
+.ad-upload-label span {
+  color: #a855f7;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ad-upload-hint {
+  font-size: 11px;
+  color: #3a3a3a;
+  margin: 0;
+}
+
+.ad-upload-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.ad-upload-icon-done {
+  color: #22c55e;
+  flex-shrink: 0;
+}
+
+.ad-upload-file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ad-upload-filename {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e2e2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ad-upload-filesize {
+  font-size: 11px;
+  color: #555;
+}
+
+/* Disabled paid button when no receipt */
+.ad-paid-btn.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
