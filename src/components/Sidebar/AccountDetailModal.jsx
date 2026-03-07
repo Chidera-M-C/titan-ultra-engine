@@ -22,10 +22,9 @@ const INTL_DETAILS = [
 ];
 
 const NOTES = [
-  'Make sure to screenshot/download the payment reciept after transfer',
-  'After completing the transfer, click "I Have Made This Payment" — your credits will be added instantly.',
-  'If no payment is received within 30 minutes, the credits will be reversed.',
-  'A confirmation receipt will be sent to your email.',
+  'Upload the transfer reciept/screenshot for confirmation',
+  'Once you click "I Have Made This Payment" — your credits will be added instantly.',
+  'The credits will be reversed if no payment is recieved',
   'No element of "pornography" will be recorded in your bank statement or inbox.',
 ];
 
