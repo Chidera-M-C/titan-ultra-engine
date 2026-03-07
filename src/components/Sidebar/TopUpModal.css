@@ -413,7 +413,7 @@
   .select-pack-btn {
     grid-column: 3;
     grid-row: 1;
-    width: 96px;
+    width: 110px;
     flex-shrink: 0;
     padding: 10px 8px;
     font-size: 11px;
