@@ -47,7 +47,6 @@ export default function TopUpModal({ isOpen, onClose, onSelect, onBankTransfer }
             <div
               key={pack.id}
               className={`credit-pack-card ${pack.popular ? 'popular' : ''} ${loadingPackId === pack.id ? 'loading' : ''}`}
-              // ← NO onClick on the card anymore (this was blocking the bank button)
             >
               {pack.popular && (
                 <div className="popular-ribbon">
@@ -71,7 +70,7 @@ export default function TopUpModal({ isOpen, onClose, onSelect, onBankTransfer }
 
               <p className="pack-desc">{pack.description}</p>
 
-              {/* Primary: Crypto payment — now handles the click */}
+              {/* Primary: Crypto payment */}
               <button
                 className="select-pack-btn"
                 disabled={loadingPackId !== null}
@@ -87,11 +86,11 @@ export default function TopUpModal({ isOpen, onClose, onSelect, onBankTransfer }
                 )}
               </button>
 
-              {/* Secondary: Bank transfer — clean click (no stopPropagation needed) */}
+              {/* Secondary: Bank transfer — TEMPORARY ALERT TO PROVE CLICK WORKS */}
               <button
                 className="bank-transfer-btn"
-                disabled={loadingPackId !== null}
                 onClick={() => {
+                  alert(`Bank transfer clicked for ${pack.name}!`); // ← REMOVE THIS LINE AFTER TEST
                   if (onBankTransfer) onBankTransfer(pack);
                 }}
               >
