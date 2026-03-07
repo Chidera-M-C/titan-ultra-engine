@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { X, Copy, Check, Share2, Upload, ImagePlus, FileCheck, CheckCircle } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import './AccountDetailModal.css';
 
 const US_DETAILS = [
@@ -90,7 +91,9 @@ function UploadBox({ file, onFileChange }) {
   );
 }
 
-function TabContent({ details, pack, userId, onSuccess }) {
+// Reads userId directly from AuthContext — no prop needed
+function TabContent({ details, pack, onSuccess }) {
+  const { user, setCredits } = useAuth();
   const [allCopied, setAllCopied]     = useState(false);
   const [receiptFile, setReceiptFile] = useState(null);
   const [submitting, setSubmitting]   = useState(false);
@@ -114,12 +117,12 @@ function TabContent({ details, pack, userId, onSuccess }) {
   };
 
   const handleSubmit = async () => {
+    const userId = user?.id;
     console.log('handleSubmit fired', { receiptFile, userId, submitting });
     if (!receiptFile || !userId || submitting) return;
     console.log('passed guards, calling API...');
     setSubmitting(true);
     setError(null);
-
     try {
       const form = new FormData();
       form.append('receipt', receiptFile);
@@ -127,12 +130,10 @@ function TabContent({ details, pack, userId, onSuccess }) {
       form.append('credits', pack.credits);
       form.append('price',   pack.price);
       form.append('pack',    pack.name);
-
       const res = await fetch('/api/bank-transfer', { method: 'POST', body: form });
       const data = await res.json();
-
       if (!res.ok || !data.success) throw new Error(data.error || 'Submission failed');
-
+      setCredits(data.newBalance);
       onSuccess(data.newBalance);
     } catch (err) {
       setError(err.message);
@@ -206,23 +207,19 @@ function SuccessScreen({ pack, onClose }) {
   );
 }
 
-export default function AccountDetailModal({ pack, onClose, userId, onCreditsUpdated }) {
+export default function AccountDetailModal({ pack, onClose }) {
   const [activeTab, setActiveTab] = useState('us');
   const [success, setSuccess]     = useState(false);
-  const [newBalance, setNewBalance] = useState(null);
 
   if (!pack) return null;
 
-  const handleSuccess = (balance) => {
-    setNewBalance(balance);
+  const handleSuccess = () => {
     setSuccess(true);
-    if (onCreditsUpdated) onCreditsUpdated(balance);
   };
 
   return (
     <div className="account-detail-overlay" onClick={(e) => { e.stopPropagation(); onClose(); }}>
       <div className="account-detail-box" onClick={e => e.stopPropagation()}>
-
         <button className="account-detail-close" onClick={onClose} aria-label="Close">
           <X size={16} />
         </button>
@@ -243,8 +240,8 @@ export default function AccountDetailModal({ pack, onClose, userId, onCreditsUpd
             </div>
 
             {activeTab === 'us'
-              ? <TabContent details={US_DETAILS} pack={pack} userId={userId} onSuccess={handleSuccess} />
-              : <TabContent details={INTL_DETAILS} pack={pack} userId={userId} onSuccess={handleSuccess} />
+              ? <TabContent details={US_DETAILS} pack={pack} onSuccess={handleSuccess} />
+              : <TabContent details={INTL_DETAILS} pack={pack} onSuccess={handleSuccess} />
             }
 
             <div className="ad-notes">
