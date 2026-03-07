@@ -327,6 +327,8 @@ const handleBankTransfer = (pack) => {
           onClose={() => setTopUpModalOpen(false)}
           onSelect={handleTopUpPurchase}
           onBankTransfer={handleBankTransfer}
+          userId={user?.id}
+          onCreditsUpdated={setCredits}
         />
 
         {/* Bank transfer modal — NEW */}
