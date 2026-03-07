@@ -36,15 +36,10 @@ export default function App() {
   const [promptCollapsed, setPromptCollapsed] = useState(false);
   const [exploreRefreshKey, setExploreRefreshKey] = useState(0);
 
-  // Bank transfer state — NEW
-  const [bankTransferPack, setBankTransferPack] = useState(null);
-  const [bankTransferOpen, setBankTransferOpen] = useState(false);
-
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
   const handleGlobalClick = (e) => {
     if (user || authLoading) return;
-
     const allowed =
       e.target.closest('.auth-card') ||
       e.target.closest('.auth-overlay') ||
@@ -53,18 +48,15 @@ export default function App() {
       e.target.closest('.mobile-menu-toggle') ||
       e.target.closest('.sidebar') ||
       e.target.closest('.login-modal') ||
-      e.target.closest('[data-allow]') ||   // ← add || here
+      e.target.closest('[data-allow]') ||
       e.target.closest('.modal-overlay') ||
       e.target.closest('.modal-content');
-
     if (allowed) return;
-
     const isMainContent =
       e.target.closest('.main-content') ||
       e.target.closest('.scrollable-area') ||
       e.target.closest('.top-header') ||
       e.target.closest('.floating-prompt');
-
     if (isMainContent) {
       e.preventDefault();
       e.stopPropagation();
@@ -80,7 +72,6 @@ export default function App() {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-
       if (imagesError) throw imagesError;
       setUserGallery(images.map(doc => ({
         id: doc.id,
@@ -179,11 +170,9 @@ export default function App() {
       const startData = await response.json();
       const jobId = startData.jobId;
       if (!jobId) throw new Error('Failed to start generation job');
-
       let completed = false;
       let attempts = 0;
       const maxAttempts = 150;
-
       while (!completed && attempts < maxAttempts) {
         attempts++;
         const statusRes = await fetch('/api/check-status', {
@@ -191,20 +180,16 @@ export default function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ jobId })
         });
-
         if (!statusRes.ok) throw new Error(`Status check failed: ${statusRes.status}`);
         const statusData = await statusRes.json();
         if (statusData.error) throw new Error(`RunPod error: ${statusData.error}`);
-
         if (statusData.status === 'COMPLETED') {
           const output = statusData.output;
           const base64Image = output?.image || output?.images?.[0] || output?.[0]?.image || output?.[0] || null;
           if (!base64Image) throw new Error('Image data not found');
-
           setImage(base64Image);
           setLoading(false);
           completed = true;
-
           (async () => {
             try {
               await deductCreditsLive(2);
@@ -215,7 +200,6 @@ export default function App() {
               console.error('❌ Post-generation save failed:', err);
             }
           })();
-
         } else if (statusData.status === 'FAILED') {
           throw new Error('RunPod generation failed');
         } else {
@@ -280,9 +264,7 @@ export default function App() {
         <button className="mobile-menu-toggle" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
           {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
-
         {isSidebarOpen && <div className="sidebar-mobile-overlay" onClick={() => setIsSidebarOpen(false)} />}
-
         <Sidebar
           activeTab={activeTab}
           onNavigate={handleNavigation}
@@ -293,7 +275,6 @@ export default function App() {
           onPromptLoad={setPrompt}
           onTopUpClick={() => setTopUpModalOpen(true)}
         />
-
         <main className="main-content">
           {!promptCollapsed && (
             <header className="top-header">
@@ -301,32 +282,22 @@ export default function App() {
               <PromptBox prompt={prompt} setPrompt={setPrompt} aspectRatio={aspectRatio} setAspectRatio={setAspectRatio} onGenerate={generateImage} loading={loading} credits={credits} />
             </header>
           )}
-
           {promptCollapsed && (
             <div className="floating-prompt">
               <PromptBox prompt={prompt} setPrompt={setPrompt} aspectRatio={aspectRatio} setAspectRatio={setAspectRatio} onGenerate={generateImage} loading={loading} collapsed={true} credits={credits} />
             </div>
           )}
-
           <div className="scrollable-area">{renderActiveView()}</div>
         </main>
 
         <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
 
-        {/* Crypto payment modal */}
         <TopUpModal
           isOpen={topUpModalOpen}
           onClose={() => setTopUpModalOpen(false)}
           onSelect={handleTopUpPurchase}
           userId={user?.id}
           onCreditsUpdated={setCredits}
-        />
-
-        {/* Bank transfer modal — NEW */}
-        <AccountDetailModal
-          isOpen={bankTransferOpen}
-          onClose={() => setBankTransferOpen(false)}
-          selectedPack={bankTransferPack}
         />
 
         {(viewState === 'result' || loading || image || error) && (
@@ -341,7 +312,6 @@ export default function App() {
             onViewFullScreen={handleViewImage}
           />
         )}
-
         {editModalOpen && <EditModal image={editingImage?.url} originalPrompt={editingImage?.prompt} onClose={() => setEditModalOpen(false)} />}
         {viewImageModalOpen && <ImageViewModal imageUrl={viewingImageUrl} onClose={() => setViewImageModalOpen(false)} />}
       </div>
