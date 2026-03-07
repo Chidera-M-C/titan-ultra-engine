@@ -30,6 +30,7 @@ export default async function handler(req, res) {
     // ── 1. Parse multipart form data ─────────────────────────────────────────
     const { fields, files } = await parseForm(req);
 
+    const email = Array.isArray(fields.email) ? fields.email[0] : fields.email;
     const userId  = Array.isArray(fields.userId)  ? fields.userId[0]  : fields.userId;
     const credits = parseInt(Array.isArray(fields.credits) ? fields.credits[0] : fields.credits);
     const price   = parseFloat(Array.isArray(fields.price)  ? fields.price[0]  : fields.price);
@@ -89,6 +90,7 @@ export default async function handler(req, res) {
     const { error: insertError } = await supabase
       .from('bank_transfers')
       .insert({
+        email:       email,
         user_id:     userId,
         credits:     credits,
         amount_usd:  price,
