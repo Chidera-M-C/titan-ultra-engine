@@ -54,7 +54,9 @@ export default function App() {
       e.target.closest('.mobile-menu-toggle') ||
       e.target.closest('.sidebar') ||
       e.target.closest('.login-modal') ||
-      e.target.closest('[data-allow]');
+      e.target.closest('[data-allow]')
+      e.target.closest('.modal-overlay') ||  // ADD THIS
+      e.target.closest('.modal-content');    // ADD THIS
 
     if (allowed) return;
 
