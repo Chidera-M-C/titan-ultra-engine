@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Copy, Check, Share2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Copy, Check, Share2, Upload, ImagePlus, FileCheck } from 'lucide-react';
 import './AccountDetailModal.css';
 
 const US_DETAILS = [
@@ -22,9 +22,9 @@ const INTL_DETAILS = [
 ];
 
 const NOTES = [
-  'Upload the transfer reciept/screenshot for confirmation',
+  'Upload the transfer receipt/screenshot for confirmation.',
   'Once you click "I Have Made This Payment" — your credits will be added instantly.',
-  'The credits will be reversed if no payment is recieved',
+  'The credits will be reversed if no payment is received.',
   'No element of "pornography" will be recorded in your bank statement or inbox.',
 ];
 
@@ -43,8 +43,66 @@ function CopyButton({ value }) {
   );
 }
 
+function UploadBox({ file, onFileChange }) {
+  const inputRef = useRef(null);
+  const [dragging, setDragging] = useState(false);
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragging(false);
+    const dropped = e.dataTransfer.files[0];
+    if (dropped) onFileChange(dropped);
+  };
+
+  const handleDragOver = (e) => { e.preventDefault(); setDragging(true); };
+  const handleDragLeave = () => setDragging(false);
+
+  const handleClick = () => inputRef.current?.click();
+
+  const handleInput = (e) => {
+    const selected = e.target.files[0];
+    if (selected) onFileChange(selected);
+  };
+
+  return (
+    <div
+      className={`ad-upload-box ${dragging ? 'dragging' : ''} ${file ? 'has-file' : ''}`}
+      onClick={handleClick}
+      onDrop={handleDrop}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+    >
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*,application/pdf"
+        className="ad-upload-input"
+        onChange={handleInput}
+      />
+      {file ? (
+        <div className="ad-upload-preview">
+          <FileCheck size={20} className="ad-upload-icon-done" />
+          <div className="ad-upload-file-info">
+            <span className="ad-upload-filename">{file.name}</span>
+            <span className="ad-upload-filesize">{(file.size / 1024).toFixed(1)} KB — click to change</span>
+          </div>
+        </div>
+      ) : (
+        <div className="ad-upload-empty">
+          <div className="ad-upload-icon-wrap">
+            <ImagePlus size={20} />
+          </div>
+          <p className="ad-upload-label">Drop receipt here or <span>browse</span></p>
+          <p className="ad-upload-hint">PNG, JPG or PDF — max 5MB</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TabContent({ details, pack }) {
   const [allCopied, setAllCopied] = useState(false);
+  const [receiptFile, setReceiptFile] = useState(null);
 
   const fullText = details.map(d => `${d.label}: ${d.value}`).join('\n');
 
@@ -57,9 +115,7 @@ function TabContent({ details, pack }) {
   const handleShare = async () => {
     const shareText = `Bank Transfer Details\n\nPayment: $${pack.price} for ${pack.credits} credits\n\n${fullText}`;
     if (navigator.share) {
-      try {
-        await navigator.share({ title: 'Bank Transfer Details', text: shareText });
-      } catch {}
+      try { await navigator.share({ title: 'Bank Transfer Details', text: shareText }); } catch {}
     } else {
       navigator.clipboard.writeText(shareText);
     }
@@ -94,7 +150,18 @@ function TabContent({ details, pack }) {
         </button>
       </div>
 
-      <button className="ad-paid-btn">I Have Made This Payment</button>
+      {/* Receipt upload */}
+      <div className="ad-upload-section">
+        <p className="ad-upload-section-label">
+          <Upload size={11} />
+          Upload Transfer Receipt
+        </p>
+        <UploadBox file={receiptFile} onFileChange={setReceiptFile} />
+      </div>
+
+      <button className={`ad-paid-btn ${!receiptFile ? 'disabled' : ''}`} disabled={!receiptFile}>
+        I Have Made This Payment
+      </button>
     </div>
   );
 }
@@ -114,35 +181,24 @@ export default function AccountDetailModal({ pack, onClose }) {
 
         <h3 className="ad-title">Bank Transfer Details</h3>
 
-        {/* Tabs */}
         <div className="ad-tabs">
-          <button
-            className={`ad-tab ${activeTab === 'us' ? 'active' : ''}`}
-            onClick={() => setActiveTab('us')}
-          >
+          <button className={`ad-tab ${activeTab === 'us' ? 'active' : ''}`} onClick={() => setActiveTab('us')}>
             Within US <span className="ad-tab-sub">Wire / ACH</span>
           </button>
-          <button
-            className={`ad-tab ${activeTab === 'intl' ? 'active' : ''}`}
-            onClick={() => setActiveTab('intl')}
-          >
+          <button className={`ad-tab ${activeTab === 'intl' ? 'active' : ''}`} onClick={() => setActiveTab('intl')}>
             Outside US <span className="ad-tab-sub">Wire / SWIFT</span>
           </button>
         </div>
 
-        {/* Tab Content */}
         {activeTab === 'us'
           ? <TabContent details={US_DETAILS} pack={pack} />
           : <TabContent details={INTL_DETAILS} pack={pack} />
         }
 
-        {/* Notes */}
         <div className="ad-notes">
           <p className="ad-notes-title">Please Note</p>
           <ul className="ad-notes-list">
-            {NOTES.map((note, i) => (
-              <li key={i}>{note}</li>
-            ))}
+            {NOTES.map((note, i) => <li key={i}>{note}</li>)}
           </ul>
         </div>
 
