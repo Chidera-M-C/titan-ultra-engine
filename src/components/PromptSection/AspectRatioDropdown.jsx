@@ -8,6 +8,8 @@ const RatioIcon = ({ ratio }) => {
       return <svg width="12" height="12" viewBox="0 0 12 12" style={{ flexShrink: 0 }}><rect width="12" height="12" rx="1" fill="currentColor" /></svg>;
     case '4:5':
       return <svg width="10" height="12" viewBox="0 0 10 12" style={{ flexShrink: 0 }}><rect width="10" height="12" rx="1" fill="currentColor" /></svg>;
+    case '5:4':
+      return <svg width="12" height="10" viewBox="0 0 12 10" style={{ flexShrink: 0 }}><rect width="12" height="10" rx="1" fill="currentColor" /></svg>;
     case '9:16':
       return <svg width="8" height="14" viewBox="0 0 8 14" style={{ flexShrink: 0 }}><rect width="8" height="14" rx="1" fill="currentColor" /></svg>;
     case '16:9':
@@ -18,10 +20,11 @@ const RatioIcon = ({ ratio }) => {
 };
 
 const RATIOS = [
-  { value: '1:1', label: '1:1' },
-  { value: '4:5', label: '4:5' },
+  { value: '1:1',  label: '1:1'  },
+  { value: '4:5',  label: '4:5'  },
+  { value: '5:4',  label: '5:4'  },
   { value: '9:16', label: '9:16' },
-  { value: '16:9', label: '16:9' }
+  { value: '16:9', label: '16:9' },
 ];
 
 export default function AspectRatioDropdown({ value, onChange }) {
@@ -45,10 +48,7 @@ export default function AspectRatioDropdown({ value, onChange }) {
 
   return (
     <div className="aspect-dropdown" ref={dropdownRef}>
-      <div
-        className="aspect-pill"
-        onClick={() => setIsOpen(!isOpen)}
-      >
+      <div className="aspect-pill" onClick={() => setIsOpen(!isOpen)}>
         <RatioIcon ratio={value} />
         <span className="aspect-value">{value}</span>
         <ChevronDown
