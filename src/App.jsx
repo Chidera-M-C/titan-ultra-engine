@@ -23,6 +23,7 @@ export default function App() {
   const [prompt, setPrompt] = useState('');
   const [aspectRatio, setAspectRatio] = useState('9:16');
   const [image, setImage] = useState(null);
+  const [attachedImage, setAttachedImage] = useState(null); // base64 for img2img
   const [userGallery, setUserGallery] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -161,18 +162,24 @@ export default function App() {
     setError(null);
     setImage(null);
     try {
+      // Build payload — include image + aspectRatio if present
+      const payload = { prompt, aspect_ratio: aspectRatio };
+      if (attachedImage) payload.image = attachedImage;
+
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt })
+        body: JSON.stringify(payload)
       });
       if (!response.ok) throw new Error('Server Error');
       const startData = await response.json();
       const jobId = startData.jobId;
       if (!jobId) throw new Error('Failed to start generation job');
+
       let completed = false;
       let attempts = 0;
       const maxAttempts = 150;
+
       while (!completed && attempts < maxAttempts) {
         attempts++;
         const statusRes = await fetch('/api/check-status', {
@@ -183,13 +190,16 @@ export default function App() {
         if (!statusRes.ok) throw new Error(`Status check failed: ${statusRes.status}`);
         const statusData = await statusRes.json();
         if (statusData.error) throw new Error(`RunPod error: ${statusData.error}`);
+
         if (statusData.status === 'COMPLETED') {
           const output = statusData.output;
           const base64Image = output?.image || output?.images?.[0] || output?.[0]?.image || output?.[0] || null;
           if (!base64Image) throw new Error('Image data not found');
+
           setImage(base64Image);
           setLoading(false);
           completed = true;
+
           (async () => {
             try {
               await deductCreditsLive(2);
@@ -200,6 +210,7 @@ export default function App() {
               console.error('❌ Post-generation save failed:', err);
             }
           })();
+
         } else if (statusData.status === 'FAILED') {
           throw new Error('RunPod generation failed');
         } else {
@@ -258,6 +269,18 @@ export default function App() {
     }
   };
 
+  const promptBoxProps = {
+    prompt,
+    setPrompt,
+    aspectRatio,
+    setAspectRatio,
+    onGenerate: generateImage,
+    loading,
+    attachedImage,
+    onImageAttach: setAttachedImage,
+    onImageRemove: () => setAttachedImage(null),
+  };
+
   return (
     <div className="master-wrapper" onClickCapture={handleGlobalClick}>
       <div className="app-shell">
@@ -265,6 +288,7 @@ export default function App() {
           {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
         {isSidebarOpen && <div className="sidebar-mobile-overlay" onClick={() => setIsSidebarOpen(false)} />}
+
         <Sidebar
           activeTab={activeTab}
           onNavigate={handleNavigation}
@@ -275,16 +299,17 @@ export default function App() {
           onPromptLoad={setPrompt}
           onTopUpClick={() => setTopUpModalOpen(true)}
         />
+
         <main className="main-content">
           {!promptCollapsed && (
             <header className="top-header">
               <h1 className="aesthetic-title">What will you create?</h1>
-              <PromptBox prompt={prompt} setPrompt={setPrompt} aspectRatio={aspectRatio} setAspectRatio={setAspectRatio} onGenerate={generateImage} loading={loading} credits={credits} />
+              <PromptBox {...promptBoxProps} />
             </header>
           )}
           {promptCollapsed && (
             <div className="floating-prompt">
-              <PromptBox prompt={prompt} setPrompt={setPrompt} aspectRatio={aspectRatio} setAspectRatio={setAspectRatio} onGenerate={generateImage} loading={loading} collapsed={true} credits={credits} />
+              <PromptBox {...promptBoxProps} collapsed={true} />
             </div>
           )}
           <div className="scrollable-area">{renderActiveView()}</div>
@@ -296,7 +321,7 @@ export default function App() {
           isOpen={topUpModalOpen}
           onClose={() => setTopUpModalOpen(false)}
           onSelect={handleTopUpPurchase}
-          userId={user?.id ?? null}
+          userId={user?.id}
           onCreditsUpdated={setCredits}
         />
 
