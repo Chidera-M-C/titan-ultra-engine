@@ -16,6 +16,7 @@
   -webkit-overflow-scrolling: touch;
 }
 .category-tabs::-webkit-scrollbar { display: none; }
+
 .tab {
   font-size: 0.95rem;
   font-weight: 600;
@@ -37,14 +38,11 @@
   background: #fff;
 }
 
-/* MASONRY CORE — grid fills row by row, images keep natural aspect ratio */
+/* ── Masonry via CSS columns ─────────────────────────────────────────────── */
 .masonry-grid {
   width: 100%;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  grid-template-rows: masonry;
-  gap: 12px;
-  align-items: start;
+  columns: 5;
+  column-gap: 12px;
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -58,14 +56,18 @@
   cursor: pointer;
   border: 1px solid #2a2a2a;
   width: 100%;
+  break-inside: avoid;
+  margin-bottom: 12px;
+  display: inline-block;
 }
+
 .gallery-card img {
   width: 100%;
   height: auto;
   display: block;
 }
 
-/* OVERLAY LOGIC (WEB/DESKTOP) */
+/* ── Overlay ─────────────────────────────────────────────────────────────── */
 .gallery-overlay,
 .pin-overlay {
   position: absolute;
@@ -82,50 +84,104 @@
 .pin-item:hover .pin-overlay {
   opacity: 1;
 }
+
 .overlay-actions {
   display: flex;
   gap: 10px;
 }
 
-/* RESPONSIVE BREAKPOINTS */
+/* ── Icon buttons ────────────────────────────────────────────────────────── */
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(20,20,20,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+.icon-btn:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.2);
+}
+.icon-btn.active-heart {
+  background: rgba(255,75,75,0.15);
+  border-color: rgba(255,75,75,0.3);
+}
+
+/* ── Pin card (ImageCard) ────────────────────────────────────────────────── */
+.pin-item {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  break-inside: avoid;
+  margin-bottom: 12px;
+  display: inline-block;
+  width: 100%;
+}
+.pin-item img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.use-btn {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: none;
+  background: #fff;
+  color: #000;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.use-btn:hover { background: #e0e0e0; }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 1200px) {
-  .masonry-grid { grid-template-columns: repeat(4, 1fr); }
+  .masonry-grid { columns: 4; }
 }
 @media (max-width: 992px) {
-  .masonry-grid { grid-template-columns: repeat(3, 1fr); }
+  .masonry-grid { columns: 3; }
 }
 @media (max-width: 768px) {
   .category-tabs { justify-content: flex-start; }
 
   .masonry-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
-  .gallery-card {
-    border-radius: 8px;
+    columns: 2;
+    column-gap: 8px;
   }
 
-  /* MOBILE: always show buttons */
+  .gallery-card,
+  .pin-item {
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+
   .gallery-overlay,
   .pin-overlay {
     opacity: 1;
     padding: 8px;
     background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 40%);
   }
+
   .overlay-actions {
     gap: 4px;
     flex-wrap: wrap;
     justify-content: center;
   }
+
   .icon-btn {
     width: 32px !important;
     height: 32px !important;
     min-width: 32px !important;
     padding: 0 !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(40, 40, 40, 0.7) !important;
     border-radius: 8px !important;
   }
   .icon-btn svg {
