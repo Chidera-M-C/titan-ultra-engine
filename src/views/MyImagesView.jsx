@@ -26,7 +26,7 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, prom
   }
 
   return (
-    <div className="masonry-grid">
+    <div className="my-images-grid">
       {images.map((img) => (
         <div
           key={img.id}
