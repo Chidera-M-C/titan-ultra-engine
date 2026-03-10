@@ -14,7 +14,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "lucide-react": "^0.441.0",
-    "groq-sdk": "latest"
+    "groq-sdk": "latest",
+    "@opennextjs/cloudflare": "latest"
   },
   
   "devDependencies": {
