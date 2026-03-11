@@ -36,7 +36,7 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-top">
         <div className="brand">
-          <img src={NudelyLogo} alt="Nudely" style={{ height: '32px', width: 'auto' }} />
+          <img src={NudelyLogo} alt="Nudely" style={{ height: '24px', width: 'auto' }} />
         </div>
 
         <nav className="side-nav">
