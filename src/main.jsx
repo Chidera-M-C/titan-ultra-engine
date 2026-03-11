@@ -9,3 +9,12 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <App />
   </AuthProvider>
 )
+
+// Hide splash once React mounts
+requestAnimationFrame(() => {
+  const splash = document.getElementById('splash');
+  if (splash) {
+    splash.classList.add('hidden');
+    setTimeout(() => splash.remove(), 500);
+  }
+});
