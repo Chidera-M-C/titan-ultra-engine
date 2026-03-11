@@ -1,43 +1,36 @@
-// api/check-status.js
-export default async function handler(req, res) {
-  // Only allow POST to keep jobIds private in the body
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
+export async function onRequestPost(context) {
+  const { request, env } = context;
 
   try {
-    const { jobId } = req.body;
+    const { jobId } = await request.json();
 
     if (!jobId) {
-      return res.status(400).json({ error: 'Job ID is required' });
+      return new Response(JSON.stringify({ error: 'Job ID is required' }), { status: 400 });
     }
 
     // Call RunPod status endpoint
-    const response = await fetch(`https://api.runpod.ai/v2/${process.env.RUNPOD_ENDPOINT_ID}/status/${jobId}`, {
+    const response = await fetch(`https://api.runpod.ai/v2/${env.RUNPOD_ENDPOINT_ID}/status/${jobId}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${process.env.RUNPOD_API_KEY}`,
+        'Authorization': `Bearer ${env.RUNPOD_API_KEY}`,
         'Content-Type': 'application/json'
       }
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`RunPod status error: ${response.status} - ${errorText}`);
+      return new Response(JSON.stringify({ error: `RunPod status error: ${response.status} - ${errorText}` }), { status: response.status });
     }
 
     const data = await response.json();
+    
+    // Return the RunPod response directly
+    return new Response(JSON.stringify(data), {
+      headers: { 'Content-Type': 'application/json' }
+    });
 
-    /* Possible data.status values: 
-       - IN_QUEUE: Waiting for a GPU
-       - IN_PROGRESS: GPU is rendering (warming up or generating)
-       - COMPLETED: Finished! Output is ready.
-       - FAILED: Something went wrong on the pod.
-    */
-
-    res.status(200).json(data);
   } catch (error) {
     console.error('Status check error:', error);
-    res.status(500).json({ error: error.message || 'Server error' });
+    return new Response(JSON.stringify({ error: error.message || 'Server error' }), { status: 500 });
   }
 }
