@@ -1,3 +1,4 @@
+// --- ORIGINAL DATABASE RESTORED ---
 const styleCategories = {
   "missionary_style": ["missionary position", "legs spread wide", "deep vaginal penetration", "legs over shoulders", "mating press", "eye contact fucking", "breeding press", "intimate face-to-face", "pillow under hips", "slow deep thrusts"],
   "doggy_style": ["doggy style", "ass up face down", "backshots", "deep penetration from behind", "hair pulling", "arched back", "waist gripped", "spanked ass", "pounding doggy", "face down ass up"],
@@ -84,6 +85,7 @@ const settings = {
   "hospital": ["hospital room", "medical bed", "doctor patient fantasy", "clinical white room", "hospital gown", "monitor beeps background", "sterile hospital lighting", "bedridden scene"]
 };
 
+// --- HELPER FUNCTIONS RESTORED ---
 function buildAnonymousDatabase(obj) {
   return Object.values(obj).map(v => Array.isArray(v) ? v : Object.values(v));
 }
@@ -111,26 +113,76 @@ SETTING OPTIONS (pick one group, 5-7 terms):
 ${buildAnonymousDatabase(settings).map((g, i) => `[${i + 1}] ${g.join(', ')}`).join('\n')}`;
 }
 
+// --- ORIGINAL PROMPTS RESTORED ---
 const REASONING_PROMPT = () => `You are an expert SDXL/Flux prompt engineer analyzing a scene request.
 
-You have access to this composition database:
+You have access to this composition database (numbered groups — never output group numbers in any result):
 ${formatDatabaseForPrompt()}
 
-Your job is to THINK THROUGH the scene and decide which terms to use. 
+Your job is to THINK THROUGH the scene and decide which terms to use. Work through each step:
 
-1. STYLE IS KING — Choose the SINGLE best styleCategory. Pick 3-5 strongest terms.
-2. Camera angle: 1 term.
-3. Camera perspective: 1 term.
-4. Camera lens length: 1 term.
-5. Gender: 1 tag.
-6. Race: 3-5 features.
-7. Settings: 5-7 terms.
-8. Quality: masterpiece, best quality, photorealistic, cinematic lighting.
+1. STYLE IS KING — First identify the SINGLE core theme the user wants (non-negotiable). Example: "cute girl getting ass fucked" → core = anal penetration (dick in ass). Choose the SINGLE best category from styleCategories that fits the input core composition. Pick 3-5 strongest terms from that category ONLY.
+2. Camera angle: Choose the SINGLE best category from camera_angle that fits the mental image. Pick 1 most relevant term from it.
+3. Camera perspective: Choose the SINGLE best category from camera_perspective. Pick exactly 1 term from it.
+4. Camera lens length: Choose the SINGLE best category from camera_lens_length that controls closeness. Pick exactly 1 relevant term from it.
+5. Gender: Choose the SINGLE best category from genderCategories that matches the subjects. Pick exactly 1 best tag from it.
+6. Race: Choose the SINGLE best category from raceCategories that matches the described people. Pick 3-5 most relevant features from it only.
+7. Settings: Choose the SINGLE best category from settings that best matches (or intuitively fits) the scene. Pick 5-7 relevant terms from it.
+8. Quality: Pick exactly 3-5 terms from: masterpiece, best quality, ultra detailed, photorealistic, 8k raw photo, sharp focus, cinematic lighting, depth of field, intricate details, hyperrealistic.
 
-Output reasoning ONLY. Flowing natural thought.`;
+Output your reasoning as natural flowing thought. Be thorough. Do NOT output the final prompt here — reasoning only.`;
 
-const OUTPUT_PROMPT = `You are an SDXL/Flux prompt builder. Output a single line of comma-separated tags ONLY. No intro, no explanation. Order: angle, perspective, lens, gender, race, style, setting, quality. Wrap style in parentheses. 500 chars max.`;
+const OUTPUT_PROMPT = `You are an SDXL/Flux prompt builder. You will receive a reasoning analysis and must convert it into a final prompt.
 
+Rules — STRICT:
+- Output a single line of comma-separated tags ONLY. DO NOT FUCKING OUTPUT THE REASONING ANALYSIS, ONLY THE FINAL PROMPT
+- No explanation, no intro, no labels, no quotes, no numbering, no category names.
+- Build order: camera angle term, camera perspective term, camera lens term, gender term, race terms, style terms, setting terms, quality terms.
+- Wrap key style tags in parentheses for emphasis e.g. (deep anal penetration).
+- Hard cap: 480-500 characters total.
+- Use ONLY the terms mentioned in the reasoning — do not invent new ones.
+- Your entire response must be the prompt and nothing else.`;
+
+// --- MODEL FALLBACK LOGIC RESTORED ---
+function isRateLimit(error) {
+  return error?.status === 429 || error?.code === 'rate_limit_exceeded';
+}
+
+async function tryModels(env, messages, stream = false) {
+  const models = ['llama-3.3-70b-versatile', 'qwen/qwen3-32b'];
+  for (let i = 0; i < models.length; i++) {
+    try {
+      console.log(`Trying model: ${models[i]}`);
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${env.GROQ_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: models[i],
+          messages,
+          temperature: 0.65,
+          max_tokens: 800,
+          stream
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        if (isRateLimit(errData.error) && i < models.length - 1) continue;
+        throw new Error(errData.error?.message || 'API Error');
+      }
+
+      return response;
+    } catch (err) {
+      if (i < models.length - 1) continue;
+      throw err;
+    }
+  }
+}
+
+// --- MAIN CLOUDFLARE HANDLER ---
 export async function onRequestPost(context) {
   const { request, env } = context;
   const { userPrompt } = await request.json();
@@ -141,33 +193,28 @@ export async function onRequestPost(context) {
   const writer = writable.getWriter();
   const encoder = new TextEncoder();
 
-  // Execute in background
+  // Background execution for streaming
   (async () => {
     try {
-      let reasoningText = '';
-      
-      // CALL 1: Streaming Reasoning
-      const response1 = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${env.GROQ_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          messages: [{ role: 'system', content: REASONING_PROMPT() }, { role: 'user', content: userPrompt }],
-          stream: true
-        })
-      });
+      // 1. CALL 1: Thinking/Reasoning
+      const reasoningMessages = [
+        { role: 'system', content: REASONING_PROMPT() },
+        { role: 'user', content: userPrompt }
+      ];
 
-      const reader = response1.body.getReader();
+      const reasoningResponse = await tryModels(env, reasoningMessages, true);
+      const reader = reasoningResponse.body.getReader();
       const decoder = new TextDecoder();
+      let reasoningText = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value);
-        const lines = chunk.split('\n').filter(line => line.trim() !== '');
+        const lines = chunk.split('\n');
         
         for (const line of lines) {
-          if (line.includes('[DONE]')) break;
+          if (line.trim() === '' || line.includes('[DONE]')) continue;
           if (!line.startsWith('data: ')) continue;
           try {
             const data = JSON.parse(line.slice(6));
@@ -182,25 +229,23 @@ export async function onRequestPost(context) {
 
       await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'thinking_done' })}\n\n`));
 
-      // CALL 2: Final Prompt (Non-streaming)
-      const response2 = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${env.GROQ_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          messages: [
-            { role: 'system', content: OUTPUT_PROMPT },
-            { role: 'user', content: `Here is the reasoning analysis for "${userPrompt}":\n\n${reasoningText}\n\nOutput final prompt now.` }
-          ]
-        })
-      });
+      // 2. CALL 2: Final Result
+      const outputMessages = [
+        { role: 'system', content: OUTPUT_PROMPT },
+        {
+          role: 'user',
+          content: `Here is the reasoning analysis for the scene "${userPrompt}":\n\n${reasoningText}\n\nNow output the final comma-separated prompt. Single line only, nothing else.`
+        }
+      ];
 
-      const result = await response2.json();
-      const optimized = result.choices[0]?.message?.content?.trim().replace(/^["']|["']$/g, '') || '';
+      const outputResponse = await tryModels(env, outputMessages, false);
+      const finalData = await outputResponse.json();
+      const optimized = finalData.choices[0]?.message?.content?.trim().replace(/^["']|["']$/g, '') || '';
 
       await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'result', optimized })}\n\n`));
 
     } catch (err) {
+      console.error('Fatal Error:', err);
       await writer.write(encoder.encode(`data: ${JSON.stringify({ error: err.message })}\n\n`));
     } finally {
       await writer.close();
@@ -208,6 +253,10 @@ export async function onRequestPost(context) {
   })();
 
   return new Response(readable, {
-    headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "Connection": "keep-alive" }
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+    },
   });
 }
