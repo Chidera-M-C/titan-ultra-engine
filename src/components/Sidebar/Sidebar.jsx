@@ -4,6 +4,7 @@ import NavItem from './NavItem';
 import CreditsCard from './CreditsCard';
 import Promptimize from './Promptimize';
 import { useAuth } from '../../context/AuthContext';
+import NudelyLogo from '../../assets/nudely-logo.png';
 import './Sidebar.css';
 
 export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen, onPromptLoad, currentPrompt }) {
@@ -35,7 +36,7 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-top">
         <div className="brand">
-          <img src="/Asset_12Nudely_logo_full.png" alt="Nudely" style={{ height: '32px', width: 'auto' }} />
+          <img src={NudelyLogo} alt="Nudely" style={{ height: '32px', width: 'auto' }} />
         </div>
 
         <nav className="side-nav">
