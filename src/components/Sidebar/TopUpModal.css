@@ -28,7 +28,7 @@
 /* Blur the TopUpModal when AccountDetailModal is open on top */
 .modal-content--blurred {
   filter: blur(4px);
-  opacity: 0.5;
+  opacity: 100;
   pointer-events: none;
 }
 
