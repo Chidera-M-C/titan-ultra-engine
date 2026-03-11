@@ -1,9 +1,13 @@
 export async function onRequestPost(context) {
-  const { request, env } = context;
+  const { request } = context;
+
+  // DEBUG: Let's see what the request actually looks like
+  const bodyText = await request.text();
+  console.log("RECEIVED BODY:", bodyText);
 
   try {
-    // 1. Parse the request body
-    const body = await request.json();
+    const body = JSON.parse(bodyText);
+    // ... rest of your code
     const { prompt, aspect_ratio, image } = body;
 
     if (!prompt) {
