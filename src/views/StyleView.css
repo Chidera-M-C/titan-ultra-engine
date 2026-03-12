@@ -28,7 +28,7 @@
 .style-card {
   position: relative;
   border-radius: 16px;
-  height: 160px;
+  height: 220px;
   cursor: pointer;
   overflow: hidden;
   border: 2px solid transparent;
@@ -97,6 +97,6 @@
   }
 
   .style-card {
-    height: 130px;
+    height: 180px;
   }
 }
