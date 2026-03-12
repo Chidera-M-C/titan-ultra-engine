@@ -27,7 +27,7 @@
 .style-card {
   position: relative;
   width: calc((100% - 48px) / 5);
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 4 / 6;
   height: unset;
   cursor: pointer;
   overflow: hidden;
@@ -95,7 +95,7 @@
 @media (max-width: 768px) {
   .style-card {
     width: calc((100% - 12px) / 2);
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 4 / 6;
     height: unset;
   }
 }
