@@ -30,9 +30,6 @@ export default function StyleGeneratorView({ mood, onBack, onGenerate, loading }
           <p className="style-gen-desc">{mood.description}</p>
         </div>
       </div>
-    </div>
-  );
-}
 
       {/* Prompt input */}
       <div className="style-gen-prompt-section">
