@@ -25,8 +25,8 @@
 }
 
 .style-card {
-  width: calc((100% - 48px) / 5);  /* 5 per row, accounting for 4 gaps */
-  height: 280px;
+  width: calc((100% - 48px) / 5);
+  height: calc((100vw - 260px - 4rem - 48px) / 5 * 16 / 9);  /* true 9:16 based on actual column width */
   cursor: pointer;
   overflow: hidden;
   border: 2px solid transparent;
@@ -93,8 +93,8 @@
 
 @media (max-width: 768px) {
   .style-card {
-    width: calc((100% - 24px) / 3);  /* 3 per row on mobile */
-    height: 200px;
+    width: calc((100% - 24px) / 3);
+    height: calc((100vw - 16px - 24px) / 3 * 16 / 9);
   }
 }
 
