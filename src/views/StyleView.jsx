@@ -74,12 +74,12 @@ const MOODS = [
 },
 ];
 
-export default function StyleView({ onSelectPrompt }) {
+export default function StyleView({ onSelectStyle }) {
   const [selected, setSelected] = useState(null);
 
   const handleSelect = (mood) => {
     setSelected(mood.id);
-    onSelectPrompt(mood.prompt);
+    onSelectStyle(mood);
   };
 
   return (
