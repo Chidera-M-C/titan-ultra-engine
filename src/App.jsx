@@ -228,7 +228,7 @@ export default function App() {
   const handleNavigation = (tab) => {
     setActiveTab(tab);
     setIsSidebarOpen(false);
-    if (tab === 'explore' || tab === 'gallery') setViewState('gallery');
+    if (tab === 'explore' || tab === 'gallery' || tab === 'style') setViewState('gallery');
     else setViewState('empty');
   };
 
