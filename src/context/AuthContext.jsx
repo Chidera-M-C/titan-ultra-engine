@@ -82,10 +82,15 @@ export function AuthProvider({ children }) {
         }
 
         if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-          setLoading(false);
+  setLoading(false);
+
+        // Hide splash now that app is ready
+        const splash = document.getElementById('splash');
+        if (splash) {
+          splash.classList.add('hidden');
+          setTimeout(() => splash.remove(), 500);
         }
       }
-    );
 
     return () => {
       subscription.unsubscribe();
