@@ -18,24 +18,24 @@
   color: #666;
 }
 
-/* Vertical card grid — 2 columns, tall cards */
 .style-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 12px;
-  max-width: 600px;
 }
 
 .style-card {
   position: relative;
   border-radius: 16px;
-  height: 220px;
+  width: 140px;        /* fixed narrow width */
+  height: 220px;       /* tall height = portrait/vertical */
   cursor: pointer;
   overflow: hidden;
   border: 2px solid transparent;
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   align-items: flex-end;
+  flex-shrink: 0;
 }
 
 .style-card:hover {
@@ -92,10 +92,9 @@
 }
 
 @media (max-width: 768px) {
-  .style-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    max-width: 100%;
+  .style-card {
+    width: 120px;
+    height: 180px;
   }
 }
 
