@@ -348,7 +348,7 @@ const handleStyleGenerate = async (finalPrompt, aspectRatio) => {
 
         {(viewState === 'result' || loading || image || error || styleLoading || styleImage || styleError) && (
           <ResultModal
-            image={styleLoading || styleImage || styleError ? styleImage : image}
+            image={styleImage || image}
             loading={styleLoading || loading}
             error={styleError || error}
             prompt={prompt}
