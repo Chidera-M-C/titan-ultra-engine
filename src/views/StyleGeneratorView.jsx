@@ -62,5 +62,6 @@ export default function StyleGeneratorView({ mood, onBack, onGenerate, loading }
           </div>
         </div>
       </div>
+    </div>
   );
 }
