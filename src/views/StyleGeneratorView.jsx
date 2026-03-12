@@ -30,6 +30,9 @@ export default function StyleGeneratorView({ mood, onBack, onGenerate, loading }
           <p className="style-gen-desc">{mood.description}</p>
         </div>
       </div>
+    </div>
+  );
+}
 
       {/* Prompt input */}
       <div className="style-gen-prompt-section">
@@ -54,7 +57,7 @@ export default function StyleGeneratorView({ mood, onBack, onGenerate, loading }
             <button
               className="style-gen-btn"
               onClick={handleGenerate}
-              disabled={loading || credits < 2}
+              disabled={loading}
               style={{ background: mood.gradient }}
             >
               {loading ? <div className="spinner" /> : <><Send size={16} /> Generate</>}
