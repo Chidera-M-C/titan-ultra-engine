@@ -44,6 +44,34 @@ const MOODS = [
     prompt: 'innocent mood, natural soft daylight, candid authentic expression, clean minimal background, fresh faced beauty, no makeup natural look, airy white tones, gentle smile, pure aesthetic',
     gradient: 'linear-gradient(160deg, #1a2a2a, #2d5a5a, #5a9e9e)',
   },
+  {
+  id: 'luxurious',
+  title: 'Luxurious',
+  description: 'Opulent, high-end, refined',
+  prompt: 'luxurious mood, opulent setting, high fashion editorial, silk and velvet textures, golden accents, soft studio lighting, refined elegance, upscale atmosphere, jewelry, designer aesthetic',
+  gradient: 'linear-gradient(160deg, #1a1400, #3d3000, #8a6d00)',
+},
+{
+  id: 'wild',
+  title: 'Wild',
+  description: 'Raw, untamed, natural',
+  prompt: 'wild mood, raw untamed energy, outdoor natural setting, wind blown hair, rugged terrain, golden sunlight, adventurous spirit, earthy tones, unfiltered beauty, nature editorial',
+  gradient: 'linear-gradient(160deg, #0a1a0a, #1a3d1a, #2d6e2d)',
+},
+{
+  id: 'cinematic',
+  title: 'Cinematic',
+  description: 'Film-like, epic, storytelling',
+  prompt: 'cinematic mood, movie still aesthetic, dramatic letterbox composition, film grain, anamorphic lens flare, rich color grading, epic atmosphere, storytelling light, blockbuster quality',
+  gradient: 'linear-gradient(160deg, #0a0a1a, #1a1a3d, #1a2a4a)',
+},
+{
+  id: 'summer',
+  title: 'Summer',
+  description: 'Sun-drenched, bright, carefree',
+  prompt: 'summer mood, sun drenched outdoor setting, bright natural light, golden tan skin, beach or poolside, carefree energy, warm vibrant colors, sunlight reflections, vacation aesthetic',
+  gradient: 'linear-gradient(160deg, #1a0a00, #4a2800, #c27820)',
+},
 ];
 
 export default function StyleView({ onSelectPrompt }) {
