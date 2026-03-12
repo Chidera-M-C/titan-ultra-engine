@@ -346,14 +346,20 @@ const handleStyleGenerate = async (finalPrompt, aspectRatio) => {
           onCreditsUpdated={setCredits}
         />
 
-        {(viewState === 'result' || loading || image || error) && (
+        {(viewState === 'result' || loading || image || error || styleLoading || styleImage || styleError) && (
           <ResultModal
-            image={image}
-            loading={loading}
-            error={error}
+            image={styleLoading || styleImage || styleError ? styleImage : image}
+            loading={styleLoading || loading}
+            error={styleError || error}
             prompt={prompt}
-            onClose={() => { setViewState('gallery'); setImage(null); setError(null); }}
-            onRetry={generateImage}
+            onClose={() => {
+              setViewState('gallery');
+              setImage(null);
+              setError(null);
+              setStyleImage(null);
+              setStyleError(null);
+            }}
+            onRetry={activeStyle ? () => handleStyleGenerate(activeStyle.prompt, aspectRatio) : generateImage}
             onOpenEdit={handleEditImage}
             onViewFullScreen={handleViewImage}
           />
