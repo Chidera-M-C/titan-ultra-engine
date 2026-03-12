@@ -263,7 +263,7 @@ export default function App() {
       case 'character': return <CharacterView />;
       case 'gallery':
         return <MyImagesView images={userGallery} prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
-      case 'style': return <StyleView />;
+      case 'style': return <StyleView onSelectPrompt={handleSelectPrompt} />;
       default:
         return <ExploreView key={exploreRefreshKey} prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
     }
