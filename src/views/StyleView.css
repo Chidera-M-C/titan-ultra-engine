@@ -25,10 +25,8 @@
 }
 
 .style-card {
-  position: relative;
-  border-radius: 16px;
-  width: 140px;        /* fixed narrow width */
-  height: 220px;       /* tall height = portrait/vertical */
+  width: calc((100% - 48px) / 5);  /* 5 per row, accounting for 4 gaps */
+  height: 280px;
   cursor: pointer;
   overflow: hidden;
   border: 2px solid transparent;
@@ -36,6 +34,8 @@
   display: flex;
   align-items: flex-end;
   flex-shrink: 0;
+  border-radius: 16px;
+  position: relative;
 }
 
 .style-card:hover {
@@ -93,8 +93,8 @@
 
 @media (max-width: 768px) {
   .style-card {
-    width: 120px;
-    height: 180px;
+    width: calc((100% - 24px) / 3);  /* 3 per row on mobile */
+    height: 200px;
   }
 }
 
