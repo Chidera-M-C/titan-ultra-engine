@@ -15,6 +15,7 @@ import ExploreView from './views/ExploreView';
 import CharacterView from './views/CharacterView';
 import MyImagesView from './views/MyImagesView';
 import StyleView from './views/StyleView';
+import StyleGeneratorView from './views/StyleGeneratorView';
 
 export default function App() {
   const { user, credits, setCredits, loading: authLoading } = useAuth();
