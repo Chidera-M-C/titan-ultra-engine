@@ -5,7 +5,7 @@ import { PulseLoader } from '../components/Shared/Loader';
 import AspectRatioDropdown from '../components/PromptSection/AspectRatioDropdown';
 import './StyleGeneratorView.css';
 
-export default function StyleGeneratorView({ mood, onBack, onGenerate, loading, image, error, credits }) {
+export default function StyleGeneratorView({ mood, onBack, onGenerate, loading }) {
   const [customPrompt, setCustomPrompt] = useState('');
   const [aspectRatio, setAspectRatio] = useState('9:16');
 
@@ -61,43 +61,6 @@ export default function StyleGeneratorView({ mood, onBack, onGenerate, loading, 
             </button>
           </div>
         </div>
-        {credits < 2 && (
-          <p className="style-gen-credits-warn">Insufficient credits to generate</p>
-        )}
       </div>
-
-      {/* Result area */}
-      <div className="style-gen-result">
-        {!loading && !image && !error && (
-          <div className="style-gen-placeholder">
-            <div className="style-gen-placeholder-inner" style={{ background: mood.gradient }}>
-              <span>{mood.title}</span>
-            </div>
-            <p>Your image will appear here</p>
-          </div>
-        )}
-
-        {loading && (
-          <div className="style-gen-loading">
-            <PulseLoader />
-            <p>Creating your {mood.title.toLowerCase()} image...</p>
-          </div>
-        )}
-
-        {error && !loading && (
-          <div className="style-gen-error">
-            <AlertCircle size={28} color="#ff4444" />
-            <p>{error}</p>
-            <button className="retry-btn" onClick={handleGenerate}>Try Again</button>
-          </div>
-        )}
-
-        {image && !loading && !error && (
-          <div className="style-gen-image-wrap">
-            <img src={image} alt={`${mood.title} generation`} className="style-gen-image" />
-          </div>
-        )}
-      </div>
-    </div>
   );
 }
