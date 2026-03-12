@@ -322,17 +322,17 @@ const handleStyleGenerate = async (finalPrompt, aspectRatio) => {
         />
 
         <main className="main-content">
-          {!promptCollapsed && (
-            <header className="top-header">
-              <h1 className="aesthetic-title">What will you create?</h1>
-              <PromptBox {...promptBoxProps} />
-            </header>
-          )}
-          {promptCollapsed && (
-            <div className="floating-prompt">
-              <PromptBox {...promptBoxProps} collapsed={true} />
-            </div>
-          )}
+         {!promptCollapsed && activeTab !== 'style' && activeTab !== 'character' && (
+          <header className="top-header">
+            <h1 className="aesthetic-title">What will you create?</h1>
+            <PromptBox {...promptBoxProps} />
+          </header>
+        )}
+        {promptCollapsed && activeTab !== 'style' && activeTab !== 'character' && (
+          <div className="floating-prompt">
+            <PromptBox {...promptBoxProps} collapsed={true} />
+          </div>
+        )}
           <div className="scrollable-area">{renderActiveView()}</div>
         </main>
 
