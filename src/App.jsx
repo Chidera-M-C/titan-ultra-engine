@@ -36,6 +36,10 @@ export default function App() {
   const [topUpModalOpen, setTopUpModalOpen] = useState(false);
   const [promptCollapsed, setPromptCollapsed] = useState(false);
   const [exploreRefreshKey, setExploreRefreshKey] = useState(0);
+  const [activeStyle, setActiveStyle] = useState(null);
+  const [styleImage, setStyleImage] = useState(null);
+  const [styleLoading, setStyleLoading] = useState(false);
+  const [styleError, setStyleError] = useState(null);
 
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
@@ -149,81 +153,86 @@ export default function App() {
     }
   };
 
-  const generateImage = async () => {
-    if (!user) { setLoginModalOpen(true); return; }
-    if (!prompt || loading) return;
-    if (credits < 2) {
-      setError("Insufficient credits.");
-      setViewState('result');
-      return;
+  const runGeneration = async ({ prompt, aspect_ratio, image: attachedImg, onSuccess, setLoadingFn, setErrorFn, setImageFn }) => {
+  const payload = { prompt, aspect_ratio };
+  if (attachedImg) payload.image = attachedImg;
+
+  const response = await fetch('/api/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) throw new Error('Server Error');
+  const { jobId } = await response.json();
+  if (!jobId) throw new Error('Failed to start generation job');
+
+  let completed = false, attempts = 0;
+  while (!completed && attempts < 150) {
+    attempts++;
+    const statusRes = await fetch('/api/check-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jobId })
+    });
+    if (!statusRes.ok) throw new Error(`Status check failed: ${statusRes.status}`);
+    const statusData = await statusRes.json();
+    if (statusData.error) throw new Error(`RunPod error: ${statusData.error}`);
+
+    if (statusData.status === 'COMPLETED') {
+      const output = statusData.output;
+      const base64Image = output?.image || output?.images?.[0] || output?.[0]?.image || output?.[0] || null;
+      if (!base64Image) throw new Error('Image data not found');
+      setImageFn(base64Image);
+      setLoadingFn(false);
+      completed = true;
+      (async () => {
+        try {
+          await deductCreditsLive(2);
+          const publicUrl = await saveAiImage(user.id, base64Image, prompt);
+          setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt }, ...prev]);
+          setExploreRefreshKey(k => k + 1);
+        } catch (err) { console.error('❌ Post-generation save failed:', err); }
+      })();
+    } else if (statusData.status === 'FAILED') {
+      throw new Error('RunPod generation failed');
+    } else {
+      await delay(2000);
     }
-    setViewState('result');
-    setLoading(true);
-    setError(null);
-    setImage(null);
-    try {
-      // Build payload — include image + aspectRatio if present
-      const payload = { prompt, aspect_ratio: aspectRatio };
-      if (attachedImage) payload.image = attachedImage;
+  }
+  if (!completed) throw new Error('The GPU is taking too long to wake up.');
+};
 
-      const response = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (!response.ok) throw new Error('Server Error');
-      const startData = await response.json();
-      const jobId = startData.jobId;
-      if (!jobId) throw new Error('Failed to start generation job');
+const generateImage = async () => {
+  if (!user) { setLoginModalOpen(true); return; }
+  if (!prompt || loading) return;
+  if (credits < 2) { setError("Insufficient credits."); setViewState('result'); return; }
+  setViewState('result');
+  setLoading(true);
+  setError(null);
+  setImage(null);
+  try {
+    await runGeneration({ prompt, aspect_ratio: aspectRatio, image: attachedImage, setLoadingFn: setLoading, setErrorFn: setError, setImageFn: setImage });
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
-      let completed = false;
-      let attempts = 0;
-      const maxAttempts = 150;
-
-      while (!completed && attempts < maxAttempts) {
-        attempts++;
-        const statusRes = await fetch('/api/check-status', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jobId })
-        });
-        if (!statusRes.ok) throw new Error(`Status check failed: ${statusRes.status}`);
-        const statusData = await statusRes.json();
-        if (statusData.error) throw new Error(`RunPod error: ${statusData.error}`);
-
-        if (statusData.status === 'COMPLETED') {
-          const output = statusData.output;
-          const base64Image = output?.image || output?.images?.[0] || output?.[0]?.image || output?.[0] || null;
-          if (!base64Image) throw new Error('Image data not found');
-
-          setImage(base64Image);
-          setLoading(false);
-          completed = true;
-
-          (async () => {
-            try {
-              await deductCreditsLive(2);
-              const publicUrl = await saveAiImage(user.id, base64Image, prompt);
-              setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt }, ...prev]);
-              setExploreRefreshKey(k => k + 1);
-            } catch (err) {
-              console.error('❌ Post-generation save failed:', err);
-            }
-          })();
-
-        } else if (statusData.status === 'FAILED') {
-          throw new Error('RunPod generation failed');
-        } else {
-          await delay(2000);
-        }
-      }
-      if (!completed) throw new Error('The GPU is taking too long to wake up.');
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+const handleStyleGenerate = async (finalPrompt, aspectRatio) => {
+  if (!user) { setLoginModalOpen(true); return; }
+  if (credits < 2) { setStyleError("Insufficient credits."); return; }
+  setStyleLoading(true);
+  setStyleError(null);
+  setStyleImage(null);
+  try {
+    await runGeneration({ prompt: finalPrompt, aspect_ratio: aspectRatio, setLoadingFn: setStyleLoading, setErrorFn: setStyleError, setImageFn: setStyleImage });
+  } catch (err) {
+    setStyleError(err.message);
+  } finally {
+    setStyleLoading(false);
+  }
+};
 
   const handleNavigation = (tab) => {
     setActiveTab(tab);
@@ -263,7 +272,18 @@ export default function App() {
       case 'character': return <CharacterView />;
       case 'gallery':
         return <MyImagesView images={userGallery} prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
-      case 'style': return <StyleView onSelectPrompt={handleSelectPrompt} />;
+      case 'style':
+        return activeStyle
+          ? <StyleGeneratorView
+              mood={activeStyle}
+              onBack={() => { setActiveStyle(null); setStyleImage(null); setStyleError(null); }}
+              onGenerate={handleStyleGenerate}
+              loading={styleLoading}
+              image={styleImage}
+              error={styleError}
+              credits={credits}
+            />
+          : <StyleView onSelectStyle={setActiveStyle} />;
       default:
         return <ExploreView key={exploreRefreshKey} prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
     }
