@@ -21,8 +21,9 @@
 /* Vertical card grid — 2 columns, tall cards */
 .style-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
+  max-width: 600px;
 }
 
 .style-card {
@@ -94,7 +95,9 @@
   .style-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
+    max-width: 100%;
   }
+}
 
   .style-card {
     height: 180px;
