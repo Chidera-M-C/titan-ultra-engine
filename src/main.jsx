@@ -9,11 +9,3 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <App />
   </AuthProvider>
 )
-
-setTimeout(() => {
-  const splash = document.getElementById('splash');
-  if (splash) {
-    splash.classList.add('hidden');
-    setTimeout(() => splash.remove(), 500);
-  }
-}, 1000);
