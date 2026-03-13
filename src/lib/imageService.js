@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-export const saveAiImage = async (userId, base64String, prompt) => {
+export const saveAiImage = async (userId, base64String, prompt, style = null) => {
   console.log('📸 saveAiImage called. userId:', userId, 'prompt:', prompt?.slice(0, 30));
 
   try {
@@ -52,7 +52,8 @@ export const saveAiImage = async (userId, base64String, prompt) => {
         user_id: userId,
         image_url: publicUrl,
         prompt: prompt,
-        category: 'Explore'
+        category: 'Explore',
+        style: style
       }]);
 
     if (dbError) throw new Error(`DB insert failed: ${dbError.message}`);
