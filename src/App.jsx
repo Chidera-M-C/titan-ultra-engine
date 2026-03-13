@@ -154,7 +154,7 @@ export default function App() {
     }
   };
 
-  const runGeneration = async ({ prompt, aspect_ratio, image: attachedImg, onSuccess, setLoadingFn, setErrorFn, setImageFn }) => {
+  const runGeneration = async ({ prompt, aspect_ratio, image: attachedImg, onSuccess, setLoadingFn, setErrorFn, setImageFn, styleId = null }) => {
   const payload = { prompt, aspect_ratio };
   if (attachedImg) payload.image = attachedImg;
 
@@ -189,7 +189,7 @@ export default function App() {
       (async () => {
         try {
           await deductCreditsLive(2);
-          const publicUrl = await saveAiImage(user.id, base64Image, prompt);
+          const publicUrl = await saveAiImage(user.id, base64Image, prompt, styleId);
           setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt }, ...prev]);
           setExploreRefreshKey(k => k + 1);
         } catch (err) { console.error('❌ Post-generation save failed:', err); }
@@ -227,7 +227,7 @@ const handleStyleGenerate = async (finalPrompt, aspectRatio) => {
   setStyleError(null);
   setStyleImage(null);
   try {
-    await runGeneration({ prompt: finalPrompt, aspect_ratio: aspectRatio, setLoadingFn: setStyleLoading, setErrorFn: setStyleError, setImageFn: setStyleImage });
+    await runGeneration({ prompt: finalPrompt, aspect_ratio: aspectRatio, setLoadingFn: setStyleLoading, setErrorFn: setStyleError, setImageFn: setStyleImage, styleId: activeStyle.id });
   } catch (err) {
     setStyleError(err.message);
   } finally {
@@ -280,9 +280,10 @@ const handleStyleGenerate = async (finalPrompt, aspectRatio) => {
               onBack={() => { setActiveStyle(null); setStyleImage(null); setStyleError(null); }}
               onGenerate={handleStyleGenerate}
               loading={styleLoading}
-              image={styleImage}
-              error={styleError}
-              credits={credits}
+              onViewImage={handleViewImage}
+              onEditImage={handleEditImage}
+              onSelectPrompt={handleSelectPrompt}
+              prompt={prompt}
             />
           : <StyleView onSelectStyle={setActiveStyle} />;
       default:
