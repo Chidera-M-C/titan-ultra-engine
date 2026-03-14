@@ -3,10 +3,7 @@ name: Build RunPod Handlers
 on:
   push:
     paths:
-      - 'handler_biglust.py'
-      - 'handler_crystalclear.py'
-      - 'Dockerfile.biglust'
-      - 'Dockerfile.crystalclear'
+      - 'handlers/**'
 
 jobs:
   build-biglust:
@@ -19,8 +16,8 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - uses: docker/build-push-action@v4
         with:
-          context: .
-          file: ./Dockerfile.biglust
+          context: ./handlers
+          file: ./handlers/Dockerfile.biglust
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/nudely-biglust:latest
           build-args: |
@@ -36,8 +33,8 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - uses: docker/build-push-action@v4
         with:
-          context: .
-          file: ./Dockerfile.crystalclear
+          context: ./handlers
+          file: ./handlers/Dockerfile.crystalclear
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/nudely-crystalclear:latest
           build-args: |
