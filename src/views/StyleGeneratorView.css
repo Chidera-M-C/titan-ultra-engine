@@ -255,7 +255,9 @@
   .style-gen-inputs-row {
     flex-direction: column;
   }
+  .style-gen-input-main,
   .style-gen-input-negative {
+    flex: unset;
     width: 100%;
   }
 }
