@@ -229,6 +229,17 @@
   display: block;
 }
 
+.style-gen-divider {
+  height: 1px;
+  background: #2a2a2a;
+  margin: 0;
+}
+
+.style-gen-negative::placeholder {
+  color: #ff4444;
+  opacity: 0.5;
+}
+
 /* ── Spinner ─────────────────────────────────────────────────────────────── */
 .spinner {
   width: 16px;
