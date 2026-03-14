@@ -1,0 +1,41 @@
+name: Build RunPod Handlers
+
+on:
+  push:
+    paths:
+      - 'handlers/**'
+
+jobs:
+  build-biglust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/build-push-action@v4
+        with:
+          context: ./handlers
+          file: ./handlers/Dockerfile.biglust
+          push: true
+          tags: yourdockerhubusername/nudely-biglust:latest
+          build-args: |
+            CIVITAI_TOKEN=${{ secrets.CIVITAI_TOKEN }}
+
+  build-crystalclear:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/build-push-action@v4
+        with:
+          context: ./handlers
+          file: ./handlers/Dockerfile.crystalclear
+          push: true
+          tags: yourdockerhubusername/nudely-crystalclear:latest
+          build-args: |
+            CIVITAI_TOKEN=${{ secrets.CIVITAI_TOKEN }}
