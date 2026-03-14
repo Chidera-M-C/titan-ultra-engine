@@ -60,12 +60,6 @@
 }
 
 /* ── Prompt section ──────────────────────────────────────────────────────── */
-.style-gen-prompt-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 .style-gen-label {
   font-size: 0.85rem;
   font-weight: 600;
@@ -229,15 +223,41 @@
   display: block;
 }
 
-.style-gen-divider {
-  height: 1px;
-  background: #2a2a2a;
-  margin: 0;
+.style-gen-inputs-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.style-gen-input-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.style-gen-input-main {
+  flex: 2;
+}
+
+.style-gen-input-negative {
+  flex: 1;
+}
+
+.style-gen-negative-box {
+  height: 100%;
 }
 
 .style-gen-negative::placeholder {
-  color: #ff4444;
-  opacity: 0.5;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 768px) {
+  .style-gen-inputs-row {
+    flex-direction: column;
+  }
+  .style-gen-input-negative {
+    width: 100%;
+  }
 }
 
 /* ── Spinner ─────────────────────────────────────────────────────────────── */
