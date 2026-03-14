@@ -157,6 +157,7 @@ export default function App() {
   const runGeneration = async ({ prompt, aspect_ratio, image: attachedImg, onSuccess, setLoadingFn, setErrorFn, setImageFn, styleId = null }) => {
   const payload = { prompt, aspect_ratio };
   if (attachedImg) payload.image = attachedImg;
+  if (negative_prompt) payload.negative_prompt = negative_prompt;
 
   const response = await fetch('/api/generate', {
     method: 'POST',
@@ -220,14 +221,14 @@ const generateImage = async () => {
   }
 };
 
-const handleStyleGenerate = async (finalPrompt, aspectRatio) => {
+const handleStyleGenerate = async (finalPrompt, aspectRatio, negativePrompt) => {
   if (!user) { setLoginModalOpen(true); return; }
   if (credits < 2) { setStyleError("Insufficient credits."); return; }
   setStyleLoading(true);
   setStyleError(null);
   setStyleImage(null);
   try {
-    await runGeneration({ prompt: finalPrompt, aspect_ratio: aspectRatio, setLoadingFn: setStyleLoading, setErrorFn: setStyleError, setImageFn: setStyleImage, styleId: activeStyle.id });
+    await runGeneration({ prompt: finalPrompt, aspect_ratio: aspectRatio, negative_prompt: negativePrompt, setLoadingFn: setStyleLoading, setErrorFn: setStyleError, setImageFn: setStyleImage, styleId: activeStyle.id });
   } catch (err) {
     setStyleError(err.message);
   } finally {
