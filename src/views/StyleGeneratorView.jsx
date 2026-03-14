@@ -86,8 +86,9 @@ export default function StyleGeneratorView({ mood, onBack, onGenerate, loading, 
         </div>
       </div>
 
-      {/* Prompt input */}
-      <div className="style-gen-prompt-section">
+          {/* Prompt + Negative side by side */}
+    <div className="style-gen-inputs-row">
+      <div className="style-gen-input-block style-gen-input-main">
         <p className="style-gen-label">Add your own details <span>(optional)</span></p>
         <div className="style-gen-prompt-box">
           <textarea
@@ -104,15 +105,6 @@ export default function StyleGeneratorView({ mood, onBack, onGenerate, loading, 
               }
             }}
           />
-          <div className="style-gen-divider" />
-          <textarea
-            className="style-gen-textarea style-gen-negative"
-            placeholder="Negative prompt — what to avoid (e.g. blurry, bad hands, extra fingers...)"
-            value={negativePrompt}
-            onChange={(e) => setNegativePrompt(e.target.value)}
-            disabled={loading}
-            rows={2}
-          />
           <div className="style-gen-footer">
             <AspectRatioDropdown value={aspectRatio} onChange={setAspectRatio} />
             <button
@@ -126,6 +118,21 @@ export default function StyleGeneratorView({ mood, onBack, onGenerate, loading, 
           </div>
         </div>
       </div>
+    
+      <div className="style-gen-input-block style-gen-input-negative">
+        <p className="style-gen-label">Negative prompt</p>
+        <div className="style-gen-prompt-box style-gen-negative-box">
+          <textarea
+            className="style-gen-textarea style-gen-negative"
+            placeholder="What to avoid (e.g. blurry, bad hands, extra fingers, low quality...)"
+            value={negativePrompt}
+            onChange={(e) => setNegativePrompt(e.target.value)}
+            disabled={loading}
+            rows={3}
+          />
+        </div>
+      </div>
+    </div>
 
       {/* Style gallery */}
       <div className="style-gen-gallery">
