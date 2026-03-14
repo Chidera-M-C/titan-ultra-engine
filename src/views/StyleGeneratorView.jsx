@@ -11,13 +11,14 @@ export default function StyleGeneratorView({ mood, onBack, onGenerate, loading, 
   const [galleryImages, setGalleryImages] = useState([]);
   const [galleryLoading, setGalleryLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [negativePrompt, setNegativePrompt] = useState('');
 
   const finalPrompt = customPrompt.trim()
     ? `${customPrompt}, ${mood.prompt}`
     : mood.prompt;
 
-  const handleGenerate = () => {
-    onGenerate(finalPrompt, aspectRatio);
+   const handleGenerate = () => {
+    onGenerate(finalPrompt, aspectRatio, negativePrompt);
   };
 
   const loadGallery = async (isLoadMore = false) => {
@@ -102,6 +103,15 @@ export default function StyleGeneratorView({ mood, onBack, onGenerate, loading, 
                 handleGenerate();
               }
             }}
+          />
+          <div className="style-gen-divider" />
+          <textarea
+            className="style-gen-textarea style-gen-negative"
+            placeholder="Negative prompt — what to avoid (e.g. blurry, bad hands, extra fingers...)"
+            value={negativePrompt}
+            onChange={(e) => setNegativePrompt(e.target.value)}
+            disabled={loading}
+            rows={2}
           />
           <div className="style-gen-footer">
             <AspectRatioDropdown value={aspectRatio} onChange={setAspectRatio} />
