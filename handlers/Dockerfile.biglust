@@ -1,0 +1,57 @@
+FROM runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel
+
+WORKDIR /app
+
+# Install dependencies
+RUN pip install --no-cache-dir \
+    diffusers==0.27.0 \
+    transformers==4.38.0 \
+    accelerate==0.27.0 \
+    safetensors==0.4.2 \
+    runpod==1.6.2 \
+    Pillow==10.2.0 \
+    requests==2.31.0
+
+# Accept CivitAI token as build arg
+ARG CIVITAI_TOKEN
+
+# Download all models at build time
+RUN python -c "
+import requests, os
+
+def download(url, path, label):
+    print(f'Downloading {label}...')
+    headers = {
+        'User-Agent': 'Mozilla/5.0',
+        'Authorization': f'Bearer ${CIVITAI_TOKEN}'
+    }
+    r = requests.get(url, headers=headers, stream=True)
+    r.raise_for_status()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'wb') as f:
+        for chunk in r.iter_content(chunk_size=1024*1024):
+            f.write(chunk)
+    print(f'  {label} done')
+
+# Base model and VAE
+download('https://civitai.com/api/download/models/1081768?type=Model&format=SafeTensor&size=full&fp=fp16', '/tmp/biglust.safetensors', 'BigLust')
+download('https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/sdxl_vae.safetensors', '/tmp/sdxl_vae.safetensors', 'SDXL VAE')
+download('https://huggingface.co/LyliaEngine/add-detail-xl/resolve/main/add-detail-xl.safetensors', '/tmp/add-detail-xl.safetensors', 'Detail Tweaker LoRA')
+
+# Style LoRAs
+download('https://civitai.com/api/download/models/2536215?type=Model&format=SafeTensor', '/tmp/lora_missionary.safetensors', 'LoRA: Missionary')
+download('https://civitai.com/api/download/models/2530338?type=Model&format=SafeTensor', '/tmp/lora_doggy.safetensors', 'LoRA: Doggy')
+download('https://civitai.com/api/download/models/2530288?type=Model&format=SafeTensor', '/tmp/lora_cowgirl.safetensors', 'LoRA: Cowgirl')
+download('https://civitai.com/api/download/models/2530355?type=Model&format=SafeTensor', '/tmp/lora_anal.safetensors', 'LoRA: Anal')
+download('https://civitai.com/api/download/models/2530259?type=Model&format=SafeTensor', '/tmp/lora_oral.safetensors', 'LoRA: Oral')
+download('https://civitai.com/api/download/models/714650?type=Model&format=SafeTensor',  '/tmp/lora_threesome.safetensors', 'LoRA: Threesome')
+download('https://civitai.com/api/download/models/2530375?type=Model&format=SafeTensor', '/tmp/lora_cum_on_face.safetensors', 'LoRA: Cum on Face')
+download('https://civitai.com/api/download/models/714650?type=Model&format=SafeTensor',  '/tmp/lora_lesbian.safetensors', 'LoRA: Lesbian')
+
+print('All models downloaded successfully')
+"
+
+# Copy handler
+COPY handler_biglust.py .
+
+CMD ["python", "handler_biglust.py"]
