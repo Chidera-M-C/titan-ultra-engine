@@ -154,7 +154,7 @@ export default function App() {
     }
   };
 
-  const runGeneration = async ({ prompt, aspect_ratio, image: attachedImg, onSuccess, setLoadingFn, setErrorFn, setImageFn, styleId = null }) => {
+  const runGeneration = async ({ prompt, aspect_ratio, image: attachedImg, onSuccess, setLoadingFn, setErrorFn, setImageFn, styleId = null, negative_prompt = null }) => {
   const payload = { prompt, aspect_ratio };
   if (attachedImg) payload.image = attachedImg;
   if (negative_prompt) payload.negative_prompt = negative_prompt;
