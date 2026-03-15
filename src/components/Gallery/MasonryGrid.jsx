@@ -1,5 +1,5 @@
 import './Gallery.css';
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Wand2, Download, Heart, RotateCcw } from 'lucide-react';
 
 const downloadImage = async (e, url, imageId) => {
