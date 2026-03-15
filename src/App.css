@@ -331,7 +331,8 @@ body, html {
 
 @media (max-width: 768px) {
   .top-header {
-    padding: 8px 1rem;
+    padding: 8px 1rem 8px 1rem;
+    padding-top: 0;
     align-items: center;
   }
 }
