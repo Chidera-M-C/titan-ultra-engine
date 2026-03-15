@@ -323,6 +323,12 @@ body, html {
   height: 100%;
 }
 
+@media (max-width: 768px) {
+  .aesthetic-title {
+    display: none;
+  }
+}
+
 /* RESPONSIVE BREAKPOINTS */
 @media (max-width: 768px) {
   .mobile-menu-toggle { display: flex; }
