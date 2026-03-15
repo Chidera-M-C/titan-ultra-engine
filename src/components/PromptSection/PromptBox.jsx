@@ -53,8 +53,7 @@ export default function PromptBox({
               }
             }}
           />
-          <p className="prompt-hint">Plain words don't work! Use Promptimize <CornerLeftUp size={11} /></p>
-          <div className="prompt-footer">
+            <div className="prompt-footer">
             <div className="left-tools">
               <AspectRatioDropdown value={aspectRatio} onChange={setAspectRatio} />
             </div>
@@ -76,7 +75,7 @@ export default function PromptBox({
             <textarea
               ref={textareaRef}
               className="prompt-input"
-              placeholder="PLAIN WORDS DO NOT WORK! Use the PROMPTIMIZE feature on the left...⬅️"
+              placeholder="What would you like to see..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               disabled={loading}
@@ -87,6 +86,7 @@ export default function PromptBox({
                 }
               }}
             />
+            <p className="prompt-hint">Plain words don't work! Use Promptimize <CornerLeftUp size={11} /></p>
             <div className="prompt-footer">
               <div className="left-tools">
                 <AspectRatioDropdown value={aspectRatio} onChange={setAspectRatio} />
