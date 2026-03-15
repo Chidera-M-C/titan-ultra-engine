@@ -94,14 +94,6 @@ body, html {
   margin-bottom: 0;
 }
 
-@media (max-width: 768px) {
-  .top-header.collapsed {
-    z-index: 1002;
-    left: 0;
-    right: 0;
-  }
-}
-
 .floating-prompt {
   position: fixed;
   top: 60px;
@@ -327,28 +319,28 @@ body, html {
   .aesthetic-title {
     display: none;
   }
-}
 
-@media (max-width: 768px) {
-  .top-header {
-    padding: 8px 1rem 8px 1rem;
-    padding-top: 0;
-    align-items: center;
-  }
-}
-
-/* RESPONSIVE BREAKPOINTS */
-@media (max-width: 768px) {
   .mobile-menu-toggle { display: flex; }
   .main-content { margin-left: 0; }
-  .top-header { padding-top: 70px; }
-  .aesthetic-title { font-size: 1.5rem; }
-  .scrollable-area { 
-    padding: 0 8px 8rem 8px !important; 
+
+  .top-header {
+    padding: 8px 1rem;
+    align-items: center;
+  }
+
+  .top-header.collapsed {
+    z-index: 1002;
+    left: 0;
+    right: 0;
+  }
+
+  .scrollable-area {
+    padding: 0 8px 8rem 8px !important;
     width: 100%;
     max-width: 100vw;
     box-sizing: border-box;
   }
+
   .gallery-centered-block {
     width: 100%;
     padding: 0;
