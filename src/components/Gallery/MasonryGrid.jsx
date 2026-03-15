@@ -21,7 +21,7 @@ const downloadImage = async (e, url, imageId) => {
 };
 
   // Shuffle images randomly every time the images prop changes
-export default function MasonryGrid({ images, prompt, onImageClick, onSelectPrompt, onEditImage }) {
+export default function MasonryGrid({ images, promptRef, onImageClick, onSelectPrompt, onEditImage }) {
   return (
     <div className="masonry-grid">
       {images.map((img) => (
@@ -42,7 +42,7 @@ export default function MasonryGrid({ images, prompt, onImageClick, onSelectProm
                 className="icon-btn"
                 onClick={(e) => {
                   e.stopPropagation();
-                  const currentPrompt = prompt || '';
+                  const currentPrompt = promptRef?.current || '';
                   const imagePrompt = img.prompt || '';
                   if (currentPrompt.trim() === imagePrompt.trim() && currentPrompt !== '') {
                     onSelectPrompt('');
@@ -51,7 +51,7 @@ export default function MasonryGrid({ images, prompt, onImageClick, onSelectProm
                   }
                 }}
                 data-tooltip={
-                  (prompt || '').trim() === (img.prompt || '').trim() && prompt ? "Unload prompt" : "Load prompt"
+                  (promptRef?.current || '').trim() === (img.prompt || '').trim() && promptRef?.current ? "Unload prompt" : "Load prompt"
                 }
               >
                 <RotateCcw size={18} color="#ffffff" />
