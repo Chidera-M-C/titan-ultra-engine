@@ -122,34 +122,36 @@ export default function StyleGeneratorView({ mood, onBack, onGenerate, loading, 
             }}
           />
           <div className="style-gen-footer">
-            <AspectRatioDropdown value={aspectRatio} onChange={setAspectRatio} />
-            {supportsImg2img && (
-          <>
-            <button
-              className={`attach-image-btn ${attachedImage ? 'active' : ''}`}
-              onClick={() => fileInputRef.current?.click()}
-              disabled={loading}
-              title="Attach image to edit"
-            >
-              <ImagePlus size={15} />
-              <span>{attachedImage ? 'Change' : 'Edit Image'}</span>
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              style={{ display: 'none' }}
-              onChange={(e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (ev) => setAttachedImage(ev.target.result);
-                reader.readAsDataURL(file);
-                e.target.value = '';
-              }}
-            />
-          </>
-        )}
+            <div className="style-gen-footer-left">
+              <AspectRatioDropdown value={aspectRatio} onChange={setAspectRatio} />
+              {supportsImg2img && (
+                <>
+                  <button
+                    className={`attach-image-btn ${attachedImage ? 'active' : ''}`}
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={loading}
+                    title="Attach image to edit"
+                  >
+                    <ImagePlus size={15} />
+                    <span>{attachedImage ? 'Change' : 'Edit Image'}</span>
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = (ev) => setAttachedImage(ev.target.result);
+                      reader.readAsDataURL(file);
+                      e.target.value = '';
+                    }}
+                  />
+                </>
+              )}
+            </div>
             <button
               className="style-gen-btn"
               onClick={handleGenerate}
