@@ -53,7 +53,7 @@ STYLE_CONFIGS = {
 }
 
 # txt2img only — no img2img for position styles
-IMG2IMG_STYLES = set()  # empty — none supported
+IMG2IMG_STYLES = {'cum_on_face'}
 
 base_pipeline    = None
 refiner_pipeline = None
@@ -199,36 +199,56 @@ def post_process(image):
 
 def handler(job):
     try:
-        input_data   = job['input']
-        user_prompt  = input_data.get('prompt', 'a beautiful woman')
-        style_id     = input_data.get('style', 'missionary_style')
-        aspect_ratio = input_data.get('aspect_ratio', '9:16')
+        input_data    = job['input']
+        user_prompt   = input_data.get('prompt', 'a beautiful woman')
+        style_id      = input_data.get('style', 'missionary_style')
+        aspect_ratio  = input_data.get('aspect_ratio', '9:16')
+        image_base64  = input_data.get('image', None)
+        user_negative = input_data.get('negative_prompt', '')
 
         config = STYLE_CONFIGS.get(style_id, STYLE_CONFIGS['missionary_style'])
 
         switch_lora(style_id)
 
         positive, negative = build_prompts(user_prompt, style_id)
+        if user_negative:
+            negative = f"{user_negative}, {negative}"
+
         width, height, upscale_w, upscale_h = get_dimensions(aspect_ratio)
 
-        # txt2img only for all BigLust styles
-        runpod.serverless.progress_update(job, "GENERATING_BASE")
-        base_image = base_pipeline(
-            prompt=positive, negative_prompt=negative,
-            num_inference_steps=config['steps'],
-            guidance_scale=config['guidance_scale'],
-            height=height, width=width,
-        ).images[0]
+        if image_base64 and style_id in IMG2IMG_STYLES:
+            # ── img2img path ──────────────────────────────────────────
+            runpod.serverless.progress_update(job, "PROCESSING_IMAGE")
+            image_data  = base64.b64decode(image_base64.split(",")[1] if "," in image_base64 else image_base64)
+            input_image = Image.open(io.BytesIO(image_data)).convert("RGB")
+            input_image = input_image.resize((upscale_w, upscale_h), Image.Resampling.LANCZOS)
+            final_image = refiner_pipeline(
+                prompt=positive, negative_prompt=negative,
+                image=input_image,
+                num_inference_steps=config['steps'],
+                guidance_scale=config['guidance_scale'],
+                denoising_strength=config['denoising_strength'],
+            ).images[0]
 
-        runpod.serverless.progress_update(job, "APPLYING_HIGHRES_FIX")
-        upscaled = base_image.resize((upscale_w, upscale_h), Image.Resampling.LANCZOS)
-        final_image = refiner_pipeline(
-            prompt=positive, negative_prompt=negative,
-            image=upscaled,
-            num_inference_steps=40,
-            guidance_scale=config['guidance_scale'],
-            denoising_strength=config['denoising_strength'],
-        ).images[0]
+        else:
+            # ── txt2img path ──────────────────────────────────────────
+            runpod.serverless.progress_update(job, "GENERATING_BASE")
+            base_image = base_pipeline(
+                prompt=positive, negative_prompt=negative,
+                num_inference_steps=config['steps'],
+                guidance_scale=config['guidance_scale'],
+                height=height, width=width,
+            ).images[0]
+
+            runpod.serverless.progress_update(job, "APPLYING_HIGHRES_FIX")
+            upscaled = base_image.resize((upscale_w, upscale_h), Image.Resampling.LANCZOS)
+            final_image = refiner_pipeline(
+                prompt=positive, negative_prompt=negative,
+                image=upscaled,
+                num_inference_steps=40,
+                guidance_scale=config['guidance_scale'],
+                denoising_strength=config['denoising_strength'],
+            ).images[0]
 
         final_image = post_process(final_image)
 
