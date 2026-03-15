@@ -158,6 +158,7 @@ export default function App() {
   const payload = { prompt, aspect_ratio };
   if (attachedImg) payload.image = attachedImg;
   if (negative_prompt) payload.negative_prompt = negative_prompt;
+  if (styleId) payload.style = styleId;
 
   const response = await fetch('/api/generate', {
     method: 'POST',
