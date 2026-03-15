@@ -156,7 +156,6 @@ export default function App() {
 
   const runGeneration = async ({ prompt, aspect_ratio, image: attachedImg, onSuccess, setLoadingFn, setErrorFn, setImageFn, styleId = null, negative_prompt = null }) => {
   const payload = { prompt, aspect_ratio };
-  const { jobId, endpointId } = await response.json();
   if (attachedImg) payload.image = attachedImg;
   if (negative_prompt) payload.negative_prompt = negative_prompt;
   if (styleId) payload.style = styleId;
@@ -167,7 +166,7 @@ export default function App() {
     body: JSON.stringify(payload)
   });
   if (!response.ok) throw new Error('Server Error');
-  const { jobId } = await response.json();
+  const { jobId, endpointId } = await response.json();
   if (!jobId) throw new Error('Failed to start generation job');
 
   let completed = false, attempts = 0;
