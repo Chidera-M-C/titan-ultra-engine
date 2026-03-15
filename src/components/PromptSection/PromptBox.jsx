@@ -86,7 +86,7 @@ export default function PromptBox({
                 }
               }}
             />
-            <p className="prompt-hint">Plain words often don't work! Use Promptimize <ArrowUpLeft size={11} /></p>
+            <p className="prompt-hint">Plain words don't work! Promptimize it <ArrowUpLeft size={11} /></p>
             <div className="prompt-footer">
               <div className="left-tools">
                 <AspectRatioDropdown value={aspectRatio} onChange={setAspectRatio} />
