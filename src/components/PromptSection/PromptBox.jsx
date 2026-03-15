@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
+import { Send, CornerLeftUp } from 'lucide-react';
 import AspectRatioDropdown from './AspectRatioDropdown';
 import './PromptBox.css';
 
@@ -53,6 +53,7 @@ export default function PromptBox({
               }
             }}
           />
+          <p className="prompt-hint">Plain words don't work! Use Promptimize <CornerLeftUp size={11} /></p>
           <div className="prompt-footer">
             <div className="left-tools">
               <AspectRatioDropdown value={aspectRatio} onChange={setAspectRatio} />
