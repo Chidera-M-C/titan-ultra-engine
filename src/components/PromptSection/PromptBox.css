@@ -387,8 +387,7 @@
   }
 
   .prompt-container.collapsed .prompt-input-negative {
-    max-height: 36px;
-    opacity: 1;
+    display: none;
   }
 
   .attach-image-btn span {
