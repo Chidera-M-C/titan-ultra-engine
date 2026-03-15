@@ -347,16 +347,11 @@ export default function App() {
         />
 
         <main className="main-content">
-          {!promptCollapsed && activeTab !== 'style' && activeTab !== 'character' && (
-            <header className="top-header">
+          {activeTab !== 'style' && activeTab !== 'character' && (
+            <header className={`top-header ${promptCollapsed ? 'collapsed' : ''}`}>
               <h1 className="aesthetic-title">What will you create?</h1>
-              <PromptBox {...promptBoxProps} />
+              <PromptBox {...promptBoxProps} collapsed={promptCollapsed} />
             </header>
-          )}
-          {promptCollapsed && activeTab !== 'style' && activeTab !== 'character' && (
-            <div className="floating-prompt">
-              <PromptBox {...promptBoxProps} collapsed={true} />
-            </div>
           )}
           <div className="scrollable-area">{renderActiveView()}</div>
         </main>
