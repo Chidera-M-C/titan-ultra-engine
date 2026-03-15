@@ -329,6 +329,13 @@ body, html {
   }
 }
 
+@media (max-width: 768px) {
+  .top-header {
+    padding: 8px 1rem;
+    align-items: center;
+  }
+}
+
 /* RESPONSIVE BREAKPOINTS */
 @media (max-width: 768px) {
   .mobile-menu-toggle { display: flex; }
