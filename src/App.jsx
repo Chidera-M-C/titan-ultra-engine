@@ -39,7 +39,6 @@ export default function App() {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [topUpModalOpen, setTopUpModalOpen] = useState(false);
   const [promptCollapsed, setPromptCollapsed] = useState(false);
-  const [exploreRefreshKey, setExploreRefreshKey] = useState(0);
   const [activeStyle, setActiveStyle] = useState(null);
   const [styleImage, setStyleImage] = useState(null);
   const [styleLoading, setStyleLoading] = useState(false);
@@ -196,7 +195,6 @@ export default function App() {
             await deductCreditsLive(2);
             const publicUrl = await saveAiImage(user.id, base64Image, prompt, styleId);
             setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt }, ...prev]);
-            setExploreRefreshKey(k => k + 1);
           } catch (err) { console.error('❌ Post-generation save failed:', err); }
         })();
       } else if (statusData.status === 'FAILED') {
@@ -275,7 +273,6 @@ export default function App() {
     switch (activeTab) {
       case 'explore':
         return <MemoExploreView
-          key={exploreRefreshKey}
           prompt={prompt}
           onSelectPrompt={handleSelectPrompt}
           onViewImage={handleViewImage}
