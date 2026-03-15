@@ -156,6 +156,7 @@ export default function App() {
 
   const runGeneration = async ({ prompt, aspect_ratio, image: attachedImg, onSuccess, setLoadingFn, setErrorFn, setImageFn, styleId = null, negative_prompt = null }) => {
   const payload = { prompt, aspect_ratio };
+  const { jobId, endpointId } = await response.json();
   if (attachedImg) payload.image = attachedImg;
   if (negative_prompt) payload.negative_prompt = negative_prompt;
   if (styleId) payload.style = styleId;
@@ -175,7 +176,7 @@ export default function App() {
     const statusRes = await fetch('/api/check-status', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jobId })
+      body: JSON.stringify({ jobId, endpointId })
     });
     if (!statusRes.ok) throw new Error(`Status check failed: ${statusRes.status}`);
     const statusData = await statusRes.json();
