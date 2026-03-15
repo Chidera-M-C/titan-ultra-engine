@@ -17,14 +17,17 @@ import MyImagesView from './views/MyImagesView';
 import StyleView from './views/StyleView';
 import StyleGeneratorView from './views/StyleGeneratorView';
 
+// Memoized outside component to prevent re-render cascade
+const MemoExploreView = React.memo(ExploreView);
+
 export default function App() {
   const { user, credits, setCredits, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState('explore');
   const [viewState, setViewState] = useState('gallery');
   const [prompt, setPrompt] = useState('');
+  const [negativePrompt, setNegativePrompt] = useState('');
   const [aspectRatio, setAspectRatio] = useState('9:16');
   const [image, setImage] = useState(null);
-  const [attachedImage, setAttachedImage] = useState(null); // base64 for img2img
   const [userGallery, setUserGallery] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -41,7 +44,6 @@ export default function App() {
   const [styleImage, setStyleImage] = useState(null);
   const [styleLoading, setStyleLoading] = useState(false);
   const [styleError, setStyleError] = useState(null);
-  const [negativePrompt, setNegativePrompt] = useState('');
 
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
@@ -155,88 +157,88 @@ export default function App() {
     }
   };
 
-  const runGeneration = async ({ prompt, aspect_ratio, image: attachedImg, onSuccess, setLoadingFn, setErrorFn, setImageFn, styleId = null, negative_prompt = null }) => {
-  const payload = { prompt, aspect_ratio };
-  if (attachedImg) payload.image = attachedImg;
-  if (negative_prompt) payload.negative_prompt = negative_prompt;
-  if (styleId) payload.style = styleId;
+  const runGeneration = async ({ prompt, aspect_ratio, image: attachedImg, setLoadingFn, setErrorFn, setImageFn, styleId = null, negative_prompt = null }) => {
+    const payload = { prompt, aspect_ratio };
+    if (attachedImg)     payload.image           = attachedImg;
+    if (negative_prompt) payload.negative_prompt = negative_prompt;
+    if (styleId)         payload.style           = styleId;
 
-  const response = await fetch('/api/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-  if (!response.ok) throw new Error('Server Error');
-  const { jobId, endpointId } = await response.json();
-  if (!jobId) throw new Error('Failed to start generation job');
-
-  let completed = false, attempts = 0;
-  while (!completed && attempts < 150) {
-    attempts++;
-    const statusRes = await fetch('/api/check-status', {
+    const response = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jobId, endpointId })
+      body: JSON.stringify(payload)
     });
-    if (!statusRes.ok) throw new Error(`Status check failed: ${statusRes.status}`);
-    const statusData = await statusRes.json();
-    if (statusData.error) throw new Error(`RunPod error: ${statusData.error}`);
+    if (!response.ok) throw new Error('Server Error');
+    const { jobId, endpointId } = await response.json();
+    if (!jobId) throw new Error('Failed to start generation job');
 
-    if (statusData.status === 'COMPLETED') {
-      const output = statusData.output;
-      const base64Image = output?.image || output?.images?.[0] || output?.[0]?.image || output?.[0] || null;
-      if (!base64Image) throw new Error('Image data not found');
-      setImageFn(base64Image);
-      setLoadingFn(false);
-      completed = true;
-      (async () => {
-        try {
-          await deductCreditsLive(2);
-          const publicUrl = await saveAiImage(user.id, base64Image, prompt, styleId);
-          setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt }, ...prev]);
-          setExploreRefreshKey(k => k + 1);
-        } catch (err) { console.error('❌ Post-generation save failed:', err); }
-      })();
-    } else if (statusData.status === 'FAILED') {
-      throw new Error('RunPod generation failed');
-    } else {
-      await delay(2000);
+    let completed = false, attempts = 0;
+    while (!completed && attempts < 150) {
+      attempts++;
+      const statusRes = await fetch('/api/check-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId, endpointId })
+      });
+      if (!statusRes.ok) throw new Error(`Status check failed: ${statusRes.status}`);
+      const statusData = await statusRes.json();
+      if (statusData.error) throw new Error(`RunPod error: ${statusData.error}`);
+
+      if (statusData.status === 'COMPLETED') {
+        const output = statusData.output;
+        const base64Image = output?.image || output?.images?.[0] || output?.[0]?.image || output?.[0] || null;
+        if (!base64Image) throw new Error('Image data not found');
+        setImageFn(base64Image);
+        setLoadingFn(false);
+        completed = true;
+        (async () => {
+          try {
+            await deductCreditsLive(2);
+            const publicUrl = await saveAiImage(user.id, base64Image, prompt, styleId);
+            setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt }, ...prev]);
+            setExploreRefreshKey(k => k + 1);
+          } catch (err) { console.error('❌ Post-generation save failed:', err); }
+        })();
+      } else if (statusData.status === 'FAILED') {
+        throw new Error('RunPod generation failed');
+      } else {
+        await delay(2000);
+      }
     }
-  }
-  if (!completed) throw new Error('The GPU is taking too long to wake up.');
-};
+    if (!completed) throw new Error('The GPU is taking too long to wake up.');
+  };
 
-const generateImage = async () => {
-  if (!user) { setLoginModalOpen(true); return; }
-  if (!prompt || loading) return;
-  if (credits < 2) { setError("Insufficient credits."); setViewState('result'); return; }
-  setViewState('result');
-  setLoading(true);
-  setError(null);
-  setImage(null);
-  try {
-    await runGeneration({ prompt, aspect_ratio: aspectRatio, negative_prompt: negativePrompt, setLoadingFn: setLoading, setErrorFn: setError, setImageFn: setImage });
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+  const generateImage = async () => {
+    if (!user) { setLoginModalOpen(true); return; }
+    if (!prompt || loading) return;
+    if (credits < 2) { setError("Insufficient credits."); setViewState('result'); return; }
+    setViewState('result');
+    setLoading(true);
+    setError(null);
+    setImage(null);
+    try {
+      await runGeneration({ prompt, aspect_ratio: aspectRatio, negative_prompt: negativePrompt, setLoadingFn: setLoading, setErrorFn: setError, setImageFn: setImage });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-const handleStyleGenerate = async (finalPrompt, aspectRatio, negativePrompt, attachedImage) => {
-  if (!user) { setLoginModalOpen(true); return; }
-  if (credits < 2) { setStyleError("Insufficient credits."); return; }
-  setStyleLoading(true);
-  setStyleError(null);
-  setStyleImage(null);
-  try {
-    await runGeneration({ prompt: finalPrompt, aspect_ratio: aspectRatio, negative_prompt: negativePrompt, image: attachedImage, setLoadingFn: setStyleLoading, setErrorFn: setStyleError, setImageFn: setStyleImage, styleId: activeStyle.id });
-  } catch (err) {
-    setStyleError(err.message);
-  } finally {
-    setStyleLoading(false);
-  }
-};
+  const handleStyleGenerate = async (finalPrompt, aspectRatio, negativePrompt, attachedImage) => {
+    if (!user) { setLoginModalOpen(true); return; }
+    if (credits < 2) { setStyleError("Insufficient credits."); return; }
+    setStyleLoading(true);
+    setStyleError(null);
+    setStyleImage(null);
+    try {
+      await runGeneration({ prompt: finalPrompt, aspect_ratio: aspectRatio, negative_prompt: negativePrompt, image: attachedImage, setLoadingFn: setStyleLoading, setErrorFn: setStyleError, setImageFn: setStyleImage, styleId: activeStyle.id });
+    } catch (err) {
+      setStyleError(err.message);
+    } finally {
+      setStyleLoading(false);
+    }
+  };
 
   const handleNavigation = (tab) => {
     setActiveTab(tab);
@@ -272,10 +274,22 @@ const handleStyleGenerate = async (finalPrompt, aspectRatio, negativePrompt, att
     }
     switch (activeTab) {
       case 'explore':
-        return <ExploreView key={exploreRefreshKey} prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
-      case 'character': return <CharacterView />;
+        return <MemoExploreView
+          key={exploreRefreshKey}
+          onSelectPrompt={handleSelectPrompt}
+          onViewImage={handleViewImage}
+          onEditImage={handleEditImage}
+        />;
+      case 'character':
+        return <CharacterView />;
       case 'gallery':
-        return <MyImagesView images={userGallery} prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
+        return <MyImagesView
+          images={userGallery}
+          prompt={prompt}
+          onSelectPrompt={handleSelectPrompt}
+          onViewImage={handleViewImage}
+          onEditImage={handleEditImage}
+        />;
       case 'style':
         return activeStyle
           ? <StyleGeneratorView
@@ -290,7 +304,12 @@ const handleStyleGenerate = async (finalPrompt, aspectRatio, negativePrompt, att
             />
           : <StyleView onSelectStyle={setActiveStyle} />;
       default:
-        return <ExploreView key={exploreRefreshKey} prompt={prompt} onSelectPrompt={handleSelectPrompt} onViewImage={handleViewImage} onEditImage={handleEditImage} />;
+        return <MemoExploreView
+          key={exploreRefreshKey}
+          onSelectPrompt={handleSelectPrompt}
+          onViewImage={handleViewImage}
+          onEditImage={handleEditImage}
+        />;
     }
   };
 
@@ -300,9 +319,9 @@ const handleStyleGenerate = async (finalPrompt, aspectRatio, negativePrompt, att
     aspectRatio,
     setAspectRatio,
     onGenerate: generateImage,
+    loading,
     negativePrompt,
     setNegativePrompt,
-    loading,
   };
 
   return (
@@ -325,17 +344,17 @@ const handleStyleGenerate = async (finalPrompt, aspectRatio, negativePrompt, att
         />
 
         <main className="main-content">
-         {!promptCollapsed && activeTab !== 'style' && activeTab !== 'character' && (
-          <header className="top-header">
-            <h1 className="aesthetic-title">What will you create?</h1>
-            <PromptBox {...promptBoxProps} />
-          </header>
-        )}
-        {promptCollapsed && activeTab !== 'style' && activeTab !== 'character' && (
-          <div className="floating-prompt">
-            <PromptBox {...promptBoxProps} collapsed={true} />
-          </div>
-        )}
+          {!promptCollapsed && activeTab !== 'style' && activeTab !== 'character' && (
+            <header className="top-header">
+              <h1 className="aesthetic-title">What will you create?</h1>
+              <PromptBox {...promptBoxProps} />
+            </header>
+          )}
+          {promptCollapsed && activeTab !== 'style' && activeTab !== 'character' && (
+            <div className="floating-prompt">
+              <PromptBox {...promptBoxProps} collapsed={true} />
+            </div>
+          )}
           <div className="scrollable-area">{renderActiveView()}</div>
         </main>
 
