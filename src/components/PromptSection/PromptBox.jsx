@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Send, CornerLeftUp } from 'lucide-react';
+import { Send, ArrowUpLeft } from 'lucide-react';
 import AspectRatioDropdown from './AspectRatioDropdown';
 import './PromptBox.css';
 
@@ -75,7 +75,7 @@ export default function PromptBox({
             <textarea
               ref={textareaRef}
               className="prompt-input"
-              placeholder="What would you like to see..."
+              placeholder="Describe what you wanna see..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               disabled={loading}
@@ -86,7 +86,7 @@ export default function PromptBox({
                 }
               }}
             />
-            <p className="prompt-hint">Plain words don't work! Use Promptimize <CornerLeftUp size={11} /></p>
+            <p className="prompt-hint">Plain words often don't work! Use Promptimize <ArrowUpLeft size={11} /></p>
             <div className="prompt-footer">
               <div className="left-tools">
                 <AspectRatioDropdown value={aspectRatio} onChange={setAspectRatio} />
