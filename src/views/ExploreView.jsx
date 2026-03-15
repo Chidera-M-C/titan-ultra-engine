@@ -97,8 +97,8 @@ export default function ExploreView({ prompt, onSelectPrompt, onViewImage, onEdi
             <p>Be the first to create something amazing!</p>
           </div>
         ) : (
-          <MasonryGrid 
-            images={images} 
+          <MasonryGrid
+            images={images}
             prompt={prompt}
             onImageClick={onViewImage}
             onSelectPrompt={onSelectPrompt}
