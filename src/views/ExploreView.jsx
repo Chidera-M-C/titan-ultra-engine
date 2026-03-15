@@ -8,55 +8,54 @@ export default function ExploreView({ prompt, onSelectPrompt, onViewImage, onEdi
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+
+  // Add this shuffle helper
+  const shuffleArray = (arr) => {
+    const shuffled = [...arr];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
   
   const categories = ['Explore', 'Top', 'People', 'Nature', 'Poster', '3D Render'];
 
   const loadImages = async (isLoadMore = false) => {
-    if (loading) return;
-    
-    setLoading(true);
-    try {
-      const limit = 20;
-      const offset = isLoadMore ? images.length : 0;
-
-      // Supabase Query Logic
-      let query = supabase
-        .from('images')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1);
-
-      // Filter by category if not 'Explore'
-      if (activeCategory !== 'Explore') {
-        query = query.eq('category', activeCategory);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      const fetchedImages = data.map(doc => ({
-        id: doc.id,
-        url: doc.image_url,
-        prompt: doc.prompt,
-        userId: doc.user_id,
-        createdAt: doc.created_at
-      }));
-
-      if (isLoadMore) {
-        setImages(prev => [...prev, ...fetchedImages]);
-      } else {
-        setImages(fetchedImages);
-      }
-
-      setHasMore(fetchedImages.length === limit);
-      
-    } catch (err) {
-      console.error("Failed to fetch explore images from Supabase:", err);
-    } finally {
-      setLoading(false);
+  if (loading) return;
+  setLoading(true);
+  try {
+    const limit = 20;
+    const offset = isLoadMore ? images.length : 0;
+    let query = supabase
+      .from('images')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+    if (activeCategory !== 'Explore') {
+      query = query.eq('category', activeCategory);
     }
-  };
+    const { data, error } = await query;
+    if (error) throw error;
+    const fetchedImages = data.map(doc => ({
+      id: doc.id,
+      url: doc.image_url,
+      prompt: doc.prompt,
+      userId: doc.user_id,
+      createdAt: doc.created_at
+    }));
+    if (isLoadMore) {
+      setImages(prev => [...prev, ...fetchedImages]);
+    } else {
+      setImages(shuffleArray(fetchedImages));
+    }
+    setHasMore(fetchedImages.length === limit);
+  } catch (err) {
+    console.error("Failed to fetch explore images from Supabase:", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     loadImages();
