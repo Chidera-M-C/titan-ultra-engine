@@ -177,6 +177,14 @@
     justify-content: center;
   }
 
+  .gallery-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+  min-height: 100px;  /* prevents zero-height flash */
+  background: #1a1a1a; /* placeholder color while loading */
+}
+
   .icon-btn {
     width: 32px !important;
     height: 32px !important;
