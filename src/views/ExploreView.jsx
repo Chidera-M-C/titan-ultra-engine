@@ -61,27 +61,6 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
     loadImages();
   }, [activeCategory]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollable = document.querySelector('.scrollable-area');
-      if (!scrollable) return;
-
-      const scrollTop = scrollable.scrollTop;
-      const scrollHeight = scrollable.scrollHeight;
-      const clientHeight = scrollable.clientHeight;
-
-      if (scrollHeight - scrollTop - clientHeight < 200 && hasMore && !loading) {
-        loadImages(true);
-      }
-    };
-
-    const scrollable = document.querySelector('.scrollable-area');
-    if (scrollable) {
-      scrollable.addEventListener('scroll', handleScroll);
-      return () => scrollable.removeEventListener('scroll', handleScroll);
-    }
-  }, [images, hasMore, loading]);
-
   return (
     <>
       <CategoryTabs 
