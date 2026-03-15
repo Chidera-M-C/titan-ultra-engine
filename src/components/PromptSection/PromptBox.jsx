@@ -70,6 +70,7 @@ export default function PromptBox({
         // ── Expanded: side by side prompt + negative ──────────────────────
         <div className="prompt-inputs-row">
           <div className="prompt-input-block prompt-input-main">
+            <p className="prompt-negative-label" style={{ visibility: 'hidden' }}>Prompt</p>  {/* spacer */}
             <div className="prompt-input-main-box">
             <textarea
               ref={textareaRef}
