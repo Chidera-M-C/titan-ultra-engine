@@ -136,7 +136,7 @@ export default function StyleGeneratorView({ mood, onBack, onGenerate, loading, 
 
       {/* Style gallery */}
       <div className="style-gen-gallery">
-        <h3 className="style-gen-gallery-title">What people are creating with {mood.title}</h3>
+        <h3 className="style-gen-gallery-title">{mood.title} Gallery</h3>
         {galleryImages.length === 0 && !galleryLoading ? (
           <div className="style-gen-gallery-empty">
             <p>No images yet — be the first to generate in this style!</p>
