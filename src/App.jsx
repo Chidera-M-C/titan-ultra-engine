@@ -41,6 +41,7 @@ export default function App() {
   const [styleImage, setStyleImage] = useState(null);
   const [styleLoading, setStyleLoading] = useState(false);
   const [styleError, setStyleError] = useState(null);
+  const [negativePrompt, setNegativePrompt] = useState('');
 
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
@@ -214,7 +215,7 @@ const generateImage = async () => {
   setError(null);
   setImage(null);
   try {
-    await runGeneration({ prompt, aspect_ratio: aspectRatio, image: attachedImage, setLoadingFn: setLoading, setErrorFn: setError, setImageFn: setImage });
+    await runGeneration({ prompt, aspect_ratio: aspectRatio, negative_prompt: negativePrompt, setLoadingFn: setLoading, setErrorFn: setError, setImageFn: setImage });
   } catch (err) {
     setError(err.message);
   } finally {
@@ -299,10 +300,9 @@ const handleStyleGenerate = async (finalPrompt, aspectRatio, negativePrompt, att
     aspectRatio,
     setAspectRatio,
     onGenerate: generateImage,
+    negativePrompt,
+    setNegativePrompt,
     loading,
-    attachedImage,
-    onImageAttach: setAttachedImage,
-    onImageRemove: () => setAttachedImage(null),
   };
 
   return (
