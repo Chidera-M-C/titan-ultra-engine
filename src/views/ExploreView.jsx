@@ -25,13 +25,10 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
   if (loading) return;
   setLoading(true);
   try {
-    const limit = 20;
-    const offset = isLoadMore ? images.length : 0;
     let query = supabase
       .from('images')
       .select('*')
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+      .order('created_at', { ascending: false });
     if (activeCategory !== 'Explore') {
       query = query.eq('category', activeCategory);
     }
