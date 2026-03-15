@@ -211,6 +211,7 @@
   opacity: 1;
   overflow: hidden;
   pointer-events: auto;
+  z-index: 1002;
 }
 
 .prompt-container.collapsed .prompt-negative-box {
