@@ -9,7 +9,9 @@ export async function onRequestPost(context) {
     }
 
     // Call RunPod status endpoint
-    const response = await fetch(`https://api.runpod.ai/v2/${env.RUNPOD_ENDPOINT_ID}/status/${jobId}`, {
+    const { jobId, endpointId } = await request.json();
+    const resolvedEndpoint = endpointId || env.RUNPOD_ENDPOINT_ID;
+    const response = await fetch(`https://api.runpod.ai/v2/${resolvedEndpoint}/status/${jobId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${env.RUNPOD_API_KEY}`,
