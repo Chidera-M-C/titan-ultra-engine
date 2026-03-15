@@ -46,7 +46,6 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
     } else {
       setImages(shuffleArray(fetchedImages));
     }
-    setHasMore(fetchedImages.length === limit);
   } catch (err) {
     console.error("Failed to fetch explore images from Supabase:", err);
   } finally {
