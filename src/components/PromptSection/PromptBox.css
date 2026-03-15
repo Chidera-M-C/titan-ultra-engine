@@ -1,15 +1,17 @@
 .prompt-container {
   width: 100%;
   max-width: 850px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.prompt-input-main-box {
   background: #161616;
   border: 1px solid #252525;
   border-radius: 20px;
   padding: 12px;
-  display: flex;
-  flex-direction: column;
   box-shadow: 0 10px 40px rgba(0,0,0,0.6);
   position: relative;
-  transition: all 0.3s ease;
 }
 
 /* ── Side by side layout ─────────────────────────────────────────────────── */
@@ -38,22 +40,6 @@
   font-weight: 600;
   color: #555;
   padding: 2px 0;
-}
-
-.prompt-negative-textarea {
-  background: #111;
-  border: 1px solid #222;
-  border-radius: 12px;
-  padding: 10px 12px;
-  color: #fff;
-  font-size: 0.88rem;
-  font-family: inherit;
-  resize: none;
-  outline: none;
-  line-height: 1.5;
-  width: 100%;
-  transition: border-color 0.2s ease;
-  min-height: 90px;
 }
 
 .prompt-negative-textarea::placeholder {
@@ -119,6 +105,41 @@
   padding: 4px 50px 4px 4px;
   font-size: 0.9rem;
   min-height: 24px;
+}
+
+.prompt-negative-box {
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  overflow: visible;
+  transition: border-color 0.2s ease;
+  height: 100%;
+}
+
+.prompt-negative-box:focus-within {
+  border-color: #444;
+}
+
+.prompt-negative-textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 0.88rem;
+  font-family: inherit;
+  resize: none;
+  padding: 14px 16px;
+  line-height: 1.5;
+  min-height: 90px;
+}
+
+.prompt-negative-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.15);
+}
+
+.prompt-negative-textarea:disabled {
+  opacity: 0.5;
 }
 
 /* ── Footer ──────────────────────────────────────────────────────────────── */
