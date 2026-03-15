@@ -20,24 +20,11 @@ const downloadImage = async (e, url, imageId) => {
   }
 };
 
-export default function MasonryGrid({ images, prompt, onImageClick, onSelectPrompt, onEditImage }) {
-
   // Shuffle images randomly every time the images prop changes
-  const shuffledImages = useMemo(() => {
-    if (!images || images.length === 0) return [];
-    
-    // Proper Fisher-Yates shuffle (true random)
-    const shuffled = [...images];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-  }, [images]);
-
+export default function MasonryGrid({ images, prompt, onImageClick, onSelectPrompt, onEditImage }) {
   return (
     <div className="masonry-grid">
-      {shuffledImages.map((img) => (
+      {images.map((img) => (
         <div
           key={img.id}
           className="gallery-card"
