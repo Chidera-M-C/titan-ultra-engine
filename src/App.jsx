@@ -47,6 +47,7 @@ export default function App() {
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
   const promptRef = useRef(prompt);
   useEffect(() => { promptRef.current = prompt; }, [prompt]);
+  const exploreImagesCache = useRef([]);
 
   const handleGlobalClick = (e) => {
     if (user || authLoading) return;
@@ -274,12 +275,13 @@ export default function App() {
     }
     switch (activeTab) {
       case 'explore':
-        return <MemoExploreView
+        <MemoExploreView
           promptRef={promptRef}
           onSelectPrompt={handleSelectPrompt}
           onViewImage={handleViewImage}
           onEditImage={handleEditImage}
-        />;
+          imagesCache={exploreImagesCache}
+        />
       case 'character':
         return <CharacterView />;
       case 'gallery':
@@ -304,12 +306,13 @@ export default function App() {
             />
           : <StyleView onSelectStyle={setActiveStyle} />;
       default:
-        return <MemoExploreView
+        <MemoExploreView
           promptRef={promptRef}
           onSelectPrompt={handleSelectPrompt}
           onViewImage={handleViewImage}
           onEditImage={handleEditImage}
-        />;
+          imagesCache={exploreImagesCache}
+        />
     }
   };
 
