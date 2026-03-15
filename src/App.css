@@ -59,8 +59,32 @@ body, html {
   padding: 1rem 2rem 1rem 1rem;
   flex-shrink: 0;
   position: relative;
-  z-index: 1000; 
+  z-index: 1000;
   background: var(--bg-app);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.top-header.collapsed {
+  position: fixed;
+  top: 0;
+  left: 260px;
+  right: 0;
+  padding: 8px 1rem;
+  background: rgba(16, 16, 16, 0.9);
+  backdrop-filter: blur(12px);
+  z-index: 1001;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.top-header.collapsed .aesthetic-title {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .top-header.collapsed {
+    left: 0;
+  }
 }
 
 .aesthetic-title {
