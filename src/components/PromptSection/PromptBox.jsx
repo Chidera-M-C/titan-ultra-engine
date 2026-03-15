@@ -70,6 +70,7 @@ export default function PromptBox({
         // ── Expanded: side by side prompt + negative ──────────────────────
         <div className="prompt-inputs-row">
           <div className="prompt-input-block prompt-input-main">
+            <div className="prompt-input-main-box">
             <textarea
               ref={textareaRef}
               className="prompt-input"
@@ -95,19 +96,23 @@ export default function PromptBox({
               >
                 {loading ? <div className="spinner"></div> : <Send size={20} />}
               </button>
+              </div>
             </div>
           </div>
+            
 
           <div className="prompt-input-block prompt-input-negative">
             <p className="prompt-negative-label">Negative prompt</p>
-            <textarea
-              className="prompt-input prompt-negative-textarea"
-              placeholder="What to avoid (e.g. blurry, bad hands, extra fingers, low quality...)"
-              value={negativePrompt}
-              onChange={(e) => setNegativePrompt(e.target.value)}
-              disabled={loading}
-              rows={3}
-            />
+            <div className="prompt-negative-box">
+              <textarea
+                className="prompt-negative-textarea"
+                placeholder="What to avoid (e.g. blurry, bad hands, extra fingers, low quality...)"
+                value={negativePrompt}
+                onChange={(e) => setNegativePrompt(e.target.value)}
+                disabled={loading}
+                rows={3}
+              />
+            </div>
           </div>
         </div>
       )}
