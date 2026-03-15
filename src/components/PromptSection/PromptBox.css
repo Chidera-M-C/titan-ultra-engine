@@ -201,7 +201,7 @@
 /* ── COLLAPSED STATE ─────────────────────────────────────────────────────── */
 .prompt-container.collapsed .prompt-inputs-row {
   gap: 8px;
-  align-items: center;
+  align-items: flex-start;
 }
 
 /* Compress negative box — stays visible, single line height */
@@ -219,7 +219,7 @@
 
 .prompt-container.collapsed .prompt-negative-textarea {
   min-height: unset;
-  height: 36px;
+  height: 52px;
   padding: 6px 12px;
   font-size: 0.8rem;
   overflow: hidden;
@@ -248,7 +248,7 @@
 .prompt-container.collapsed .prompt-input {
   font-size: 0.88rem;
   padding: 4px 50px 4px 4px;
-  max-height: 36px;
+  max-height: 24px;
 }
 
 /* Hide hint */
