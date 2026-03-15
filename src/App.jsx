@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './App.css';
 import { Menu, X } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
@@ -45,6 +45,8 @@ export default function App() {
   const [styleError, setStyleError] = useState(null);
 
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
+  const promptRef = useRef(prompt);
+  useEffect(() => { promptRef.current = prompt; }, [prompt]);
 
   const handleGlobalClick = (e) => {
     if (user || authLoading) return;
@@ -245,21 +247,21 @@ export default function App() {
     else setViewState('empty');
   };
 
-  const handleSelectPrompt = (selectedPrompt) => {
+  const handleSelectPrompt = useCallback((selectedPrompt) => {
     setPrompt(selectedPrompt);
     if (selectedPrompt) window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleViewImage = (img) => {
+  }, []);
+  
+  const handleViewImage = useCallback((img) => {
     setViewingImageUrl(img.url);
     setViewImageModalOpen(true);
-  };
-
-  const handleEditImage = (img) => {
+  }, []);
+  
+  const handleEditImage = useCallback((img) => {
     if (!user) { setLoginModalOpen(true); return; }
     setEditingImage(img);
     setEditModalOpen(true);
-  };
+  }, [user]);
 
   const renderActiveView = () => {
     if (viewState === 'empty') {
@@ -273,7 +275,7 @@ export default function App() {
     switch (activeTab) {
       case 'explore':
         return <MemoExploreView
-          prompt={prompt}
+          promptRef={promptRef}
           onSelectPrompt={handleSelectPrompt}
           onViewImage={handleViewImage}
           onEditImage={handleEditImage}
@@ -303,7 +305,7 @@ export default function App() {
           : <StyleView onSelectStyle={setActiveStyle} />;
       default:
         return <MemoExploreView
-          key={exploreRefreshKey}
+          promptRef={promptRef}
           onSelectPrompt={handleSelectPrompt}
           onViewImage={handleViewImage}
           onEditImage={handleEditImage}
