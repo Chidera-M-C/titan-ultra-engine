@@ -275,13 +275,13 @@ export default function App() {
     }
     switch (activeTab) {
       case 'explore':
-        <MemoExploreView
+        return <MemoExploreView
           promptRef={promptRef}
           onSelectPrompt={handleSelectPrompt}
           onViewImage={handleViewImage}
           onEditImage={handleEditImage}
           imagesCache={exploreImagesCache}
-        />
+        />;
       case 'character':
         return <CharacterView />;
       case 'gallery':
