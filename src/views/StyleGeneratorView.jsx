@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Send, ImagePlus, X } from 'lucide-react';
+import '../components/PromptSection/PromptBox.css';
 import { supabase } from '../lib/supabase.js';
 import AspectRatioDropdown from '../components/PromptSection/AspectRatioDropdown';
 import MasonryGrid from '../components/Gallery/MasonryGrid';
 import './StyleGeneratorView.css';
+import { useRef } from 'react'; // add useRef
 
 export default function StyleGeneratorView({ mood, onBack, onGenerate, loading, onViewImage, onEditImage, onSelectPrompt, prompt }) {
   const [customPrompt, setCustomPrompt] = useState('');
@@ -12,13 +14,18 @@ export default function StyleGeneratorView({ mood, onBack, onGenerate, loading, 
   const [galleryLoading, setGalleryLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [negativePrompt, setNegativePrompt] = useState('');
+  const [attachedImage, setAttachedImage] = useState(null);
+  const fileInputRef = useRef(null);
+  
+  const IMG2IMG_STYLES = new Set(['female_nude_portrait', 'dressed_vs_naked', 'cum_on_face']);
+  const supportsImg2img = IMG2IMG_STYLES.has(mood.id);
 
   const finalPrompt = customPrompt.trim()
     ? `${customPrompt}, ${mood.prompt}`
     : mood.prompt;
 
-   const handleGenerate = () => {
-    onGenerate(finalPrompt, aspectRatio, negativePrompt);
+  const handleGenerate = () => {
+    onGenerate(finalPrompt, aspectRatio, negativePrompt, attachedImage);
   };
 
   const loadGallery = async (isLoadMore = false) => {
@@ -91,6 +98,15 @@ export default function StyleGeneratorView({ mood, onBack, onGenerate, loading, 
       <div className="style-gen-input-block style-gen-input-main">
         <p className="style-gen-label">Add your own details <span>(optional)</span></p>
         <div className="style-gen-prompt-box">
+          {attachedImage && (
+            <div className="prompt-image-preview">
+              <img src={attachedImage} alt="Attached" className="prompt-image-thumb" />
+              <button className="prompt-image-remove" onClick={() => setAttachedImage(null)}>
+                <X size={11} />
+              </button>
+              <span className="prompt-image-label">Edit mode</span>
+            </div>
+          )}
           <textarea
             className="style-gen-textarea"
             placeholder={`e.g. "blonde woman on a rooftop" — the ${mood.title.toLowerCase()} mood will be applied automatically`}
@@ -107,6 +123,33 @@ export default function StyleGeneratorView({ mood, onBack, onGenerate, loading, 
           />
           <div className="style-gen-footer">
             <AspectRatioDropdown value={aspectRatio} onChange={setAspectRatio} />
+            {supportsImg2img && (
+          <>
+            <button
+              className={`attach-image-btn ${attachedImage ? 'active' : ''}`}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading}
+              title="Attach image to edit"
+            >
+              <ImagePlus size={15} />
+              <span>{attachedImage ? 'Change' : 'Edit Image'}</span>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => setAttachedImage(ev.target.result);
+                reader.readAsDataURL(file);
+                e.target.value = '';
+              }}
+            />
+          </>
+        )}
             <button
               className="style-gen-btn"
               onClick={handleGenerate}
