@@ -38,7 +38,7 @@ export async function onRequestPost(context) {
     }
 
     const data = await response.json();
-    return new Response(JSON.stringify({ jobId: data.id, status: data.status }), {
+    return new Response(JSON.stringify({ jobId: data.id, status: data.status, endpointId }), {
       headers: { 'Content-Type': 'application/json' }
     });
 
