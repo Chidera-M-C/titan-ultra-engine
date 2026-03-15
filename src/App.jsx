@@ -222,14 +222,14 @@ const generateImage = async () => {
   }
 };
 
-const handleStyleGenerate = async (finalPrompt, aspectRatio, negativePrompt) => {
+const handleStyleGenerate = async (finalPrompt, aspectRatio, negativePrompt, attachedImage) => {
   if (!user) { setLoginModalOpen(true); return; }
   if (credits < 2) { setStyleError("Insufficient credits."); return; }
   setStyleLoading(true);
   setStyleError(null);
   setStyleImage(null);
   try {
-    await runGeneration({ prompt: finalPrompt, aspect_ratio: aspectRatio, negative_prompt: negativePrompt, setLoadingFn: setStyleLoading, setErrorFn: setStyleError, setImageFn: setStyleImage, styleId: activeStyle.id });
+    await runGeneration({ prompt: finalPrompt, aspect_ratio: aspectRatio, negative_prompt: negativePrompt, image: attachedImage, setLoadingFn: setStyleLoading, setErrorFn: setStyleError, setImageFn: setStyleImage, styleId: activeStyle.id });
   } catch (err) {
     setStyleError(err.message);
   } finally {
