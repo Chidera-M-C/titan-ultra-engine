@@ -96,7 +96,9 @@ body, html {
 
 @media (max-width: 768px) {
   .top-header.collapsed {
+    z-index: 1002;
     left: 0;
+    right: 0;
   }
 }
 
