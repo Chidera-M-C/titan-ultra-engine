@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { Send, ImagePlus, X } from 'lucide-react';
+import React, { useRef, useEffect } from 'react';
+import { Send } from 'lucide-react';
 import AspectRatioDropdown from './AspectRatioDropdown';
 import './PromptBox.css';
 
@@ -11,12 +11,10 @@ export default function PromptBox({
   onGenerate,
   loading,
   collapsed = false,
-  attachedImage,
-  onImageAttach,
-  onImageRemove,
+  negativePrompt,
+  setNegativePrompt,
 }) {
   const textareaRef = useRef(null);
-  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -36,90 +34,83 @@ export default function PromptBox({
     };
   }, [prompt, collapsed]);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      if (onImageAttach) onImageAttach(ev.target.result); // base64 string
-    };
-    reader.readAsDataURL(file);
-    // Reset input so same file can be re-selected
-    e.target.value = '';
-  };
-
   return (
     <div className={`prompt-container ${collapsed ? 'collapsed' : ''}`}>
+      {collapsed ? (
+        // ── Collapsed: single row ─────────────────────────────────────────
+        <>
+          <textarea
+            ref={textareaRef}
+            className="prompt-input"
+            placeholder="Describe what you want to create..."
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            disabled={loading}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                onGenerate();
+              }
+            }}
+          />
+          <div className="prompt-footer">
+            <div className="left-tools">
+              <AspectRatioDropdown value={aspectRatio} onChange={setAspectRatio} />
+            </div>
+            <button
+              className="generate-fab"
+              onClick={onGenerate}
+              disabled={!prompt.trim() || loading}
+            >
+              {loading ? <div className="spinner"></div> : <Send size={20} />}
+            </button>
+          </div>
+        </>
+      ) : (
+        // ── Expanded: side by side prompt + negative ──────────────────────
+        <div className="prompt-inputs-row">
+          <div className="prompt-input-block prompt-input-main">
+            <textarea
+              ref={textareaRef}
+              className="prompt-input"
+              placeholder="PLAIN WORDS DO NOT WORK! Use the PROMPTIMIZE feature on the left...⬅️"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              disabled={loading}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  onGenerate();
+                }
+              }}
+            />
+            <div className="prompt-footer">
+              <div className="left-tools">
+                <AspectRatioDropdown value={aspectRatio} onChange={setAspectRatio} />
+              </div>
+              <button
+                className="generate-fab"
+                onClick={onGenerate}
+                disabled={!prompt.trim() || loading}
+              >
+                {loading ? <div className="spinner"></div> : <Send size={20} />}
+              </button>
+            </div>
+          </div>
 
-      {/* Attached image preview strip */}
-      {attachedImage && (
-        <div className="prompt-image-preview">
-          <img src={attachedImage} alt="Attached" className="prompt-image-thumb" />
-          <button
-            className="prompt-image-remove"
-            onClick={onImageRemove}
-            title="Remove image"
-          >
-            <X size={11} />
-          </button>
-          <span className="prompt-image-label">Edit mode</span>
+          <div className="prompt-input-block prompt-input-negative">
+            <p className="prompt-negative-label">Negative prompt</p>
+            <textarea
+              className="prompt-input prompt-negative-textarea"
+              placeholder="What to avoid (e.g. blurry, bad hands, extra fingers, low quality...)"
+              value={negativePrompt}
+              onChange={(e) => setNegativePrompt(e.target.value)}
+              disabled={loading}
+              rows={3}
+            />
+          </div>
         </div>
       )}
-
-      <textarea
-        ref={textareaRef}
-        className="prompt-input"
-        placeholder={
-          attachedImage
-            ? 'Describe the changes you want to make to the image...'
-            : 'PLAIN WORDS DO NOT WORK! Use the PROMPTIMIZE feature on the left...⬅️'
-        }
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-        disabled={loading}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            onGenerate();
-          }
-        }}
-      />
-
-      <div className="prompt-footer">
-        <div className="left-tools">
-          <AspectRatioDropdown
-            value={aspectRatio}
-            onChange={setAspectRatio}
-          />
-
-          {/* Image attach button */}
-          <button
-            className={`attach-image-btn ${attachedImage ? 'active' : ''}`}
-            onClick={() => fileInputRef.current?.click()}
-            disabled={loading}
-            title="Attach image to edit"
-          >
-            <ImagePlus size={15} />
-            <span>{attachedImage ? 'Change' : 'Edit Image'}</span>
-          </button>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            style={{ display: 'none' }}
-            onChange={handleFileChange}
-          />
-        </div>
-
-        <button
-          className="generate-fab"
-          onClick={onGenerate}
-          disabled={!prompt.trim() || loading}
-        >
-          {loading ? <div className="spinner"></div> : <Send size={20} />}
-        </button>
-      </div>
     </div>
   );
 }
