@@ -276,6 +276,7 @@ export default function App() {
       case 'explore':
         return <MemoExploreView
           key={exploreRefreshKey}
+          prompt={prompt}
           onSelectPrompt={handleSelectPrompt}
           onViewImage={handleViewImage}
           onEditImage={handleEditImage}
