@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase.js'; // Use Supabase now
 import CategoryTabs from '../components/Gallery/CategoryTabs';
 import MasonryGrid from '../components/Gallery/MasonryGrid';
 
-export default function ExploreView({ prompt, onSelectPrompt, onViewImage, onEditImage }) {
+export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, onEditImage }) {
   const [activeCategory, setActiveCategory] = useState('Explore');
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -99,7 +99,7 @@ export default function ExploreView({ prompt, onSelectPrompt, onViewImage, onEdi
         ) : (
           <MasonryGrid
             images={images}
-            prompt={prompt}
+            promptRef={promptRef}
             onImageClick={onViewImage}
             onSelectPrompt={onSelectPrompt}
             onEditImage={onEditImage}
