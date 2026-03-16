@@ -12,16 +12,30 @@ const shuffleArray = (arr) => {
   return shuffled;
 };
 
+// Maps tab label to style id used in the images table
+const CATEGORY_STYLE_MAP = {
+  'Female Nude':    'female_nude_portrait',
+  'Missionary':     'missionary_style',
+  'Doggy Style':    'doggy_style',
+  'Dressed/Naked':  'dressed_vs_naked',
+  'Cowgirl':        'cowgirl_style',
+  'Anal':           'anal_sex',
+  'Oral':           'oral_sex',
+  'Threesome':      'threesome_sex',
+  'Cum on Face':    'cum_on_face',
+  'Lesbian':        'lesbian_sex',
+};
+
+const CATEGORIES = ['All', ...Object.keys(CATEGORY_STYLE_MAP)];
+
 export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, onEditImage, imagesCache }) {
-  const [activeCategory, setActiveCategory] = useState('Explore');
+  const [activeCategory, setActiveCategory] = useState('All');
   const [images, setImages] = useState(imagesCache?.current?.length > 0 ? imagesCache.current : []);
   const [loading, setLoading] = useState(false);
 
-  const categories = ['Explore', 'Top', 'People', 'Nature', 'Poster', '3D Render'];
-
   const loadImages = async () => {
-    // Use cache if available for Explore category
-    if (activeCategory === 'Explore' && imagesCache?.current?.length > 0) {
+    // Use cache for All category
+    if (activeCategory === 'All' && imagesCache?.current?.length > 0) {
       setImages(imagesCache.current);
       return;
     }
@@ -34,8 +48,10 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (activeCategory !== 'Explore') {
-        query = query.eq('category', activeCategory);
+      // Filter by style id if not All
+      if (activeCategory !== 'All') {
+        const styleId = CATEGORY_STYLE_MAP[activeCategory];
+        query = query.eq('style', styleId);
       }
 
       const { data, error } = await query;
@@ -51,8 +67,8 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
 
       const shuffled = shuffleArray(fetchedImages);
 
-      // Save to cache only for Explore category
-      if (activeCategory === 'Explore' && imagesCache) {
+      // Cache only for All
+      if (activeCategory === 'All' && imagesCache) {
         imagesCache.current = shuffled;
       }
 
@@ -71,7 +87,7 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
   return (
     <>
       <CategoryTabs
-        categories={categories}
+        categories={CATEGORIES}
         activeCategory={activeCategory}
         onSelectCategory={setActiveCategory}
       />
