@@ -101,16 +101,16 @@ export default function StyleView({ onSelectStyle }) {
 
       <div className="style-grid">
         {MOODS.map((mood) => (
-          <div
-            key={mood.id}
-            className={`style-card ${selected === mood.id ? 'selected' : ''}`}
-            onClick={() => handleSelect(mood)}
-            style={{
-              backgroundImage: mood.image ? `url(${mood.image})` : mood.gradient,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          >
+          <div key={mood.id} className="style-card-wrapper">
+            <div
+              className={`style-card ${selected === mood.id ? 'selected' : ''}`}
+              onClick={() => handleSelect(mood)}
+              style={{
+                backgroundImage: mood.image ? `url(${mood.image})` : mood.gradient,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            >
             <div className="style-card-content">
               <span className="style-card-title">{mood.title}</span>
               <span className="style-card-desc">{mood.description}</span>
