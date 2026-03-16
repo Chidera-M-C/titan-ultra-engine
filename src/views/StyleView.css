@@ -31,7 +31,10 @@
   height: unset;
   cursor: pointer;
   overflow: hidden;
-  border: 2px solid #9333ea;
+  border: 1.5px solid transparent;
+  background-image: url(...), linear-gradient(160deg, #a855f7, #7c3aed);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   align-items: flex-end;
