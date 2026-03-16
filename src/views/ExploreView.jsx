@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase.js';
 import CategoryTabs from '../components/Gallery/CategoryTabs';
 import MasonryGrid from '../components/Gallery/MasonryGrid';
@@ -12,18 +12,17 @@ const shuffleArray = (arr) => {
   return shuffled;
 };
 
-// Maps tab label to style id used in the images table
 const CATEGORY_STYLE_MAP = {
-  'Female Nude':    'female_nude_portrait',
-  'Missionary':     'missionary_style',
-  'Doggy Style':    'doggy_style',
-  'Dressed/Naked':  'dressed_vs_naked',
-  'Cowgirl':        'cowgirl_style',
-  'Anal':           'anal_sex',
-  'Oral':           'oral_sex',
-  'Threesome':      'threesome_sex',
-  'Cum on Face':    'cum_on_face',
-  'Lesbian':        'lesbian_sex',
+  'Female Nude':   'female_nude_portrait',
+  'Missionary':    'missionary_style',
+  'Doggy Style':   'doggy_style',
+  'Dressed/Naked': 'dressed_vs_naked',
+  'Cowgirl':       'cowgirl_style',
+  'Anal':          'anal_sex',
+  'Oral':          'oral_sex',
+  'Threesome':     'threesome_sex',
+  'Cum on Face':   'cum_on_face',
+  'Lesbian':       'lesbian_sex',
 };
 
 const CATEGORIES = ['All', ...Object.keys(CATEGORY_STYLE_MAP)];
@@ -33,14 +32,12 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
   const [images, setImages] = useState(imagesCache?.current?.length > 0 ? imagesCache.current : []);
   const [loading, setLoading] = useState(false);
 
-  const loadImages = async () => {
-    // Use cache for All category
+  const loadImages = useCallback(async () => {
     if (activeCategory === 'All' && imagesCache?.current?.length > 0) {
       setImages(imagesCache.current);
       return;
     }
 
-    if (loading) return;
     setLoading(true);
     try {
       let query = supabase
@@ -48,7 +45,6 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
         .select('*')
         .order('created_at', { ascending: false });
 
-      // Filter by style id if not All
       if (activeCategory !== 'All') {
         const styleId = CATEGORY_STYLE_MAP[activeCategory];
         query = query.eq('style', styleId);
@@ -67,7 +63,6 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
 
       const shuffled = shuffleArray(fetchedImages);
 
-      // Cache only for All
       if (activeCategory === 'All' && imagesCache) {
         imagesCache.current = shuffled;
       }
@@ -78,11 +73,11 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeCategory]);
 
   useEffect(() => {
     loadImages();
-  }, [activeCategory]);
+  }, [loadImages]);
 
   return (
     <>
