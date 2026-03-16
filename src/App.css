@@ -316,18 +316,20 @@ body, html {
   height: 100%;
 }
 
-.aesthetic-title {
+@media (max-width: 768px) {
+  .aesthetic-title {
     display: none;
   }
 
-.main-content { margin-left: 0; }
+  .mobile-menu-toggle { display: flex; }
+  .main-content { margin-left: 0; }
 
-.top-header {
+  .top-header {
     padding: 8px 1rem;
     align-items: center;
   }
 
-.top-header.collapsed {
+  .top-header.collapsed {
     z-index: 1002;
     left: 0;
     right: 0;
