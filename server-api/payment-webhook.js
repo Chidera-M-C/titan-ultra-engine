@@ -1,21 +1,25 @@
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
-export default async function handler(req, res) {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const ipnSecret = process.env.NOWPAYMENTS_IPN_SECRET; 
-  const supabase = createClient(supabaseUrl, supabaseKey);
+export async function onRequestPost(context) {
+  const { request, env } = context;
 
-  const body = req.body;
+  const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
-  // STEP A: User clicked a button (Generating the Link)
-  if (req.method === 'POST' && body.price && !body.payment_status) {
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), { status: 400 });
+  }
+
+  // STEP A: User clicked Pay — generate invoice link
+  if (body.price && !body.payment_status) {
     try {
       const response = await fetch('https://api.nowpayments.io/v1/invoice', {
         method: 'POST',
         headers: {
-          'x-api-key': process.env.NOWPAYMENTS_API_KEY,
+          'x-api-key': env.NOWPAYMENTS_API_KEY,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -23,42 +27,43 @@ export default async function handler(req, res) {
           price_currency: 'usd',
           order_id: body.userId,
           order_description: `${body.credits}`,
-          success_url: 'https://titan-ultra-engine.vercel.app/', 
-          cancel_url: 'https://titan-ultra-engine.vercel.app/',
+          success_url: env.APP_URL || 'https://nudely.page.dev/',
+          cancel_url: env.APP_URL || 'https://nudely.page.dev/',
         })
       });
 
       const data = await response.json();
-      return res.status(200).json({ url: data.invoice_url });
+      return new Response(JSON.stringify({ url: data.invoice_url }), {
+        headers: { 'Content-Type': 'application/json' }
+      });
     } catch (err) {
-      return res.status(500).json({ error: err.message });
+      return new Response(JSON.stringify({ error: err.message }), { status: 500 });
     }
   }
 
-  // STEP B: NowPayments calling us (The IPN Callback)
-  if (req.method === 'POST' && body.payment_status) {
-    // 1. SECURITY: Verify the signature
-    const signature = req.headers['x-nowpayments-sig'];
+  // STEP B: NowPayments IPN callback
+  if (body.payment_status) {
+    const signature = request.headers.get('x-nowpayments-sig');
+    const ipnSecret = env.NOWPAYMENTS_IPN_SECRET;
+
     if (!signature || !ipnSecret) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }
 
-    // Sort body to match NowPayments signing order
     const sortedBody = Object.keys(body).sort().reduce((obj, key) => {
-        obj[key] = body[key];
-        return obj;
-      }, {});
-    
+      obj[key] = body[key];
+      return obj;
+    }, {});
+
     const hmac = crypto.createHmac('sha512', ipnSecret);
     hmac.update(JSON.stringify(sortedBody));
     const checkSignature = hmac.digest('hex');
 
     if (signature !== checkSignature) {
-      console.error("❌ Invalid IPN Signature detected!");
-      return res.status(400).json({ error: "Invalid signature" });
+      console.error('❌ Invalid IPN Signature detected!');
+      return new Response(JSON.stringify({ error: 'Invalid signature' }), { status: 400 });
     }
 
-    // 2. LOGIC: Update credits if status is "finished"
     if (body.payment_status === 'finished') {
       const userId = body.order_id;
       const creditsToAdd = parseInt(body.order_description);
@@ -81,14 +86,18 @@ export default async function handler(req, res) {
 
         if (updateError) throw updateError;
 
-        console.log(`✅ Success: Added ${creditsToAdd} credits to user ${userId}`);
-        return res.status(200).json({ received: true });
+        console.log(`✅ Added ${creditsToAdd} credits to user ${userId}`);
+        return new Response(JSON.stringify({ received: true }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
       } catch (err) {
-        console.error("Webhook Update Error:", err.message);
-        return res.status(500).json({ error: "Failed to update credits" });
+        console.error('Webhook Update Error:', err.message);
+        return new Response(JSON.stringify({ error: 'Failed to update credits' }), { status: 500 });
       }
     }
   }
 
-  return res.status(200).json({ message: "Ping received" });
+  return new Response(JSON.stringify({ message: 'Ping received' }), {
+    headers: { 'Content-Type': 'application/json' }
+  });
 }
