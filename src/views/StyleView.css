@@ -31,7 +31,7 @@
   height: unset;
   cursor: pointer;
   overflow: hidden;
-  border: 2px solid #a855f7;
+  border: 2px solid #9333ea;
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   align-items: flex-end;
@@ -45,8 +45,8 @@
 }
 
 .style-card.selected {
-  border-color: rgba(168, 85, 247, 0.8);
-  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.3), 0 12px 32px rgba(0, 0, 0, 0.5);
+  border: 1.5px solid #d946ef;
+  box-shadow: 0 0 12px rgba(217, 70, 239, 0.4);
 }
 
 .style-card-content {
