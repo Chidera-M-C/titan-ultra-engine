@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Send, ArrowUpLeft } from 'lucide-react';
+import { Send, ArrowDownLeft } from 'lucide-react';
 import AspectRatioDropdown from './AspectRatioDropdown';
 import './PromptBox.css';
 
@@ -57,7 +57,7 @@ export default function PromptBox({
               }}
             />
             <div className="prompt-hint-row">
-              <p className="prompt-hint">Plain words don't work! Promptimize it <ArrowUpLeft size={11} /></p>
+              <p className="prompt-hint">Plain words don't work! Promptimize it <ArrowDownLeft size={11} /></p>
             </div>
             <div className="prompt-footer">
               <div className="left-tools">
