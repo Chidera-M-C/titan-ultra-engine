@@ -135,29 +135,36 @@ export default function App() {
   };
 
   const handleTopUpPurchase = async (pack) => {
-    if (!user) { setLoginModalOpen(true); return; }
-    try {
-      const response = await fetch('/api/payment-webhook', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          price: pack.price,
-          userId: user.id,
-          credits: pack.credits
-        })
-      });
-      const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        console.error("Payment generation failed detail:", data);
-        throw new Error(data.error || "Payment link generation failed");
-      }
-    } catch (err) {
-      console.error("Payment Error:", err);
-      alert("Error: " + err.message);
+  if (!user) { setLoginModalOpen(true); return; }
+  try {
+    const response = await fetch('/api/payment-webhook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        price: pack.price,
+        userId: user.id,
+        credits: pack.credits
+      })
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Server error: ${response.status} - ${text}`);
     }
-  };
+
+    const data = await response.json();
+
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      console.error("Payment generation failed detail:", data);
+      throw new Error(data.error || "Payment link generation failed");
+    }
+  } catch (err) {
+    console.error("Payment Error:", err);
+    alert("Error: " + err.message);
+  }
+};
 
   const runGeneration = async ({ prompt, aspect_ratio, image: attachedImg, setLoadingFn, setErrorFn, setImageFn, styleId = null, negative_prompt = null }) => {
     const payload = { prompt, aspect_ratio };
