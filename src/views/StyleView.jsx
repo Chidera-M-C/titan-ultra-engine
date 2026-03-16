@@ -124,6 +124,7 @@ export default function StyleView({ onSelectStyle }) {
             </div>
           </div>
         ))}
+       </div>
 
       {selected && (
         <p className="style-applied">
