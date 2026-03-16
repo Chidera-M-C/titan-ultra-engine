@@ -323,6 +323,7 @@ body, html {
   .mobile-menu-toggle {
     left: unset;
     right: 15px;
+    z-index: 10002;
   }
   .main-content { margin-left: 0; }
 
