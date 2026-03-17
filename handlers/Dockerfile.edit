@@ -1,0 +1,24 @@
+FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir \
+    diffusers==0.27.0 \
+    transformers==4.38.0 \
+    accelerate==0.27.0 \
+    safetensors==0.4.2 \
+    runpod==1.6.2 \
+    Pillow==10.2.0 \
+    requests==2.31.0 \
+    controlnet-aux==0.0.7 \
+    huggingface_hub==0.20.3 \
+    opencv-python-headless==4.9.0.80
+
+ARG CIVITAI_TOKEN
+
+COPY download_models_edit.py .
+RUN CIVITAI_TOKEN=${CIVITAI_TOKEN} python download_models_edit.py
+
+COPY handler_edit.py .
+
+CMD ["python", "handler_edit.py"]
