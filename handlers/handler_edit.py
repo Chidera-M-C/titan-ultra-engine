@@ -188,6 +188,5 @@ def handler(job):
         return {"error": str(e), "traceback": traceback.format_exc()}
 
 # Models load once at startup
-# Models load once at startup
 load_models()
 runpod.serverless.start({"handler": handler})
