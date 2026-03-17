@@ -341,15 +341,15 @@ export default function App() {
               prompt={prompt}
             />
           : <StyleView onSelectStyle={setActiveStyle} />;
-        case 'edit':
-          return <EditView
-            onGenerate={handleEditViewGenerate}
-            loading={editViewLoading}
-            image={editViewImage}
-            error={editViewError}
-            onViewImage={handleViewImage}
-            credits={credits}
-          />;
+      case 'edit':
+        return <EditView
+          onGenerate={handleEditViewGenerate}
+          loading={editViewLoading}
+          image={editViewImage}
+          error={editViewError}
+          onViewImage={handleViewImage}
+          credits={credits}
+        />;
       default:
         <MemoExploreView
           promptRef={promptRef}
