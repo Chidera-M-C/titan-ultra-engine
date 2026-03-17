@@ -18,10 +18,12 @@ export async function onRequestPost(context) {
     // Route to correct endpoint based on style
     const CRYSTALCLEAR_STYLES = new Set(['female_nude_portrait', 'dressed_vs_naked']);
     const BIGLUST_STYLES = new Set(['missionary_style', 'doggy_style', 'cowgirl_style', 'anal_sex', 'oral_sex', 'threesome_sex', 'cum_on_face', 'lesbian_sex']);
-
+    const EDIT_STYLES = new Set(['edit']);
+    
     let endpointId = env.RUNPOD_ENDPOINT_ID;
     if (style && CRYSTALCLEAR_STYLES.has(style)) endpointId = env.RUNPOD_ENDPOINT_CRYSTALCLEAR;
     if (style && BIGLUST_STYLES.has(style))      endpointId = env.RUNPOD_ENDPOINT_BIGLUST;
+    if (style && EDIT_STYLES.has(style)) endpointId = env.RUNPOD_ENDPOINT_EDIT;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
