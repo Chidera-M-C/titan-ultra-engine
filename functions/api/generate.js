@@ -23,14 +23,20 @@ export async function onRequestPost(context) {
     if (style && CRYSTALCLEAR_STYLES.has(style)) endpointId = env.RUNPOD_ENDPOINT_CRYSTALCLEAR;
     if (style && BIGLUST_STYLES.has(style))      endpointId = env.RUNPOD_ENDPOINT_BIGLUST;
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
+    
     const response = await fetch(`https://api.runpod.ai/v2/${endpointId}/run`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${env.RUNPOD_API_KEY}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ input })
+      body: JSON.stringify({ input }),
+      signal: controller.signal
     });
+    
+    clearTimeout(timeout);
 
     if (!response.ok) {
       const errorText = await response.text();
