@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Compass, User, History, Sparkles, MoreHorizontal, Settings, HelpCircle, LogOut } from 'lucide-react';
+import { Compass, User, History, Sparkles, PenLine, MoreHorizontal, Settings, HelpCircle, LogOut } from 'lucide-react';
 import NavItem from './NavItem';
 import CreditsCard from './CreditsCard';
 import Promptimize from './Promptimize';
@@ -46,6 +46,7 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
             <NavItem icon={History} label="My Images" isActive={activeTab === 'gallery'} onClick={() => onNavigate('gallery')} />
           )}
           <NavItem icon={Sparkles} label="Style" isActive={activeTab === 'style'} onClick={() => onNavigate('style')} />
+          <NavItem icon={PenLine} label="Edit Image" isActive={activeTab === 'edit'} onClick={() => onNavigate('edit')} />
         </nav>
 
         <div className="sidebar-promptimize">
