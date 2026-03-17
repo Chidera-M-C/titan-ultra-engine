@@ -279,6 +279,7 @@ export default function App() {
   const handleNavigation = (tab) => {
     setActiveTab(tab);
     setIsSidebarOpen(false);
+    setPromptCollapsed(false);
     if (tab === 'explore' || tab === 'gallery' || tab === 'style' || tab === 'edit') setViewState('gallery');
     else setViewState('empty');
   };
