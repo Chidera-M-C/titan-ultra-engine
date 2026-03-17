@@ -16,6 +16,7 @@ import CharacterView from './views/CharacterView';
 import MyImagesView from './views/MyImagesView';
 import StyleView from './views/StyleView';
 import StyleGeneratorView from './views/StyleGeneratorView';
+import EditView from './views/EditView';
 
 // Memoized outside component to prevent re-render cascade
 const MemoExploreView = React.memo(ExploreView);
@@ -43,6 +44,9 @@ export default function App() {
   const [styleImage, setStyleImage] = useState(null);
   const [styleLoading, setStyleLoading] = useState(false);
   const [styleError, setStyleError] = useState(null);
+  const [editViewImage, setEditViewImage] = useState(null);
+  const [editViewLoading, setEditViewLoading] = useState(false);
+  const [editViewError, setEditViewError] = useState(null);
 
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
   const promptRef = useRef(prompt);
@@ -166,6 +170,30 @@ export default function App() {
   }
 };
 
+  const handleEditViewGenerate = async ({ image, prompt, negativePrompt, poseStrength, cannyStrength }) => {
+    if (!user) { setLoginModalOpen(true); return; }
+    if (credits < 2) { setEditViewError("Insufficient credits."); return; }
+    setEditViewLoading(true);
+    setEditViewError(null);
+    setEditViewImage(null);
+    try {
+      await runGeneration({
+        prompt,
+        aspect_ratio: '9:16',
+        image,
+        negative_prompt: negativePrompt,
+        setLoadingFn: setEditViewLoading,
+        setErrorFn: setEditViewError,
+        setImageFn: setEditViewImage,
+        styleId: 'edit',
+      });
+    } catch (err) {
+      setEditViewError(err.message);
+    } finally {
+      setEditViewLoading(false);
+    }
+  };
+
   const runGeneration = async ({ prompt, aspect_ratio, image: attachedImg, setLoadingFn, setErrorFn, setImageFn, styleId = null, negative_prompt = null }) => {
     const payload = { prompt, aspect_ratio };
     if (attachedImg)     payload.image           = attachedImg;
@@ -251,7 +279,7 @@ export default function App() {
   const handleNavigation = (tab) => {
     setActiveTab(tab);
     setIsSidebarOpen(false);
-    if (tab === 'explore' || tab === 'gallery' || tab === 'style') setViewState('gallery');
+    if (tab === 'explore' || tab === 'gallery' || tab === 'style' || tab === 'edit') setViewState('gallery');
     else setViewState('empty');
   };
 
@@ -312,6 +340,15 @@ export default function App() {
               prompt={prompt}
             />
           : <StyleView onSelectStyle={setActiveStyle} />;
+        case 'edit':
+          return <EditView
+            onGenerate={handleEditViewGenerate}
+            loading={editViewLoading}
+            image={editViewImage}
+            error={editViewError}
+            onViewImage={handleViewImage}
+            credits={credits}
+          />;
       default:
         <MemoExploreView
           promptRef={promptRef}
