@@ -372,6 +372,8 @@ export default function App() {
     setNegativePrompt,
   };
 
+  console.log('activeTab:', activeTab);
+  
   return (
     <div className="master-wrapper" onClickCapture={handleGlobalClick}>
       <div className="app-shell">
