@@ -2,8 +2,8 @@ export async function onRequestPost(context) {
   const { request, env } = context;
   try {
     const body = await request.json();
-    const { prompt, aspect_ratio, image, style, negative_prompt } = body;
-
+    const { prompt, aspect_ratio, image, style, negative_prompt, face_embedding, character } = body;
+    
     if (!prompt) {
       return new Response(JSON.stringify({ error: 'Prompt is required' }), { status: 400 });
     }
@@ -14,6 +14,8 @@ export async function onRequestPost(context) {
     if (image)           input.image           = image;
     if (style)           input.style           = style;
     if (negative_prompt) input.negative_prompt = negative_prompt;
+    if (face_embedding)  input.face_embedding  = face_embedding;
+    if (character)       input.character       = character;
 
     // Route to correct endpoint based on style
     const CRYSTALCLEAR_STYLES = new Set(['female_nude_portrait', 'dressed_vs_naked']);
