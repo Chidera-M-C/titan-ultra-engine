@@ -47,6 +47,7 @@ export default function App() {
   const [editViewImage, setEditViewImage] = useState(null);
   const [editViewLoading, setEditViewLoading] = useState(false);
   const [editViewError, setEditViewError] = useState(null);
+  const [selectedCharacter, setSelectedCharacter] = useState(null);
 
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
   const promptRef = useRef(prompt);
@@ -253,7 +254,10 @@ export default function App() {
     setError(null);
     setImage(null);
     try {
-      await runGeneration({ prompt, aspect_ratio: aspectRatio, negative_prompt: negativePrompt, setLoadingFn: setLoading, setErrorFn: setError, setImageFn: setImage });
+      const characterContext = selectedCharacter
+        ? `${selectedCharacter.name}, ${selectedCharacter.race} woman, ${selectedCharacter.body_type?.replace(/_/g, ' ')}, same face same person, `
+        : '';
+      await runGeneration({ prompt: characterContext + prompt, aspect_ratio: aspectRatio, negative_prompt: negativePrompt, setLoadingFn: setLoading, setErrorFn: setError, setImageFn: setImage });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -319,7 +323,10 @@ export default function App() {
           imagesCache={exploreImagesCache}
         />;
       case 'character':
-        return <CharacterView />;
+        return <CharacterView
+          onSelectCharacter={setSelectedCharacter}
+          selectedCharacter={selectedCharacter}
+        />;
       case 'gallery':
         return <MyImagesView
           images={userGallery}
