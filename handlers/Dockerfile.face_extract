@@ -1,0 +1,32 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir \
+    runpod==1.6.2 \
+    insightface==0.7.3 \
+    onnxruntime==1.16.3 \
+    opencv-python-headless==4.9.0.80 \
+    Pillow==10.2.0 \
+    numpy==1.24.4 \
+    requests==2.31.0
+
+# Pre-download InsightFace buffalo_l model
+RUN python -c "
+from insightface.app import FaceAnalysis
+app = FaceAnalysis(name='buffalo_l', providers=['CPUExecutionProvider'])
+app.prepare(ctx_id=0, det_size=(640, 640))
+print('InsightFace models downloaded successfully')
+"
+
+COPY handler_face_extract.py .
+
+CMD ["python", "handler_face_extract.py"]
