@@ -98,6 +98,20 @@ function CreateCharacterModal({ onClose, onCreated }) {
       if (insertError) throw insertError;
 
       onCreated(data);
+      // Extract face embedding in background
+        try {
+          await fetch('/api/extract-face', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              characterId: data.id,
+              image: photo
+            })
+          });
+        } catch (err) {
+          console.error('Face extraction failed:', err);
+          // Non-fatal — character still created, embedding will be null
+        }
       onClose();
     } catch (err) {
       setError(err.message);
