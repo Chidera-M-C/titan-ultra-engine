@@ -195,11 +195,13 @@ export default function App() {
     }
   };
 
-  const runGeneration = async ({ prompt, aspect_ratio, image: attachedImg, setLoadingFn, setErrorFn, setImageFn, styleId = null, negative_prompt = null }) => {
+  const runGeneration = async ({ prompt, aspect_ratio, image: attachedImg, setLoadingFn, setErrorFn, setImageFn, styleId = null, negative_prompt = null, face_embedding = null, character = null }) => {
     const payload = { prompt, aspect_ratio };
-    if (attachedImg)     payload.image           = attachedImg;
-    if (negative_prompt) payload.negative_prompt = negative_prompt;
-    if (styleId)         payload.style           = styleId;
+    if (attachedImg)      payload.image           = attachedImg;
+    if (negative_prompt)  payload.negative_prompt = negative_prompt;
+    if (styleId)          payload.style           = styleId;
+    if (face_embedding)   payload.face_embedding  = face_embedding;
+    if (character)        payload.character       = character;
 
     const response = await fetch('/api/generate', {
       method: 'POST',
@@ -257,13 +259,26 @@ export default function App() {
       const characterContext = selectedCharacter
         ? `${selectedCharacter.name}, ${selectedCharacter.race} woman, ${selectedCharacter.body_type?.replace(/_/g, ' ')}, same face same person, `
         : '';
-      await runGeneration({ prompt: characterContext + prompt, aspect_ratio: aspectRatio, negative_prompt: negativePrompt, setLoadingFn: setLoading, setErrorFn: setError, setImageFn: setImage });
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+      
+      const characterPayload = selectedCharacter?.face_embedding ? {
+        face_embedding: selectedCharacter.face_embedding,
+        character: {
+          name: selectedCharacter.name,
+          race: selectedCharacter.race,
+          body_type: selectedCharacter.body_type,
+        }
+      } : {};
+      
+      await runGeneration({
+        prompt: characterContext + prompt,
+        aspect_ratio: aspectRatio,
+        negative_prompt: negativePrompt,
+        setLoadingFn: setLoading,
+        setErrorFn: setError,
+        setImageFn: setImage,
+        styleId: selectedCharacter?.face_embedding ? 'character' : null,
+        ...characterPayload,
+      });
 
   const handleStyleGenerate = async (finalPrompt, aspectRatio, negativePrompt, attachedImage) => {
     if (!user) { setLoginModalOpen(true); return; }
