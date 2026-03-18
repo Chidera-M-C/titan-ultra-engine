@@ -247,7 +247,7 @@ export default function App() {
     if (!completed) throw new Error('The GPU is taking too long to wake up.');
   };
 
-  const generateImage = async () => {
+    const generateImage = async () => {
     if (!user) { setLoginModalOpen(true); return; }
     if (!prompt || loading) return;
     if (credits < 2) { setError("Insufficient credits."); setViewState('result'); return; }
@@ -279,6 +279,13 @@ export default function App() {
         styleId: selectedCharacter?.face_embedding ? 'character' : null,
         ...characterPayload,
       });
+    } catch (err) {
+      setError(err.message);
+      console.error("Generate error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleStyleGenerate = async (finalPrompt, aspectRatio, negativePrompt, attachedImage) => {
     if (!user) { setLoginModalOpen(true); return; }
