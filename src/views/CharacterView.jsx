@@ -79,6 +79,7 @@ function CreateCharacterModal({ onClose, onCreated }) {
         .getPublicUrl(fileName);
 
       // Insert character record
+      // Insert character record
       const bodyTypeData = BODY_TYPES.find(b => b.id === bodyType);
       const raceData = RACES.find(r => r.id === race);
 
