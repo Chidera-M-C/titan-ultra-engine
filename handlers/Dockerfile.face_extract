@@ -20,12 +20,8 @@ RUN pip install --no-cache-dir \
     requests==2.31.0
 
 # Pre-download InsightFace buffalo_l model
-RUN python -c "
-from insightface.app import FaceAnalysis
-app = FaceAnalysis(name='buffalo_l', providers=['CPUExecutionProvider'])
-app.prepare(ctx_id=0, det_size=(640, 640))
-print('InsightFace models downloaded successfully')
-"
+COPY download_insightface.py .
+RUN python download_insightface.py
 
 COPY handler_face_extract.py .
 
