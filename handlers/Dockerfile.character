@@ -17,8 +17,9 @@ RUN pip install --no-cache-dir \
     huggingface_hub==0.20.3 \
     insightface==0.7.3 \
     onnxruntime-gpu==1.16.3 \
-    opencv-python-headless==4.9.0.80 \
-    ip-adapter
+    opencv-python-headless==4.9.0.80
+
+RUN pip install --no-cache-dir git+https://github.com/tencent-ailab/IP-Adapter.git
 
 ARG CIVITAI_TOKEN
 
