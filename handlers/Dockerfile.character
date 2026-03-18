@@ -1,11 +1,20 @@
 FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
 
+# === FIX FOR TZDATA PROMPT ===
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
+# Combined + non-interactive tzdata install
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tzdata \
     g++ \
     git \
     libglib2.0-0 libsm6 libxext6 libxrender-dev libgomp1 \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+    && echo $TZ > /etc/timezone \
+    && dpkg-reconfigure --frontend noninteractive tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir \
