@@ -284,7 +284,7 @@ export default function App() {
     setActiveTab(tab);
     setIsSidebarOpen(false);
     setPromptCollapsed(false);
-    if (tab === 'explore' || tab === 'gallery' || tab === 'style' || tab === 'edit') setViewState('gallery');
+    if (tab === 'explore' || tab === 'gallery' || tab === 'style' || tab === 'edit' || tab === 'character') setViewState('gallery');
     else setViewState('empty');
   };
 
@@ -378,8 +378,6 @@ export default function App() {
     negativePrompt,
     setNegativePrompt,
   };
-
-  console.log('activeTab:', activeTab);
   
   return (
     <div className="master-wrapper" onClickCapture={handleGlobalClick}>
