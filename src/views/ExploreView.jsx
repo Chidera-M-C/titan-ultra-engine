@@ -35,7 +35,7 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
   const loadImages = useCallback(async () => {
     if (activeCategory === 'All' && imagesCache?.current?.length > 0) {
       setImages(imagesCache.current);
-      onReady?.(); // cache hit — already loaded, signal ready immediately
+      setTimeout(() => onReady?.(), 0); // let spinner render first, then signal ready
       return;
     }
     
