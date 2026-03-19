@@ -32,7 +32,7 @@ export default function EditModal({ image, loading, error, onClose, onRetry, ori
       <div className="edit-content">
         
         {/* Header with status - clickable to expand/collapse */}
-        <div className="edit-header" onClick={toggleMinimize}>
+        <div className="edit-modal-header" onClick={toggleMinimize}>
           <div className="edit-status-text">
             <span className={`edit-status-dot ${loading ? 'generating' : ''}`}></span>
             {loading ? 'Image editing' : error ? 'Edit failed' : 'Ready to edit'}
