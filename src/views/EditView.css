@@ -407,3 +407,9 @@
     padding: 1.5rem 1rem;
   }
 }
+
+@media (max-width: 768px) {
+  .edit-right {
+    width: 100%;
+  }
+}
