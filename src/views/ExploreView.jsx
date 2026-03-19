@@ -35,11 +35,11 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
   const loadImages = useCallback(async () => {
     if (activeCategory === 'All' && imagesCache?.current?.length > 0) {
       setImages(imagesCache.current);
-      setTimeout(() => onReady?.(), 0); // let spinner render first, then signal ready
+      onReady?.(); // cache hit — images already downloaded, show immediately
       return;
     }
-    
-    onFetching?.(); // 👈 tell App "a fetch is starting, show spinner"
+
+    onFetching?.(); // fetch starting — keep spinner up
     setLoading(true);
     try {
       let query = supabase
@@ -69,8 +69,9 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
         imagesCache.current = shuffled;
       }
 
+      // preload every image before revealing — this is what makes it smooth
       await Promise.all(
-        shuffled.map((img) => new Promise((resolve) => {
+        shuffled.map(img => new Promise(resolve => {
           const i = new Image();
           i.onload = resolve;
           i.onerror = resolve;
@@ -79,10 +80,10 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
       );
 
       setImages(shuffled);
-      onReady?.(); // images fully loaded, drop the spinner
+      onReady?.(); // every image is downloaded — drop the spinner now
     } catch (err) {
-      console.error("Failed to fetch explore images:", err);
-      onReady?.();
+      console.error("Failed to fetch explore images from Supabase:", err);
+      onReady?.(); // don't leave user stuck on spinner if something fails
     } finally {
       setLoading(false);
     }
