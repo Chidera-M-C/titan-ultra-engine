@@ -27,7 +27,7 @@ const CATEGORY_STYLE_MAP = {
 
 const CATEGORIES = ['All', ...Object.keys(CATEGORY_STYLE_MAP)];
 
-export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, onEditImage, imagesCache, onReady }) {
+export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, onEditImage, imagesCache, onFetching, onReady }) {
   const [activeCategory, setActiveCategory] = useState('All');
   const [images, setImages] = useState(imagesCache?.current?.length > 0 ? imagesCache.current : []);
   const [loading, setLoading] = useState(false);
@@ -38,7 +38,8 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
       onReady?.(); // cache hit — already loaded, signal ready immediately
       return;
     }
-
+    
+    onFetching?.(); // 👈 tell App "a fetch is starting, show spinner"
     setLoading(true);
     try {
       let query = supabase
@@ -69,22 +70,19 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
       }
 
       await Promise.all(
-        shuffled.map(
-          (img) =>
-            new Promise((resolve) => {
-              const i = new Image();
-              i.onload = resolve;
-              i.onerror = resolve; // don't get stuck if one image fails
-              i.src = img.url;
-            })
-        )
+        shuffled.map((img) => new Promise((resolve) => {
+          const i = new Image();
+          i.onload = resolve;
+          i.onerror = resolve;
+          i.src = img.url;
+        }))
       );
-      
+
       setImages(shuffled);
-      onReady?.(); // now every image is downloaded and ready
+      onReady?.(); // images fully loaded, drop the spinner
     } catch (err) {
-      console.error("Failed to fetch explore images from Supabase:", err);
-      onReady?.(); // even on error, remove spinner so user isn't stuck
+      console.error("Failed to fetch explore images:", err);
+      onReady?.();
     } finally {
       setLoading(false);
     }
