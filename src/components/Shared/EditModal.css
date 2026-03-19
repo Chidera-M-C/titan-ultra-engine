@@ -18,6 +18,8 @@
   animation: slideInFromBottom 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 /* Minimized state */
@@ -37,7 +39,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 2px 6px;
+  padding: 12px 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   cursor: pointer;
   transition: background 0.2s;
@@ -45,11 +47,6 @@
 
 .edit-header:hover {
   background: rgba(255, 255, 255, 0.02);
-}
-
-.minimized .edit-header {
-  padding: 2px 6px;
-  border-bottom: none;
 }
 
 .edit-status-text {
