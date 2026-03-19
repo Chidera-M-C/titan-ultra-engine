@@ -36,13 +36,14 @@
 /* Header bar with status and close button */
 .edit-modal-header {
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
+  min-height: 48px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   cursor: pointer;
   transition: background 0.2s;
-  min-height: 48px;   /* add this */
 }
 
 .edit-modal-header:hover {
