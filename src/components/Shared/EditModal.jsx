@@ -3,16 +3,13 @@ import { AlertCircle, Sparkles } from 'lucide-react';
 import { PulseLoader } from './Loader';
 import './EditModal.css';
 
-export default function EditModal({ image, loading, error, onClose, onRetry, originalPrompt }) {
+export default function EditModal({ image, loading, error, resultImage, onClose, onRetry, originalPrompt }) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [editPrompt, setEditPrompt] = useState('');
 
-  // Only allow closing when NOT loading
   const handleClose = (e) => {
     e.stopPropagation();
-    if (!loading) {
-      onClose();
-    }
+    if (!loading) onClose();
   };
 
   const toggleMinimize = (e) => {
@@ -21,73 +18,64 @@ export default function EditModal({ image, loading, error, onClose, onRetry, ori
   };
 
   const handleEdit = () => {
-    if (!editPrompt.trim()) return;
-    console.log('Editing with prompt:', editPrompt);
-    // This will call your edit/generation function later
+    if (!editPrompt.trim() || loading) return;
     onRetry(editPrompt);
   };
 
   return (
     <div className={`edit-modal ${isMinimized ? 'minimized' : ''}`}>
       <div className="edit-content">
-        
-        {/* Header with status - clickable to expand/collapse */}
+
         <div className="edit-modal-header" onClick={toggleMinimize}>
           <div className="edit-status-text">
             <span className={`edit-status-dot ${loading ? 'generating' : ''}`}></span>
-            {loading ? 'Image editing' : error ? 'Edit failed' : 'Ready to edit'}
+            {loading ? 'Editing image...' : error ? 'Edit failed' : resultImage ? 'Edit complete' : 'Ready to edit'}
           </div>
           <div className="edit-header-actions">
-            {/* Minimize/Expand button */}
-            <button 
-              className="edit-minimize-btn"
-              onClick={toggleMinimize} 
-              data-tooltip={isMinimized ? 'Expand' : 'Minimize'}
-            >
+            <button className="edit-minimize-btn" onClick={toggleMinimize}>
               {isMinimized ? '▲' : '−'}
             </button>
-            
-            {/* Close button - only show when NOT loading */}
             {!loading && (
-              <button className="edit-close-btn" onClick={handleClose} data-tooltip="Close">
-                ✕
-              </button>
+              <button className="edit-close-btn" onClick={handleClose}>✕</button>
             )}
           </div>
         </div>
 
-        {/* Content area - hidden when minimized */}
         {!isMinimized && (
           <>
-            {/* Image preview */}
             <div className="edit-image-stage">
-              {/* LOADING STATE */}
+
+              {/* LOADING */}
               {loading && (
                 <div className="edit-loading-wrapper">
                   <PulseLoader />
-                  <p className="edit-loading-label">Editing your image...</p>
+                  <p className="edit-loading-label">Making your changes...</p>
                 </div>
               )}
 
-              {/* ERROR STATE */}
+              {/* ERROR */}
               {error && !loading && (
                 <div className="edit-error-wrapper">
                   <AlertCircle size={32} color="#ff4444" />
                   <p className="edit-error-title">Edit Failed</p>
                   <p className="edit-error-message">{error}</p>
-                  <button className="edit-retry-btn" onClick={() => onRetry(editPrompt)}>
+                  <button className="edit-retry-btn" onClick={handleEdit}>
                     Try Again
                   </button>
                 </div>
               )}
 
-              {/* SUCCESS/READY STATE - Show original image */}
-              {image && !loading && !error && (
-                <img src={image} alt="Image to edit" className="edit-gen-result" />
+              {/* RESULT IMAGE — show edited result if available, otherwise original */}
+              {!loading && !error && (
+                <img
+                  src={resultImage || image}
+                  alt="Image"
+                  className="edit-gen-result"
+                />
               )}
+
             </div>
 
-            {/* Prompt input section */}
             <div className="edit-prompt-section">
               <div className="edit-prompt-label">
                 <Sparkles size={14} />
@@ -107,8 +95,8 @@ export default function EditModal({ image, loading, error, onClose, onRetry, ori
                   <span className="edit-original-text">{originalPrompt}</span>
                 </div>
               )}
-              <button 
-                className="edit-generate-btn" 
+              <button
+                className="edit-generate-btn"
                 onClick={handleEdit}
                 disabled={loading || !editPrompt.trim()}
               >
