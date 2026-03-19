@@ -52,7 +52,6 @@ export default function App() {
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
   const promptRef = useRef(prompt);
   useEffect(() => { promptRef.current = prompt; }, [prompt]);
-  const exploreImagesCache = useRef([]);
   const [isGalleryReady, setIsGalleryReady] = useState(false);
   const [exploreKey, setExploreKey] = useState(0);
 
@@ -307,7 +306,7 @@ export default function App() {
   const handleNavigation = (tab) => {
     if (activeTab === 'explore' && tab !== 'explore') {
       setIsGalleryReady(false);
-      setExploreKey(k => k + 1); // force ExploreView to remount fresh on next visit
+      setExploreKey(k => k + 1);
     }
     setActiveTab(tab);
     setIsSidebarOpen(false);
@@ -349,7 +348,6 @@ export default function App() {
           onSelectPrompt={handleSelectPrompt}
           onViewImage={handleViewImage}
           onEditImage={handleEditImage}
-          imagesCache={exploreImagesCache}
           onFetching={() => setIsGalleryReady(false)}
           onReady={() => setIsGalleryReady(true)}
         />;
