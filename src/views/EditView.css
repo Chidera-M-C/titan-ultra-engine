@@ -401,3 +401,9 @@
     width: 100%;
   }
 }
+
+@media (max-width: 768px) {
+  .edit-view {
+    padding: 1.5rem 1rem;
+  }
+}
