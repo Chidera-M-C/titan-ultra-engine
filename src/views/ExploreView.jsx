@@ -27,7 +27,7 @@ const CATEGORY_STYLE_MAP = {
 
 const CATEGORIES = ['All', ...Object.keys(CATEGORY_STYLE_MAP)];
 
-export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, onEditImage, imagesCache }) {
+export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, onEditImage, imagesCache, onReady }) {
   const [activeCategory, setActiveCategory] = useState('All');
   const [images, setImages] = useState(imagesCache?.current?.length > 0 ? imagesCache.current : []);
   const [loading, setLoading] = useState(false);
@@ -35,6 +35,7 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
   const loadImages = useCallback(async () => {
     if (activeCategory === 'All' && imagesCache?.current?.length > 0) {
       setImages(imagesCache.current);
+      onReady?.(); // cache hit — already loaded, signal ready immediately
       return;
     }
 
@@ -68,8 +69,10 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
       }
 
       setImages(shuffled);
+      onReady?.(); // fresh fetch done — signal ready now
     } catch (err) {
       console.error("Failed to fetch explore images from Supabase:", err);
+      onReady?.(); // even on error, remove spinner so user isn't stuck
     } finally {
       setLoading(false);
     }
