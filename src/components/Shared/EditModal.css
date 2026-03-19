@@ -43,6 +43,7 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   cursor: pointer;
   transition: background 0.2s;
+  min-height: 48px;   /* add this */
 }
 
 .edit-header:hover {
@@ -285,6 +286,23 @@
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+}
+
+.edit-modal::-webkit-scrollbar {
+  width: 4px;
+}
+
+.edit-modal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.edit-modal::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+.edit-modal::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* ANIMATIONS */
