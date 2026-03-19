@@ -68,8 +68,20 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
         imagesCache.current = shuffled;
       }
 
+      await Promise.all(
+        shuffled.map(
+          (img) =>
+            new Promise((resolve) => {
+              const i = new Image();
+              i.onload = resolve;
+              i.onerror = resolve; // don't get stuck if one image fails
+              i.src = img.url;
+            })
+        )
+      );
+      
       setImages(shuffled);
-      onReady?.(); // fresh fetch done — signal ready now
+      onReady?.(); // now every image is downloaded and ready
     } catch (err) {
       console.error("Failed to fetch explore images from Supabase:", err);
       onReady?.(); // even on error, remove spinner so user isn't stuck
