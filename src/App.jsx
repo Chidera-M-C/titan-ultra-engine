@@ -487,7 +487,25 @@ export default function App() {
             onViewFullScreen={handleViewImage}
           />
         )}
-        {editModalOpen && <EditModal image={editingImage?.url} originalPrompt={editingImage?.prompt} onClose={() => setEditModalOpen(false)} />}
+        {editModalOpen && (
+          <EditModal
+            image={editingImage?.url}
+            originalPrompt={editingImage?.prompt}
+            onClose={() => setEditModalOpen(false)}
+            onRetry={(newPrompt) => {
+              setEditModalOpen(false);
+              setActiveTab('edit');
+              setViewState('gallery');
+              handleEditViewGenerate({
+                image: editingImage?.url,
+                prompt: newPrompt,
+                negativePrompt: '',
+                poseStrength: 0.6,
+                cannyStrength: 0.4,
+              });
+            }}
+          />
+        )}
         {viewImageModalOpen && <ImageViewModal imageUrl={viewingImageUrl} onClose={() => setViewImageModalOpen(false)} />}
       </div>
     </div>
