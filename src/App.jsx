@@ -54,6 +54,7 @@ export default function App() {
   useEffect(() => { promptRef.current = prompt; }, [prompt]);
   const exploreImagesCache = useRef([]);
   const [isGalleryReady, setIsGalleryReady] = useState(false);
+  const [exploreKey, setExploreKey] = useState(0);
 
   const handleGlobalClick = (e) => {
     if (user || authLoading) return;
@@ -304,7 +305,10 @@ export default function App() {
   };
 
   const handleNavigation = (tab) => {
-    if (tab !== 'explore') setIsGalleryReady(false); // reset so spinner shows if images need to reload
+    if (activeTab === 'explore' && tab !== 'explore') {
+      setIsGalleryReady(false);
+      setExploreKey(k => k + 1); // force ExploreView to remount fresh on next visit
+    }
     setActiveTab(tab);
     setIsSidebarOpen(false);
     setPromptCollapsed(false);
@@ -340,12 +344,13 @@ export default function App() {
     switch (activeTab) {
       case 'explore':
         return <MemoExploreView
+          key={exploreKey}
           promptRef={promptRef}
           onSelectPrompt={handleSelectPrompt}
           onViewImage={handleViewImage}
           onEditImage={handleEditImage}
           imagesCache={exploreImagesCache}
-          onFetching={() => setIsGalleryReady(false)}  // 👈 add this
+          onFetching={() => setIsGalleryReady(false)}
           onReady={() => setIsGalleryReady(true)}
         />;
       case 'character':
