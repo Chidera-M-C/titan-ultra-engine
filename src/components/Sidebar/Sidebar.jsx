@@ -43,10 +43,10 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
 
           {/* Section 1 */}
           <NavItem icon={Compass} label="Explore" isActive={activeTab === 'explore'} onClick={() => onNavigate('explore')} />
-            <NavItem icon={Sparkles} label="Style" isActive={activeTab === 'style'} onClick={() => onNavigate('style')} />
-            {user && (
-              <NavItem icon={Images} label="My Images" isActive={activeTab === 'gallery'} onClick={() => onNavigate('gallery')} />
-            )}
+          <NavItem icon={Sparkles} label="Style" isActive={activeTab === 'style'} onClick={() => onNavigate('style')} />
+          {user && (
+            <NavItem icon={Images} label="My Images" isActive={activeTab === 'gallery'} onClick={() => onNavigate('gallery')} />
+          )}
           </div>
 
           {/* Section 2 — Deep Dive */}
