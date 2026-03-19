@@ -344,6 +344,7 @@ export default function App() {
           onViewImage={handleViewImage}
           onEditImage={handleEditImage}
           imagesCache={exploreImagesCache}
+          onFetching={() => setIsGalleryReady(false)}  // 👈 add this
           onReady={() => setIsGalleryReady(true)}
         />;
       case 'character':
