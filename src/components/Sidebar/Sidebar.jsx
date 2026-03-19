@@ -42,13 +42,14 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
         <nav className="side-nav">
 
           {/* Section 1 */}
-          <NavItem icon={Compass} label="Explore" isActive={activeTab === 'explore'} onClick={() => onNavigate('explore')} />
-          <NavItem icon={Sparkles} label="Style" isActive={activeTab === 'style'} onClick={() => onNavigate('style')} />
-          {user && (
-            <NavItem icon={Images} label="My Images" isActive={activeTab === 'gallery'} onClick={() => onNavigate('gallery')} />
-          )}
+          <div className="nav-section">
+            <NavItem icon={Compass} label="Explore" isActive={activeTab === 'explore'} onClick={() => onNavigate('explore')} />
+            <NavItem icon={Sparkles} label="Style" isActive={activeTab === 'style'} onClick={() => onNavigate('style')} />
+            {user && (
+              <NavItem icon={Images} label="My Images" isActive={activeTab === 'gallery'} onClick={() => onNavigate('gallery')} />
+            )}
           </div>
-
+        
           {/* Section 2 — Deep Dive */}
           <div className="nav-section">
             <p className="nav-section-title">Deep Dive</p>
@@ -56,7 +57,7 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
             <NavItem icon={User} label="Character" isActive={activeTab === 'character'} onClick={() => onNavigate('character')} />
             <NavItem icon={RefreshCw} label="Face Swap" isActive={activeTab === 'faceswap'} onClick={() => onNavigate('faceswap')} />
           </div>
-
+        
         </nav>
 
         <div className="sidebar-promptimize">
