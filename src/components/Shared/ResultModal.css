@@ -79,7 +79,7 @@
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 12px
+  gap: 12px;
   height: 100%;
 }
 
