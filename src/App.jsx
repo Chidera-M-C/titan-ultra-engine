@@ -48,12 +48,12 @@ export default function App() {
   const [editViewLoading, setEditViewLoading] = useState(false);
   const [editViewError, setEditViewError] = useState(null);
   const [selectedCharacter, setSelectedCharacter] = useState(null);
-  const [isGalleryReady, setIsGalleryReady] = useState(false);
 
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
   const promptRef = useRef(prompt);
   useEffect(() => { promptRef.current = prompt; }, [prompt]);
   const exploreImagesCache = useRef([]);
+  const [isGalleryReady, setIsGalleryReady] = useState(false);
 
   const handleGlobalClick = (e) => {
     if (user || authLoading) return;
