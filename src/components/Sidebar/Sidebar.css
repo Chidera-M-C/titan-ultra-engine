@@ -6,7 +6,7 @@
   left: 0;
   width: 260px;
   height: 100vh;
-  height: 100dvh; /* dynamic viewport height — fixes mobile browser chrome */
+  height: 100dvh;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border);
   display: flex;
@@ -14,12 +14,12 @@
   z-index: 9999;
   overflow: hidden;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Scrollable top area — constrained so bottom never gets pushed out */
 .sidebar-top {
   flex: 1;
-  min-height: 0; /* critical — lets flex child shrink below content size */
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -49,52 +49,103 @@
 
 .side-nav {
   padding: 0 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
+/* ── Nav sections ──────────────────────────────────────────────────────── */
+.nav-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nav-section:last-child {
+  border-bottom: none;
+}
+
+.nav-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(168, 85, 247, 0.7);
+  padding: 8px 14px 4px 14px;
+  margin: 0;
+}
+
+/* ── Nav buttons ───────────────────────────────────────────────────────── */
 .side-nav button {
   width: 100%;
   background: transparent;
   border: none;
-  color: #fff;
+  color: rgba(255, 255, 255, 0.55);
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 12px 14px;
+  gap: 12px;
+  padding: 9px 14px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 500;
-  transition: 0.2s;
-  margin-bottom: 4px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  margin-bottom: 2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: 0.1px;
 }
 
 .side-nav button svg {
-  width: 18px;
-  height: 18px;
-  color: #fff;
+  width: 17px;
+  height: 17px;
+  color: rgba(255, 255, 255, 0.45);
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+.nav-emoji {
+  font-size: 1rem;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 17px;
+  text-align: center;
 }
 
 .side-nav button:hover {
-  background: #1a1a1a;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.side-nav button:hover svg {
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .side-nav button.active {
-  background: #1a1a1a;
-  color: #fff;
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
+  border: 1px solid rgba(139, 92, 246, 0.2);
 }
 
+.side-nav button.active svg {
+  color: #a78bfa;
+}
+
+/* ── Promptimize ───────────────────────────────────────────────────────── */
 .sidebar-promptimize {
   padding: 0 1.25rem;
   margin-top: 8px;
   padding-bottom: 16px;
 }
 
-/* Sidebar bottom — always anchored, never clipped */
+/* ── Sidebar bottom ────────────────────────────────────────────────────── */
 .sidebar-bottom {
-  flex-shrink: 0; /* never compress */
+  flex-shrink: 0;
   padding: 1rem 1.25rem;
   border-top: 1px solid var(--border);
   background: var(--bg-sidebar);
@@ -103,7 +154,7 @@
   gap: 0.75rem;
 }
 
-/* CreditsCard */
+/* ── CreditsCard ───────────────────────────────────────────────────────── */
 .credits-card {
   background: #1a1a1a;
   border: 1px solid #333;
@@ -154,7 +205,7 @@
   background: #2563eb;
 }
 
-/* User profile */
+/* ── User profile ──────────────────────────────────────────────────────── */
 .user-profile {
   position: relative;
   display: flex;
@@ -218,7 +269,7 @@
   color: #fff;
 }
 
-/* Profile dropdown */
+/* ── Profile dropdown ──────────────────────────────────────────────────── */
 .profile-dropdown {
   position: absolute;
   left: 0;
@@ -248,9 +299,7 @@
   text-align: left;
 }
 
-.dropdown-item:hover {
-  background: #222;
-}
+.dropdown-item:hover { background: #222; }
 
 .dropdown-item svg {
   width: 18px;
@@ -258,19 +307,13 @@
   color: #888;
 }
 
-.logout-item {
-  color: #ff4d4d;
-}
+.logout-item { color: #ff4d4d; }
 
-.logout-item:hover {
-  background: rgba(255, 77, 77, 0.1);
-}
+.logout-item:hover { background: rgba(255, 77, 77, 0.1); }
 
-.logout-item svg {
-  color: #ff4d4d;
-}
+.logout-item svg { color: #ff4d4d; }
 
-/* Google login button */
+/* ── Google login ──────────────────────────────────────────────────────── */
 .google-login-btn {
   width: 100%;
   background: #fff;
@@ -298,7 +341,7 @@
   height: 18px;
 }
 
-/* Mobile */
+/* ── Mobile ────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(-100%);
