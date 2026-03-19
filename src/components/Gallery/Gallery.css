@@ -10,6 +10,10 @@
   top: 0;
   background: #101010;
   z-index: 15;
+  margin-left: -2rem;
+  margin-right: -2rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
   overflow-x: auto;
   white-space: nowrap;
   scrollbar-width: none;
