@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Compass, User, History, Sparkles, Wand2, MoreHorizontal, Settings, HelpCircle, LogOut } from 'lucide-react';
+import { Images, Sparkles, Wand2, MoreHorizontal, Settings, HelpCircle, LogOut } from 'lucide-react';
 import NavItem from './NavItem';
 import CreditsCard from './CreditsCard';
 import Promptimize from './Promptimize';
@@ -40,13 +40,24 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
         </div>
 
         <nav className="side-nav">
-          <NavItem icon={Compass} label="Explore" isActive={activeTab === 'explore'} onClick={() => onNavigate('explore')} />
-          <NavItem icon={User} label="Character" isActive={activeTab === 'character'} onClick={() => onNavigate('character')} />
-          {user && (
-            <NavItem icon={History} label="My Images" isActive={activeTab === 'gallery'} onClick={() => onNavigate('gallery')} />
-          )}
-          <NavItem icon={Sparkles} label="Style" isActive={activeTab === 'style'} onClick={() => onNavigate('style')} />
-          <NavItem icon={Wand2} label="Edit Image" isActive={activeTab === 'edit'} onClick={() => onNavigate('edit')} />
+
+          {/* Section 1 */}
+          <div className="nav-section">
+            <NavItem emoji="🧭" label="Explore" isActive={activeTab === 'explore'} onClick={() => onNavigate('explore')} />
+            <NavItem icon={Sparkles} label="Style" isActive={activeTab === 'style'} onClick={() => onNavigate('style')} />
+            {user && (
+              <NavItem icon={Images} label="My Images" isActive={activeTab === 'gallery'} onClick={() => onNavigate('gallery')} />
+            )}
+          </div>
+
+          {/* Section 2 — Deep Dive */}
+          <div className="nav-section">
+            <p className="nav-section-title">Deep Dive</p>
+            <NavItem icon={Wand2} label="Edit Image" isActive={activeTab === 'edit'} onClick={() => onNavigate('edit')} />
+            <NavItem emoji="🎭" label="Character" isActive={activeTab === 'character'} onClick={() => onNavigate('character')} />
+            <NavItem emoji="🔄" label="Face Swap" isActive={activeTab === 'faceswap'} onClick={() => onNavigate('faceswap')} />
+          </div>
+
         </nav>
 
         <div className="sidebar-promptimize">
