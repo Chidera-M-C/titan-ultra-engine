@@ -48,6 +48,7 @@ export default function App() {
   const [editViewLoading, setEditViewLoading] = useState(false);
   const [editViewError, setEditViewError] = useState(null);
   const [selectedCharacter, setSelectedCharacter] = useState(null);
+  const [isGalleryReady, setIsGalleryReady] = useState(false);
 
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
   const promptRef = useRef(prompt);
@@ -343,6 +344,7 @@ export default function App() {
           onViewImage={handleViewImage}
           onEditImage={handleEditImage}
           imagesCache={exploreImagesCache}
+          onReady={() => setIsGalleryReady(true)}
         />;
       case 'character':
         return <CharacterView
@@ -427,7 +429,29 @@ export default function App() {
               <PromptBox {...promptBoxProps} collapsed={promptCollapsed} />
             </header>
           )}
-          <div className="scrollable-area">{renderActiveView()}</div>
+          <div className="scrollable-area" style={{ position: 'relative' }}>
+            {activeTab === 'explore' && !isGalleryReady && (
+              <div style={{
+                position: 'absolute', inset: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'var(--bg, #0f0f0f)', zIndex: 10
+              }}>
+                <div style={{
+                  width: 40, height: 40,
+                  border: '3px solid rgba(255,255,255,0.1)',
+                  borderTop: '3px solid white',
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite'
+                }} />
+              </div>
+            )}
+            <div style={{
+              opacity: activeTab === 'explore' ? (isGalleryReady ? 1 : 0) : 1,
+              transition: 'opacity 0.4s ease'
+            }}>
+              {renderActiveView()}
+            </div>
+          </div>
         </main>
 
         <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
