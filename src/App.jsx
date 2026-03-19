@@ -304,6 +304,7 @@ export default function App() {
   };
 
   const handleNavigation = (tab) => {
+    if (tab !== 'explore') setIsGalleryReady(false); // reset so spinner shows if images need to reload
     setActiveTab(tab);
     setIsSidebarOpen(false);
     setPromptCollapsed(false);
