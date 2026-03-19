@@ -269,6 +269,10 @@ body, html {
   display: inline-block;
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 @media (max-width: 1200px) { .my-images-grid { columns: 4; } }
 @media (max-width: 992px)  { .my-images-grid { columns: 3; } }
 @media (max-width: 768px)  { .my-images-grid { columns: 2; column-gap: 8px; } }
