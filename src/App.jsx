@@ -328,6 +328,8 @@ export default function App() {
   const handleEditImage = useCallback((img) => {
     if (!user) { setLoginModalOpen(true); return; }
     setEditingImage(img);
+    setEditViewImage(null);   // clear previous result
+    setEditViewError(null);   // clear previous error
     setEditModalOpen(true);
   }, [user]);
 
@@ -491,11 +493,15 @@ export default function App() {
           <EditModal
             image={editingImage?.url}
             originalPrompt={editingImage?.prompt}
-            onClose={() => setEditModalOpen(false)}
-            onRetry={(newPrompt) => {
+            resultImage={editViewImage}
+            loading={editViewLoading}
+            error={editViewError}
+            onClose={() => {
               setEditModalOpen(false);
-              setActiveTab('edit');
-              setViewState('gallery');
+              setEditViewImage(null);
+              setEditViewError(null);
+            }}
+            onRetry={(newPrompt) => {
               handleEditViewGenerate({
                 image: editingImage?.url,
                 prompt: newPrompt,
