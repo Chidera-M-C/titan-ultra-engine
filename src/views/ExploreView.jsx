@@ -27,19 +27,13 @@ const CATEGORY_STYLE_MAP = {
 
 const CATEGORIES = ['All', ...Object.keys(CATEGORY_STYLE_MAP)];
 
-export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, onEditImage, imagesCache, onFetching, onReady }) {
+export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, onEditImage, onFetching, onReady }) {
   const [activeCategory, setActiveCategory] = useState('All');
-  const [images, setImages] = useState(imagesCache?.current?.length > 0 ? imagesCache.current : []);
+  const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const loadImages = useCallback(async () => {
-    if (activeCategory === 'All' && imagesCache?.current?.length > 0) {
-      setImages(imagesCache.current);
-      onReady?.(); // cache hit — images already downloaded, show immediately
-      return;
-    }
-
-    onFetching?.(); // fetch starting — keep spinner up
+    onFetching?.();
     setLoading(true);
     try {
       let query = supabase
@@ -65,11 +59,7 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
 
       const shuffled = shuffleArray(fetchedImages);
 
-      if (activeCategory === 'All' && imagesCache) {
-        imagesCache.current = shuffled;
-      }
-
-      // preload every image before revealing — this is what makes it smooth
+      // preload all images before revealing — this is what makes it smooth
       await Promise.all(
         shuffled.map(img => new Promise(resolve => {
           const i = new Image();
@@ -80,10 +70,10 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
       );
 
       setImages(shuffled);
-      onReady?.(); // every image is downloaded — drop the spinner now
+      onReady?.();
     } catch (err) {
-      console.error("Failed to fetch explore images from Supabase:", err);
-      onReady?.(); // don't leave user stuck on spinner if something fails
+      console.error("Failed to fetch explore images:", err);
+      onReady?.();
     } finally {
       setLoading(false);
     }
