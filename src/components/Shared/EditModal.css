@@ -34,7 +34,7 @@
 }
 
 /* Header bar with status and close button */
-.edit-header {
+.edit-modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -45,7 +45,7 @@
   min-height: 48px;   /* add this */
 }
 
-.edit-header:hover {
+.edit-modal-header:hover {
   background: rgba(255, 255, 255, 0.02);
 }
 
