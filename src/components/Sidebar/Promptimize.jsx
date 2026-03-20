@@ -2,18 +2,20 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Wand2, Copy, ArrowUpRight, Check, AlertCircle, Brain } from 'lucide-react';
 import './Promptimize.css';
 
-export default function Promptimize({ onLoad, currentPrompt }) {
-  const [input, setInput]         = useState('');
-  const [output, setOutput]       = useState('');
-  const [thinking, setThinking]   = useState('');
-  const [loading, setLoading]     = useState(false);
-  const [copied, setCopied]       = useState(false);
-  const [error, setError]         = useState(null);
-  const [thinkDone, setThinkDone] = useState(false);
+export default function Promptimize({ onLoad, onNegativePromptLoad, currentPrompt, currentNegativePrompt }) {
+  const [input, setInput]               = useState('');
+  const [output, setOutput]             = useState('');
+  const [negativeOutput, setNegativeOutput] = useState('');
+  const [thinking, setThinking]         = useState('');
+  const [loading, setLoading]           = useState(false);
+  const [copied, setCopied]             = useState(false);
+  const [copiedNeg, setCopiedNeg]       = useState(false);
+  const [error, setError]               = useState(null);
+  const [thinkDone, setThinkDone]       = useState(false);
+  const [buildDone, setBuildDone]       = useState(false);
 
   const thinkBoxRef = useRef(null);
 
-  // Auto-scroll think box as content streams in
   useEffect(() => {
     if (thinkBoxRef.current) {
       thinkBoxRef.current.scrollTop = thinkBoxRef.current.scrollHeight;
@@ -24,8 +26,10 @@ export default function Promptimize({ onLoad, currentPrompt }) {
     if (!input.trim() || loading) return;
     setLoading(true);
     setOutput('');
+    setNegativeOutput('');
     setThinking('');
     setThinkDone(false);
+    setBuildDone(false);
     setError(null);
 
     try {
@@ -47,7 +51,7 @@ export default function Promptimize({ onLoad, currentPrompt }) {
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
-        buffer = lines.pop(); // hold incomplete line
+        buffer = lines.pop();
 
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
@@ -55,30 +59,30 @@ export default function Promptimize({ onLoad, currentPrompt }) {
           if (!jsonStr) continue;
 
           let parsed;
-          try {
-            parsed = JSON.parse(jsonStr);
-          } catch {
-            console.warn('SSE parse error, skipping line:', jsonStr);
-            continue;
-          }
+          try { parsed = JSON.parse(jsonStr); }
+          catch { continue; }
 
-          if (parsed.error) {
-            throw new Error(parsed.error);
-          }
+          if (parsed.error) throw new Error(parsed.error);
 
-          // type: 'thinking' — stream reasoning chunks into think box
+          // Call 1 — thinking stream
           if (parsed.type === 'thinking' && parsed.chunk) {
             setThinking(prev => prev + parsed.chunk);
           }
 
-          // type: 'thinking_done' — Call 1 finished, Call 2 is running
+          // Call 1 done
           if (parsed.type === 'thinking_done') {
             setThinkDone(true);
           }
 
-          // type: 'result' — Call 2 finished, show final prompt
+          // Call 2 — positive prompt result
           if (parsed.type === 'result') {
             setOutput(parsed.optimized || '');
+            setBuildDone(true);
+          }
+
+          // Call 3 — negative prompt result
+          if (parsed.type === 'negative') {
+            setNegativeOutput(parsed.negative || '');
           }
         }
       }
@@ -97,23 +101,37 @@ export default function Promptimize({ onLoad, currentPrompt }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const isLoaded = output && (currentPrompt || '').trim() === output.trim();
+  const handleCopyNeg = () => {
+    if (!negativeOutput) return;
+    navigator.clipboard.writeText(negativeOutput);
+    setCopiedNeg(true);
+    setTimeout(() => setCopiedNeg(false), 2000);
+  };
+
+  const isLoaded =
+    output &&
+    (currentPrompt || '').trim() === output.trim() &&
+    (!negativeOutput || (currentNegativePrompt || '').trim() === negativeOutput.trim());
 
   const handleLoadToggle = () => {
-    if (!output || !onLoad) return;
+    if (!output) return;
     if (isLoaded) {
-      onLoad('');
+      onLoad?.('');
+      onNegativePromptLoad?.('');
     } else {
-      onLoad(output);
+      onLoad?.(output);
+      if (negativeOutput) onNegativePromptLoad?.(negativeOutput);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  // Think box visible while loading OR after if thinking content exists
   const showThinkBox = loading || (thinkDone && thinking);
 
-  // Loading has two phases now — thinking (Call 1) and building (Call 2)
-  const loadingLabel = loading && thinkDone ? 'Building prompt...' : 'Thinking...';
+  const loadingLabel = loading && buildDone
+    ? 'Building negative...'
+    : loading && thinkDone
+    ? 'Building prompt...'
+    : 'Thinking...';
 
   return (
     <div className="promptimize-wrapper">
@@ -141,15 +159,9 @@ export default function Promptimize({ onLoad, currentPrompt }) {
         disabled={!input.trim() || loading}
       >
         {loading ? (
-          <>
-            <div className="promptimize-spinner" />
-            <span>{loadingLabel}</span>
-          </>
+          <><div className="promptimize-spinner" /><span>{loadingLabel}</span></>
         ) : (
-          <>
-            <Wand2 size={13} />
-            <span>Promptimize It</span>
-          </>
+          <><Wand2 size={13} /><span>Promptimize It</span></>
         )}
       </button>
 
@@ -160,7 +172,7 @@ export default function Promptimize({ onLoad, currentPrompt }) {
         </div>
       )}
 
-      {/* THINKING BOX — streams Call 1 live */}
+      {/* THINKING BOX — Call 1 stream */}
       {showThinkBox && (
         <div className={`promptimize-think-box ${thinkDone ? 'think-done' : 'think-active'}`}>
           <div className="think-box-header">
@@ -174,11 +186,33 @@ export default function Promptimize({ onLoad, currentPrompt }) {
         </div>
       )}
 
-      {/* OUTPUT — only shown after Call 2 returns result */}
+      {/* OUTPUT — Call 2 positive prompt */}
       {output && (
         <div className="promptimize-output">
           <div className="promptimize-output-label">Optimized Prompt</div>
           <p className="promptimize-output-text">{output}</p>
+
+          {/* DIVIDER */}
+          {negativeOutput && <div className="promptimize-output-divider" />}
+
+          {/* NEGATIVE PROMPT — Call 3 */}
+          {negativeOutput && (
+            <>
+              <div className="promptimize-output-label neg-label">Negative Prompt</div>
+              <p className="promptimize-output-text">{negativeOutput}</p>
+              <div className="promptimize-neg-copy">
+                <button
+                  className={`promptimize-action-btn copy ${copiedNeg ? 'copied' : ''}`}
+                  onClick={handleCopyNeg}
+                >
+                  {copiedNeg ? <Check size={13} /> : <Copy size={13} />}
+                  <span>{copiedNeg ? 'Copied' : 'Copy Negative'}</span>
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* ACTIONS */}
           <div className="promptimize-output-actions">
             <button
               className={`promptimize-action-btn copy ${copied ? 'copied' : ''}`}
@@ -192,7 +226,7 @@ export default function Promptimize({ onLoad, currentPrompt }) {
               onClick={handleLoadToggle}
             >
               <ArrowUpRight size={13} />
-              <span>{isLoaded ? 'Unload' : 'Load'}</span>
+              <span>{isLoaded ? 'Unload' : 'Load Both'}</span>
             </button>
           </div>
         </div>
