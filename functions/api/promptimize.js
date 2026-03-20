@@ -100,13 +100,16 @@ export async function onRequestPost(context) {
       const reader = thinkingResponse.body.getReader();
       const decoder = new TextDecoder();
       let thinkingText = '';
-
+      let buffer = '';  // 👈 add this
+      
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-
+        
+        buffer += decoder.decode(value, { stream: true });  // 👈 append to buffer
+        const lines = buffer.split('\n');
+        buffer = lines.pop();  // 👈 hold incomplete last line
+      
         for (const line of lines) {
           if (line.trim() === '' || line.includes('[DONE]')) continue;
           if (!line.startsWith('data: ')) continue;
