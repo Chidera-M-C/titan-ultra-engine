@@ -59,7 +59,7 @@
   padding: 10px 12px;
   color: #ececec;
   font-size: 0.82rem;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: inherit;
   resize: none;
   outline: none;
   line-height: 1.5;
@@ -167,7 +167,6 @@
   letter-spacing: 0.5px;
 }
 
-/* Pulsing brain icon while active */
 .brain-pulse {
   animation: brainPulse 1.2s ease-in-out infinite;
   color: #a855f7;
@@ -181,7 +180,7 @@
 .think-box-content {
   padding: 10px;
   font-size: 0.72rem;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: inherit;
   color: #444;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -192,9 +191,7 @@
   scrollbar-color: #1e1e1e #0a0a0a;
 }
 
-.think-active .think-box-content {
-  color: #666;
-}
+.think-active .think-box-content { color: #666; }
 
 .think-box-content::-webkit-scrollbar { width: 4px; }
 .think-box-content::-webkit-scrollbar-track { background: transparent; }
@@ -224,14 +221,34 @@
   margin-bottom: 8px;
 }
 
+.promptimize-output-label.neg-label {
+  color: #f97316;
+}
+
 .promptimize-output-text {
   font-size: 0.8rem;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: inherit;
   color: #ccc;
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
   margin-bottom: 12px;
+}
+
+/* Divider between positive and negative */
+.promptimize-output-divider {
+  height: 1px;
+  background: #1e1e1e;
+  margin: 4px 0 12px 0;
+}
+
+/* Negative copy button row */
+.promptimize-neg-copy {
+  margin-bottom: 12px;
+}
+
+.promptimize-neg-copy .promptimize-action-btn.copy {
+  width: 100%;
 }
 
 .promptimize-output-actions {
