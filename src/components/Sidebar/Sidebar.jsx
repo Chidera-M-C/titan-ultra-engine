@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Compass, Images, Sparkles, Wand2, User, RefreshCw, Repeat2, MoreHorizontal, Settings, HelpCircle, LogOut } from 'lucide-react';
+import { Compass, Images, Sparkles, Wand2, User, Repeat2, MoreHorizontal, Settings, HelpCircle, LogOut } from 'lucide-react';
 import NavItem from './NavItem';
 import CreditsCard from './CreditsCard';
 import Promptimize from './Promptimize';
@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import NudelyLogo from '../../assets/nudely-logo.png';
 import './Sidebar.css';
 
-export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen, onPromptLoad, currentPrompt }) {
+export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen, onPromptLoad, onNegativePromptLoad, currentPrompt, currentNegativePrompt }) {
   const { user, loginWithGoogle, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const profileRef = useRef(null);
@@ -49,7 +49,7 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
               <NavItem icon={Images} label="My Images" isActive={activeTab === 'gallery'} onClick={() => onNavigate('gallery')} />
             )}
           </div>
-        
+
           {/* Section 2 — Deep Dive */}
           <div className="nav-section">
             <p className="nav-section-title">Deep Dive</p>
@@ -57,11 +57,16 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
             <NavItem icon={User} label="Character" isActive={activeTab === 'character'} onClick={() => onNavigate('character')} />
             <NavItem icon={Repeat2} label="Face Swap" isActive={activeTab === 'faceswap'} onClick={() => onNavigate('faceswap')} />
           </div>
-        
+
         </nav>
 
         <div className="sidebar-promptimize">
-          <Promptimize onLoad={onPromptLoad} currentPrompt={currentPrompt} />
+          <Promptimize
+            onLoad={onPromptLoad}
+            onNegativePromptLoad={onNegativePromptLoad}
+            currentPrompt={currentPrompt}
+            currentNegativePrompt={currentNegativePrompt}
+          />
         </div>
       </div>
 
