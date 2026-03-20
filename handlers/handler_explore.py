@@ -90,8 +90,8 @@ def get_dimensions(aspect_ratio):
         '16:9': (1536, 1024),
     }
     width, height = dimensions.get(aspect_ratio, (1024, 1536))
-    upscale_w = int(width  * 1.5 // 8 * 8)
-    upscale_h = int(height * 1.5 // 8 * 8)
+    upscale_w = int(width  * 2 // 8 * 8)
+    upscale_h = int(height * 2 // 8 * 8)
     return width, height, upscale_w, upscale_h
 
 def build_prompts(user_prompt, user_negative=''):
