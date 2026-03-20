@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Compass, Images, Sparkles, Wand2, User, RefreshCw, MoreHorizontal, Settings, HelpCircle, LogOut } from 'lucide-react';
+import { Compass, Images, Sparkles, Wand2, User, RefreshCw, Repeat2, MoreHorizontal, Settings, HelpCircle, LogOut } from 'lucide-react';
 import NavItem from './NavItem';
 import CreditsCard from './CreditsCard';
 import Promptimize from './Promptimize';
@@ -55,7 +55,7 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
             <p className="nav-section-title">Deep Dive</p>
             <NavItem icon={Wand2} label="Edit Image" isActive={activeTab === 'edit'} onClick={() => onNavigate('edit')} />
             <NavItem icon={User} label="Character" isActive={activeTab === 'character'} onClick={() => onNavigate('character')} />
-            <NavItem icon={RefreshCw} label="Face Swap" isActive={activeTab === 'faceswap'} onClick={() => onNavigate('faceswap')} />
+            <NavItem icon={Repeat2} label="Face Swap" isActive={activeTab === 'faceswap'} onClick={() => onNavigate('faceswap')} />
           </div>
         
         </nav>
