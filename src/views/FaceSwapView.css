@@ -1,0 +1,314 @@
+.faceswap-view {
+  padding: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.faceswap-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.faceswap-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.faceswap-subtitle {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.faceswap-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.faceswap-inputs {
+  flex: 1.5;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.faceswap-result-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Upload row ──────────────────────────────────────────────────────────── */
+.faceswap-upload-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.faceswap-upload-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.faceswap-arrow {
+  font-size: 1.5rem;
+  color: #333;
+  flex-shrink: 0;
+  margin-top: 32px;
+}
+
+.faceswap-upload-label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.faceswap-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #888;
+}
+
+.faceswap-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  color: #a855f7;
+}
+
+.faceswap-sublabel {
+  font-size: 0.72rem;
+  color: #444;
+  line-height: 1.4;
+}
+
+/* ── Upload zone ─────────────────────────────────────────────────────────── */
+.faceswap-upload-zone {
+  border: 1.5px dashed rgba(168, 85, 247, 0.25);
+  border-radius: 16px;
+  background: rgba(168, 85, 247, 0.03);
+  aspect-ratio: 3 / 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  padding: 1rem;
+}
+
+.faceswap-upload-zone:hover {
+  border-color: rgba(168, 85, 247, 0.5);
+  background: rgba(168, 85, 247, 0.06);
+}
+
+.faceswap-upload-zone p {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #666;
+}
+
+.faceswap-upload-zone span {
+  font-size: 0.72rem;
+  color: #444;
+}
+
+/* ── Preview ─────────────────────────────────────────────────────────────── */
+.faceswap-preview {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1.5px solid rgba(168, 85, 247, 0.3);
+  aspect-ratio: 3 / 4;
+}
+
+.faceswap-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.faceswap-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s;
+}
+
+.faceswap-remove:hover {
+  background: rgba(255, 77, 77, 0.5);
+}
+
+/* ── Swap button ─────────────────────────────────────────────────────────── */
+.faceswap-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #7e22ce, #a855f7);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.faceswap-btn:hover:not(:disabled) {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+
+.faceswap-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.faceswap-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: faceswapSpin 0.7s linear infinite;
+}
+
+@keyframes faceswapSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Result ──────────────────────────────────────────────────────────────── */
+.faceswap-result-placeholder {
+  border: 1.5px dashed #222;
+  border-radius: 16px;
+  aspect-ratio: 3 / 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  font-size: 0.85rem;
+}
+
+.faceswap-result-loading {
+  border-radius: 16px;
+  aspect-ratio: 3 / 4;
+  background: #0d0d0d;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #555;
+  font-size: 0.85rem;
+}
+
+.faceswap-result-error {
+  border-radius: 16px;
+  aspect-ratio: 3 / 4;
+  background: #0d0d0d;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #888;
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 2rem;
+}
+
+.faceswap-retry-btn {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #fff;
+  padding: 8px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+
+.faceswap-retry-btn:hover {
+  background: #252525;
+}
+
+.faceswap-result-image {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1.5px solid rgba(168, 85, 247, 0.2);
+}
+
+.faceswap-result-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.faceswap-download-btn {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+}
+
+.faceswap-download-btn:hover {
+  background: rgba(168, 85, 247, 0.6);
+}
+
+/* ── Mobile ──────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .faceswap-layout {
+    flex-direction: column;
+  }
+
+  .faceswap-upload-row {
+    flex-direction: column;
+  }
+
+  .faceswap-arrow {
+    transform: rotate(90deg);
+    margin-top: 0;
+    align-self: center;
+  }
+}
