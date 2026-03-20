@@ -597,12 +597,30 @@
 
 /* ── Mobile ──────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
+  .faceswap-view {
+    align-items: center;
+  }
+
   .faceswap-layout {
     flex-direction: column;
+    width: 100%;
+  }
+
+  .faceswap-inputs {
+    width: 100%;
+  }
+
+  .faceswap-result-col {
+    width: 100%;
   }
 
   .faceswap-upload-row {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .faceswap-upload-col {
+    width: 100%;
   }
 
   .faceswap-arrow {
