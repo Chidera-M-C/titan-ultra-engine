@@ -226,7 +226,7 @@ export default function Promptimize({ onLoad, onNegativePromptLoad, currentPromp
               onClick={handleLoadToggle}
             >
               <ArrowUpRight size={13} />
-              <span>{isLoaded ? 'Unload' : 'Load Both'}</span>
+              <span>{isLoaded ? 'Unload' : 'Load'}</span>
             </button>
           </div>
         </div>
