@@ -440,6 +440,7 @@ export default function App() {
     loading,
     negativePrompt,
     setNegativePrompt,
+    onOpenSidebar: () => setIsSidebarOpen(true),  // 👈 add this
   };
   
   return (
