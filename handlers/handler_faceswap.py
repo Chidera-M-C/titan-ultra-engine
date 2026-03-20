@@ -103,6 +103,7 @@ def handler(job):
         result_img = enhance_face(result_img)
 
         # Convert back to RGB and encode
+        # Convert back to RGB and encode
         result_rgb = cv2.cvtColor(result_img, cv2.COLOR_BGR2RGB)
         result_pil = Image.fromarray(result_rgb)
 
