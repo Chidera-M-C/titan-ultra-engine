@@ -61,9 +61,9 @@ Rules — STRICT:
 - Focus on the most visually impactful elements from the draft
 - Let composition imply camera angle naturally — do NOT force camera angle tags
 - Include: subject count tag (1girl, 1man, etc), physical descriptors, action/pose tags, setting tags, mood/lighting tags, quality tags
-- Wrap the most critical action or pose tags in parentheses for emphasis e.g. (arched back)
+- Wrap the most critical action or pose tags in parentheses for emphasis
 - Quality tags to end with: masterpiece, best quality, photorealistic, ultra detailed, sharp focus
-- Hard cap: 500 characters minimum
+- Hard cap: 60-70 words
 - Your entire response must be the prompt and nothing else`;
 
 const NEGATIVE_PROMPT = `You are an SDXL/Flux negative prompt engineer. You receive a final positive prompt and generate a negative prompt that prevents unwanted artifacts and inconsistencies specific to this scene.
