@@ -17,6 +17,7 @@ import MyImagesView from './views/MyImagesView';
 import StyleView from './views/StyleView';
 import StyleGeneratorView from './views/StyleGeneratorView';
 import EditView from './views/EditView';
+import FaceSwapView from './views/FaceSwapView';
 
 // Memoized outside component to prevent re-render cascade
 const MemoExploreView = React.memo(ExploreView);
@@ -54,6 +55,30 @@ export default function App() {
   useEffect(() => { promptRef.current = prompt; }, [prompt]);
   const [isGalleryReady, setIsGalleryReady] = useState(false);
   const [exploreKey, setExploreKey] = useState(0);
+  const [faceswapResult, setFaceswapResult] = useState(null);
+  const [faceswapLoading, setFaceswapLoading] = useState(false);
+  const [faceswapError, setFaceswapError] = useState(null);
+
+  const handleFaceSwap = async ({ targetImage, sourceImage }) => {
+    if (!user) { setLoginModalOpen(true); return; }
+    setFaceswapLoading(true);
+    setFaceswapError(null);
+    setFaceswapResult(null);
+    try {
+      const response = await fetch('/api/faceswap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetImage, sourceImage })
+      });
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      setFaceswapResult(data.image);
+    } catch (err) {
+      setFaceswapError(err.message);
+    } finally {
+      setFaceswapLoading(false);
+    }
+  };
 
   const handleGlobalClick = (e) => {
     if (user || authLoading) return;
@@ -311,7 +336,7 @@ export default function App() {
     setActiveTab(tab);
     setIsSidebarOpen(false);
     setPromptCollapsed(false);
-    if (tab === 'explore' || tab === 'gallery' || tab === 'style' || tab === 'edit' || tab === 'character') setViewState('gallery');
+    if (tab === 'explore' || tab === 'gallery' || tab === 'style' || tab === 'edit' || tab === 'character' || tab === 'faceswap') setViewState('gallery');
     else setViewState('empty');
   };
 
@@ -388,6 +413,13 @@ export default function App() {
           onViewImage={handleViewImage}
           credits={credits}
         />;
+      case 'faceswap':
+        return <FaceSwapView
+          onSwap={handleFaceSwap}
+          loading={faceswapLoading}
+          result={faceswapResult}
+          error={faceswapError}
+        />;
       default:
         <MemoExploreView
           promptRef={promptRef}
@@ -430,7 +462,7 @@ export default function App() {
         />
 
         <main className="main-content">
-          {activeTab !== 'style' && activeTab !== 'character' && activeTab !== 'edit' && (
+          {activeTab !== 'style' && activeTab !== 'character' && activeTab !== 'edit' && activeTab !== 'faceswap' (
             <header className={`top-header ${promptCollapsed ? 'collapsed' : ''}`}>
               <h1 className="aesthetic-title">What will you create?</h1>
               <PromptBox {...promptBoxProps} collapsed={promptCollapsed} />
