@@ -388,8 +388,6 @@
   .mobile-sidebar-trigger {
     cursor: pointer;
     pointer-events: auto;
-    text-decoration: underline;
-    text-underline-offset: 2px;
   }
 
   .prompt-input-main,
