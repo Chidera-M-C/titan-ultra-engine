@@ -13,6 +13,7 @@ export default function PromptBox({
   collapsed = false,
   negativePrompt,
   setNegativePrompt,
+  onOpenSidebar,
 }) {
   const textareaRef = useRef(null);
 
@@ -57,7 +58,9 @@ export default function PromptBox({
               }}
             />
             <div className="prompt-hint-row">
-              <p className="prompt-hint">Plain words don't work! Promptimize it <ArrowDownLeft size={11} /></p>
+              <p className="prompt-hint mobile-sidebar-trigger" onClick={onOpenSidebar}>
+                Plain words don't work! Promptimize it <ArrowDownLeft size={11} />
+              </p>
             </div>
             <div className="prompt-footer">
               <div className="left-tools">
