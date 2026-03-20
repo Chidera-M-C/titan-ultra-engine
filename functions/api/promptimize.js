@@ -1,149 +1,4 @@
-// --- ORIGINAL DATABASE RESTORED ---
-const styleCategories = {
-  "missionary_style": ["missionary position", "legs spread wide", "deep vaginal penetration", "legs over shoulders", "mating press", "eye contact fucking", "breeding press", "intimate face-to-face", "pillow under hips", "slow deep thrusts"],
-  "doggy_style": ["doggy style", "ass up face down", "backshots", "deep penetration from behind", "hair pulling", "arched back", "waist gripped", "spanked ass", "pounding doggy", "face down ass up"],
-  "female_nude_portrait": ["artistic female nude", "seductive nude portrait", "elegant nude pose", "bare breasts focus", "detailed shaved pussy", "standing graceful nude", "lying on back nude", "soft studio lighting nude", "contrapposto nude", "boudoir nude"],
-  "male_nude_portrait": ["artistic male nude", "seductive male portrait", "muscular bare body", "detailed penis", "standing male nude", "lying nude male", "masculine erotic pose", "soft studio male nude", "confident male form"],
-  "ass_fucking": ["prone bone", "ass up face down", "deep anal penetration", "stretched asshole", "gaping anus", "balls deep anal", "rough backshots", "anal creampie dripping", "lubed glistening asshole", "raw anal pounding"],
-  "dick_sucking": ["deepthroat", "throat bulge", "sloppy blowjob", "gagging on cock", "tears from deepthroat", "eye contact blowjob", "tongue out ahegao sucking", "throat fucking", "cum in mouth", "balls deep oral"],
-  "threesome_2male": ["double penetration", "spitroast", "one in mouth one in pussy", "dp", "two men one girl", "airtight", "sandwiched", "double vaginal", "mmf threesome"],
-  "threesome_2females": ["ffm threesome", "two girls one guy", "double blowjob", "one cock two mouths", "girl riding while kissing", "lesbian action with cock", "double female oral"],
-  "pussy_eating": ["face sitting", "cunnilingus", "tongue deep in pussy", "clit sucking", "pussy eating from behind", "legs shaking orgasm", "squirting on face", "wet pussy licked"],
-  "boobs_sucking": ["nipple sucking", "breast worship", "tongue on nipples", "boob sucking", "puffy nipples sucked", "milk leaking", "tit sucking hard"],
-  "lesbian_sex": ["scissoring", "tribbing", "69 lesbian", "lesbian cunnilingus", "strap-on lesbian", "pussy grinding", "breast sucking lesbian"],
-  "homosexual_sex": ["gay anal", "male on male", "cock in ass gay", "deep gay anal", "gay missionary", "rimming", "gay blowjob"],
-  "trans_sex": ["trans woman with cock", "futanari sex", "ladyboy anal", "girl with dick fucking", "trans blowjob", "shemale penetration"],
-  "rape": ["non-consensual", "pinned down", "forced penetration", "crying during sex", "struggling", "fearful expression", "held down", "rough forced"],
-  "standing_doggy_style": ["standing doggy", "bent over standing", "wall pressed doggy", "standing backshots", "upright doggy", "standing anal doggy", "kitchen counter doggy", "standing hair pull", "deep standing penetration", "legs spread standing", "standing creampie", "rough standing doggy", "ass up standing", "wall fuck standing", "standing arched back", "standing waist grip", "public standing doggy", "standing pussy pounding", "standing orgasm", "bent over table doggy"],
-  "cowgirl_style": ["cowgirl position", "riding cock", "straddling reverse", "girl on top", "cowgirl bouncing", "deep cowgirl ride", "hands on chest cowgirl", "cowgirl grinding", "slow cowgirl ride", "fast cowgirl bounce", "cowgirl creampie", "reverse cowgirl transition", "cowgirl eye contact", "riding orgasm", "cowgirl tit bounce", "deep cowgirl penetration", "cowgirl ass slap", "riding ahegao", "cowgirl cum drip", "straddling cowgirl"],
-  "reverse_cowgirl": ["reverse cowgirl", "ass towards viewer", "back riding", "reverse bouncing", "reverse cowgirl view", "ass clapping reverse", "deep reverse penetration", "reverse cowgirl creampie", "hands on thighs reverse", "reverse grinding", "reverse cowgirl orgasm", "ass focus reverse", "reverse ahegao", "slow reverse ride", "fast reverse bounce", "reverse hair flip", "reverse pussy grip", "reverse anal ride", "back view creampie", "reverse cowgirl squat"],
-  "male_masturbation": ["male masturbation", "stroking cock", "handjob solo male", "jerking off", "detailed penis stroke", "cumshot male", "edging male", "slow stroking", "fast jerking", "veiny cock masturbation", "male orgasm face", "cum on abs", "fleshlight male", "ball fondling", "pre-cum dripping", "male ahegao stroke", "prostate milking solo", "thick cum rope", "male self pleasure", "detailed hand on cock"],
-  "female_masturbation": ["female masturbation", "fingering pussy", "clit rubbing", "dildo insertion", "solo female orgasm", "squirt masturbation", "legs spread fingering", "vibrator on clit", "detailed wet pussy fingers", "female ahegao solo", "breast squeezing while fingering", "slow pussy rub", "fast clit circles", "dildo deep", "female squirting", "toy in ass and pussy", "mirror masturbation", "female cum drip", "pussy spread masturbation", "orgasm shaking solo"],
-  "triple_blowjob": ["triple blowjob", "three girls one cock", "triple oral", "three mouths on cock", "triple deepthroat", "cum on three faces", "triple tongue worship", "three girls sucking balls", "triple handjob blowjob", "triple slobber", "three ahegao mouths", "triple cum swap", "triple throat bulge", "three girls kissing cock", "triple facial", "overloaded oral", "triple cock worship", "three tongues licking", "triple cum dump", "three girls fighting for cock"],
-  "cowgirl_anal": ["cowgirl anal", "reverse cowgirl anal", "anal riding", "ass riding cowgirl", "deep anal cowgirl", "anal bounce", "anal creampie cowgirl", "stretched asshole riding", "anal ahegao cowgirl", "slow anal grind", "fast anal bounce", "anal cowgirl view", "ass to pussy cowgirl", "anal orgasm riding", "lubed anal ride", "gaping anal cowgirl", "anal prolapse tease", "cowgirl anal cum drip", "hands on ass anal ride", "deep rectal cowgirl"],
-  "titfuck": ["titfuck", "paizuri", "boob job", "breast fucking", "cleavage fuck", "titfuck cumshot", "oiled tits fuck", "big tits paizuri", "nipple tease titfuck", "cum on tits", "deep cleavage stroke", "titfuck ahegao", "slow tit job", "fast tit pounding", "titfuck eye contact", "glistening oiled boobs", "titfuck facial", "breast squeeze fuck", "veiny cock between tits", "cum covered cleavage"],
-  "self_nipple_sucking": ["self nipple sucking", "autofellatio breasts", "girl sucking own nipples", "self boob worship", "milk leaking self suck", "flexible nipple suck", "self tit play", "tongue on own nipple", "double nipple suck", "self lactation play", "contorted self suck", "nipple biting solo", "breast worship self", "milky self suck", "detailed tongue on nipple", "self induced lactation", "flexible girl self suck", "nipple orgasm", "heavy breasts self suck", "self nipple tease"],
-  "handjob_and_blowjob": ["handjob and blowjob", "hj + bj combo", "stroke and suck", "handjob blowjob combo", "sloppy hand blow", "dual stimulation oral", "handjob with deepthroat", "cum on hand and mouth", "ball massage blowjob", "slow handjob suck", "fast stroking oral", "eye contact hj bj", "messy handjob blow", "veiny cock handjob", "pre-cum handjob", "handjob facial", "blowjob hand twist", "dual hand blowjob", "cum covered hands", "oral handjob finish"],
-  "footjob": ["footjob", "feet on cock", "toes stroking", "sole rub cock", "footjob cumshot", "oiled footjob", "high heel footjob", "bare foot stroke", "toe sucking while footjob", "dual footjob", "footjob ahegao", "slow foot rub", "fast footjob", "cum on feet", "detailed toes on cock", "arched footjob", "nylon footjob", "footjob facial", "ball foot massage", "footjob orgasm"],
-  "cum_on_face": ["cum on face", "facial cumshot", "bukakke face", "thick cum ropes face", "cum dripping face", "ahegao cum face", "open mouth facial", "eyes closed cum", "messy facial", "cum covered face", "multiple facial", "cum in eyes", "tongue out facial", "glazed face", "cum on cheeks", "post cum face", "heavy facial load", "cum swap facial", "tears with cum", "detailed cum texture"],
-  "split_fucking": ["split fucking", "leg split penetration", "full split sex", "standing split fuck", "mating press split", "deep split penetration", "flexible split fucking", "legs behind head fuck", "contortionist sex", "split creampie", "split orgasm", "rough split pound", "slow deep split", "split ahegao", "yoga split sex", "acrobatic split fuck", "pussy split open", "split breeding", "extreme flexibility sex", "split pussy grip"],
-  "dick_shot": ["detailed dick close-up", "erect penis portrait", "veiny cock focus", "throbbing dick shot", "hard cock macro", "glistening penis closeup", "detailed shaft and head", "pulsing erection", "cock from below", "side view dick shot", "upward penis angle", "pre-cum dripping cock", "thick veiny dick", "circumcised penis closeup", "uncut foreskin shot", "hard throbbing member", "detailed balls and cock", "moist glans focus", "erect penis macro shot", "cock worship close-up"],
-  "cum_on_face_shot": ["cum on face close-up", "facial cumshot macro", "thick ropes on face", "dripping cum facial", "ahegao cum face", "open mouth facial shot", "eyes closed cum covered", "messy glazed face", "cum dripping from chin", "heavy facial load", "tongue out cum facial", "post orgasm cum face", "detailed cum texture face", "bukakke close-up", "cum in eyes shot", "glistening cum on cheeks", "tears mixed with cum", "cum covered lips", "fresh facial macro", "sticky cum on face closeup"]
-};
-
-const camera_angle = {
-  "high_angle": ["high angle shot", "overhead view", "bird's eye view", "top down angle", "looking down", "aerial perspective", "high angle full body", "dramatic high angle", "god's eye view", "tilted high angle"],
-  "low_angle": ["low angle shot", "worm's eye view", "looking up", "heroic low angle", "dramatic upward angle", "feet level view", "powerful low angle", "ground level shot", "upward perspective", "extreme low angle"],
-  "eye_level": ["eye level shot", "straight on view", "neutral angle", "direct eye contact angle", "level camera", "realistic eye level", "frontal eye level", "natural perspective", "standard angle", "conversational eye level"],
-  "dutch_angle": ["dutch angle", "tilted camera", "canted angle", "diagonal composition", "slanted perspective", "dramatic tilt", "unstable angle", "cinematic dutch tilt", "off-kilter shot", "dynamic tilt"],
-  "over_shoulder": ["over the shoulder shot", "OTS view", "behind shoulder perspective", "partial back view", "shoulder framing", "intimate over shoulder", "conversation OTS", "viewer behind character"]
-};
-
-const camera_perspective = {
-  "character_perspective": ["POV", "first person view", "through the eyes of the character", "subjective camera", "immersive POV", "point of view shot", "viewer is the participant", "self insert POV", "intimate POV", "handheld POV"],
-  "cameraman_perspective": ["third person view", "over the shoulder shot", "behind the character shot", "following shot", "external perspective", "objective camera", "wide scene view", "cinematic third person", "tracking shot", "side profile perspective"]
-};
-
-const camera_lens_length = {
-  "close_shot": ["close-up shot", "extreme close-up", "tight close-up on face", "macro shot", "detailed close-up", "intimate close-up", "face focus close-up", "extreme close on eyes", "close-up on body part", "tight framing"],
-  "medium_shot": ["medium shot", "waist-up shot", "medium close-up", "upper body focus", "torso shot", "half-body shot", "medium framing", "chest up view", "balanced medium shot", "conversational medium"],
-  "full_shot": ["full body shot", "long shot", "full figure", "head to toe shot", "wide full body", "complete body view", "full length shot", "standing full shot", "environmental full body", "distant full shot"]
-};
-
-const genderCategories = {
-  "Straight": ["1girl", "1man", "1girl, 1man", "1girl, 2men", "2girls, 1man", "2men", "2girls", "1boy", "1woman"],
-  "Trans": ["futanari", "1transwoman", "1transman", "shemale", "ladyboy", "newhalf", "futa", "trans female with penis", "trans male", "hermaphrodite", "dickgirl", "transgirl"]
-};
-
-const raceCategories = {
-  "american_female": ["caucasian", "fair skin", "blue eyes", "blonde hair", "slender build", "european features", "high cheekbones", "straight nose", "light brown hair", "green eyes", "freckles", "athletic american", "curvy american woman", "pale skin", "redhead", "sharp jawline", "long wavy hair", "american beauty", "youthful caucasian", "detailed american face"],
-  "american_male": ["caucasian male", "fair skin", "blue eyes", "short hair", "strong jawline", "muscular build", "light stubble", "straight nose", "athletic american man", "confident american male", "brown hair", "tall slender", "sharp features", "clean shaven", "light skin tone", "american hunk", "detailed american male face", "broad shoulders"],
-  "asian_female": ["asian", "east asian features", "almond shaped eyes", "black hair", "pale smooth skin", "petite face", "straight black hair", "delicate features", "porcelain skin", "slender asian build", "dark brown eyes", "high cheekbones", "small nose", "silky hair", "youthful asian beauty", "smooth skin", "elegant asian woman", "detailed asian face"],
-  "asian_male": ["asian male", "east asian features", "black hair", "sharp eyes", "slim build", "clean cut", "high cheekbones", "straight black hair", "smooth skin", "athletic asian man", "detailed asian male face", "confident asian male"],
-  "arabic_female": ["arabic woman", "middle eastern beauty", "dark expressive eyes", "olive skin", "long dark hair", "exotic features", "thick eyebrows", "warm skin tone", "full lips", "curvy figure", "high cheekbones", "elegant arabic beauty", "detailed arabic face", "silky black hair"],
-  "arabic_male": ["arabic man", "middle eastern features", "olive skin", "dark hair", "strong nose", "beard possible", "expressive eyes", "warm skin tone", "muscular build", "confident arabic male"],
-  "egyptian_female": ["egyptian woman", "north african features", "warm olive skin", "dark almond eyes", "long dark hair", "exotic egyptian beauty", "high cheekbones", "full lips", "smooth skin", "elegant egyptian woman"],
-  "egyptian_male": ["egyptian man", "north african male", "olive skin", "dark features", "strong jaw", "dark hair", "expressive eyes"],
-  "hispanic_female": ["latina", "hispanic woman", "tanned skin", "curvy body", "dark wavy hair", "full lips", "expressive eyes", "latina beauty", "golden brown skin", "voluptuous figure", "long dark hair", "warm tan skin", "high cheekbones", "detailed latina face"],
-  "latina_female": ["latina beauty", "hispanic features", "curvy figure", "long dark hair", "warm tan skin", "full lips", "expressive brown eyes", "voluptuous latina", "golden skin", "detailed latina face"],
-  "african_female": ["black woman", "dark skin", "african features", "full lips", "coily or braided hair", "beautiful dark skin", "deep brown eyes", "voluptuous", "high cheekbones", "afro hair", "smooth dark skin", "elegant african beauty", "curvy african woman", "detailed african face"],
-  "african_male": ["black man", "dark skin", "african male", "muscular build", "short black hair", "strong features", "deep brown eyes", "confident african man"],
-  "native_american_female": ["native american woman", "indigenous features", "warm brown skin", "long straight dark hair", "high cheekbones", "earthy beauty", "dark eyes", "smooth skin", "elegant native beauty"],
-  "native_american_male": ["native american man", "indigenous male", "strong features", "long hair", "warm brown skin", "high cheekbones"],
-  "indian_female": ["indian woman", "south asian beauty", "brown skin", "dark expressive eyes", "long black hair", "traditional beauty", "deep brown eyes", "smooth brown skin", "high cheekbones", "full lips", "elegant indian woman", "silky hair", "detailed indian face"],
-  "indian_male": ["indian man", "south asian male", "brown skin", "dark hair", "expressive eyes", "sharp features", "smooth skin"]
-};
-
-const settings = {
-  "kitchen": ["modern kitchen", "kitchen counter sex", "bent over island", "stainless steel appliances", "marble countertops", "warm kitchen lighting", "wooden cabinets", "bright daylight kitchen", "luxury kitchen", "tiles floor", "standing in kitchen"],
-  "livingroom": ["living room", "leather couch sex", "on the sofa", "fireplace background", "modern living room", "carpeted floor", "soft couch", "TV in background", "cozy living room", "bent over sofa", "floor sex livingroom"],
-  "bathroom": ["luxury bathroom", "shower sex", "bathtub scene", "steamy bathroom", "mirror reflection", "wet tiles", "bathroom counter", "jacuzzi tub", "marble bathroom", "foggy mirror"],
-  "outdoor": ["forest clearing", "public outdoor sex", "beach at night", "city rooftop", "park bench", "mountain view", "woodland path", "sunset outdoor", "rainy outdoor", "wilderness setting"],
-  "bedroom": ["luxury bedroom", "silk sheets", "soft bed", "pillows scattered", "bedroom window light", "messy bedsheets", "headboard grip", "nightstand lamp", "cozy bedroom", "king size bed"],
-  "diningroom": ["dining room table", "bent over dining table", "luxury dining room", "candlelight dinner", "wooden dining table", "chairs pushed aside", "elegant dining room", "dining chair sex"],
-  "toilet": ["bathroom stall", "public toilet sex", "dirty restroom", "standing in toilet", "sink counter sex", "stall door locked", "public restroom"],
-  "hospital": ["hospital room", "medical bed", "doctor patient fantasy", "clinical white room", "hospital gown", "monitor beeps background", "sterile hospital lighting", "bedridden scene"]
-};
-
-// --- HELPER FUNCTIONS RESTORED ---
-function buildAnonymousDatabase(obj) {
-  return Object.values(obj).map(v => Array.isArray(v) ? v : Object.values(v));
-}
-
-function formatDatabaseForPrompt() {
-  return `STYLE OPTIONS (pick one group, 3-5 terms):
-${buildAnonymousDatabase(styleCategories).map((g, i) => `[${i + 1}] ${g.join(', ')}`).join('\n')}
-
-CAMERA ANGLE OPTIONS (pick one group, 1 term):
-${buildAnonymousDatabase(camera_angle).map((g, i) => `[${i + 1}] ${g.join(', ')}`).join('\n')}
-
-CAMERA PERSPECTIVE OPTIONS (pick one group, 1 term):
-${buildAnonymousDatabase(camera_perspective).map((g, i) => `[${i + 1}] ${g.join(', ')}`).join('\n')}
-
-CAMERA LENS OPTIONS (pick one group, 1 term):
-${buildAnonymousDatabase(camera_lens_length).map((g, i) => `[${i + 1}] ${g.join(', ')}`).join('\n')}
-
-GENDER OPTIONS (pick one group, 1 term):
-${buildAnonymousDatabase(genderCategories).map((g, i) => `[${i + 1}] ${g.join(', ')}`).join('\n')}
-
-RACE OPTIONS (pick one group, 3-5 terms):
-${buildAnonymousDatabase(raceCategories).map((g, i) => `[${i + 1}] ${g.join(', ')}`).join('\n')}
-
-SETTING OPTIONS (pick one group, 5-7 terms):
-${buildAnonymousDatabase(settings).map((g, i) => `[${i + 1}] ${g.join(', ')}`).join('\n')}`;
-}
-
-// --- ORIGINAL PROMPTS RESTORED ---
-const REASONING_PROMPT = () => `You are an expert SDXL/Flux prompt engineer analyzing a scene request.
-
-You have access to this composition database (numbered groups — never output group numbers in any result):
-${formatDatabaseForPrompt()}
-
-Your job is to THINK THROUGH the scene and decide which terms to use. Work through each step:
-
-1. STYLE IS KING — First identify the SINGLE core theme the user wants (non-negotiable). Example: "cute girl getting ass fucked" → core = anal penetration (dick in ass). Choose the SINGLE best category from styleCategories that fits the input core composition. Pick 3-5 strongest terms from that category ONLY.
-2. Camera angle: Choose the SINGLE best category from camera_angle that fits the mental image. Pick 1 most relevant term from it.
-3. Camera perspective: Choose the SINGLE best category from camera_perspective. Pick exactly 1 term from it.
-4. Camera lens length: Choose the SINGLE best category from camera_lens_length that controls closeness. Pick exactly 1 relevant term from it.
-5. Gender: Choose the SINGLE best category from genderCategories that matches the subjects. Pick exactly 1 best tag from it.
-6. Race: Choose the SINGLE best category from raceCategories that matches the described people. Pick 3-5 most relevant features from it only.
-7. Settings: Choose the SINGLE best category from settings that best matches (or intuitively fits) the scene. Pick 5-7 relevant terms from it.
-8. Quality: Pick exactly 3-5 terms from: masterpiece, best quality, ultra detailed, photorealistic, 8k raw photo, sharp focus, cinematic lighting, depth of field, intricate details, hyperrealistic.
-
-Output your reasoning as natural flowing thought. Be thorough. Do NOT output the final prompt here — reasoning only.`;
-
-const OUTPUT_PROMPT = `You are an SDXL/Flux prompt builder. You will receive a reasoning analysis and must convert it into a final prompt.
-
-Rules — STRICT:
-- Output a single line of comma-separated tags ONLY. DO NOT FUCKING OUTPUT THE REASONING ANALYSIS, ONLY THE FINAL PROMPT
-- No explanation, no intro, no labels, no quotes, no numbering, no category names.
-- Build order: camera angle term, camera perspective term, camera lens term, gender term, race terms, style terms, setting terms, quality terms.
-- Wrap key style tags in parentheses for emphasis e.g. (deep anal penetration).
-- Hard cap: 480-500 characters total.
-- Use ONLY the terms mentioned in the reasoning — do not invent new ones.
-- Your entire response must be the prompt and nothing else.`;
-
-// --- MODEL FALLBACK LOGIC RESTORED ---
+// --- MODEL FALLBACK LOGIC ---
 function isRateLimit(error) {
   return error?.status === 429 || error?.code === 'rate_limit_exceeded';
 }
@@ -162,8 +17,8 @@ async function tryModels(env, messages, stream = false) {
         body: JSON.stringify({
           model: models[i],
           messages,
-          temperature: 0.65,
-          max_tokens: 800,
+          temperature: 0.75,
+          max_tokens: 1000,
           stream
         }),
       });
@@ -182,7 +37,47 @@ async function tryModels(env, messages, stream = false) {
   }
 }
 
-// --- MAIN CLOUDFLARE HANDLER ---
+// --- PROMPTS ---
+
+const THINKING_PROMPT = `You are a creative director and visual scene architect. A user gives you a basic scene idea. Your job is to think through it deeply across 4 stages and produce a rich, refined draft. Be creative, be bold, be realistic.
+
+**Stage 1 — Context Expansion**
+Take the user's input and expand it into a vivid, sensory-rich paragraph in plain English. Add realistic details that make the scene feel real and alive. Think about: lighting, environment, mood, physical details of the subjects, emotional state, textures, sounds. Do not hold back. Write 100-200 words.
+
+**Stage 2 — Compositional Realism**
+Now think purely about the physical composition of the subjects. Ask yourself: given the action or pose described, what would naturally happen to the body? What details emerge? For example if a woman is arching her back, her shoulder blades would press together, her chin might lift. Think about: body positioning, natural physical reactions, facial expressions consistent with the action, secondary details that emerge from the primary action. Think through these like a photographer setting up a shot — what is TRUE about this scene physically? Write this as flowing thought, not a list. 100-150 words.
+
+**Stage 3 — Meta Decisions**
+Decide: how many subjects are in the scene (1 person, 2 people, etc.)? What is the shot style — professional photography studio, candid mobile shot, analog film, cinematic, selfie? Why does this shot style fit this scene? Keep this brief, 2-3 sentences.
+
+**Stage 4 — Refined Draft**
+Synthesize everything from stages 1-3 into one clean, complete scene description in plain English. This is your final draft before prompt conversion. 150-200 words. Write it as a vivid visual description, not a list.`;
+
+const OUTPUT_PROMPT = `You are an SDXL/Flux prompt engineer. You receive a detailed scene draft and convert it into a final positive prompt.
+
+Rules — STRICT:
+- Output a single line of comma-separated tags ONLY
+- No explanation, no intro, no labels, no quotes, no numbering
+- Focus on the most visually impactful elements from the draft
+- Let composition imply camera angle naturally — do NOT force camera angle tags
+- Include: subject count tag (1girl, 1man, etc), physical descriptors, action/pose tags, setting tags, mood/lighting tags, quality tags
+- Wrap the most critical action or pose tags in parentheses for emphasis e.g. (arched back)
+- Quality tags to end with: masterpiece, best quality, photorealistic, ultra detailed, sharp focus
+- Hard cap: 300 characters total
+- Your entire response must be the prompt and nothing else`;
+
+const NEGATIVE_PROMPT = `You are an SDXL/Flux negative prompt engineer. You receive a final positive prompt and generate a negative prompt that prevents unwanted artifacts and inconsistencies specific to this scene.
+
+Rules — STRICT:
+- Output a single line of comma-separated tags ONLY
+- No explanation, no intro, no labels, no quotes
+- Think about what could go wrong in this specific scene and add tags to prevent it
+- Always include base quality negatives: worst quality, low quality, blurry, deformed, ugly, bad anatomy, extra limbs, watermark, text
+- Add scene-specific negatives based on what the positive prompt contains
+- Hard cap: 200 characters
+- Your entire response must be the negative prompt and nothing else`;
+
+// --- MAIN HANDLER ---
 export async function onRequestPost(context) {
   const { request, env } = context;
   const { userPrompt } = await request.json();
@@ -193,26 +88,25 @@ export async function onRequestPost(context) {
   const writer = writable.getWriter();
   const encoder = new TextEncoder();
 
-  // Background execution for streaming
   (async () => {
     try {
-      // 1. CALL 1: Thinking/Reasoning
-      const reasoningMessages = [
-        { role: 'system', content: REASONING_PROMPT() },
+      // ── CALL 1: Thinking (streamed) ──────────────────────────────────
+      const thinkingMessages = [
+        { role: 'system', content: THINKING_PROMPT },
         { role: 'user', content: userPrompt }
       ];
 
-      const reasoningResponse = await tryModels(env, reasoningMessages, true);
-      const reader = reasoningResponse.body.getReader();
+      const thinkingResponse = await tryModels(env, thinkingMessages, true);
+      const reader = thinkingResponse.body.getReader();
       const decoder = new TextDecoder();
-      let reasoningText = '';
+      let thinkingText = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value);
         const lines = chunk.split('\n');
-        
+
         for (const line of lines) {
           if (line.trim() === '' || line.includes('[DONE]')) continue;
           if (!line.startsWith('data: ')) continue;
@@ -220,7 +114,7 @@ export async function onRequestPost(context) {
             const data = JSON.parse(line.slice(6));
             const delta = data.choices[0]?.delta?.content || '';
             if (delta) {
-              reasoningText += delta;
+              thinkingText += delta;
               await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'thinking', chunk: delta })}\n\n`));
             }
           } catch (e) {}
@@ -229,20 +123,35 @@ export async function onRequestPost(context) {
 
       await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'thinking_done' })}\n\n`));
 
-      // 2. CALL 2: Final Result
+      // ── CALL 2: Positive prompt (non-streamed) ───────────────────────
       const outputMessages = [
         { role: 'system', content: OUTPUT_PROMPT },
         {
           role: 'user',
-          content: `Here is the reasoning analysis for the scene "${userPrompt}":\n\n${reasoningText}\n\nNow output the final comma-separated prompt. Single line only, nothing else.`
+          content: `Here is the refined scene draft:\n\n${thinkingText}\n\nConvert this into the final SDXL positive prompt now. Single line, tags only, nothing else.`
         }
       ];
 
       const outputResponse = await tryModels(env, outputMessages, false);
-      const finalData = await outputResponse.json();
-      const optimized = finalData.choices[0]?.message?.content?.trim().replace(/^["']|["']$/g, '') || '';
+      const outputData = await outputResponse.json();
+      const optimized = outputData.choices[0]?.message?.content?.trim().replace(/^["']|["']$/g, '') || '';
 
       await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'result', optimized })}\n\n`));
+
+      // ── CALL 3: Negative prompt (non-streamed) ───────────────────────
+      const negativeMessages = [
+        { role: 'system', content: NEGATIVE_PROMPT },
+        {
+          role: 'user',
+          content: `Here is the positive prompt:\n\n${optimized}\n\nGenerate the negative prompt now. Single line, tags only, nothing else.`
+        }
+      ];
+
+      const negativeResponse = await tryModels(env, negativeMessages, false);
+      const negativeData = await negativeResponse.json();
+      const negative = negativeData.choices[0]?.message?.content?.trim().replace(/^["']|["']$/g, '') || '';
+
+      await writer.write(encoder.encode(`data: ${JSON.stringify({ type: 'negative', negative })}\n\n`));
 
     } catch (err) {
       console.error('Fatal Error:', err);
