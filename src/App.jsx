@@ -458,6 +458,8 @@ export default function App() {
           isOpen={isSidebarOpen}
           currentPrompt={prompt}
           onPromptLoad={setPrompt}
+          onNegativePromptLoad={setNegativePrompt}
+          currentNegativePrompt={negativePrompt}
           onTopUpClick={() => setTopUpModalOpen(true)}
         />
 
