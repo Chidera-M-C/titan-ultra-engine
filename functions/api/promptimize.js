@@ -4,7 +4,7 @@ function isRateLimit(error) {
 }
 
 async function tryModels(env, messages, stream = false) {
-  const models = ['llama-3.3-70b-versatile', 'qwen/qwen3-32b'];
+  const models = ['llama-3.3-70b-versatile', 'mixtral-8x7b-32768'];
   for (let i = 0; i < models.length; i++) {
     try {
       console.log(`Trying model: ${models[i]}`);
