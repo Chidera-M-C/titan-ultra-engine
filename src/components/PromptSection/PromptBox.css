@@ -375,9 +375,21 @@
 }
 
 /* ── Mobile ──────────────────────────────────────────────────────────────── */
+.mobile-sidebar-trigger {
+  cursor: default;
+  pointer-events: none;
+}
+
 @media (max-width: 768px) {
   .prompt-inputs-row {
     flex-direction: column;
+  }
+
+  .mobile-sidebar-trigger {
+    cursor: pointer;
+    pointer-events: auto;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
   .prompt-input-main,
