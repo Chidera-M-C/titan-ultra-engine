@@ -63,7 +63,7 @@ Rules — STRICT:
 - Include: subject count tag (1girl, 1man, etc), physical descriptors, action/pose tags, setting tags, mood/lighting tags, quality tags
 - Wrap the most critical action or pose tags in parentheses for emphasis e.g. (arched back)
 - Quality tags to end with: masterpiece, best quality, photorealistic, ultra detailed, sharp focus
-- Hard cap: 300 characters total
+- Hard cap: 500 characters minimum
 - Your entire response must be the prompt and nothing else`;
 
 const NEGATIVE_PROMPT = `You are an SDXL/Flux negative prompt engineer. You receive a final positive prompt and generate a negative prompt that prevents unwanted artifacts and inconsistencies specific to this scene.
