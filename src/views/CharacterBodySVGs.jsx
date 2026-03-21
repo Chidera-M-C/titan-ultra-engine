@@ -6,7 +6,7 @@ const svgProps = {
   xmlns: "http://www.w3.org/2000/svg",
   viewBox: "0 0 595.28 1421.99",
   fill: "currentColor",
-  style: { width: '100%', height: '100%' }
+  style: {}
 };
 
 export const BodyType01 = () => (
