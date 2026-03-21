@@ -254,6 +254,14 @@
   color: #fff;
 }
 
+.char-body-card {
+  color: #666;
+}
+
+.char-body-card.selected {
+  color: #a855f7;
+}
+
 /* ── Step indicators ─────────────────────────────────────────────────────── */
 .char-steps {
   display: flex;
