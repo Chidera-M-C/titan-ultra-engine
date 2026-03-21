@@ -459,9 +459,8 @@
 }
 
 .char-body-card svg {
-  width: 50%;
-  height: auto;
-  aspect-ratio: 1/2;
+  width: 75px;
+  height: 150px;
   color: #4a4a4a;
 }
 
