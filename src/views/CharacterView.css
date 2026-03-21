@@ -459,10 +459,10 @@
 .char-body-card svg {
   width: 15px;
   height: 30px;
-  color: 333;
+  color: #333;
 }
 
-.char-body-card.selected .char-body-svg {
+.char-body-card.selected svg {
   color: #a855f7;
 }
 
