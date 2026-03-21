@@ -457,9 +457,9 @@
 }
 
 .char-body-card svg {
-  width: 36px;
-  height: 72px;
-  color: inherit;
+  width: 15px;
+  height: 30px;
+  color: 333;
 }
 
 .char-body-card.selected .char-body-svg {
