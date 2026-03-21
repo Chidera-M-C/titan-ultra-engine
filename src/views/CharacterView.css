@@ -256,6 +256,7 @@
 
 .char-body-card {
   color: #666;
+  width: 100%;
 }
 
 .char-body-card.selected {
@@ -458,8 +459,9 @@
 }
 
 .char-body-card svg {
-  width: 75px;
-  height: 150px;
+  width: 50%;
+  height: auto;
+  aspect-ratio: 1/2;
   color: #4a4a4a;
 }
 
