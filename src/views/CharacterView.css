@@ -619,7 +619,16 @@
 /* ── Mobile ──────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .char-body-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .char-step-content {
+    padding: 1rem 0.75rem;
+  }
+
+  .char-body-card svg {
+    width: 80px;
+    height: 160px;
   }
 
   .char-race-grid {
