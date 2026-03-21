@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nudely-v1';
+const CACHE_NAME = 'nudely-v2';
 
 // On install — cache nothing critical, just activate immediately
 self.addEventListener('install', (event) => {
@@ -9,14 +9,9 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      )
-    )
+      Promise.all(keys.map((key) => caches.delete(key)))  // nuke ALL caches
+    ).then(() => self.clients.claim())  // take control immediately
   );
-  self.clients.claim();
 });
 
 // Fetch — network first, fall back to cache for static assets
