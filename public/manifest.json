@@ -3,7 +3,7 @@
   "short_name": "Nudely",
   "description": "AI image generation — create anything you imagine",
   "start_url": "/",
-  "display": "fullscreen",
+  "display": "standalone",
   "background_color": "#101010",
   "theme_color": "#a855f7",
   "orientation": "portrait",
