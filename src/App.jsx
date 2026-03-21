@@ -18,6 +18,7 @@ import StyleView from './views/StyleView';
 import StyleGeneratorView from './views/StyleGeneratorView';
 import EditView from './views/EditView';
 import FaceSwapView from './views/FaceSwapView';
+import InstallPrompt from './components/InstallPrompt';
 
 // Memoized outside component to prevent re-render cascade
 const MemoExploreView = React.memo(ExploreView);
@@ -548,6 +549,7 @@ export default function App() {
           />
         )}
         {viewImageModalOpen && <ImageViewModal imageUrl={viewingImageUrl} onClose={() => setViewImageModalOpen(false)} />}
+        <InstallPrompt />  {/* 👈 here */}
       </div>
     </div>
   );
