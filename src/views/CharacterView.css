@@ -456,11 +456,10 @@
   color: #a855f7;
 }
 
-.char-body-svg {
+.char-body-card svg {
   width: 36px;
   height: 72px;
-  color: #555;
-  transition: color 0.2s ease;
+  color: inherit;
 }
 
 .char-body-card.selected .char-body-svg {
