@@ -469,6 +469,18 @@ export default function App() {
           {activeTab !== 'style' && activeTab !== 'character' && activeTab !== 'edit' && activeTab !== 'faceswap' && (
             <header className={`top-header ${promptCollapsed ? 'collapsed' : ''}`}>
               <h1 className="aesthetic-title">What will you create?</h1>
+              {selectedCharacter && (
+                <div className="character-pill">
+                  <img src={selectedCharacter.photo_url} alt={selectedCharacter.name} className="character-pill-photo" />
+                  <span className="character-pill-name">{selectedCharacter.name}</span>
+                  {!selectedCharacter.face_embedding && (
+                    <span className="character-pill-processing">Processing face...</span>
+                  )}
+                  <button className="character-pill-remove" onClick={() => setSelectedCharacter(null)}>
+                    <X size={12} />
+                  </button>
+                </div>
+              )}
               <PromptBox {...promptBoxProps} collapsed={promptCollapsed} />
             </header>
           )}
