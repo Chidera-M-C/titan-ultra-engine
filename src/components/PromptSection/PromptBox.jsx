@@ -4,7 +4,7 @@ import AspectRatioDropdown from './AspectRatioDropdown';
 import './PromptBox.css';
 
 // ── Mini character picker modal ───────────────────────────────────────────
-function CharacterPicker({ characters, selectedCharacter, onSelect, onClose }) {
+function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCreateCharacter }) {
   return (
     <div className="char-picker-overlay" onClick={onClose}>
       <div className="char-picker" onClick={e => e.stopPropagation()}>
@@ -12,33 +12,35 @@ function CharacterPicker({ characters, selectedCharacter, onSelect, onClose }) {
           <p className="char-picker-title">Select Character</p>
           <button className="char-picker-close" onClick={onClose}><X size={14} /></button>
         </div>
-        {characters.length === 0 ? (
-          <p className="char-picker-empty">No characters yet. Create one from the Character tab.</p>
-        ) : (
-          <div className="char-picker-grid">
-            {characters.map(char => (
-              <button
-                key={char.id}
-                className={`char-picker-item ${selectedCharacter?.id === char.id ? 'selected' : ''}`}
-                onClick={() => { onSelect(char); onClose(); }}
-              >
-                <div className="char-picker-photo">
-                  {char.photo_url
-                    ? <img src={char.photo_url} alt={char.name} />
-                    : <div className="char-picker-placeholder" />
-                  }
-                  {selectedCharacter?.id === char.id && (
-                    <div className="char-picker-check"><Check size={10} /></div>
-                  )}
-                </div>
-                <span className="char-picker-name">{char.name}</span>
-                {!char.face_embedding && (
-                  <span className="char-picker-processing">Processing...</span>
+        <div className="char-picker-grid">
+          <button className="char-picker-create" onClick={() => { onCreateCharacter(); onClose(); }}>
+            <div className="char-picker-create-icon">
+              <UserPlus size={20} />
+            </div>
+            <span className="char-picker-name">New</span>
+          </button>
+          {characters.map(char => (
+            <button
+              key={char.id}
+              className={`char-picker-item ${selectedCharacter?.id === char.id ? 'selected' : ''}`}
+              onClick={() => { onSelect(char); onClose(); }}
+            >
+              <div className="char-picker-photo">
+                {char.photo_url
+                  ? <img src={char.photo_url} alt={char.name} />
+                  : <div className="char-picker-placeholder" />
+                }
+                {selectedCharacter?.id === char.id && (
+                  <div className="char-picker-check"><Check size={10} /></div>
                 )}
-              </button>
-            ))}
-          </div>
-        )}
+              </div>
+              <span className="char-picker-name">{char.name}</span>
+              {!char.face_embedding && (
+                <span className="char-picker-processing">Processing...</span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -57,6 +59,7 @@ export default function PromptBox({
   onOpenSidebar,
   selectedCharacter,
   onSelectCharacter,
+  onCreateCharacter,
   characters = [],
 }) {
   const textareaRef = useRef(null);
@@ -174,6 +177,10 @@ export default function PromptBox({
           selectedCharacter={selectedCharacter}
           onSelect={onSelectCharacter}
           onClose={() => setShowCharPicker(false)}
+          onCreateCharacter={() => {
+            setShowCharPicker(false);
+            if (onCreateCharacter) onCreateCharacter();
+          }}
         />
       )}
     </div>
