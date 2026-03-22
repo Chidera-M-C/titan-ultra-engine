@@ -59,7 +59,7 @@ function CreateCharacterModal({ onClose, onCreated }) {
     setSaving(true);
     setError('');
     try {
-      // Upload photo to Supabase storage
+      // ── 1. Upload photo ─────────────────────────────────────────────
       const base64Data = photo.replace(/^data:image\/\w+;base64,/, '');
       const byteCharacters = atob(base64Data);
       const byteArray = new Uint8Array(byteCharacters.length);
@@ -68,52 +68,62 @@ function CreateCharacterModal({ onClose, onCreated }) {
       }
       const blob = new Blob([byteArray], { type: 'image/jpeg' });
       const fileName = `${user.id}/${Date.now()}.jpg`;
-
+  
       const { error: uploadError } = await supabase.storage
         .from('character_photos')
         .upload(fileName, blob, { contentType: 'image/jpeg', upsert: false });
-
       if (uploadError) throw uploadError;
-
+  
       const { data: { publicUrl } } = supabase.storage
         .from('character_photos')
         .getPublicUrl(fileName);
-
-      // Insert character record
-      // Insert character record
-      const bodyTypeData = BODY_TYPES.find(b => b.id === bodyType);
-      const raceData = RACES.find(r => r.id === race);
-
+  
+      // ── 2. Insert character record ───────────────────────────────────
       const { data, error: insertError } = await supabase
         .from('characters')
         .insert({
           user_id: user.id,
           name: name.trim(),
-          race: race,
+          race,
           body_type: bodyType,
           photo_url: publicUrl,
-          face_embedding: null, // will be populated by handler later
+          face_embedding: null,
         })
         .select()
         .single();
-
       if (insertError) throw insertError;
-
+  
+      // Add to local list immediately with null embedding
       onCreated(data);
-      // Extract face embedding in background
-        try {
-          await fetch('/api/extract-face', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              characterId: data.id,
-              image: photo
-            })
-          });
-        } catch (err) {
-          console.error('Face extraction failed:', err);
-          // Non-fatal — character still created, embedding will be null
+  
+      // ── 3. Extract face embedding ────────────────────────────────────
+      try {
+        const extractRes = await fetch('/api/extract-face', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ characterId: data.id, image: photo })
+        });
+        const extractData = await extractRes.json();
+  
+        if (extractData.success) {
+          // Refetch updated character with embedding
+          const { data: updated } = await supabase
+            .from('characters')
+            .select('*')
+            .eq('id', data.id)
+            .single();
+          if (updated) {
+            setCharacters(prev => prev.map(c => c.id === data.id ? updated : c));
+            if (onCharacterCreated) onCharacterCreated(updated);
+          }
+        } else {
+          if (onCharacterCreated) onCharacterCreated(data);
         }
+      } catch (err) {
+        console.error('Face extraction failed:', err);
+        if (onCharacterCreated) onCharacterCreated(data);
+      }
+  
       onClose();
     } catch (err) {
       setError(err.message);
