@@ -20,68 +20,102 @@ import EditView from './views/EditView';
 import FaceSwapView from './views/FaceSwapView';
 import InstallPrompt from './components/InstallPrompt';
 
-// Memoized outside component to prevent re-render cascade
 const MemoExploreView = React.memo(ExploreView);
 
 export default function App() {
   const { user, credits, setCredits, loading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState('explore');
-  const [viewState, setViewState] = useState('gallery');
-  const [prompt, setPrompt] = useState('');
+  const [activeTab, setActiveTab]         = useState('explore');
+  const [viewState, setViewState]         = useState('gallery');
+  const [prompt, setPrompt]               = useState('');
   const [negativePrompt, setNegativePrompt] = useState('');
-  const [aspectRatio, setAspectRatio] = useState('9:16');
-  const [image, setImage] = useState(null);
-  const [userGallery, setUserGallery] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [aspectRatio, setAspectRatio]     = useState('9:16');
+  const [image, setImage]                 = useState(null);
+  const [userGallery, setUserGallery]     = useState([]);
+  const [loading, setLoading]             = useState(false);
+  const [error, setError]                 = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editingImage, setEditingImage] = useState(null);
+  const [editingImage, setEditingImage]   = useState(null);
   const [viewImageModalOpen, setViewImageModalOpen] = useState(false);
-  const [viewingImageUrl, setViewingImageUrl] = useState(null);
-  const [loginModalOpen, setLoginModalOpen] = useState(false);
-  const [topUpModalOpen, setTopUpModalOpen] = useState(false);
-  const [promptCollapsed, setPromptCollapsed] = useState(false);
-  const [activeStyle, setActiveStyle] = useState(null);
-  const [styleImage, setStyleImage] = useState(null);
-  const [styleLoading, setStyleLoading] = useState(false);
-  const [styleError, setStyleError] = useState(null);
+  const [viewingImageUrl, setViewingImageUrl]       = useState(null);
+  const [loginModalOpen, setLoginModalOpen]         = useState(false);
+  const [topUpModalOpen, setTopUpModalOpen]         = useState(false);
+  const [promptCollapsed, setPromptCollapsed]       = useState(false);
+  const [activeStyle, setActiveStyle]     = useState(null);
+  const [styleImage, setStyleImage]       = useState(null);
+  const [styleLoading, setStyleLoading]   = useState(false);
+  const [styleError, setStyleError]       = useState(null);
   const [editViewImage, setEditViewImage] = useState(null);
   const [editViewLoading, setEditViewLoading] = useState(false);
-  const [editViewError, setEditViewError] = useState(null);
+  const [editViewError, setEditViewError]     = useState(null);
   const [selectedCharacter, setSelectedCharacter] = useState(null);
+  const [userCharacters, setUserCharacters]       = useState([]);
+  const [isGalleryReady, setIsGalleryReady] = useState(false);
+  const [exploreKey, setExploreKey]         = useState(0);
+  const [faceswapResult, setFaceswapResult] = useState(null);
+  const [faceswapLoading, setFaceswapLoading] = useState(false);
+  const [faceswapError, setFaceswapError]     = useState(null);
 
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
   const promptRef = useRef(prompt);
   useEffect(() => { promptRef.current = prompt; }, [prompt]);
-  const [isGalleryReady, setIsGalleryReady] = useState(false);
-  const [exploreKey, setExploreKey] = useState(0);
-  const [faceswapResult, setFaceswapResult] = useState(null);
-  const [faceswapLoading, setFaceswapLoading] = useState(false);
-  const [faceswapError, setFaceswapError] = useState(null);
-  const [userCharacters, setUserCharacters] = useState([]);
 
-  const handleFaceSwap = async ({ targetImage, sourceImage }) => {
-    if (!user) { setLoginModalOpen(true); return; }
-    setFaceswapLoading(true);
-    setFaceswapError(null);
-    setFaceswapResult(null);
+  // ── Load user characters ──────────────────────────────────────────────
+  useEffect(() => {
+    if (!user) { setUserCharacters([]); return; }
+    supabase
+      .from('characters')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setUserCharacters(data || []));
+  }, [user]);
+
+  // ── Load gallery ──────────────────────────────────────────────────────
+  const loadGallery = async () => {
+    if (!user) { setUserGallery([]); return; }
     try {
-      const response = await fetch('/api/faceswap', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetImage, sourceImage })
-      });
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-      setFaceswapResult(data.image);
+      const { data: images, error: imagesError } = await supabase
+        .from('images')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      if (imagesError) throw imagesError;
+      setUserGallery(images.map(doc => ({
+        id: doc.id,
+        url: doc.image_url,
+        prompt: doc.prompt
+      })));
     } catch (err) {
-      setFaceswapError(err.message);
-    } finally {
-      setFaceswapLoading(false);
+      console.error('Supabase Sync error:', err);
     }
   };
 
+  useEffect(() => {
+    if (authLoading) return;
+    if (user) {
+      loadGallery();
+    } else {
+      setUserGallery([]);
+      const timer = setTimeout(() => setLoginModalOpen(true), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [user, authLoading]);
+
+  // ── Scroll collapse ───────────────────────────────────────────────────
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollable = document.querySelector('.scrollable-area');
+      if (scrollable) setPromptCollapsed(scrollable.scrollTop > 100);
+    };
+    const scrollable = document.querySelector('.scrollable-area');
+    if (scrollable) {
+      scrollable.addEventListener('scroll', handleScroll);
+      return () => scrollable.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
+
+  // ── Global click guard (unauthenticated users) ────────────────────────
   const handleGlobalClick = (e) => {
     if (user || authLoading) return;
     const allowed =
@@ -108,135 +142,57 @@ export default function App() {
     }
   };
 
-  const loadGallery = async () => {
-    if (!user) { setUserGallery([]); return; }
-    try {
-      const { data: images, error: imagesError } = await supabase
-        .from('images')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      if (imagesError) throw imagesError;
-      setUserGallery(images.map(doc => ({
-        id: doc.id,
-        url: doc.image_url,
-        prompt: doc.prompt
-      })));
-    } catch (err) {
-      console.error("Supabase Sync error:", err);
-    }
-  };
-  
-// inside loadGallery or a separate useEffect:
-  useEffect(() => {
-    if (!user) return;
-    supabase.from('characters').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
-      .then(({ data }) => setUserCharacters(data || []));
-  }, [user]);
-
-  useEffect(() => {
-    if (authLoading) return;
-    if (user) {
-      loadGallery();
-    } else {
-      setUserGallery([]);
-      const timer = setTimeout(() => setLoginModalOpen(true), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [user, authLoading]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollable = document.querySelector('.scrollable-area');
-      if (scrollable) setPromptCollapsed(scrollable.scrollTop > 100);
-    };
-    const scrollable = document.querySelector('.scrollable-area');
-    if (scrollable) {
-      scrollable.addEventListener('scroll', handleScroll);
-      return () => scrollable.removeEventListener('scroll', handleScroll);
-    }
-  }, []);
-
+  // ── Credits ───────────────────────────────────────────────────────────
   const deductCreditsLive = async (amount) => {
     if (!user) return;
     const { data, error: fetchError } = await supabase
-      .from('users')
-      .select('credits')
-      .eq('id', user.id)
-      .single();
+      .from('users').select('credits').eq('id', user.id).single();
     if (fetchError) throw fetchError;
     const safeBalance = Math.max(0, (data.credits ?? 0) - amount);
     const { error: updateError } = await supabase
-      .from('users')
-      .update({ credits: safeBalance })
-      .eq('id', user.id);
+      .from('users').update({ credits: safeBalance }).eq('id', user.id);
     if (updateError) throw updateError;
     setCredits(safeBalance);
   };
 
+  // ── Payment ───────────────────────────────────────────────────────────
   const handleTopUpPurchase = async (pack) => {
-  if (!user) { setLoginModalOpen(true); return; }
-  try {
-    const response = await fetch('/api/payment-webhook', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        price: pack.price,
-        userId: user.id,
-        credits: pack.credits
-      })
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Server error: ${response.status} - ${text}`);
-    }
-
-    const data = await response.json();
-
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      console.error("Payment generation failed detail:", data);
-      throw new Error(data.error || "Payment link generation failed");
-    }
-  } catch (err) {
-    console.error("Payment Error:", err);
-    alert("Error: " + err.message);
-  }
-};
-
-  const handleEditViewGenerate = async ({ image, prompt, negativePrompt, poseStrength, cannyStrength }) => {
     if (!user) { setLoginModalOpen(true); return; }
-    if (credits < 2) { setEditViewError("Insufficient credits."); return; }
-    setEditViewLoading(true);
-    setEditViewError(null);
-    setEditViewImage(null);
     try {
-      await runGeneration({
-        prompt,
-        aspect_ratio: '9:16',
-        image,
-        negative_prompt: negativePrompt,
-        setLoadingFn: setEditViewLoading,
-        setErrorFn: setEditViewError,
-        setImageFn: setEditViewImage,
-        styleId: 'edit',
+      const response = await fetch('/api/payment-webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ price: pack.price, userId: user.id, credits: pack.credits })
       });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Server error: ${response.status} - ${text}`);
+      }
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || 'Payment link generation failed');
+      }
     } catch (err) {
-      setEditViewError(err.message);
-    } finally {
-      setEditViewLoading(false);
+      console.error('Payment Error:', err);
+      alert('Error: ' + err.message);
     }
   };
 
-  const runGeneration = async ({ prompt, aspect_ratio, image: attachedImg, setLoadingFn, setErrorFn, setImageFn, styleId = null, negative_prompt = null, face_embedding = null, character = null }) => {
+  // ── Core generation ───────────────────────────────────────────────────
+  const runGeneration = async ({
+    prompt, aspect_ratio, image: attachedImg,
+    setLoadingFn, setErrorFn, setImageFn,
+    styleId = null, negative_prompt = null,
+    face_embedding = null, character = null
+  }) => {
     const payload = { prompt, aspect_ratio };
-    if (attachedImg)      payload.image           = attachedImg;
-    if (negative_prompt)  payload.negative_prompt = negative_prompt;
-    if (styleId)          payload.style           = styleId;
-    if (face_embedding)   payload.face_embedding  = face_embedding;
-    if (character)        payload.character       = character;
+    if (attachedImg)     payload.image           = attachedImg;
+    if (negative_prompt) payload.negative_prompt = negative_prompt;
+    if (styleId)         payload.style           = styleId;
+    if (face_embedding)  payload.face_embedding  = face_embedding;
+    if (character)       payload.character       = character;
 
     const response = await fetch('/api/generate', {
       method: 'POST',
@@ -282,10 +238,11 @@ export default function App() {
     if (!completed) throw new Error('The GPU is taking too long to wake up.');
   };
 
-    const generateImage = async () => {
+  // ── Generate (explore) ────────────────────────────────────────────────
+  const generateImage = async () => {
     if (!user) { setLoginModalOpen(true); return; }
     if (!prompt || loading) return;
-    if (credits < 2) { setError("Insufficient credits."); setViewState('result'); return; }
+    if (credits < 2) { setError('Insufficient credits.'); setViewState('result'); return; }
     setViewState('result');
     setLoading(true);
     setError(null);
@@ -294,7 +251,6 @@ export default function App() {
       const characterContext = selectedCharacter
         ? `${selectedCharacter.name}, ${selectedCharacter.race} woman, ${selectedCharacter.body_type?.replace(/_/g, ' ')}, same face same person, `
         : '';
-      
       const characterPayload = selectedCharacter?.face_embedding ? {
         face_embedding: selectedCharacter.face_embedding,
         character: {
@@ -303,7 +259,6 @@ export default function App() {
           body_type: selectedCharacter.body_type,
         }
       } : {};
-      
       await runGeneration({
         prompt: characterContext + prompt,
         aspect_ratio: aspectRatio,
@@ -316,20 +271,25 @@ export default function App() {
       });
     } catch (err) {
       setError(err.message);
-      console.error("Generate error:", err);
     } finally {
       setLoading(false);
     }
   };
 
+  // ── Generate (style) ──────────────────────────────────────────────────
   const handleStyleGenerate = async (finalPrompt, aspectRatio, negativePrompt, attachedImage) => {
     if (!user) { setLoginModalOpen(true); return; }
-    if (credits < 2) { setStyleError("Insufficient credits."); return; }
+    if (credits < 2) { setStyleError('Insufficient credits.'); return; }
     setStyleLoading(true);
     setStyleError(null);
     setStyleImage(null);
     try {
-      await runGeneration({ prompt: finalPrompt, aspect_ratio: aspectRatio, negative_prompt: negativePrompt, image: attachedImage, setLoadingFn: setStyleLoading, setErrorFn: setStyleError, setImageFn: setStyleImage, styleId: activeStyle.id });
+      await runGeneration({
+        prompt: finalPrompt, aspect_ratio: aspectRatio,
+        negative_prompt: negativePrompt, image: attachedImage,
+        setLoadingFn: setStyleLoading, setErrorFn: setStyleError, setImageFn: setStyleImage,
+        styleId: activeStyle.id
+      });
     } catch (err) {
       setStyleError(err.message);
     } finally {
@@ -337,6 +297,50 @@ export default function App() {
     }
   };
 
+  // ── Generate (edit) ───────────────────────────────────────────────────
+  const handleEditViewGenerate = async ({ image, prompt, negativePrompt, poseStrength, cannyStrength }) => {
+    if (!user) { setLoginModalOpen(true); return; }
+    if (credits < 2) { setEditViewError('Insufficient credits.'); return; }
+    setEditViewLoading(true);
+    setEditViewError(null);
+    setEditViewImage(null);
+    try {
+      await runGeneration({
+        prompt, aspect_ratio: '9:16', image,
+        negative_prompt: negativePrompt,
+        setLoadingFn: setEditViewLoading, setErrorFn: setEditViewError, setImageFn: setEditViewImage,
+        styleId: 'edit',
+      });
+    } catch (err) {
+      setEditViewError(err.message);
+    } finally {
+      setEditViewLoading(false);
+    }
+  };
+
+  // ── Face swap ─────────────────────────────────────────────────────────
+  const handleFaceSwap = async ({ targetImage, sourceImage }) => {
+    if (!user) { setLoginModalOpen(true); return; }
+    setFaceswapLoading(true);
+    setFaceswapError(null);
+    setFaceswapResult(null);
+    try {
+      const response = await fetch('/api/faceswap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetImage, sourceImage })
+      });
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      setFaceswapResult(data.image);
+    } catch (err) {
+      setFaceswapError(err.message);
+    } finally {
+      setFaceswapLoading(false);
+    }
+  };
+
+  // ── Navigation ────────────────────────────────────────────────────────
   const handleNavigation = (tab) => {
     if (activeTab === 'explore' && tab !== 'explore') {
       setIsGalleryReady(false);
@@ -345,28 +349,37 @@ export default function App() {
     setActiveTab(tab);
     setIsSidebarOpen(false);
     setPromptCollapsed(false);
-    if (tab === 'explore' || tab === 'gallery' || tab === 'style' || tab === 'edit' || tab === 'character' || tab === 'faceswap') setViewState('gallery');
-    else setViewState('empty');
+    if (['explore', 'gallery', 'style', 'edit', 'character', 'faceswap'].includes(tab)) {
+      setViewState('gallery');
+    } else {
+      setViewState('empty');
+    }
   };
 
   const handleSelectPrompt = useCallback((selectedPrompt) => {
     setPrompt(selectedPrompt);
     if (selectedPrompt) window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
-  
+
   const handleViewImage = useCallback((img) => {
     setViewingImageUrl(img.url);
     setViewImageModalOpen(true);
   }, []);
-  
+
   const handleEditImage = useCallback((img) => {
     if (!user) { setLoginModalOpen(true); return; }
     setEditingImage(img);
-    setEditViewImage(null);   // clear previous result
-    setEditViewError(null);   // clear previous error
+    setEditViewImage(null);
+    setEditViewError(null);
     setEditModalOpen(true);
   }, [user]);
 
+  // ── Character created callback ────────────────────────────────────────
+  const handleCharacterCreated = (newChar) => {
+    setUserCharacters(prev => [newChar, ...prev]);
+  };
+
+  // ── Render views ──────────────────────────────────────────────────────
   const renderActiveView = () => {
     if (viewState === 'empty') {
       return (
@@ -391,6 +404,7 @@ export default function App() {
         return <CharacterView
           onSelectCharacter={setSelectedCharacter}
           selectedCharacter={selectedCharacter}
+          onCharacterCreated={handleCharacterCreated}
         />;
       case 'gallery':
         return <MyImagesView
@@ -430,13 +444,12 @@ export default function App() {
           error={faceswapError}
         />;
       default:
-        <MemoExploreView
+        return <MemoExploreView
           promptRef={promptRef}
           onSelectPrompt={handleSelectPrompt}
           onViewImage={handleViewImage}
           onEditImage={handleEditImage}
-          imagesCache={exploreImagesCache}
-        />
+        />;
     }
   };
 
@@ -449,10 +462,12 @@ export default function App() {
     loading,
     negativePrompt,
     setNegativePrompt,
-    onOpenSidebar: () => setIsSidebarOpen(true),  // 👈 add this
-    characters: userCharacters, // add this state
+    onOpenSidebar: () => setIsSidebarOpen(true),
+    selectedCharacter,
+    onSelectCharacter: setSelectedCharacter,
+    characters: userCharacters,
   };
-  
+
   return (
     <div className="master-wrapper" onClickCapture={handleGlobalClick}>
       <div className="app-shell">
@@ -474,13 +489,13 @@ export default function App() {
           onTopUpClick={() => setTopUpModalOpen(true)}
         />
 
-       <main className="main-content">
-        {activeTab !== 'style' && activeTab !== 'character' && activeTab !== 'edit' && activeTab !== 'faceswap' && (
-          <header className={`top-header ${promptCollapsed ? 'collapsed' : ''}`}>
-            <h1 className="aesthetic-title">What will you create?</h1>
-            <PromptBox {...promptBoxProps} collapsed={promptCollapsed} />
-          </header>
-        )}
+        <main className="main-content">
+          {activeTab !== 'style' && activeTab !== 'character' && activeTab !== 'edit' && activeTab !== 'faceswap' && (
+            <header className={`top-header ${promptCollapsed ? 'collapsed' : ''}`}>
+              <h1 className="aesthetic-title">What will you create?</h1>
+              <PromptBox {...promptBoxProps} collapsed={promptCollapsed} />
+            </header>
+          )}
           <div className="scrollable-area" style={{ position: 'relative' }}>
             {activeTab === 'explore' && !isGalleryReady && (
               <div style={{
@@ -534,6 +549,7 @@ export default function App() {
             onViewFullScreen={handleViewImage}
           />
         )}
+
         {editModalOpen && (
           <EditModal
             image={editingImage?.url}
@@ -557,8 +573,12 @@ export default function App() {
             }}
           />
         )}
-        {viewImageModalOpen && <ImageViewModal imageUrl={viewingImageUrl} onClose={() => setViewImageModalOpen(false)} />}
-        <InstallPrompt />  {/* 👈 here */}
+
+        {viewImageModalOpen && (
+          <ImageViewModal imageUrl={viewingImageUrl} onClose={() => setViewImageModalOpen(false)} />
+        )}
+
+        <InstallPrompt />
       </div>
     </div>
   );
