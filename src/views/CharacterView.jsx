@@ -268,21 +268,11 @@ function CharacterCard({ character, isSelected, onSelect }) {
 }
 
 // ── Main CharacterView ────────────────────────────────────────────────────
-export default function CharacterView({ onSelectCharacter, selectedCharacter, onCharacterCreated, externalShowModal, onExternalModalClose }) {
+export default function CharacterView({ onSelectCharacter, selectedCharacter, onCharacterCreated }) {
   const { user } = useAuth();
   const [characters, setCharacters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-
-  // open modal when triggered externally
-  useEffect(() => {
-    if (externalShowModal) setShowModal(true);
-  }, [externalShowModal]);
-
-  const handleModalClose = () => {
-    setShowModal(false);
-    if (onExternalModalClose) onExternalModalClose();
-  };
 
   const loadCharacters = async () => {
     if (!user) return;
