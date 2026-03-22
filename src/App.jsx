@@ -59,6 +59,7 @@ export default function App() {
   const [faceswapResult, setFaceswapResult] = useState(null);
   const [faceswapLoading, setFaceswapLoading] = useState(false);
   const [faceswapError, setFaceswapError] = useState(null);
+  const [userCharacters, setUserCharacters] = useState([]);
 
   const handleFaceSwap = async ({ targetImage, sourceImage }) => {
     if (!user) { setLoginModalOpen(true); return; }
@@ -125,6 +126,13 @@ export default function App() {
       console.error("Supabase Sync error:", err);
     }
   };
+  
+// inside loadGallery or a separate useEffect:
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('characters').select('*').eq('user_id', user.id).order('created_at', { ascending: false })
+      .then(({ data }) => setUserCharacters(data || []));
+  }, [user]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -442,6 +450,7 @@ export default function App() {
     negativePrompt,
     setNegativePrompt,
     onOpenSidebar: () => setIsSidebarOpen(true),  // 👈 add this
+    characters: userCharacters, // add this state
   };
   
   return (
@@ -465,25 +474,13 @@ export default function App() {
           onTopUpClick={() => setTopUpModalOpen(true)}
         />
 
-        <main className="main-content">
-          {activeTab !== 'style' && activeTab !== 'character' && activeTab !== 'edit' && activeTab !== 'faceswap' && (
-            <header className={`top-header ${promptCollapsed ? 'collapsed' : ''}`}>
-              <h1 className="aesthetic-title">What will you create?</h1>
-              {selectedCharacter && (
-                <div className="character-pill">
-                  <img src={selectedCharacter.photo_url} alt={selectedCharacter.name} className="character-pill-photo" />
-                  <span className="character-pill-name">{selectedCharacter.name}</span>
-                  {!selectedCharacter.face_embedding && (
-                    <span className="character-pill-processing">Processing face...</span>
-                  )}
-                  <button className="character-pill-remove" onClick={() => setSelectedCharacter(null)}>
-                    <X size={12} />
-                  </button>
-                </div>
-              )}
-              <PromptBox {...promptBoxProps} collapsed={promptCollapsed} />
-            </header>
-          )}
+       <main className="main-content">
+        {activeTab !== 'style' && activeTab !== 'character' && activeTab !== 'edit' && activeTab !== 'faceswap' && (
+          <header className={`top-header ${promptCollapsed ? 'collapsed' : ''}`}>
+            <h1 className="aesthetic-title">What will you create?</h1>
+            <PromptBox {...promptBoxProps} collapsed={promptCollapsed} />
+          </header>
+        )}
           <div className="scrollable-area" style={{ position: 'relative' }}>
             {activeTab === 'explore' && !isGalleryReady && (
               <div style={{
