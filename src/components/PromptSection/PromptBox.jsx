@@ -1,7 +1,48 @@
-import React, { useRef, useEffect } from 'react';
-import { Send, ArrowDownLeft } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { Send, ArrowDownLeft, UserPlus, X, Check } from 'lucide-react';
 import AspectRatioDropdown from './AspectRatioDropdown';
 import './PromptBox.css';
+
+// ── Mini character picker modal ───────────────────────────────────────────
+function CharacterPicker({ characters, selectedCharacter, onSelect, onClose }) {
+  return (
+    <div className="char-picker-overlay" onClick={onClose}>
+      <div className="char-picker" onClick={e => e.stopPropagation()}>
+        <div className="char-picker-header">
+          <p className="char-picker-title">Select Character</p>
+          <button className="char-picker-close" onClick={onClose}><X size={14} /></button>
+        </div>
+        {characters.length === 0 ? (
+          <p className="char-picker-empty">No characters yet. Create one from the Character tab.</p>
+        ) : (
+          <div className="char-picker-grid">
+            {characters.map(char => (
+              <button
+                key={char.id}
+                className={`char-picker-item ${selectedCharacter?.id === char.id ? 'selected' : ''}`}
+                onClick={() => { onSelect(char); onClose(); }}
+              >
+                <div className="char-picker-photo">
+                  {char.photo_url
+                    ? <img src={char.photo_url} alt={char.name} />
+                    : <div className="char-picker-placeholder" />
+                  }
+                  {selectedCharacter?.id === char.id && (
+                    <div className="char-picker-check"><Check size={10} /></div>
+                  )}
+                </div>
+                <span className="char-picker-name">{char.name}</span>
+                {!char.face_embedding && (
+                  <span className="char-picker-processing">Processing...</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function PromptBox({
   prompt,
@@ -14,8 +55,12 @@ export default function PromptBox({
   negativePrompt,
   setNegativePrompt,
   onOpenSidebar,
+  selectedCharacter,
+  onSelectCharacter,
+  characters = [],
 }) {
   const textareaRef = useRef(null);
+  const [showCharPicker, setShowCharPicker] = useState(false);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -65,7 +110,35 @@ export default function PromptBox({
             <div className="prompt-footer">
               <div className="left-tools">
                 <AspectRatioDropdown value={aspectRatio} onChange={setAspectRatio} />
+
+                {/* ── Character selector ──────────────────────────────── */}
+                {selectedCharacter ? (
+                  <div className="char-pill">
+                    <img src={selectedCharacter.photo_url} alt={selectedCharacter.name} className="char-pill-photo" />
+                    <span className="char-pill-name">{selectedCharacter.name}</span>
+                    {!selectedCharacter.face_embedding && (
+                      <span className="char-pill-dot" title="Processing face..." />
+                    )}
+                    <button
+                      className="char-pill-remove"
+                      onClick={() => onSelectCharacter(null)}
+                      title="Remove character"
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="char-add-btn"
+                    onClick={() => setShowCharPicker(true)}
+                    title="Add character"
+                  >
+                    <UserPlus size={14} />
+                    <span>Character</span>
+                  </button>
+                )}
               </div>
+
               <button
                 className="generate-fab"
                 onClick={onGenerate}
@@ -77,7 +150,7 @@ export default function PromptBox({
           </div>
         </div>
 
-        {/* ── Negative prompt box — hidden when collapsed ──────────────── */}
+        {/* ── Negative prompt box ──────────────────────────────────────── */}
         <div className="prompt-input-block prompt-input-negative">
           <p className="prompt-negative-label">Negative prompt</p>
           <div className="prompt-negative-box">
@@ -93,6 +166,16 @@ export default function PromptBox({
         </div>
 
       </div>
+
+      {/* ── Character picker modal ────────────────────────────────────── */}
+      {showCharPicker && (
+        <CharacterPicker
+          characters={characters}
+          selectedCharacter={selectedCharacter}
+          onSelect={onSelectCharacter}
+          onClose={() => setShowCharPicker(false)}
+        />
+      )}
     </div>
   );
 }
