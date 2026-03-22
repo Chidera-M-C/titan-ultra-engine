@@ -286,7 +286,7 @@ function CharacterCard({ character, isSelected, onSelect }) {
 }
 
 // ── Main CharacterView ────────────────────────────────────────────────────
-export default function CharacterView({ onSelectCharacter, selectedCharacter }) {
+export default function CharacterView({ onSelectCharacter, selectedCharacter, onCharacterCreated }) {
   const { user } = useAuth();
   const [characters, setCharacters] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -316,6 +316,7 @@ export default function CharacterView({ onSelectCharacter, selectedCharacter }) 
 
   const handleCreated = (newChar) => {
     setCharacters(prev => [newChar, ...prev]);
+    if (onCharacterCreated) onCharacterCreated(newChar);
   };
 
   return (
