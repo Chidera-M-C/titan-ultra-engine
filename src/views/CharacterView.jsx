@@ -1,37 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { BodyType01, BodyType02, BodyType03, BodyType04, BodyType05, BodyType06, BodyType07, BodyType08, BodyType09, BodyType10, BodyType11, BodyType12 } from './CharacterBodySVGs';
+import CreateCharacterModal, { BODY_TYPES, RACES } from '../components/Shared/CreateCharacterModal';
 import { Plus, X, ChevronRight, ChevronLeft, Check, User } from 'lucide-react';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../context/AuthContext';
 import './CharacterView.css';
-
-// ── Body type silhouettes ─────────────────────────────────────────────────
-const BODY_TYPES = [
-  { id: 'slim_flat',       label: 'Slim & Flat',         prompt: 'slim petite figure, flat chest, lean body', Icon: BodyType01 },
-  { id: 'slim_busty',      label: 'Slim & Busty',         prompt: 'slim figure, large breasts, narrow waist, lean legs', Icon: BodyType03 },
-  { id: 'athletic',        label: 'Athletic',              prompt: 'athletic toned figure, muscular definition, fit body, medium chest', Icon: BodyType05 },
-  { id: 'hourglass',       label: 'Hourglass',             prompt: 'hourglass figure, full breasts, narrow waist, wide hips, curvy', Icon: BodyType07 },
-  { id: 'pear',            label: 'Pear Shape',            prompt: 'pear shaped figure, small chest, wide hips, thick thighs, curvy bottom', Icon: BodyType09 },
-  { id: 'curvy_plus',      label: 'Curvy Plus',            prompt: 'full figured plus size, large breasts, curvy waist, wide hips, thick thighs', Icon: BodyType11 },
-  { id: 'apple',           label: 'Apple Shape',           prompt: 'apple shaped figure, fuller midsection, medium chest, slimmer legs', Icon: BodyType02 },
-  { id: 'petite_curvy',    label: 'Petite Curvy',          prompt: 'petite curvy figure, small frame, proportional curves, medium chest, round hips', Icon: BodyType04 },
-  { id: 'tall_slim',       label: 'Tall & Slim',           prompt: 'tall slim figure, long legs, lean body, small chest, model figure', Icon: BodyType06 },
-  { id: 'muscular_fem',    label: 'Muscular Feminine',     prompt: 'muscular feminine figure, defined muscles, athletic curves, strong build, toned', Icon: BodyType08 },
-  { id: 'bbw',             label: 'BBW',                   prompt: 'BBW figure, very large breasts, very curvy, plus size, thick everywhere, full body', Icon: BodyType10 },
-  { id: 'rectangle',      label: 'Rectangle',             prompt: 'rectangle straight figure, equal shoulders and hips, athletic build, minimal curves', Icon: BodyType12 },
-];
-
-const RACES = [
-  { id: 'african',    label: 'African',    emoji: '🌍' },
-  { id: 'american',   label: 'American',   emoji: '🇺🇸' },
-  { id: 'asian',      label: 'Asian',      emoji: '🌏' },
-  { id: 'latina',     label: 'Latina',     emoji: '💃' },
-  { id: 'hispanic',   label: 'Hispanic',   emoji: '🌺' },
-  { id: 'arabic',     label: 'Arabic',     emoji: '🌙' },
-  { id: 'european',   label: 'European',   emoji: '🌹' },
-  { id: 'indian',     label: 'Indian',     emoji: '🪷' },
-  { id: 'mixed',      label: 'Mixed',      emoji: '✨' },
-];
 
 // ── Create Character Modal ────────────────────────────────────────────────
 function CreateCharacterModal({ onClose, onCreated }) {
