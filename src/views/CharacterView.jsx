@@ -255,10 +255,19 @@ function CharacterCard({ character, isSelected, onSelect }) {
   const bodyTypeData = BODY_TYPES.find(b => b.id === character.body_type);
   const raceData = RACES.find(r => r.id === character.race);
 
+  const handleSelect = async () => {
+    const { data } = await supabase
+      .from('characters')
+      .select('*')
+      .eq('id', character.id)
+      .single();
+    onSelect(data || character);
+  };
+
   return (
     <div
       className={`char-card ${isSelected ? 'selected' : ''}`}
-      onClick={() => onSelect(character)}
+      onClick={handleSelect}
     >
       <div className="char-card-photo">
         {character.photo_url ? (
