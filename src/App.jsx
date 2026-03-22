@@ -376,7 +376,11 @@ export default function App() {
 
   // ── Character created callback ────────────────────────────────────────
   const handleCharacterCreated = (newChar) => {
-    setUserCharacters(prev => [newChar, ...prev]);
+    setUserCharacters(prev => {
+      const exists = prev.find(c => c.id === newChar.id);
+      if (exists) return prev.map(c => c.id === newChar.id ? newChar : c);
+      return [newChar, ...prev];
+    });
   };
 
   // ── Render views ──────────────────────────────────────────────────────
