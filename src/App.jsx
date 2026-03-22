@@ -55,6 +55,7 @@ export default function App() {
   const [faceswapResult, setFaceswapResult] = useState(null);
   const [faceswapLoading, setFaceswapLoading] = useState(false);
   const [faceswapError, setFaceswapError]     = useState(null);
+  const [showCreateCharacter, setShowCreateCharacter] = useState(false);
 
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
   const promptRef = useRef(prompt);
