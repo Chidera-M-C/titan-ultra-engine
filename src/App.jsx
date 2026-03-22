@@ -410,6 +410,8 @@ export default function App() {
           onSelectCharacter={setSelectedCharacter}
           selectedCharacter={selectedCharacter}
           onCharacterCreated={handleCharacterCreated}
+          externalShowModal={showCreateCharacter}
+          onExternalModalClose={() => setShowCreateCharacter(false)}
         />;
       case 'gallery':
         return <MyImagesView
@@ -468,6 +470,7 @@ export default function App() {
     negativePrompt,
     setNegativePrompt,
     onOpenSidebar: () => setIsSidebarOpen(true),
+    onCreateCharacter: () => setShowCreateCharacter(true),
     selectedCharacter,
     onSelectCharacter: setSelectedCharacter,
     characters: userCharacters,
