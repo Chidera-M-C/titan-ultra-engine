@@ -222,6 +222,53 @@ body, html {
 
 .icon-btn:hover svg { stroke: #000000; }
 
+.character-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 6px;
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 20px;
+  margin-bottom: 8px;
+  width: fit-content;
+}
+
+.character-pill-photo {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+}
+
+.character-pill-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #c084fc;
+}
+
+.character-pill-processing {
+  font-size: 0.72rem;
+  color: #666;
+  font-style: italic;
+}
+
+.character-pill-remove {
+  background: transparent;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.character-pill-remove:hover {
+  color: #fff;
+}
+
 /* Tooltips - base styles */
 .icon-btn::before {
   content: attr(data-tooltip);
