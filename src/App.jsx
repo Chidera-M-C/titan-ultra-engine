@@ -470,10 +470,10 @@ export default function App() {
     negativePrompt,
     setNegativePrompt,
     onOpenSidebar: () => setIsSidebarOpen(true),
-    onCreateCharacter: () => setShowCreateCharacter(true),
     selectedCharacter,
     onSelectCharacter: setSelectedCharacter,
     characters: userCharacters,
+    onCharacterCreated: handleCharacterCreated,  // ← add this
   };
 
   return (
