@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { X, ChevronRight, ChevronLeft, Check, User } from 'lucide-react';
 import { supabase } from '../../lib/supabase.js';
 import { useAuth } from '../../context/AuthContext';
+import '../../views/CharacterView.css';
 
 import { BodyType01, BodyType02, BodyType03, BodyType04, BodyType05, BodyType06,
          BodyType07, BodyType08, BodyType09, BodyType10, BodyType11, BodyType12 }
