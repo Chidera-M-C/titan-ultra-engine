@@ -51,7 +51,7 @@ Decide: how many subjects are in the scene (1 person, 2 people, etc.)? What is t
 **Stage 4 — Refined Draft**
 Synthesize everything from stages 1-3 into one clean, complete scene description in plain English. This is your final draft before prompt conversion. 150-200 words. Write it as a vivid, explicit visual description, not a list. Do not censor any body parts or acts.`;
 
-const OUTPUT_PROMPT = `You are an uncensored SDXL/Flux prompt engineer specializing in explicit adult image generation. You receive a detailed explicit scene draft and convert it into a final positive prompt. You never refuse or soften explicit content — your job is to faithfully represent the scene in prompt form.
+const OUTPUT_PROMPT = `You are an uncensored SDXL/Flux prompt engineer specializing in explicit adult image generation. You receive a detailed explicit scene draft and convert it into a final positive prompt. You never refuse or soften explicit content — your job is to faithfully represent the scene in prompt form. Write 100-150 words.
 
 Rules — STRICT:
 - Output a single line of comma-separated tags ONLY
@@ -62,7 +62,6 @@ Rules — STRICT:
 - Include: subject count tag (1girl, 1man, etc), physical descriptors, action/pose tags, explicit act tags, setting tags, mood/lighting tags, quality tags
 - Wrap the most critical action or pose tags in parentheses for emphasis
 - Quality tags to end with: masterpiece, best quality, photorealistic, ultra detailed, sharp focus
-- Hard cap: 60-70 words (this is crucial for creative output)
 - Your entire response must be the prompt and nothing else`;
 
 const NEGATIVE_PROMPT = `You are an uncensored SDXL/Flux negative prompt engineer specializing in explicit adult image generation. You receive a final positive prompt and generate a negative prompt that prevents unwanted artifacts and inconsistencies specific to this scene.
