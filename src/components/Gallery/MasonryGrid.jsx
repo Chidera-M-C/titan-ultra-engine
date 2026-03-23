@@ -1,6 +1,8 @@
 import './Gallery.css';
 import React, { useState } from 'react';
 import { Wand2, Download, Heart, RotateCcw } from 'lucide-react';
+import { supabase } from '../../lib/supabase.js';
+import { useAuth } from '../../context/AuthContext';
 
 const downloadImage = async (e, url, imageId) => {
   e.stopPropagation();
@@ -20,7 +22,36 @@ const downloadImage = async (e, url, imageId) => {
   }
 };
 
-  // Shuffle images randomly every time the images prop changes
+function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
+  const { user } = useAuth();
+  const [liked, setLiked] = useState(initialLiked);
+  const [likes, setLikes] = useState(initialLikes);
+
+  const handleLike = async (e) => {
+    e.stopPropagation();
+    if (!user) return;
+
+    const newLiked = !liked;
+    setLiked(newLiked);
+    setLikes(prev => newLiked ? prev + 1 : prev - 1);
+
+    if (newLiked) {
+      await supabase.from('image_likes').insert({ user_id: user.id, image_id: imageId });
+      await supabase.from('images').update({ likes: likes + 1 }).eq('id', imageId);
+    } else {
+      await supabase.from('image_likes').delete().eq('user_id', user.id).eq('image_id', imageId);
+      await supabase.from('images').update({ likes: likes - 1 }).eq('id', imageId);
+    }
+  };
+
+  return (
+    <div className="like-badge" onClick={handleLike}>
+      <Heart size={13} fill={liked ? '#ff4b4b' : 'none'} color={liked ? '#ff4b4b' : '#fff'} />
+      <span>{likes}</span>
+    </div>
+  );
+}
+
 export default function MasonryGrid({ images, promptRef, onImageClick, onSelectPrompt, onEditImage }) {
   return (
     <div className="masonry-grid">
@@ -51,7 +82,9 @@ export default function MasonryGrid({ images, promptRef, onImageClick, onSelectP
                   }
                 }}
                 data-tooltip={
-                  (promptRef?.current || '').trim() === (img.prompt || '').trim() && promptRef?.current ? "Unload prompt" : "Load prompt"
+                  (promptRef?.current || '').trim() === (img.prompt || '').trim() && promptRef?.current
+                    ? 'Unload prompt'
+                    : 'Load prompt'
                 }
               >
                 <RotateCcw size={18} color="#ffffff" />
@@ -73,31 +106,17 @@ export default function MasonryGrid({ images, promptRef, onImageClick, onSelectP
               >
                 <Wand2 size={18} color="#ffffff" />
               </button>
-              <HeartButton />
             </div>
           </div>
+
+          {/* Always visible like badge */}
+          <HeartButton
+            imageId={img.id}
+            initialLikes={img.likes || 0}
+            initialLiked={img.liked || false}
+          />
         </div>
       ))}
     </div>
-  );
-}
-
-function HeartButton() {
-  const [active, setActive] = useState(false);
-  return (
-    <button
-      className={`icon-btn ${active ? 'active-heart' : ''}`}
-      onClick={(e) => {
-        e.stopPropagation();
-        setActive(!active);
-      }}
-      data-tooltip={active ? 'Unlike' : 'Like'}
-    >
-      <Heart
-        size={18}
-        color={active ? '#ff4b4b' : '#ffffff'}
-        fill={active ? '#ff4b4b' : 'none'}
-      />
-    </button>
   );
 }
