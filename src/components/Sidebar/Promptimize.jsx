@@ -32,6 +32,21 @@ export default function Promptimize({ onLoad, onNegativePromptLoad, currentPromp
     setBuildDone(false);
     setError(null);
 
+    // ── Collect raw prompt before promptimizing ───────────────────────
+    try {
+      await fetch('/api/collect-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          raw_prompt: input,
+          promptimized: true,
+          category: 'promptimize',
+        })
+      });
+    } catch (e) {
+      // non-fatal
+    }
+
     try {
       const response = await fetch('/api/promptimize', {
         method: 'POST',
