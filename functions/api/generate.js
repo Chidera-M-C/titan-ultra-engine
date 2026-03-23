@@ -13,6 +13,34 @@ export async function onRequestPost(context) {
     // ── Data collection — fire and forget ────────────────────────────
     try {
       const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+    
+      let imageUrl = null;
+    
+      // Upload image to storage if present
+      if (image) {
+        try {
+          const base64Data    = image.replace(/^data:image\/\w+;base64,/, '');
+          const byteCharacters = atob(base64Data);
+          const byteArray     = new Uint8Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) byteArray[i] = byteCharacters.charCodeAt(i);
+          const blob     = new Blob([byteArray], { type: 'image/jpeg' });
+          const fileName = `collected/${Date.now()}.jpg`;
+    
+          const { error: uploadError } = await supabase.storage
+            .from('data_collect_images')
+            .upload(fileName, blob, { contentType: 'image/jpeg', upsert: false });
+    
+          if (!uploadError) {
+            const { data: { publicUrl } } = supabase.storage
+              .from('data_collect_images')
+              .getPublicUrl(fileName);
+            imageUrl = publicUrl;
+          }
+        } catch (imgErr) {
+          console.error('Image upload error:', imgErr.message);
+        }
+      }
+    
       await supabase.from('data_collect').insert({
         prompt:          prompt,
         negative_prompt: negative_prompt || null,
@@ -20,6 +48,7 @@ export async function onRequestPost(context) {
         aspect_ratio:    aspect_ratio || '9:16',
         style:           style || null,
         has_image:       !!image,
+        image_url:       imageUrl,
         has_character:   !!character,
         character_name:  character?.name || null,
         promptimized:    false,
@@ -27,7 +56,6 @@ export async function onRequestPost(context) {
       });
     } catch (collectErr) {
       console.error('Data collection error:', collectErr.message);
-      // non-fatal — never block generation
     }
 
     // ── Build input payload ───────────────────────────────────────────
