@@ -67,14 +67,6 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
       const { data, error } = await query;
       if (error) throw error;
 
-      const fetchedImages = data.map(doc => ({
-        id: doc.id,
-        url: doc.image_url,
-        prompt: doc.prompt,
-        userId: doc.user_id,
-        createdAt: doc.created_at
-      }));
-
       const shuffled = shuffleArray(fetchedImages);
 
       // preload all images before revealing — this is what makes it smooth
