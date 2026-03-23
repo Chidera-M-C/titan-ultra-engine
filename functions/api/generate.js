@@ -1,14 +1,36 @@
+import { createClient } from '@supabase/supabase-js';
+
 export async function onRequestPost(context) {
   const { request, env } = context;
   try {
     const body = await request.json();
-    const { prompt, aspect_ratio, image, style, negative_prompt, face_embedding, character } = body;
-    
+    const { prompt, aspect_ratio, image, style, negative_prompt, face_embedding, character, photo } = body;
+
     if (!prompt) {
       return new Response(JSON.stringify({ error: 'Prompt is required' }), { status: 400 });
     }
 
-    // Build input payload
+    // ── Data collection — fire and forget ────────────────────────────
+    try {
+      const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+      await supabase.from('data_collect').insert({
+        prompt:          prompt,
+        negative_prompt: negative_prompt || null,
+        category:        style || 'explore',
+        aspect_ratio:    aspect_ratio || '9:16',
+        style:           style || null,
+        has_image:       !!image,
+        has_character:   !!character,
+        character_name:  character?.name || null,
+        promptimized:    false,
+        status:          'submitted',
+      });
+    } catch (collectErr) {
+      console.error('Data collection error:', collectErr.message);
+      // non-fatal — never block generation
+    }
+
+    // ── Build input payload ───────────────────────────────────────────
     const input = { prompt };
     if (aspect_ratio)    input.aspect_ratio    = aspect_ratio;
     if (image)           input.image           = image;
@@ -16,32 +38,33 @@ export async function onRequestPost(context) {
     if (negative_prompt) input.negative_prompt = negative_prompt;
     if (face_embedding)  input.face_embedding  = face_embedding;
     if (character)       input.character       = character;
+    if (photo)           input.photo           = photo;
 
-    // Route to correct endpoint based on style
+    // ── Route to correct endpoint ─────────────────────────────────────
     const CRYSTALCLEAR_STYLES = new Set(['female_nude_portrait', 'dressed_vs_naked']);
-    const BIGLUST_STYLES = new Set(['missionary_style', 'doggy_style', 'cowgirl_style', 'anal_sex', 'oral_sex', 'threesome_sex', 'cum_on_face', 'lesbian_sex']);
-    const EDIT_STYLES = new Set(['edit']);
-    
+    const BIGLUST_STYLES      = new Set(['missionary_style', 'doggy_style', 'cowgirl_style', 'anal_sex', 'oral_sex', 'threesome_sex', 'cum_on_face', 'lesbian_sex']);
+    const EDIT_STYLES         = new Set(['edit']);
+
     let endpointId = env.RUNPOD_ENDPOINT_ID;
     if (style && CRYSTALCLEAR_STYLES.has(style)) endpointId = env.RUNPOD_ENDPOINT_CRYSTALCLEAR;
     if (style && BIGLUST_STYLES.has(style))      endpointId = env.RUNPOD_ENDPOINT_BIGLUST;
-    if (style && EDIT_STYLES.has(style)) endpointId = env.RUNPOD_ENDPOINT_EDIT;
-    if (style && style === 'character') endpointId = env.RUNPOD_ENDPOINT_CHARACTER;
-    if (face_embedding) endpointId = env.RUNPOD_ENDPOINT_CHARACTER;
+    if (style && EDIT_STYLES.has(style))         endpointId = env.RUNPOD_ENDPOINT_EDIT;
+    if (style && style === 'character')          endpointId = env.RUNPOD_ENDPOINT_CHARACTER;
+    if (face_embedding || photo)                 endpointId = env.RUNPOD_ENDPOINT_CHARACTER;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000);
-    
+    const timeout    = setTimeout(() => controller.abort(), 25000);
+
     const response = await fetch(`https://api.runpod.ai/v2/${endpointId}/run`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${env.RUNPOD_API_KEY}`,
-        'Content-Type': 'application/json'
+        'Content-Type':  'application/json'
       },
-      body: JSON.stringify({ input }),
+      body:   JSON.stringify({ input }),
       signal: controller.signal
     });
-    
+
     clearTimeout(timeout);
 
     if (!response.ok) {
