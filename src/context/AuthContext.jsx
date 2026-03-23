@@ -4,10 +4,19 @@ import { supabase } from '../lib/supabase';
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser]       = useState(null);
   const [credits, setCredits] = useState(0);
   const [loading, setLoading] = useState(true);
-  const initializedUserRef = useRef(null);
+  const initializedUserRef    = useRef(null);
+
+  const hideSplash = () => {
+    setLoading(false);
+    const splash = document.getElementById('splash');
+    if (splash) {
+      splash.classList.add('hidden');
+      setTimeout(() => splash.remove(), 500);
+    }
+  };
 
   const fetchOrCreateUser = async (authUser) => {
     try {
@@ -31,12 +40,18 @@ export function AuthProvider({ children }) {
         setCredits(data.credits);
       }
     } catch (err) {
-      console.error("Error fetching/creating user:", err.message);
+      console.error('Error fetching/creating user:', err.message);
     }
   };
 
   useEffect(() => {
     let realtimeChannel = null;
+
+    // ── Safety timeout — never stay stuck on splash forever ──────────
+    const safetyTimeout = setTimeout(() => {
+      console.warn('Auth safety timeout fired — forcing splash hide');
+      hideSplash();
+    }, 5000);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -58,16 +73,18 @@ export function AuthProvider({ children }) {
 
         if (currentUser) {
           initializedUserRef.current = currentUser.id;
-          await fetchOrCreateUser(currentUser);
+
+          // Fire and forget — never block loading on DB call
+          fetchOrCreateUser(currentUser);
 
           realtimeChannel = supabase
             .channel(`credits-${currentUser.id}`)
             .on(
               'postgres_changes',
               {
-                event: 'UPDATE',
+                event:  'UPDATE',
                 schema: 'public',
-                table: 'users',
+                table:  'users',
                 filter: `id=eq.${currentUser.id}`
               },
               (payload) => {
@@ -81,20 +98,19 @@ export function AuthProvider({ children }) {
           setCredits(0);
         }
 
-        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-          setLoading(false);
-
-          // Hide splash once app is ready
-          const splash = document.getElementById('splash');
-          if (splash) {
-            splash.classList.add('hidden');
-            setTimeout(() => splash.remove(), 500);
-          }
+        if (
+          event === 'INITIAL_SESSION' ||
+          event === 'SIGNED_IN'       ||
+          event === 'SIGNED_OUT'
+        ) {
+          clearTimeout(safetyTimeout);
+          hideSplash();
         }
       }
     );
 
     return () => {
+      clearTimeout(safetyTimeout);
       subscription.unsubscribe();
       if (realtimeChannel) supabase.removeChannel(realtimeChannel);
     };
@@ -107,14 +123,14 @@ export function AuthProvider({ children }) {
         options: {
           redirectTo: window.location.origin,
           queryParams: {
-            prompt: 'select_account',
+            prompt:      'select_account',
             access_type: 'offline',
           },
         },
       });
       if (error) throw error;
     } catch (error) {
-      console.error("Login failed:", error.message);
+      console.error('Login failed:', error.message);
     }
   };
 
@@ -124,7 +140,7 @@ export function AuthProvider({ children }) {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error("Signup error:", error.message);
+      console.error('Signup error:', error.message);
       throw error;
     }
   };
@@ -135,7 +151,7 @@ export function AuthProvider({ children }) {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error("Login error:", error.message);
+      console.error('Login error:', error.message);
       throw error;
     }
   };
@@ -148,7 +164,7 @@ export function AuthProvider({ children }) {
       setCredits(0);
       initializedUserRef.current = null;
     } catch (error) {
-      console.error("Logout failed:", error.message);
+      console.error('Logout failed:', error.message);
     }
   };
 
@@ -163,7 +179,7 @@ export function AuthProvider({ children }) {
       logout,
       loading
     }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
