@@ -29,7 +29,7 @@ export function AuthProvider({ children }) {
       if (error && error.code === 'PGRST116') {
         const { data: newUser, error: createError } = await supabase
           .from('users')
-          .insert({ id: authUser.id, credits: 10 })
+          .insert({ id: authUser.id, credits: 6 })
           .select('credits')
           .single();
         if (createError) throw createError;
