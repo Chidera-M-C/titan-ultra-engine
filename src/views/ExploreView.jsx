@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase.js';
 import CategoryTabs from '../components/Gallery/CategoryTabs';
 import MasonryGrid from '../components/Gallery/MasonryGrid';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 const shuffleArray = (arr) => {
   const shuffled = [...arr];
