@@ -284,11 +284,24 @@ export default function App() {
     setStyleError(null);
     setStyleImage(null);
     try {
+      const characterPayload = selectedCharacter?.face_embedding ? {
+        face_embedding: selectedCharacter.face_embedding,
+        character: {
+          name: selectedCharacter.name,
+          race: selectedCharacter.race,
+          body_type: selectedCharacter.body_type,
+        }
+      } : {};
       await runGeneration({
-        prompt: finalPrompt, aspect_ratio: aspectRatio,
-        negative_prompt: negativePrompt, image: attachedImage,
-        setLoadingFn: setStyleLoading, setErrorFn: setStyleError, setImageFn: setStyleImage,
-        styleId: activeStyle.id
+        prompt: finalPrompt,
+        aspect_ratio: aspectRatio,
+        negative_prompt: negativePrompt,
+        image: attachedImage,
+        setLoadingFn: setStyleLoading,
+        setErrorFn: setStyleError,
+        setImageFn: setStyleImage,
+        styleId: selectedCharacter?.face_embedding ? 'character' : activeStyle.id,
+        ...characterPayload,
       });
     } catch (err) {
       setStyleError(err.message);
