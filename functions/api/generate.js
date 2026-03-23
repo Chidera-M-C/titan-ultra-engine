@@ -27,6 +27,7 @@ export async function onRequestPost(context) {
     if (style && BIGLUST_STYLES.has(style))      endpointId = env.RUNPOD_ENDPOINT_BIGLUST;
     if (style && EDIT_STYLES.has(style)) endpointId = env.RUNPOD_ENDPOINT_EDIT;
     if (style && style === 'character') endpointId = env.RUNPOD_ENDPOINT_CHARACTER;
+    if (face_embedding) endpointId = env.RUNPOD_ENDPOINT_CHARACTER;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000);
