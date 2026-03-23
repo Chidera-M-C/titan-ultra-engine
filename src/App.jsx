@@ -429,6 +429,10 @@ export default function App() {
               onEditImage={handleEditImage}
               onSelectPrompt={handleSelectPrompt}
               prompt={prompt}
+              selectedCharacter={selectedCharacter}
+              onSelectCharacter={setSelectedCharacter}
+              characters={userCharacters}
+              onCharacterCreated={handleCharacterCreated}
             />
           : <StyleView onSelectStyle={setActiveStyle} />;
       case 'edit':
