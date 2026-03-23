@@ -73,23 +73,33 @@ export default function App() {
 
   // ── Load gallery ──────────────────────────────────────────────────────
   const loadGallery = async () => {
-    if (!user) { setUserGallery([]); return; }
-    try {
-      const { data: images, error: imagesError } = await supabase
-        .from('images')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      if (imagesError) throw imagesError;
-      setUserGallery(images.map(doc => ({
-        id: doc.id,
-        url: doc.image_url,
-        prompt: doc.prompt
-      })));
-    } catch (err) {
-      console.error('Supabase Sync error:', err);
-    }
-  };
+  if (!user) { setUserGallery([]); return; }
+  try {
+    const { data: images, error: imagesError } = await supabase
+      .from('images')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    if (imagesError) throw imagesError;
+
+    const { data: userLikes } = await supabase
+      .from('image_likes')
+      .select('image_id')
+      .eq('user_id', user.id);
+
+    const likedSet = new Set((userLikes || []).map(l => l.image_id));
+
+    setUserGallery(images.map(doc => ({
+      id: doc.id,
+      url: doc.image_url,
+      prompt: doc.prompt,
+      likes: doc.likes || 0,
+      liked: likedSet.has(doc.id),
+    })));
+  } catch (err) {
+    console.error('Supabase Sync error:', err);
+  }
+};
 
   useEffect(() => {
     if (authLoading) return;
