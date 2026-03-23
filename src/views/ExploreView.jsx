@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase.js';
 import CategoryTabs from '../components/Gallery/CategoryTabs';
 import MasonryGrid from '../components/Gallery/MasonryGrid';
+import { useAuth } from '../../context/AuthContext';
 
 const shuffleArray = (arr) => {
   const shuffled = [...arr];
@@ -31,6 +32,7 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
   const [activeCategory, setActiveCategory] = useState('All');
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const { user } = useAuth();
 
   const loadImages = useCallback(async () => {
     onFetching?.();
@@ -45,6 +47,22 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
         const styleId = CATEGORY_STYLE_MAP[activeCategory];
         query = query.eq('style', styleId);
       }
+      
+      const { data: userLikes } = user
+        ? await supabase.from('image_likes').select('image_id').eq('user_id', user.id)
+        : { data: [] };
+      
+      const likedSet = new Set((userLikes || []).map(l => l.image_id));
+      
+      const fetchedImages = data.map(doc => ({
+        id: doc.id,
+        url: doc.image_url,
+        prompt: doc.prompt,
+        userId: doc.user_id,
+        createdAt: doc.created_at,
+        likes: doc.likes || 0,
+        liked: likedSet.has(doc.id),
+      }));
 
       const { data, error } = await query;
       if (error) throw error;
