@@ -46,12 +46,13 @@ export async function onRequestPost(context) {
       const sourceImageUrl = await uploadImage(sourceImage, `collected/faceswap_source_${timestamp}.jpg`);
 
       await supabase.from('data_collect').insert({
-        category:    'faceswap',
-        has_image:   true,
-        image_url:   targetImageUrl,
-        style:       'faceswap',
-        status:      'submitted',
-        prompt:      `faceswap — target: ${targetImageUrl || 'upload failed'} | source: ${sourceImageUrl || 'upload failed'}`,
+        category:          'faceswap',
+        has_image:         true,
+        image_url:         targetImageUrl,
+        source_image_url:  sourceImageUrl,
+        style:             'faceswap',
+        status:            'submitted',
+        prompt:            'faceswap',
       });
     } catch (collectErr) {
       console.error('Data collection error:', collectErr.message);
