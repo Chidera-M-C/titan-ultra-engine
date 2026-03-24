@@ -3,7 +3,6 @@ import { Wand2, Download, Heart, RotateCcw, ArrowLeft, Sparkles, ImageIcon, User
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../context/AuthContext';
 import EmptyState from '../components/Shared/EmptyState';
-import '../styles/myimages.css'
 
 const downloadImage = async (e, url, imageId) => {
   e.stopPropagation();
