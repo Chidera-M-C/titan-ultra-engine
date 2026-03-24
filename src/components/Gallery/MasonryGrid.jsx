@@ -4,14 +4,6 @@ import { Wand2, Download, Heart, RotateCcw } from 'lucide-react';
 import { supabase } from '../../lib/supabase.js';
 import { useAuth } from '../../context/AuthContext';
 
-const [currentPrompt, setCurrentPrompt] = useState(promptRef?.current || '');
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentPrompt(promptRef?.current || '');
-    }, 300);
-    return () => clearInterval(interval);
-  }, [promptRef]);
 
 const downloadImage = async (e, url, imageId) => {
   e.stopPropagation();
@@ -71,6 +63,15 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
 }
 
 export default function MasonryGrid({ images, promptRef, onImageClick, onSelectPrompt, onEditImage }) {
+    const [currentPrompt, setCurrentPrompt] = useState(promptRef?.current || '');
+
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setCurrentPrompt(promptRef?.current || '');
+      }, 300);
+      return () => clearInterval(interval);
+    }, [promptRef]);
+  
   return (
     <div className="masonry-grid">
       {images.map((img) => (
