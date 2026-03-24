@@ -1,15 +1,9 @@
 import { S3Client, ListObjectsV2Command, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
-import { XMLParser } from "fast-xml-parser"; // This might require an install if not in your env
-
-// If fast-xml-parser isn't available, we use the internal SDK 'stream' fix:
-const parser = {
-  parse: (xml) => new XMLParser().parse(xml)
-};
 
 export async function onRequestPost(context) {
   const { env } = context;
 
-  // 1. Setup Supabase Source
+  // 1. Setup Supabase Source (The "Old" Warehouse)
   const s3Supabase = new S3Client({
     region: "us-east-1",
     endpoint: "https://rtklziobobnsqxsozmoq.supabase.co/storage/v1/s3",
@@ -17,12 +11,10 @@ export async function onRequestPost(context) {
       accessKeyId: env.SUPABASE_S3_ACCESS_KEY,
       secretAccessKey: env.SUPABASE_S3_SECRET_KEY,
     },
-    forcePathStyle: true,
-    // Add this line to handle XML without DOMParser
-    runtime: "webworker" 
+    forcePathStyle: true, // Fixes the Supabase S3 error
   });
 
-  // 2. Setup Cloudflare R2 Destination
+  // 2. Setup Cloudflare R2 Destination (The "New" Warehouse)
   const s3R2 = new S3Client({
     region: "auto",
     endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
@@ -36,21 +28,68 @@ export async function onRequestPost(context) {
     let continuationToken = null;
     let totalMoved = 0;
 
-    console.log("Starting migration logic...");
+    console.log("🚀 Starting Full Migration from Supabase to R2...");
 
-    // The rest of the logic remains the same as before...
-    // (Listing objects and putting them into R2)
-    
-    // ... [Rest of your migration loop] ...
+    do {
+      const listParams = {
+        Bucket: "generated_images", // Supabase source bucket (underscore)
+        Prefix: "public/",          // CRITICAL: Supabase stores public files here
+        ContinuationToken: continuationToken,
+      };
 
-    return new Response(JSON.stringify({ success: true, count: totalMoved }), {
-      headers: { "Content-Type": "application/json" }
+      const { Contents, NextContinuationToken } = await s3Supabase.send(new ListObjectsV2Command(listParams));
+
+      if (!Contents || Contents.length === 0) {
+        console.log("No files found in this batch.");
+        break;
+      }
+
+      for (const object of Contents) {
+        // Skip folder placeholders
+        if (object.Key.endsWith('/')) continue;
+
+        // 1. Download from Supabase
+        const getObj = await s3Supabase.send(new GetObjectCommand({
+          Bucket: "generated_images",
+          Key: object.Key
+        }));
+
+        // 2. Convert stream to Uint8Array for Cloudflare Worker environment
+        const bodyContents = await getObj.Body.transformToByteArray();
+
+        // 3. Upload to R2 (Target bucket: generated-images with hyphen)
+        // Note: object.Key includes the "public/" prefix, keeping structure intact
+        await s3R2.send(new PutObjectCommand({
+          Bucket: "generated-images", 
+          Key: object.Key,
+          Body: bodyContents,
+          ContentType: getObj.ContentType || 'image/jpeg',
+        }));
+
+        totalMoved++;
+        console.log(`✅ Migrated: ${object.Key}`);
+      }
+
+      continuationToken = NextContinuationToken;
+    } while (continuationToken);
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      count: totalMoved,
+      message: `Successfully migrated ${totalMoved} files (including folders).` 
+    }), { 
+      headers: { "Content-Type": "application/json" } 
     });
 
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message, details: "Cloudflare Worker XML Error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" }
+    console.error("Migration Error:", error);
+    return new Response(JSON.stringify({ 
+      success: false,
+      error: error.message,
+      stack: error.stack 
+    }), { 
+      status: 500, 
+      headers: { "Content-Type": "application/json" } 
     });
   }
 }
