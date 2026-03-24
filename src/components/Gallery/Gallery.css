@@ -174,6 +174,32 @@
 }
 .use-btn:hover { background: #e0e0e0; }
 
+.more-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  cursor: pointer;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.more-dropdown {
+  display: none;
+  position: absolute;
+  top: 24px;
+  right: 0;
+  background: rgba(0,0,0,0.75);
+  border-radius: 8px;
+  padding: 6px;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.more-btn:hover .more-dropdown {
+  display: flex;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 1200px) {
   .masonry-grid { columns: 4; }
