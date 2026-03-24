@@ -7,37 +7,36 @@ export async function onRequestPost(context) {
   const R2_SECRET = env.R2_SECRET_ACCESS_KEY;
 
   try {
-    // 1. Fetch ALL images from the DB
-    const listResponse = await fetch(`${SUPABASE_URL}/rest/v1/images?select=image_url`, {
+    // 1. Fetch exactly 20 images that still have 'supabase.co' in the URL
+    const listResponse = await fetch(`${SUPABASE_URL}/rest/v1/images?select=image_url&image_url=ilike.*supabase.co*&limit=20`, {
       method: 'GET',
       headers: {
         'apikey': SUPABASE_KEY,
         'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json'
       }
     });
 
     const images = await listResponse.json();
+    
+    if (!images || images.length === 0) {
+      return new Response(JSON.stringify({ success: true, migrated: 0, message: "No more images left to migrate!" }));
+    }
+
     let movedCount = 0;
-    const LIMIT = 45; // Cloudflare subrequest limit is 50
 
     for (const row of images) {
-      if (movedCount >= LIMIT) break; // STOP before we hit the limit
-
       const oldUrl = row.image_url;
-      if (!oldUrl || !oldUrl.includes('supabase.co')) continue;
-
       const path = oldUrl.split('generated_images/')[1];
       if (!path) continue;
 
-      // Check if it already exists in R2 to avoid double-work
-      // (This counts as a subrequest, so we stay under 50)
+      // Subrequest #1: Fetch from Supabase
       const imageResp = await fetch(oldUrl);
       if (!imageResp.ok) continue;
 
       const imageData = await imageResp.arrayBuffer();
 
-      await fetch(`https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/generated-images/${path}`, {
+      // Subrequest #2: Upload to R2
+      const r2Upload = await fetch(`https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/generated-images/${path}`, {
         method: 'PUT',
         headers: {
           'Content-Type': imageResp.headers.get('Content-Type') || 'image/jpeg',
@@ -46,14 +45,16 @@ export async function onRequestPost(context) {
         body: imageData
       });
 
-      movedCount++;
+      if (r2Upload.ok) movedCount++;
     }
 
     return new Response(JSON.stringify({ 
       success: true, 
       migrated: movedCount, 
-      message: movedCount > 0 ? "Batch complete. Click Send again to move the next 45." : "All images migrated!" 
-    }), { headers: { "Content-Type": "application/json" } });
+      remaining_in_batch: images.length 
+    }), { 
+      headers: { "Content-Type": "application/json" } 
+    });
 
   } catch (error) {
     return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500 });
