@@ -61,6 +61,20 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
 
 function ImageGrid({ images, onSelectPrompt, onViewImage, onEditImage, prompt }) {
   const [openId, setOpenId] = useState(null);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    setReady(false);
+    if (!images || images.length === 0) { setReady(true); return; }
+    Promise.all(
+      images.map(img => new Promise(resolve => {
+        const i = new Image();
+        i.onload = resolve;
+        i.onerror = resolve;
+        i.src = img.url;
+      }))
+    ).then(() => setReady(true));
+  }, [images]);
 
   useEffect(() => {
     const handleClickOutside = () => setOpenId(null);
@@ -69,72 +83,93 @@ function ImageGrid({ images, onSelectPrompt, onViewImage, onEditImage, prompt })
   }, []);
 
   if (!images || images.length === 0) {
-    return (
-      <div className="myimages-empty">
-        <p>No images here yet</p>
-      </div>
-    );
+    return <div className="myimages-empty"><p>No images here yet</p></div>;
   }
 
   return (
-    <div className="my-images-grid">
-      {images.map((img) => (
-        <div
-          key={img.id}
-          className="gallery-card"
-          onClick={() => { setOpenId(null); onViewImage(img); }}
-        >
-          <img src={img.url} alt="Generated AI image" loading="lazy" />
-          <div
-            className={`more-btn ${openId === img.id ? 'open' : ''}`}
-            onClick={e => { e.stopPropagation(); setOpenId(openId === img.id ? null : img.id); }}
-          >
-            <span>···</span>
-            <div className="more-dropdown" onClick={e => e.stopPropagation()}>
-              <button
-                className="dropdown-item"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setOpenId(null);
-                  const currentPrompt = prompt || '';
-                  const imagePrompt = img.prompt || '';
-                  if (currentPrompt.trim() === imagePrompt.trim() && currentPrompt !== '') {
-                    onSelectPrompt('');
-                  } else {
-                    onSelectPrompt(img.prompt);
-                  }
-                }}
-              >
-                <RotateCcw size={15} />
-                <span>{(prompt || '').trim() === (img.prompt || '').trim() && prompt ? 'Unload prompt' : 'Load prompt'}</span>
-              </button>
-              <button
-                className="dropdown-item"
-                onClick={(e) => { setOpenId(null); downloadImage(e, img.url, img.id); }}
-              >
-                <Download size={15} />
-                <span>Download</span>
-              </button>
-              <button
-                className="dropdown-item"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setOpenId(null);
-                  onEditImage(img);
-                }}
-              >
-                <Wand2 size={15} />
-                <span>Edit image</span>
-              </button>
-            </div>
-          </div>
-          <HeartButton
-            imageId={img.id}
-            initialLikes={img.likes || 0}
-            initialLiked={img.liked || false}
-          />
+    <div style={{ position: 'relative', minHeight: '200px' }}>
+      {/* Spinner shown while preloading */}
+      {!ready && (
+        <div style={{
+          position: 'absolute', inset: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'var(--bg, #0f0f0f)',
+          zIndex: 10,
+          minHeight: '200px',
+        }}>
+          <div style={{
+            width: 40, height: 40,
+            border: '3px solid rgba(255,255,255,0.1)',
+            borderTop: '3px solid #7c3aed',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+          }} />
         </div>
-      ))}
+      )}
+
+      {/* Grid fades in once ready */}
+      <div
+        className="my-images-grid"
+        style={{ opacity: ready ? 1 : 0, transition: 'opacity 0.4s ease' }}
+      >
+        {images.map((img) => (
+          <div
+            key={img.id}
+            className="gallery-card"
+            onClick={() => { setOpenId(null); onViewImage(img); }}
+          >
+            <img src={img.url} alt="Generated AI image" loading="lazy" />
+            <div
+              className={`more-btn ${openId === img.id ? 'open' : ''}`}
+              onClick={e => { e.stopPropagation(); setOpenId(openId === img.id ? null : img.id); }}
+            >
+              <span>···</span>
+              <div className="more-dropdown" onClick={e => e.stopPropagation()}>
+                <button
+                  className="dropdown-item"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenId(null);
+                    const currentPrompt = prompt || '';
+                    const imagePrompt = img.prompt || '';
+                    if (currentPrompt.trim() === imagePrompt.trim() && currentPrompt !== '') {
+                      onSelectPrompt('');
+                    } else {
+                      onSelectPrompt(img.prompt);
+                    }
+                  }}
+                >
+                  <RotateCcw size={15} />
+                  <span>{(prompt || '').trim() === (img.prompt || '').trim() && prompt ? 'Unload prompt' : 'Load prompt'}</span>
+                </button>
+                <button
+                  className="dropdown-item"
+                  onClick={(e) => { setOpenId(null); downloadImage(e, img.url, img.id); }}
+                >
+                  <Download size={15} />
+                  <span>Download</span>
+                </button>
+                <button
+                  className="dropdown-item"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenId(null);
+                    onEditImage(img);
+                  }}
+                >
+                  <Wand2 size={15} />
+                  <span>Edit image</span>
+                </button>
+              </div>
+            </div>
+            <HeartButton
+              imageId={img.id}
+              initialLikes={img.likes || 0}
+              initialLiked={img.liked || false}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -187,11 +222,8 @@ export default function MyImagesView({ images, likedImages, onSelectPrompt, onVi
 
   const allImages = images || [];
 
-  // For liked images we merge the separate likedImages array
   const getImages = (cat) => {
-    if (cat.key === 'liked') {
-      return (likedImages || []);
-    }
+    if (cat.key === 'liked') return likedImages || [];
     return allImages.filter(cat.filter);
   };
 
