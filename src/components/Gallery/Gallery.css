@@ -245,7 +245,7 @@
 
 .myimages-cards {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
 }
 
@@ -266,18 +266,18 @@
 }
 
 .myimages-cat-cover {
+  height: 0;
+  padding-bottom: 150%; /* 4:6 aspect ratio */
   position: relative;
-  width: 100%;
-  height: 180px;
-  overflow: hidden;
-  background: #1a1a1a;
 }
 
-.myimages-cat-cover img {
+.myimages-cat-cover img,
+.myimages-cat-empty-cover {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
 }
 
 .myimages-cat-card:hover .myimages-cat-cover img {
@@ -288,15 +288,6 @@
   position: absolute;
   inset: 0;
   background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.7));
-}
-
-.myimages-cat-empty-cover {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #111;
 }
 
 .myimages-cat-info {
@@ -396,6 +387,12 @@
   padding: 3rem 1rem;
   color: #555;
   font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .myimages-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
