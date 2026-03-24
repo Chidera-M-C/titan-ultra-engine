@@ -4,7 +4,6 @@ import { Wand2, Download, Heart, RotateCcw } from 'lucide-react';
 import { supabase } from '../../lib/supabase.js';
 import { useAuth } from '../../context/AuthContext';
 
-
 const downloadImage = async (e, url, imageId) => {
   e.stopPropagation();
   try {
@@ -63,22 +62,29 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
 }
 
 export default function MasonryGrid({ images, promptRef, onImageClick, onSelectPrompt, onEditImage }) {
-    const [currentPrompt, setCurrentPrompt] = useState(promptRef?.current || '');
+  const [openId, setOpenId] = useState(null);
+  const [currentPrompt, setCurrentPrompt] = useState(promptRef?.current || '');
 
-    useEffect(() => {
-      const interval = setInterval(() => {
-        setCurrentPrompt(promptRef?.current || '');
-      }, 300);
-      return () => clearInterval(interval);
-    }, [promptRef]);
-  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentPrompt(promptRef?.current || '');
+    }, 300);
+    return () => clearInterval(interval);
+  }, [promptRef]);
+
+  useEffect(() => {
+    const handleClickOutside = () => setOpenId(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
   return (
     <div className="masonry-grid">
       {images.map((img) => (
         <div
           key={img.id}
           className="gallery-card"
-          onClick={() => onImageClick(img)}
+          onClick={() => { setOpenId(null); onImageClick(img); }}
         >
           <img
             src={img.url}
@@ -86,43 +92,48 @@ export default function MasonryGrid({ images, promptRef, onImageClick, onSelectP
             loading="lazy"
             className="allow-visitor"
           />
-          <div className="gallery-overlay">
-            <div className="more-btn" onClick={e => e.stopPropagation()}>
-              <span>···</span>
-              <div className="more-dropdown">
-                <button
-                  className="icon-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const currentPrompt = promptRef?.current || '';
-                    const imagePrompt = img.prompt || '';
-                    if (currentPrompt.trim() === (img.prompt || '').trim() && currentPrompt !== '') {
-                      onSelectPrompt('');
-                    } else {
-                      onSelectPrompt(img.prompt);
-                    }
-                  }}
-                  data-tooltip={
-                    currentPrompt.trim() === (img.prompt || '').trim() && currentPrompt ? 'Unload prompt' : 'Load prompt'
+
+          <div
+            className={`more-btn ${openId === img.id ? 'open' : ''}`}
+            onClick={e => { e.stopPropagation(); setOpenId(openId === img.id ? null : img.id); }}
+          >
+            <span>···</span>
+            <div className="more-dropdown" onClick={e => e.stopPropagation()}>
+              <button
+                className="dropdown-item"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenId(null);
+                  const cp = currentPrompt.trim();
+                  const ip = (img.prompt || '').trim();
+                  if (cp === ip && cp !== '') {
+                    onSelectPrompt('');
+                  } else {
+                    onSelectPrompt(img.prompt);
                   }
-                >
-                  <RotateCcw size={18} color="#ffffff" />
-                </button>
-                <button
-                  className="icon-btn"
-                  onClick={(e) => downloadImage(e, img.url, img.id)}
-                  data-tooltip="Download"
-                >
-                  <Download size={18} color="#ffffff" />
-                </button>
-                <button
-                  className="icon-btn"
-                  onClick={(e) => { e.stopPropagation(); onEditImage(img); }}
-                  data-tooltip="Edit"
-                >
-                  <Wand2 size={18} color="#ffffff" />
-                </button>
-              </div>
+                }}
+              >
+                <RotateCcw size={15} />
+                <span>{currentPrompt.trim() === (img.prompt || '').trim() && currentPrompt ? 'Unload prompt' : 'Load prompt'}</span>
+              </button>
+              <button
+                className="dropdown-item"
+                onClick={(e) => { setOpenId(null); downloadImage(e, img.url, img.id); }}
+              >
+                <Download size={15} />
+                <span>Download</span>
+              </button>
+              <button
+                className="dropdown-item"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenId(null);
+                  onEditImage(img);
+                }}
+              >
+                <Wand2 size={15} />
+                <span>Edit image</span>
+              </button>
             </div>
           </div>
 
