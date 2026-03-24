@@ -4,6 +4,15 @@ import { Wand2, Download, Heart, RotateCcw } from 'lucide-react';
 import { supabase } from '../../lib/supabase.js';
 import { useAuth } from '../../context/AuthContext';
 
+const [currentPrompt, setCurrentPrompt] = useState(promptRef?.current || '');
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentPrompt(promptRef?.current || '');
+    }, 300);
+    return () => clearInterval(interval);
+  }, [promptRef]);
+
 const downloadImage = async (e, url, imageId) => {
   e.stopPropagation();
   try {
@@ -86,16 +95,14 @@ export default function MasonryGrid({ images, promptRef, onImageClick, onSelectP
                     e.stopPropagation();
                     const currentPrompt = promptRef?.current || '';
                     const imagePrompt = img.prompt || '';
-                    if (currentPrompt.trim() === imagePrompt.trim() && currentPrompt !== '') {
+                    if (currentPrompt.trim() === (img.prompt || '').trim() && currentPrompt !== '') {
                       onSelectPrompt('');
                     } else {
                       onSelectPrompt(img.prompt);
                     }
                   }}
                   data-tooltip={
-                    promptRef?.current?.trim() === (img.prompt || '').trim() && promptRef?.current
-                      ? 'Unload prompt'
-                      : 'Load prompt'
+                    currentPrompt.trim() === (img.prompt || '').trim() && currentPrompt ? 'Unload prompt' : 'Load prompt'
                   }
                 >
                   <RotateCcw size={18} color="#ffffff" />
