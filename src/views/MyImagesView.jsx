@@ -84,15 +84,17 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, prom
                   className="icon-btn"
                   onClick={(e) => {
                     e.stopPropagation();
-                    const currentPrompt = String(prompt || '');
-                    const imagePrompt = String(img.prompt || '');
+                    const currentPrompt = prompt || '';
+                    const imagePrompt = img.prompt || '';
                     if (currentPrompt.trim() === imagePrompt.trim() && currentPrompt !== '') {
                       onSelectPrompt('');
                     } else {
                       onSelectPrompt(img.prompt);
                     }
                   }}
-                  data-tooltip={String(prompt || '').trim() === String(img.prompt || '').trim() && prompt ? 'Unload prompt' : 'Load prompt'}
+                  data-tooltip={
+                    (prompt || '').trim() === (img.prompt || '').trim() && prompt ? 'Unload prompt' : 'Load prompt'
+                  }
                 >
                   <RotateCcw size={18} color="#ffffff" />
                 </button>
