@@ -84,7 +84,7 @@ export default function MasonryGrid({ images, promptRef, onImageClick, onSelectP
                   className="icon-btn"
                   onClick={(e) => {
                     e.stopPropagation();
-                    const currentPrompt = prompt || '';
+                    const currentPrompt = promptRef?.current || '';
                     const imagePrompt = img.prompt || '';
                     if (currentPrompt.trim() === imagePrompt.trim() && currentPrompt !== '') {
                       onSelectPrompt('');
@@ -92,7 +92,7 @@ export default function MasonryGrid({ images, promptRef, onImageClick, onSelectP
                       onSelectPrompt(img.prompt);
                     }
                   }}
-                  data-tooltip={(prompt || '').trim() === (img.prompt || '').trim() && prompt ? 'Unload prompt' : 'Load prompt'}
+                  data-tooltip={(promptRef?.current || '').trim() === (img.prompt || '').trim() && promptRef?.current ? 'Unload prompt' : 'Load prompt'}
                 >
                   <RotateCcw size={18} color="#ffffff" />
                 </button>
