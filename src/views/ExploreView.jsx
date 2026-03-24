@@ -37,6 +37,8 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
   const loadImages = useCallback(async () => {
     onFetching?.();
     setLoading(true);
+    setImages([]); // ✅ clear stale images immediately on category switch
+  
     try {
       let query = supabase
         .from('images')
@@ -48,18 +50,15 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
         query = query.eq('style', styleId);
       }
   
-      // ✅ fetch images FIRST
       const { data, error } = await query;
       if (error) throw error;
   
-      // ✅ then fetch likes
       const { data: userLikes } = user
         ? await supabase.from('image_likes').select('image_id').eq('user_id', user.id)
         : { data: [] };
   
       const likedSet = new Set((userLikes || []).map(l => l.image_id));
   
-      // ✅ now map over data safely
       const fetchedImages = (data || []).map(doc => ({
         id: doc.id,
         url: doc.image_url,
@@ -82,7 +81,14 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
       );
   
       setImages(shuffled);
-      onReady?.();
+  
+      // ✅ wait one frame for React to render before lifting curtain
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          onReady?.();
+        });
+      });
+  
     } catch (err) {
       console.error("Failed to fetch explore images:", err);
       onReady?.();
