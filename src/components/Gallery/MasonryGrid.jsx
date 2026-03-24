@@ -32,35 +32,16 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
     if (!user) return;
 
     const newLiked = !liked;
-
-    if (newLiked) {
-      await supabase.from('image_likes').insert({ user_id: user.id, image_id: imageId });
-      const { error } = await supabase.rpc('increment_likes', { image_id: imageId });
-      console.log('increment error:', error);
-    } else {
-      await supabase.from('image_likes').delete()
-        .eq('user_id', user.id)
-        .eq('image_id', imageId);
-      const { error } = await supabase.rpc('decrement_likes', { image_id: imageId });
-      console.log('decrement error:', error);
-    }
-
-    // Optimistic UI update
     setLiked(newLiked);
     setLikes(prev => Math.max(0, newLiked ? prev + 1 : prev - 1));
 
     try {
-      if (newLiked) {
-        await supabase.from('image_likes').insert({ user_id: user.id, image_id: imageId });
-        await supabase.rpc('increment_likes', { image_id: imageId });
-      } else {
-        await supabase.from('image_likes').delete()
-          .eq('user_id', user.id)
-          .eq('image_id', imageId);
-        await supabase.rpc('decrement_likes', { image_id: imageId });
-      }
+      const { error } = await supabase.rpc('toggle_like', {
+        p_user_id: user.id,
+        p_image_id: imageId,
+      });
+      if (error) throw error;
     } catch (err) {
-      // Roll back UI if DB write fails
       console.error('Like failed:', err);
       setLiked(!newLiked);
       setLikes(prev => Math.max(0, newLiked ? prev - 1 : prev + 1));
