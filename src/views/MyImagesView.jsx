@@ -27,12 +27,11 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
   const [liked, setLiked] = useState(initialLiked);
   const [likes, setLikes] = useState(initialLikes);
 
-  // ✅ Add this — syncs state when parent data loads
   useEffect(() => {
     setLiked(initialLiked);
     setLikes(initialLikes);
   }, [initialLiked, initialLikes]);
-  
+
   const handleLike = async (e) => {
     e.stopPropagation();
     if (!user) return;
@@ -63,6 +62,14 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
 }
 
 export default function MyImagesView({ images, onSelectPrompt, onViewImage, prompt, onEditImage }) {
+  const [openId, setOpenId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = () => setOpenId(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
   if (!images || images.length === 0) {
     return <EmptyState title="No images yet" description="Generate something first!" />;
   }
@@ -73,46 +80,51 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, prom
         <div
           key={img.id}
           className="gallery-card"
-          onClick={() => onViewImage(img)}
+          onClick={() => { setOpenId(null); onViewImage(img); }}
         >
           <img src={img.url} alt="Generated AI image" loading="lazy" />
-          <div className="gallery-overlay">
-            <div className="more-btn" onClick={e => e.stopPropagation()}>
-              <span>···</span>
-              <div className="more-dropdown">
-                <button
-                  className="icon-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const currentPrompt = prompt || '';
-                    const imagePrompt = img.prompt || '';
-                    if (currentPrompt.trim() === imagePrompt.trim() && currentPrompt !== '') {
-                      onSelectPrompt('');
-                    } else {
-                      onSelectPrompt(img.prompt);
-                    }
-                  }}
-                  data-tooltip={
-                    (prompt || '').trim() === (img.prompt || '').trim() && prompt ? 'Unload prompt' : 'Load prompt'
+
+          <div
+            className={`more-btn ${openId === img.id ? 'open' : ''}`}
+            onClick={e => { e.stopPropagation(); setOpenId(openId === img.id ? null : img.id); }}
+          >
+            <span>···</span>
+            <div className="more-dropdown" onClick={e => e.stopPropagation()}>
+              <button
+                className="dropdown-item"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenId(null);
+                  const currentPrompt = prompt || '';
+                  const imagePrompt = img.prompt || '';
+                  if (currentPrompt.trim() === imagePrompt.trim() && currentPrompt !== '') {
+                    onSelectPrompt('');
+                  } else {
+                    onSelectPrompt(img.prompt);
                   }
-                >
-                  <RotateCcw size={18} color="#ffffff" />
-                </button>
-                <button
-                  className="icon-btn"
-                  onClick={(e) => downloadImage(e, img.url, img.id)}
-                  data-tooltip="Download"
-                >
-                  <Download size={18} color="#ffffff" />
-                </button>
-                <button
-                  className="icon-btn"
-                  onClick={(e) => { e.stopPropagation(); onEditImage(img); }}
-                  data-tooltip="Edit"
-                >
-                  <Wand2 size={18} color="#ffffff" />
-                </button>
-              </div>
+                }}
+              >
+                <RotateCcw size={15} />
+                <span>{(prompt || '').trim() === (img.prompt || '').trim() && prompt ? 'Unload prompt' : 'Load prompt'}</span>
+              </button>
+              <button
+                className="dropdown-item"
+                onClick={(e) => { setOpenId(null); downloadImage(e, img.url, img.id); }}
+              >
+                <Download size={15} />
+                <span>Download</span>
+              </button>
+              <button
+                className="dropdown-item"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenId(null);
+                  onEditImage(img);
+                }}
+              >
+                <Wand2 size={15} />
+                <span>Edit image</span>
+              </button>
             </div>
           </div>
 
