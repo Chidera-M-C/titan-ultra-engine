@@ -77,42 +77,40 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, prom
         >
           <img src={img.url} alt="Generated AI image" loading="lazy" />
           <div className="gallery-overlay">
-            <div className="overlay-actions">
-              <button
-                className="icon-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const currentPrompt = prompt || '';
-                  const imagePrompt = img.prompt || '';
-                  if (currentPrompt.trim() === imagePrompt.trim() && currentPrompt !== '') {
-                    onSelectPrompt('');
-                  } else {
-                    onSelectPrompt(img.prompt);
-                  }
-                }}
-                data-tooltip={
-                  (prompt || '').trim() === (img.prompt || '').trim() && prompt ? 'Unload prompt' : 'Load prompt'
-                }
-              >
-                <RotateCcw size={18} color="#ffffff" />
-              </button>
-              <button
-                className="icon-btn"
-                onClick={(e) => downloadImage(e, img.url, img.id)}
-                data-tooltip="Download image"
-              >
-                <Download size={18} color="#ffffff" />
-              </button>
-              <button
-                className="icon-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEditImage(img);
-                }}
-                data-tooltip="Edit image"
-              >
-                <Wand2 size={18} color="#ffffff" />
-              </button>
+            <div className="more-btn" onClick={e => e.stopPropagation()}>
+              <span>···</span>
+              <div className="more-dropdown">
+                <button
+                  className="icon-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const currentPrompt = prompt || '';
+                    const imagePrompt = img.prompt || '';
+                    if (currentPrompt.trim() === imagePrompt.trim() && currentPrompt !== '') {
+                      onSelectPrompt('');
+                    } else {
+                      onSelectPrompt(img.prompt);
+                    }
+                  }}
+                  data-tooltip={(prompt || '').trim() === (img.prompt || '').trim() && prompt ? 'Unload prompt' : 'Load prompt'}
+                >
+                  <RotateCcw size={18} color="#ffffff" />
+                </button>
+                <button
+                  className="icon-btn"
+                  onClick={(e) => downloadImage(e, img.url, img.id)}
+                  data-tooltip="Download"
+                >
+                  <Download size={18} color="#ffffff" />
+                </button>
+                <button
+                  className="icon-btn"
+                  onClick={(e) => { e.stopPropagation(); onEditImage(img); }}
+                  data-tooltip="Edit"
+                >
+                  <Wand2 size={18} color="#ffffff" />
+                </button>
+              </div>
             </div>
           </div>
 
