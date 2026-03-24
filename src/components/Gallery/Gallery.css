@@ -292,3 +292,20 @@
     height: 15px !important;
   }
 }
+
+/* Hide more-btn by default on desktop, show on card hover */
+@media (hover: hover) {
+  .more-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .gallery-card:hover .more-btn {
+    opacity: 1;
+  }
+
+  /* Keep it visible when dropdown is open */
+  .more-btn.open {
+    opacity: 1;
+  }
+}
