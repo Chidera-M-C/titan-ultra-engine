@@ -1,92 +1,94 @@
-import { S3Client, ListObjectsV2Command, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
-
 export async function onRequestPost(context) {
   const { env } = context;
 
-  // 1. Setup Supabase Source (The "Old" Warehouse)
-  const s3Supabase = new S3Client({
-    region: "us-east-1",
-    endpoint: "https://rtklziobobnsqxsozmoq.supabase.co/storage/v1/s3",
-    credentials: {
-      accessKeyId: env.SUPABASE_S3_ACCESS_KEY,
-      secretAccessKey: env.SUPABASE_S3_SECRET_KEY,
-    },
-    forcePathStyle: true, // Fixes the Supabase S3 error
-  });
-
-  // 2. Setup Cloudflare R2 Destination (The "New" Warehouse)
-  const s3R2 = new S3Client({
-    region: "auto",
-    endpoint: `https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId: env.R2_ACCESS_KEY_ID,
-      secretAccessKey: env.R2_SECRET_ACCESS_KEY,
-    },
-  });
+  // 1. Setup Configuration from your Environment Variables
+  const SUPABASE_PROJECT_ID = "rtklziobobnsqxsozmoq";
+  const R2_PUBLIC_URL = "https://pub-b591e1b05eb8435da2f642972e097ad6.r2.dev";
+  
+  // We'll use the Supabase REST API to get the list of images to move
+  const SUPABASE_REST_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/rest/v1/images?select=image_url`;
 
   try {
-    let continuationToken = null;
-    let totalMoved = 0;
+    console.log("🚀 Fetching image list from Supabase Database...");
 
-    console.log("🚀 Starting Full Migration from Supabase to R2...");
-
-    do {
-      const listParams = {
-        Bucket: "generated_images", // Supabase source bucket (underscore)
-        Prefix: "public/",          // CRITICAL: Supabase stores public files here
-        ContinuationToken: continuationToken,
-      };
-
-      const { Contents, NextContinuationToken } = await s3Supabase.send(new ListObjectsV2Command(listParams));
-
-      if (!Contents || Contents.length === 0) {
-        console.log("No files found in this batch.");
-        break;
+    // 2. Get the list of all images currently in your DB
+    const listResponse = await fetch(SUPABASE_REST_URL, {
+      headers: {
+        'apikey': env.SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${env.SUPABASE_ANON_KEY}`
       }
+    });
 
-      for (const object of Contents) {
-        // Skip folder placeholders
-        if (object.Key.endsWith('/')) continue;
+    if (!listResponse.ok) {
+      throw new Error(`Failed to fetch image list: ${listResponse.statusText}`);
+    }
 
-        // 1. Download from Supabase
-        const getObj = await s3Supabase.send(new GetObjectCommand({
-          Bucket: "generated_images",
-          Key: object.Key
-        }));
+    const images = await listResponse.json();
+    let movedCount = 0;
+    let errorCount = 0;
 
-        // 2. Convert stream to Uint8Array for Cloudflare Worker environment
-        const bodyContents = await getObj.Body.transformToByteArray();
+    console.log(`Found ${images.length} images to process.`);
 
-        // 3. Upload to R2 (Target bucket: generated-images with hyphen)
-        // Note: object.Key includes the "public/" prefix, keeping structure intact
-        await s3R2.send(new PutObjectCommand({
-          Bucket: "generated-images", 
-          Key: object.Key,
-          Body: bodyContents,
-          ContentType: getObj.ContentType || 'image/jpeg',
-        }));
+    // 3. Loop through and move each one
+    for (const row of images) {
+      const oldUrl = row.image_url;
 
-        totalMoved++;
-        console.log(`✅ Migrated: ${object.Key}`);
+      // Only process images that are still pointing to Supabase
+      if (!oldUrl || !oldUrl.includes('supabase.co')) continue;
+
+      try {
+        // Extract the path (e.g., "userId/image.jpg")
+        // This assumes your URL structure is .../public/generated_images/path
+        const path = oldUrl.split('generated_images/')[1];
+        if (!path) continue;
+
+        // Fetch the actual image data from Supabase Storage
+        const imageResp = await fetch(oldUrl);
+        if (!imageResp.ok) {
+          console.error(`Could not fetch image file: ${oldUrl}`);
+          errorCount++;
+          continue;
+        }
+
+        const imageData = await imageResp.arrayBuffer();
+
+        // 4. Upload directly to R2 using the S3-compatible API via Fetch
+        // We use the R2 worker binding if available, or a direct PUT request
+        // Since we are in a Worker, we can use the R2 bucket binding if you linked it
+        // If not, we use the Public R2 API
+        const r2Upload = await fetch(`https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/generated-images/${path}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': imageResp.headers.get('Content-Type') || 'image/jpeg',
+            'Authorization': `Bearer ${env.R2_SECRET_ACCESS_KEY}` 
+          },
+          body: imageData
+        });
+
+        if (r2Upload.ok) {
+          movedCount++;
+        } else {
+          errorCount++;
+        }
+      } catch (innerError) {
+        console.error(`Error moving ${oldUrl}:`, innerError);
+        errorCount++;
       }
-
-      continuationToken = NextContinuationToken;
-    } while (continuationToken);
+    }
 
     return new Response(JSON.stringify({ 
       success: true, 
-      count: totalMoved,
-      message: `Successfully migrated ${totalMoved} files (including folders).` 
+      migrated: movedCount, 
+      failed: errorCount,
+      message: "Migration cycle complete." 
     }), { 
       headers: { "Content-Type": "application/json" } 
     });
 
   } catch (error) {
-    console.error("Migration Error:", error);
     return new Response(JSON.stringify({ 
-      success: false,
-      error: error.message,
-      stack: error.stack 
+      success: false, 
+      error: error.message 
     }), { 
       status: 500, 
       headers: { "Content-Type": "application/json" } 
