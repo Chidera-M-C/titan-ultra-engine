@@ -32,15 +32,26 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
     if (!user) return;
 
     const newLiked = !liked;
-    setLiked(newLiked);
-    setLikes(prev => newLiked ? prev + 1 : prev - 1);
 
-    if (newLiked) {
-      await supabase.from('image_likes').insert({ user_id: user.id, image_id: imageId });
-      await supabase.from('images').update({ likes: likes + 1 }).eq('id', imageId);
-    } else {
-      await supabase.from('image_likes').delete().eq('user_id', user.id).eq('image_id', imageId);
-      await supabase.from('images').update({ likes: likes - 1 }).eq('id', imageId);
+    // Optimistic UI update
+    setLiked(newLiked);
+    setLikes(prev => Math.max(0, newLiked ? prev + 1 : prev - 1));
+
+    try {
+      if (newLiked) {
+        await supabase.from('image_likes').insert({ user_id: user.id, image_id: imageId });
+        await supabase.rpc('increment_likes', { image_id: imageId });
+      } else {
+        await supabase.from('image_likes').delete()
+          .eq('user_id', user.id)
+          .eq('image_id', imageId);
+        await supabase.rpc('decrement_likes', { image_id: imageId });
+      }
+    } catch (err) {
+      // Roll back UI if DB write fails
+      console.error('Like failed:', err);
+      setLiked(!newLiked);
+      setLikes(prev => Math.max(0, newLiked ? prev - 1 : prev + 1));
     }
   };
 
@@ -109,7 +120,6 @@ export default function MasonryGrid({ images, promptRef, onImageClick, onSelectP
             </div>
           </div>
 
-          {/* Always visible like badge */}
           <HeartButton
             imageId={img.id}
             initialLikes={img.likes || 0}
