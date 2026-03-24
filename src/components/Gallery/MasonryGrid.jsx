@@ -1,5 +1,5 @@
 import './Gallery.css';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Wand2, Download, Heart, RotateCcw } from 'lucide-react';
 import { supabase } from '../../lib/supabase.js';
 import { useAuth } from '../../context/AuthContext';
@@ -26,6 +26,11 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
   const { user } = useAuth();
   const [liked, setLiked] = useState(initialLiked);
   const [likes, setLikes] = useState(initialLikes);
+
+  useEffect(() => {
+    setLiked(initialLiked);
+    setLikes(initialLikes);
+  }, [initialLiked, initialLikes]);
 
   const handleLike = async (e) => {
     e.stopPropagation();
