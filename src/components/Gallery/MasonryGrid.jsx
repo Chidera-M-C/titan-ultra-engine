@@ -33,6 +33,18 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
 
     const newLiked = !liked;
 
+    if (newLiked) {
+      await supabase.from('image_likes').insert({ user_id: user.id, image_id: imageId });
+      const { error } = await supabase.rpc('increment_likes', { image_id: imageId });
+      console.log('increment error:', error);
+    } else {
+      await supabase.from('image_likes').delete()
+        .eq('user_id', user.id)
+        .eq('image_id', imageId);
+      const { error } = await supabase.rpc('decrement_likes', { image_id: imageId });
+      console.log('decrement error:', error);
+    }
+
     // Optimistic UI update
     setLiked(newLiked);
     setLikes(prev => Math.max(0, newLiked ? prev + 1 : prev - 1));
