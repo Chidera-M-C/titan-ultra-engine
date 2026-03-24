@@ -1,44 +1,39 @@
 import { supabase } from './supabase';
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-
-const r2Client = new S3Client({
-  region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-  },
-});
-
-const R2_PUBLIC_URL = "https://pub-b591e1b05eb8435da2f642972e097ad6.r2.dev";
 
 export const saveAiImage = async (userId, base64String, prompt, style = null) => {
+  console.log('📸 saveAiImage called. userId:', userId, 'prompt:', prompt?.slice(0, 30));
+
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) throw new Error('No active session');
+    // Step 1: Verify session
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) throw new Error(`Session error: ${sessionError.message}`);
+    if (!session) throw new Error('No active session — user not authenticated');
+    console.log('✅ Step 1: Session valid.');
 
-    // Convert base64 to Uint8Array for R2 upload
-    const base64Data = base64String.replace(/^data:image\/\w+;base64,/, '');
-    const byteCharacters = atob(base64Data);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    // Step 2: Upload to R2 via API route
+    const fileName = `${Date.now()}.jpg`;
+    console.log('⏳ Step 2: Uploading to R2...', fileName);
+
+    const uploadRes = await fetch('/api/upload-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        base64: base64String,
+        userId,
+        fileName,
+      }),
+    });
+
+    if (!uploadRes.ok) {
+      const err = await uploadRes.json();
+      throw new Error(`R2 upload failed: ${err.error}`);
     }
-    const binaryData = new Uint8Array(byteNumbers);
 
-    const fileName = `${userId}/${Date.now()}.jpg`;
+    const { publicUrl } = await uploadRes.json();
+    console.log('✅ Step 2: R2 upload successful. URL:', publicUrl);
 
-    // Upload to Cloudflare R2
-    await r2Client.send(new PutObjectCommand({
-      Bucket: "generated-images",
-      Key: fileName,
-      Body: binaryData,
-      ContentType: 'image/jpeg',
-    }));
-
-    const publicUrl = `${R2_PUBLIC_URL}/${fileName}`;
-
-    // Save the Cloudflare URL to your existing Supabase table
+    // Step 3: Insert into Supabase images table (unchanged)
+    console.log('⏳ Step 3: Inserting into images table...');
     const { error: dbError } = await supabase
       .from('images')
       .insert([{
@@ -46,10 +41,11 @@ export const saveAiImage = async (userId, base64String, prompt, style = null) =>
         image_url: publicUrl,
         prompt: prompt,
         category: 'Explore',
-        style: style
+        style: style,
       }]);
 
     if (dbError) throw new Error(`DB insert failed: ${dbError.message}`);
+    console.log('✅ Step 3: DB insert successful.');
 
     return publicUrl;
   } catch (error) {
