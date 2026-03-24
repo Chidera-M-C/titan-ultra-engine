@@ -1,54 +1,49 @@
+import { S3Client, ListObjectsV2Command, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+
 export async function onRequestPost(context) {
   const { env } = context;
 
-  const SUPABASE_URL = env.VITE_SUPABASE_URL;
-  const SUPABASE_KEY = env.VITE_SUPABASE_ANON_KEY; 
+  const s3Supabase = new S3Client({
+    region: "us-east-1",
+    endpoint: "https://rtklziobobnsqxsozmoq.supabase.co/storage/v1/s3",
+    credentials: {
+      accessKeyId: env.SUPABASE_S3_ACCESS_KEY,
+      secretAccessKey: env.SUPABASE_S3_SECRET_KEY,
+    },
+    forcePathStyle: true,
+  });
 
   try {
-    // 1. Fetch 20 images that still HAVE NOT been updated to the R2 URL
-    const listResponse = await fetch(`${SUPABASE_URL}/rest/v1/images?select=image_url&image_url=not.ilike.*r2.dev*&limit=20`, {
-      method: 'GET',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-      }
-    });
+    // 1. List files directly from Storage (skipping the DB check)
+    const listParams = {
+      Bucket: "generated_images",
+      Prefix: "public/", 
+    };
 
-    const images = await listResponse.json();
-    
-    if (!images || images.length === 0) {
-      return new Response(JSON.stringify({ success: true, migrated: 0, message: "🎉 All images are now in Cloudflare!" }));
+    const { Contents } = await s3Supabase.send(new ListObjectsV2Command(listParams));
+
+    if (!Contents || Contents.length === 0) {
+      return new Response(JSON.stringify({ success: true, message: "No files found in Supabase Storage." }));
     }
 
     let movedCount = 0;
+    // Process a batch of 20 to stay under Cloudflare limits
+    const batch = Contents.slice(0, 20); 
 
-    for (const row of images) {
-      const oldUrl = row.image_url;
-      const path = oldUrl.split('generated_images/')[1];
-      if (!path) continue;
+    for (const object of batch) {
+      if (object.Key.endsWith('/')) continue;
 
-      // Fetch from Supabase
-      const imageResp = await fetch(oldUrl);
-      if (!imageResp.ok) continue;
+      // 2. Download from Supabase
+      const getObj = await s3Supabase.send(new GetObjectCommand({
+        Bucket: "generated_images",
+        Key: object.Key
+      }));
 
-      const imageData = await imageResp.arrayBuffer();
+      const bodyContents = await getObj.Body.transformToByteArray();
 
-      // 2. Upload to R2 Binding
-      await env.MY_BUCKET.put(`public/${path}`, imageData, {
-        httpMetadata: { contentType: imageResp.headers.get('Content-Type') || 'image/jpeg' }
-      });
-
-      // 3. IMPORTANT: Update this specific row in the DB to the new R2 URL immediately
-      const newUrl = `https://pub-b591e1b05eb8435da2f642972e097ad6.r2.dev/public/${path}`;
-      await fetch(`${SUPABASE_URL}/rest/v1/images?image_url=eq.${encodeURIComponent(oldUrl)}`, {
-        method: 'PATCH',
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
-        },
-        body: JSON.stringify({ image_url: newUrl })
+      // 3. Upload to R2 using the Binding
+      await env.MY_BUCKET.put(object.Key, bodyContents, {
+        httpMetadata: { contentType: getObj.ContentType || 'image/jpeg' }
       });
 
       movedCount++;
@@ -56,11 +51,13 @@ export async function onRequestPost(context) {
 
     return new Response(JSON.stringify({ 
       success: true, 
-      migrated: movedCount,
-      message: `Moved ${movedCount} and updated database links.`
+      migrated_this_batch: movedCount,
+      total_found_in_storage: Contents.length 
     }), { headers: { "Content-Type": "application/json" } });
 
   } catch (error) {
-    return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500 });
+    // If the DOMParser error returns, it's because of the AWS SDK version.
+    // In that case, we must use the Dashboard "Sippy" tool.
+    return new Response(JSON.stringify({ error: error.message, stack: error.stack }), { status: 500 });
   }
 }
