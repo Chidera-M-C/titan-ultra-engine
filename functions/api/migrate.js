@@ -1,13 +1,17 @@
 export async function onRequestPost(context) {
   const { env } = context;
 
-  // Use the keys from your Cloudflare Environment Variables
-  const SUPABASE_URL = env.SUPABASE_URL || "https://rtklziobobnsqxsozmoq.supabase.co";
-  const SUPABASE_KEY = env.SUPABASE_ANON_KEY; 
+  // Using the EXACT variable names from your Cloudflare Dashboard
+  const SUPABASE_URL = env.VITE_SUPABASE_URL;
+  const SUPABASE_KEY = env.VITE_SUPABASE_ANON_KEY; 
   const R2_ACCOUNT_ID = env.R2_ACCOUNT_ID;
   const R2_SECRET = env.R2_SECRET_ACCESS_KEY;
 
   try {
+    if (!SUPABASE_KEY || !SUPABASE_URL) {
+      throw new Error("Missing VITE_SUPABASE_ANON_KEY or VITE_SUPABASE_URL in Cloudflare Variables");
+    }
+
     console.log("🚀 Requesting image list from Supabase...");
 
     // 1. Fetch the list of image URLs from your 'images' table
@@ -38,7 +42,7 @@ export async function onRequestPost(context) {
       const path = pathParts[1];
       if (!path) continue;
 
-      // Download from Supabase
+      // Download the file from Supabase Storage
       const imageResp = await fetch(oldUrl);
       if (!imageResp.ok) continue;
 
@@ -60,7 +64,7 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({ 
       success: true, 
       migrated: movedCount, 
-      message: "Check your R2 bucket now!" 
+      message: `Successfully moved ${movedCount} files to R2.` 
     }), { headers: { "Content-Type": "application/json" } });
 
   } catch (error) {
