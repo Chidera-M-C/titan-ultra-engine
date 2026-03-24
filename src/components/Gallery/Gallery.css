@@ -244,8 +244,8 @@
 }
 
 .myimages-cards {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
 }
 
@@ -268,7 +268,7 @@
 .myimages-cat-cover {
   position: relative;
   width: 100%;
-  height: 140px;
+  height: 180px;
   overflow: hidden;
   background: #1a1a1a;
 }
