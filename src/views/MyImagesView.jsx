@@ -55,7 +55,7 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
 
   return (
     <div className="like-badge" onClick={handleLike}>
-      <Heart size={13} fill={liked ? '#ff4b4b' : 'none'} color={liked ? '#ff4b4b' : '#fff'} />
+      <Heart size={16} fill={liked ? '#ff4b4b' : 'none'} color={liked ? '#ff4b4b' : '#fff'} />
       <span>{likes}</span>
     </div>
   );
