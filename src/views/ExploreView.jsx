@@ -42,19 +42,25 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
         .from('images')
         .select('*')
         .order('created_at', { ascending: false });
-
+  
       if (activeCategory !== 'All') {
         const styleId = CATEGORY_STYLE_MAP[activeCategory];
         query = query.eq('style', styleId);
       }
-      
+  
+      // ✅ fetch images FIRST
+      const { data, error } = await query;
+      if (error) throw error;
+  
+      // ✅ then fetch likes
       const { data: userLikes } = user
         ? await supabase.from('image_likes').select('image_id').eq('user_id', user.id)
         : { data: [] };
-      
+  
       const likedSet = new Set((userLikes || []).map(l => l.image_id));
-      
-      const fetchedImages = data.map(doc => ({
+  
+      // ✅ now map over data safely
+      const fetchedImages = (data || []).map(doc => ({
         id: doc.id,
         url: doc.image_url,
         prompt: doc.prompt,
@@ -63,13 +69,9 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
         likes: doc.likes || 0,
         liked: likedSet.has(doc.id),
       }));
-
-      const { data, error } = await query;
-      if (error) throw error;
-
+  
       const shuffled = shuffleArray(fetchedImages);
-
-      // preload all images before revealing — this is what makes it smooth
+  
       await Promise.all(
         shuffled.map(img => new Promise(resolve => {
           const i = new Image();
@@ -78,7 +80,7 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
           i.src = img.url;
         }))
       );
-
+  
       setImages(shuffled);
       onReady?.();
     } catch (err) {
@@ -87,7 +89,7 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
     } finally {
       setLoading(false);
     }
-  }, [activeCategory]);
+  }, [activeCategory, user]);
 
   useEffect(() => {
     loadImages();
