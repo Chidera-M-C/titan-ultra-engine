@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wand2, Download, Heart, RotateCcw } from 'lucide-react';
+import { Wand2, Download, Heart, RotateCcw, ArrowLeft, Sparkles, ImageIcon, User, Shuffle, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../context/AuthContext';
 import EmptyState from '../components/Shared/EmptyState';
@@ -35,11 +35,9 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
   const handleLike = async (e) => {
     e.stopPropagation();
     if (!user) return;
-
     const newLiked = !liked;
     setLiked(newLiked);
     setLikes(prev => Math.max(0, newLiked ? prev + 1 : prev - 1));
-
     try {
       const { error } = await supabase.rpc('toggle_like', {
         p_user_id: user.id,
@@ -61,7 +59,7 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
   );
 }
 
-export default function MyImagesView({ images, onSelectPrompt, onViewImage, prompt, onEditImage }) {
+function ImageGrid({ images, onSelectPrompt, onViewImage, onEditImage, prompt }) {
   const [openId, setOpenId] = useState(null);
 
   useEffect(() => {
@@ -71,7 +69,11 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, prom
   }, []);
 
   if (!images || images.length === 0) {
-    return <EmptyState title="No images yet" description="Generate something first!" />;
+    return (
+      <div className="myimages-empty">
+        <p>No images here yet</p>
+      </div>
+    );
   }
 
   return (
@@ -83,7 +85,6 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, prom
           onClick={() => { setOpenId(null); onViewImage(img); }}
         >
           <img src={img.url} alt="Generated AI image" loading="lazy" />
-
           <div
             className={`more-btn ${openId === img.id ? 'open' : ''}`}
             onClick={e => { e.stopPropagation(); setOpenId(openId === img.id ? null : img.id); }}
@@ -127,7 +128,6 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, prom
               </button>
             </div>
           </div>
-
           <HeartButton
             imageId={img.id}
             initialLikes={img.likes || 0}
@@ -135,6 +135,132 @@ export default function MyImagesView({ images, onSelectPrompt, onViewImage, prom
           />
         </div>
       ))}
+    </div>
+  );
+}
+
+const CATEGORIES = [
+  {
+    key: 'generated',
+    label: 'Generated',
+    description: 'Your AI generated images',
+    icon: Sparkles,
+    accent: '#7c3aed',
+    filter: (img) => !img.category || img.category === '' || (img.category !== 'edit' && img.category !== 'character' && img.category !== 'faceswap'),
+  },
+  {
+    key: 'liked',
+    label: 'Liked',
+    description: 'Images you have liked',
+    icon: Heart,
+    accent: '#e11d48',
+    filter: (img) => img.liked,
+  },
+  {
+    key: 'character',
+    label: 'Character',
+    description: 'Images with your characters',
+    icon: User,
+    accent: '#0ea5e9',
+    filter: (img) => img.category === 'character',
+  },
+  {
+    key: 'edited',
+    label: 'Edited',
+    description: 'Your edited images',
+    icon: Pencil,
+    accent: '#f59e0b',
+    filter: (img) => img.category === 'edit',
+  },
+  {
+    key: 'faceswap',
+    label: 'Face Swap',
+    description: 'Your face swap results',
+    icon: Shuffle,
+    accent: '#10b981',
+    filter: (img) => img.category === 'faceswap',
+  },
+];
+
+export default function MyImagesView({ images, likedImages, onSelectPrompt, onViewImage, prompt, onEditImage }) {
+  const [activeCategory, setActiveCategory] = useState(null);
+
+  const allImages = images || [];
+
+  // For liked images we merge the separate likedImages array
+  const getImages = (cat) => {
+    if (cat.key === 'liked') {
+      return (likedImages || []);
+    }
+    return allImages.filter(cat.filter);
+  };
+
+  if (activeCategory) {
+    const cat = CATEGORIES.find(c => c.key === activeCategory);
+    const catImages = getImages(cat);
+    return (
+      <div className="myimages-drilldown">
+        <div className="myimages-drilldown-header">
+          <button className="myimages-back-btn" onClick={() => setActiveCategory(null)}>
+            <ArrowLeft size={18} />
+            <span>Back</span>
+          </button>
+          <div className="myimages-drilldown-title">
+            <cat.icon size={18} color={cat.accent} />
+            <h2 style={{ color: cat.accent }}>{cat.label}</h2>
+            <span className="myimages-count">{catImages.length}</span>
+          </div>
+        </div>
+        <ImageGrid
+          images={catImages}
+          onSelectPrompt={onSelectPrompt}
+          onViewImage={onViewImage}
+          onEditImage={onEditImage}
+          prompt={prompt}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="myimages-overview">
+      <div className="myimages-cards">
+        {CATEGORIES.map((cat) => {
+          const catImages = getImages(cat);
+          const cover = catImages[0];
+          return (
+            <div
+              key={cat.key}
+              className="myimages-cat-card"
+              style={{ '--cat-accent': cat.accent }}
+              onClick={() => setActiveCategory(cat.key)}
+            >
+              <div className="myimages-cat-cover">
+                {cover ? (
+                  <img src={cover.url} alt={cat.label} loading="lazy" />
+                ) : (
+                  <div className="myimages-cat-empty-cover">
+                    <cat.icon size={32} color={cat.accent} opacity={0.4} />
+                  </div>
+                )}
+                <div className="myimages-cat-overlay" />
+              </div>
+              <div className="myimages-cat-info">
+                <div className="myimages-cat-icon" style={{ background: `${cat.accent}22`, border: `1px solid ${cat.accent}44` }}>
+                  <cat.icon size={16} color={cat.accent} />
+                </div>
+                <div className="myimages-cat-text">
+                  <h3>{cat.label}</h3>
+                  <p>{cat.description}</p>
+                </div>
+                <span className="myimages-cat-count" style={{ color: cat.accent }}>
+                  {catImages.length}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
