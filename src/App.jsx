@@ -55,6 +55,7 @@ export default function App() {
   const [faceswapResult, setFaceswapResult] = useState(null);
   const [faceswapLoading, setFaceswapLoading] = useState(false);
   const [faceswapError, setFaceswapError]     = useState(null);
+  const [likedGallery, setLikedGallery] = useState([]);
 
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
   const promptRef = useRef(prompt);
@@ -71,9 +72,9 @@ export default function App() {
       .then(({ data }) => setUserCharacters(data || []));
   }, [user]);
 
-  // ── Load gallery ──────────────────────────────────────────────────────
+  // ── 1. UPDATE loadGallery to include category and liked images ────────────
   const loadGallery = async () => {
-    if (!user) { setUserGallery([]); return; }
+    if (!user) { setUserGallery([]); setLikedGallery([]); return; }
     try {
       const { data: images, error: imagesError } = await supabase
         .from('images')
@@ -81,21 +82,43 @@ export default function App() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       if (imagesError) throw imagesError;
-  
+   
       const { data: userLikes } = await supabase
         .from('image_likes')
         .select('image_id')
         .eq('user_id', user.id);
-  
+   
       const likedSet = new Set((userLikes || []).map(l => l.image_id));
-  
-      setUserGallery(images.map(doc => ({
+   
+      setUserGallery((images || []).map(doc => ({
         id: doc.id,
         url: doc.image_url,
         prompt: doc.prompt,
         likes: doc.likes || 0,
         liked: likedSet.has(doc.id),
+        category: doc.category || '',
       })));
+   
+      // Fetch full liked images (from any user, liked by current user)
+      if (userLikes && userLikes.length > 0) {
+        const likedIds = userLikes.map(l => l.image_id);
+        const { data: likedImagesData } = await supabase
+          .from('images')
+          .select('*')
+          .in('id', likedIds)
+          .order('created_at', { ascending: false });
+   
+        setLikedGallery((likedImagesData || []).map(doc => ({
+          id: doc.id,
+          url: doc.image_url,
+          prompt: doc.prompt,
+          likes: doc.likes || 0,
+          liked: true,
+          category: doc.category || '',
+        })));
+      } else {
+        setLikedGallery([]);
+      }
     } catch (err) {
       console.error('Supabase Sync error:', err);
     }
@@ -236,7 +259,7 @@ export default function App() {
           try {
             await deductCreditsLive(2);
             const publicUrl = await saveAiImage(user.id, base64Image, prompt, styleId);
-            setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt, likes: 0, liked: false }, ...prev]);
+            setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt, likes: 0, liked: false, category: styleId || '' }, ...prev]);
           } catch (err) { console.error('❌ Post-generation save failed:', err); }
         })();
       } else if (statusData.status === 'FAILED') {
@@ -436,6 +459,7 @@ export default function App() {
       case 'gallery':
         return <MyImagesView
           images={userGallery}
+          likedImages={likedGallery}
           prompt={prompt}
           onSelectPrompt={handleSelectPrompt}
           onViewImage={handleViewImage}
