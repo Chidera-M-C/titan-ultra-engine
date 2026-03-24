@@ -236,7 +236,7 @@ export default function App() {
           try {
             await deductCreditsLive(2);
             const publicUrl = await saveAiImage(user.id, base64Image, prompt, styleId);
-            setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt }, ...prev]);
+            setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt, likes: 0, liked: false }, ...prev]);
           } catch (err) { console.error('❌ Post-generation save failed:', err); }
         })();
       } else if (statusData.status === 'FAILED') {
