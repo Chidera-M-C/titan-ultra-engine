@@ -92,7 +92,11 @@ export default function MasonryGrid({ images, promptRef, onImageClick, onSelectP
                       onSelectPrompt(img.prompt);
                     }
                   }}
-                  data-tooltip={(promptRef?.current || '').trim() === (img.prompt || '').trim() && promptRef?.current ? 'Unload prompt' : 'Load prompt'}
+                  data-tooltip={
+                    promptRef?.current?.trim() === (img.prompt || '').trim() && promptRef?.current
+                      ? 'Unload prompt'
+                      : 'Load prompt'
+                  }
                 >
                   <RotateCcw size={18} color="#ffffff" />
                 </button>
