@@ -82,8 +82,17 @@ export default function MasonryGrid({ images, promptRef, onImageClick, onSelectP
               <div className="more-dropdown">
                 <button
                   className="icon-btn"
-                  onClick={(e) => { ... }} // keep your existing load prompt logic
-                  data-tooltip="Load prompt"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const currentPrompt = prompt || '';
+                    const imagePrompt = img.prompt || '';
+                    if (currentPrompt.trim() === imagePrompt.trim() && currentPrompt !== '') {
+                      onSelectPrompt('');
+                    } else {
+                      onSelectPrompt(img.prompt);
+                    }
+                  }}
+                  data-tooltip={(prompt || '').trim() === (img.prompt || '').trim() && prompt ? 'Unload prompt' : 'Load prompt'}
                 >
                   <RotateCcw size={18} color="#ffffff" />
                 </button>
