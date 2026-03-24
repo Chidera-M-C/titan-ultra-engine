@@ -546,7 +546,7 @@ export default function App() {
         />
 
         <main className="main-content">
-          {activeTab !== 'style' && activeTab !== 'character' && activeTab !== 'edit' && activeTab !== 'faceswap' && (
+          {activeTab !== 'style' && activeTab !== 'character' && activeTab !== 'edit' && activeTab !== 'faceswap' && activeTab !== 'gallery' && (
             <header className={`top-header ${promptCollapsed ? 'collapsed' : ''}`}>
               <h1 className="aesthetic-title">What will you create?</h1>
               <PromptBox {...promptBoxProps} collapsed={promptCollapsed} />
