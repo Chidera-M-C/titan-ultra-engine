@@ -8,6 +8,7 @@ export function AuthProvider({ children }) {
   const [credits, setCredits] = useState(0);
   const [loading, setLoading] = useState(true);
   const initializedUserRef    = useRef(null);
+  const [profile, setProfile] = useState({ username: '', avatar_url: '' });
 
   const hideSplash = () => {
     setLoading(false);
@@ -22,7 +23,7 @@ export function AuthProvider({ children }) {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('credits')
+        .select('credits, username, avatar_url')
         .eq('id', authUser.id)
         .single();
 
@@ -34,6 +35,7 @@ export function AuthProvider({ children }) {
           .single();
         if (createError) throw createError;
         if (newUser) setCredits(newUser.credits);
+        setProfile({ username: data.username || '', avatar_url: data.avatar_url || '' });
       } else if (error) {
         throw error;
       } else if (data) {
@@ -173,6 +175,8 @@ export function AuthProvider({ children }) {
       user,
       credits,
       setCredits,
+      profile,
+      setProfile,
       loginWithGoogle,
       signUpWithEmail,
       signInWithEmail,
