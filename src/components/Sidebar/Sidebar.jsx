@@ -4,6 +4,8 @@ import {
   User,
   History,
   Sparkles,
+  Wand2,
+  Repeat2,
   MoreHorizontal,
   Settings,
   HelpCircle,
@@ -13,6 +15,7 @@ import NavItem from './NavItem';
 import CreditsCard from './CreditsCard';
 import Promptimize from './Promptimize';
 import { useAuth } from '../../context/AuthContext';
+import NudelyLogo from '../../assets/nudely-logo.png';
 import './Sidebar.css';
 
 export default function Sidebar({
@@ -62,9 +65,9 @@ export default function Sidebar({
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-top">
+
         <div className="brand">
-          <div className="brand-logo">N</div>
-          <span>Nudely</span>
+          <img src={NudelyLogo} alt="Nudely" style={{ height: '24px', width: 'auto' }} />
         </div>
 
         <nav className="side-nav">
@@ -93,6 +96,18 @@ export default function Sidebar({
             label="Style"
             isActive={activeTab === 'style'}
             onClick={() => onNavigate('style')}
+          />
+          <NavItem
+            icon={Wand2}
+            label="Edit Image"
+            isActive={activeTab === 'edit'}
+            onClick={() => onNavigate('edit')}
+          />
+          <NavItem
+            icon={Repeat2}
+            label="Face Swap"
+            isActive={activeTab === 'faceswap'}
+            onClick={() => onNavigate('faceswap')}
           />
         </nav>
 
