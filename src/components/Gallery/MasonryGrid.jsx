@@ -35,21 +35,34 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
   const handleLike = async (e) => {
     e.stopPropagation();
     if (!user) return;
-
+  
     const newLiked = !liked;
     setLiked(newLiked);
-    setLikes(prev => Math.max(0, newLiked ? prev + 1 : prev - 1));
-
-    try {
-      const { error } = await supabase.rpc('toggle_like', {
-        p_user_id: user.id,
-        p_image_id: imageId,
-      });
-      if (error) throw error;
-    } catch (err) {
-      console.error('Like failed:', err);
-      setLiked(!newLiked);
-      setLikes(prev => Math.max(0, newLiked ? prev - 1 : prev + 1));
+    setLikes(prev => newLiked ? prev + 1 : prev - 1);
+  
+    if (newLiked) {
+      await supabase.from('image_likes').insert({ user_id: user.id, image_id: imageId });
+      await supabase.from('images').update({ likes: likes + 1 }).eq('id', imageId);
+  
+      // Get the image owner and notify them (only if it's not their own image)
+      const { data: imgData } = await supabase
+        .from('images')
+        .select('user_id')
+        .eq('id', imageId)
+        .single();
+  
+      if (imgData && imgData.user_id !== user.id) {
+        await supabase.from('notifications').insert({
+          user_id: imgData.user_id,
+          type: 'like',
+          title: 'Someone liked your image',
+          message: 'Your image just got a like!',
+          image_id: imageId,
+        });
+      }
+    } else {
+      await supabase.from('image_likes').delete().eq('user_id', user.id).eq('image_id', imageId);
+      await supabase.from('images').update({ likes: likes - 1 }).eq('id', imageId);
     }
   };
 
