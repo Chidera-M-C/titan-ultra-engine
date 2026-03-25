@@ -396,7 +396,7 @@ export default function App() {
     setActiveTab(tab);
     setIsSidebarOpen(false);
     setPromptCollapsed(false);
-    if (['explore', 'gallery', 'style', 'edit', 'character', 'faceswap'].includes(tab)) {
+    if (['explore', 'gallery', 'style', 'edit', 'character', 'faceswap', 'settings'].includes(tab)) {
       setViewState('gallery');
     } else {
       setViewState('empty');
