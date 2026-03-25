@@ -115,7 +115,7 @@ body, html {
 .mobile-menu-toggle {
   display: none;
   position: fixed;
-  top: 40px;
+  top: 35px;
   left: unset;
   right: 15px;
   z-index: 10002;
@@ -231,7 +231,7 @@ body, html {
 .top-header-row .notif-bell-wrapper {
   position: absolute;
   right: 0;
-  top: 40px;
+  top: 15px;
   transition: opacity 0.4s ease;
 }
 
