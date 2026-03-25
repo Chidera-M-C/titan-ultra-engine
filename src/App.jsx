@@ -552,8 +552,12 @@ export default function App() {
         <main className="main-content">
           {activeTab !== 'style' && activeTab !== 'character' && activeTab !== 'edit' && activeTab !== 'faceswap' && activeTab !== 'gallery' && activeTab !== 'settings' && (
             <header className={`top-header ${promptCollapsed ? 'collapsed' : ''}`}>
-              <h1 className="aesthetic-title">What will you create?</h1>
-              <NotificationBell />   {/* 👈 add this */}
+              <div className="top-header-row">
+                <h1 className="aesthetic-title">What will you create?</h1>
+                <div className="notif-bell-wrapper">
+                  <NotificationBell />
+                </div>
+              </div>
               <PromptBox {...promptBoxProps} collapsed={promptCollapsed} />
             </header>
           )}
