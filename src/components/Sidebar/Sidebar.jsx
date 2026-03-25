@@ -79,8 +79,13 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
         {user ? (
           <div className="user-profile" ref={profileRef}>
             <div className="user-info">
-              <div className="avatar">{getInitial()}</div>
-              <span className="user-name">User</span>
+              <div className="avatar">
+                {profile.avatar_url
+                  ? <img src={profile.avatar_url} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                  : getInitial()
+                }
+              </div>
+              <span className="user-name">{profile.username || 'User'}</span>
             </div>
             <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="more-icon-btn" title="More options">
               <MoreHorizontal size={18} />
@@ -91,6 +96,8 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
                 <button onClick={handleSupport} className="dropdown-item"><HelpCircle size={18} /><span>Support</span></button>
                 <button onClick={handleLogout} className="dropdown-item logout-item"><LogOut size={18} /><span>Log out</span></button>
               </div>
+            )}
+          </div>
             )}
           </div>
         ) : (
