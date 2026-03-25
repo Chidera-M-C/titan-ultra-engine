@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import './SettingsView.css';
 
 export default function SettingsView() {
-  const { user } = useAuth();
+  const { user, setProfile } = useAuth();
   const fileInputRef = useRef(null);
 
   const [username, setUsername] = useState('');
@@ -83,6 +83,7 @@ export default function SettingsView() {
 
       setAvatarUrl(newAvatarUrl);
       setAvatarFile(null);
+      setProfile({ username: username.trim(), avatar_url: newAvatarUrl });
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
