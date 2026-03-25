@@ -22,7 +22,10 @@ export default function Sidebar({
   userId,
   isOpen,
   onPromptLoad,
-  currentPrompt
+  onNegativePromptLoad,
+  currentPrompt,
+  currentNegativePrompt,
+  onTopUpClick,
 }) {
   const { user, profile, loginWithGoogle, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -39,7 +42,11 @@ export default function Sidebar({
     setIsDropdownOpen(false);
   };
 
-  const handleSettings = () => setIsDropdownOpen(false);
+  const handleSettings = () => {
+    setIsDropdownOpen(false);
+    onNavigate('settings');
+  };
+
   const handleSupport = () => setIsDropdownOpen(false);
 
   useEffect(() => {
@@ -48,7 +55,6 @@ export default function Sidebar({
         setIsDropdownOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -91,12 +97,17 @@ export default function Sidebar({
         </nav>
 
         <div className="sidebar-promptimize">
-          <Promptimize onLoad={onPromptLoad} currentPrompt={currentPrompt} />
+          <Promptimize
+            onLoad={onPromptLoad}
+            onNegativePromptLoad={onNegativePromptLoad}
+            currentPrompt={currentPrompt}
+            currentNegativePrompt={currentNegativePrompt}
+          />
         </div>
       </div>
 
       <div className="sidebar-bottom">
-        <CreditsCard credits={credits} userId={userId} />
+        <CreditsCard credits={credits} userId={userId} onTopUpClick={onTopUpClick} />
 
         {user ? (
           <div className="user-profile" ref={profileRef}>
