@@ -1,14 +1,14 @@
 .notif-panel {
   position: absolute;
-  top: auto;
-  bottom: calc(100% + 10px);
+  top: calc(100% + 10px); /* downward */
+  bottom: auto;
   right: 0;
   width: 320px;
   background: #1a1a1a;
   border: 1px solid #2a2a2a;
   border-radius: 16px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
-  z-index: 5000;
+  z-index: 99999; /* above prompt box */
   overflow: hidden;
   animation: notifFadeIn 0.2s ease;
 }
