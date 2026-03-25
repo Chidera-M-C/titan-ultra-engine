@@ -25,7 +25,6 @@ const MemoExploreView = React.memo(ExploreView);
 
 export default function App() {
   const { user, credits, setCredits, loading: authLoading } = useAuth();
-
   const [activeTab, setActiveTab] = useState('explore');
   const [viewState, setViewState] = useState('gallery');
   const [prompt, setPrompt] = useState('');
@@ -59,7 +58,7 @@ export default function App() {
   const [faceswapError, setFaceswapError] = useState(null);
   const [likedGallery, setLikedGallery] = useState([]);
 
-  // ── NOTIFICATIONS ─────────────────────────────────────────────────────
+  // ── NOTIFICATIONS (added exactly as requested - only this new block) ──
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
@@ -69,7 +68,7 @@ export default function App() {
   const promptRef = useRef(prompt);
   useEffect(() => { promptRef.current = prompt; }, [prompt]);
 
-  // Load user characters
+  // ── Load user characters ──────────────────────────────────────────────
   useEffect(() => {
     if (!user) { setUserCharacters([]); return; }
     supabase
@@ -80,7 +79,7 @@ export default function App() {
       .then(({ data }) => setUserCharacters(data || []));
   }, [user]);
 
-  // Load gallery
+  // ── 1. UPDATE loadGallery to include category and liked images ────────────
   const loadGallery = async () => {
     if (!user) { setUserGallery([]); setLikedGallery([]); return; }
     try {
@@ -90,14 +89,14 @@ export default function App() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       if (imagesError) throw imagesError;
-
+  
       const { data: userLikes } = await supabase
         .from('image_likes')
         .select('image_id')
         .eq('user_id', user.id);
-
+  
       const likedSet = new Set((userLikes || []).map(l => l.image_id));
-
+  
       setUserGallery((images || []).map(doc => ({
         id: doc.id,
         url: doc.image_url,
@@ -106,7 +105,8 @@ export default function App() {
         liked: likedSet.has(doc.id),
         category: doc.category || '',
       })));
-
+  
+      // Fetch full liked images (from any user, liked by current user)
       if (userLikes && userLikes.length > 0) {
         const likedIds = userLikes.map(l => l.image_id);
         const { data: likedImagesData } = await supabase
@@ -114,7 +114,7 @@ export default function App() {
           .select('*')
           .in('id', likedIds)
           .order('created_at', { ascending: false });
-
+  
         setLikedGallery((likedImagesData || []).map(doc => ({
           id: doc.id,
           url: doc.image_url,
@@ -142,7 +142,7 @@ export default function App() {
     }
   }, [user, authLoading]);
 
-  // Scroll collapse
+  // ── Scroll collapse ───────────────────────────────────────────────────
   useEffect(() => {
     const handleScroll = () => {
       const scrollable = document.querySelector('.scrollable-area');
@@ -155,7 +155,7 @@ export default function App() {
     }
   }, []);
 
-  // ── NOTIFICATION LOGIC ────────────────────────────────────────────────
+  // ── NOTIFICATION LOGIC (added - realtime + fetch) ─────────────────────
   useEffect(() => {
     if (!user || authLoading) {
       setNotifications([]);
@@ -164,15 +164,18 @@ export default function App() {
     }
 
     const fetchNotifications = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(20);
 
-      setNotifications(data || []);
-      setUnreadCount((data || []).filter(n => !n.read).length);
+      if (error) console.error('Notifications fetch error:', error);
+      else {
+        setNotifications(data || []);
+        setUnreadCount((data || []).filter(n => !n.read).length);
+      }
     };
 
     fetchNotifications();
@@ -189,13 +192,13 @@ export default function App() {
         },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setNotifications(prev => [payload.new, ...prev]);
-            if (!payload.new.read) setUnreadCount(c => c + 1);
+            setNotifications((prev) => [payload.new, ...prev]);
+            if (!payload.new.read) setUnreadCount((c) => c + 1);
           } else if (payload.eventType === 'UPDATE') {
-            setNotifications(prev =>
-              prev.map(n => n.id === payload.new.id ? payload.new : n)
+            setNotifications((prev) =>
+              prev.map((n) => (n.id === payload.new.id ? payload.new : n))
             );
-            setUnreadCount(prev.filter(n => !n.read).length);
+            setUnreadCount((prev || []).filter(n => !n.read).length);
           }
         }
       )
@@ -207,8 +210,10 @@ export default function App() {
   const markAsRead = async (id) => {
     if (!id) return;
     await supabase.from('notifications').update({ read: true }).eq('id', id);
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-    setUnreadCount(c => Math.max(0, c - 1));
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+    setUnreadCount((c) => Math.max(0, c - 1));
   };
 
   const markAllAsRead = async () => {
@@ -218,10 +223,11 @@ export default function App() {
       .update({ read: true })
       .eq('user_id', user.id)
       .eq('read', false);
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
   };
 
+  // Click outside notification dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (notificationRef.current && !notificationRef.current.contains(event.target)) {
@@ -232,7 +238,7 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Global click guard
+  // ── Global click guard (unauthenticated users) ────────────────────────
   const handleGlobalClick = (e) => {
     if (user || authLoading) return;
     const allowed =
@@ -247,7 +253,6 @@ export default function App() {
       e.target.closest('.modal-overlay') ||
       e.target.closest('.modal-content');
     if (allowed) return;
-
     const isMainContent =
       e.target.closest('.main-content') ||
       e.target.closest('.scrollable-area') ||
@@ -260,28 +265,353 @@ export default function App() {
     }
   };
 
-  // Credits & Payment (unchanged)
-  const deductCreditsLive = async (amount) => { /* your original code */ };
-  const handleTopUpPurchase = async (pack) => { /* your original code */ };
+  // ── Credits ───────────────────────────────────────────────────────────
+  const deductCreditsLive = async (amount) => {
+    if (!user) return;
+    const { data, error: fetchError } = await supabase
+      .from('users').select('credits').eq('id', user.id).single();
+    if (fetchError) throw fetchError;
+    const safeBalance = Math.max(0, (data.credits ?? 0) - amount);
+    const { error: updateError } = await supabase
+      .from('users').update({ credits: safeBalance }).eq('id', user.id);
+    if (updateError) throw updateError;
+    setCredits(safeBalance);
+  };
 
-  // Core generation functions (unchanged)
-  const runGeneration = async ({ prompt, aspect_ratio, image: attachedImg, setLoadingFn, setErrorFn, setImageFn, styleId = null, negative_prompt = null, face_embedding = null, character = null }) => { /* your original code */ };
+  // ── Payment ───────────────────────────────────────────────────────────
+  const handleTopUpPurchase = async (pack) => {
+    if (!user) { setLoginModalOpen(true); return; }
+    try {
+      const response = await fetch('/api/payment-webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'json' },
+        body: JSON.stringify({ price: pack.price, userId: user.id, credits: pack.credits })
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Server error: ${response.status} - ${text}`);
+      }
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || 'Payment link generation failed');
+      }
+    } catch (err) {
+      console.error('Payment Error:', err);
+      alert('Error: ' + err.message);
+    }
+  };
 
-  const generateImage = async () => { /* your original code */ };
-  const handleStyleGenerate = async (finalPrompt, aspectRatio, negativePrompt, attachedImage) => { /* your original code */ };
-  const handleEditViewGenerate = async ({ image, prompt, negativePrompt, poseStrength, cannyStrength }) => { /* your original code */ };
-  const handleFaceSwap = async ({ targetImage, sourceImage }) => { /* your original code */ };
+  // ── Core generation ───────────────────────────────────────────────────
+  const runGeneration = async ({
+    prompt, aspect_ratio, image: attachedImg,
+    setLoadingFn, setErrorFn, setImageFn,
+    styleId = null, negative_prompt = null,
+    face_embedding = null, character = null
+  }) => {
+    const payload = { prompt, aspect_ratio };
+    if (attachedImg) payload.image = attachedImg;
+    if (negative_prompt) payload.negative_prompt = negative_prompt;
+    if (styleId) payload.style = styleId;
+    if (face_embedding) payload.face_embedding = face_embedding;
+    if (character) payload.character = character;
+    const response = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) throw new Error('Server Error');
+    const { jobId, endpointId } = await response.json();
+    if (!jobId) throw new Error('Failed to start generation job');
+    let completed = false, attempts = 0;
+    while (!completed && attempts < 150) {
+      attempts++;
+      const statusRes = await fetch('/api/check-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId, endpointId })
+      });
+      if (!statusRes.ok) throw new Error(`Status check failed: ${statusRes.status}`);
+      const statusData = await statusRes.json();
+      if (statusData.error) throw new Error(`RunPod error: ${statusData.error}`);
+      if (statusData.status === 'COMPLETED') {
+        const output = statusData.output;
+        const base64Image = output?.image || output?.images?.[0] || output?.[0]?.image || output?.[0] || null;
+        if (!base64Image) throw new Error('Image data not found');
+        setImageFn(base64Image);
+        setLoadingFn(false);
+        completed = true;
+        (async () => {
+          try {
+            await deductCreditsLive(2);
+            const publicUrl = await saveAiImage(user.id, base64Image, prompt, styleId);
+            setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt, likes: 0, liked: false, category: styleId || '' }, ...prev]);
+          } catch (err) { console.error('❌ Post-generation save failed:', err); }
+        })();
+      } else if (statusData.status === 'FAILED') {
+        throw new Error('RunPod generation failed');
+      } else {
+        await delay(2000);
+      }
+    }
+    if (!completed) throw new Error('The GPU is taking too long to wake up.');
+  };
 
-  // Navigation & handlers
-  const handleNavigation = (tab) => { /* your original code */ };
-  const handleSelectPrompt = useCallback((selectedPrompt) => { /* your original code */ }, []);
-  const handleViewImage = useCallback((img) => { /* your original code */ }, []);
-  const handleEditImage = useCallback((img) => { /* your original code */ }, [user]);
-  const handleCharacterCreated = (newChar) => { /* your original code */ };
+  // ── Generate (explore) ────────────────────────────────────────────────
+  const generateImage = async () => {
+    if (!user) { setLoginModalOpen(true); return; }
+    if (!prompt || loading) return;
+    if (credits < 2) { setError('Insufficient credits.'); setViewState('result'); return; }
+    setViewState('result');
+    setLoading(true);
+    setError(null);
+    setImage(null);
+    try {
+      const characterContext = selectedCharacter
+        ? `${selectedCharacter.name}, ${selectedCharacter.race} woman, ${selectedCharacter.body_type?.replace(/_/g, ' ')}, same face same person, `
+        : '';
+      const characterPayload = selectedCharacter?.face_embedding ? {
+        face_embedding: selectedCharacter.face_embedding,
+        character: {
+          name: selectedCharacter.name,
+          race: selectedCharacter.race,
+          body_type: selectedCharacter.body_type,
+        }
+      } : {};
+      await runGeneration({
+        prompt: characterContext + prompt,
+        aspect_ratio: aspectRatio,
+        negative_prompt: negativePrompt,
+        setLoadingFn: setLoading,
+        setErrorFn: setError,
+        setImageFn: setImage,
+        styleId: selectedCharacter?.face_embedding ? 'character' : null,
+        ...characterPayload,
+      });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const renderActiveView = () => { /* your original full renderActiveView */ };
+  // ── Generate (style) ──────────────────────────────────────────────────
+  const handleStyleGenerate = async (finalPrompt, aspectRatio, negativePrompt, attachedImage) => {
+    if (!user) { setLoginModalOpen(true); return; }
+    if (credits < 2) { setStyleError('Insufficient credits.'); return; }
+    setStyleLoading(true);
+    setStyleError(null);
+    setStyleImage(null);
+    try {
+      const characterPayload = selectedCharacter?.face_embedding ? {
+        face_embedding: selectedCharacter.face_embedding,
+        character: {
+          name: selectedCharacter.name,
+          race: selectedCharacter.race,
+          body_type: selectedCharacter.body_type,
+        }
+      } : {};
+      await runGeneration({
+        prompt: finalPrompt,
+        aspect_ratio: aspectRatio,
+        negative_prompt: negativePrompt,
+        image: attachedImage,
+        setLoadingFn: setStyleLoading,
+        setErrorFn: setStyleError,
+        setImageFn: setStyleImage,
+        styleId: selectedCharacter?.face_embedding ? 'character' : activeStyle.id,
+        ...characterPayload,
+      });
+    } catch (err) {
+      setStyleError(err.message);
+    } finally {
+      setStyleLoading(false);
+    }
+  };
 
-  const promptBoxProps = { /* your original promptBoxProps */ };
+  // ── Generate (edit) ───────────────────────────────────────────────────
+  const handleEditViewGenerate = async ({ image, prompt, negativePrompt, poseStrength, cannyStrength }) => {
+    if (!user) { setLoginModalOpen(true); return; }
+    if (credits < 2) { setEditViewError('Insufficient credits.'); return; }
+    setEditViewLoading(true);
+    setEditViewError(null);
+    setEditViewImage(null);
+    try {
+      await runGeneration({
+        prompt, aspect_ratio: '9:16', image,
+        negative_prompt: negativePrompt,
+        setLoadingFn: setEditViewLoading, setErrorFn: setEditViewError, setImageFn: setEditViewImage,
+        styleId: 'edit',
+      });
+    } catch (err) {
+      setEditViewError(err.message);
+    } finally {
+      setEditViewLoading(false);
+    }
+  };
+
+  // ── Face swap ─────────────────────────────────────────────────────────
+  const handleFaceSwap = async ({ targetImage, sourceImage }) => {
+    if (!user) { setLoginModalOpen(true); return; }
+    setFaceswapLoading(true);
+    setFaceswapError(null);
+    setFaceswapResult(null);
+    try {
+      const response = await fetch('/api/faceswap', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetImage, sourceImage })
+      });
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+      setFaceswapResult(data.image);
+    } catch (err) {
+      setFaceswapError(err.message);
+    } finally {
+      setFaceswapLoading(false);
+    }
+  };
+
+  // ── Navigation ────────────────────────────────────────────────────────
+  const handleNavigation = (tab) => {
+    if (activeTab === 'explore' && tab !== 'explore') {
+      setIsGalleryReady(false);
+      setExploreKey(k => k + 1);
+    }
+    setActiveTab(tab);
+    setIsSidebarOpen(false);
+    setPromptCollapsed(false);
+    if (['explore', 'gallery', 'style', 'edit', 'character', 'faceswap', 'settings'].includes(tab)) {
+      setViewState('gallery');
+    } else {
+      setViewState('empty');
+    }
+  };
+
+  const handleSelectPrompt = useCallback((selectedPrompt) => {
+    setPrompt(selectedPrompt);
+    if (selectedPrompt) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  const handleViewImage = useCallback((img) => {
+    setViewingImageUrl(img.url);
+    setViewImageModalOpen(true);
+  }, []);
+
+  const handleEditImage = useCallback((img) => {
+    if (!user) { setLoginModalOpen(true); return; }
+    setEditingImage(img);
+    setEditViewImage(null);
+    setEditViewError(null);
+    setEditModalOpen(true);
+  }, [user]);
+
+  // ── Character created callback ────────────────────────────────────────
+  const handleCharacterCreated = (newChar) => {
+    setUserCharacters(prev => {
+      const exists = prev.find(c => c.id === newChar.id);
+      if (exists) return prev.map(c => c.id === newChar.id ? newChar : c);
+      return [newChar, ...prev];
+    });
+  };
+
+  // ── Render views ──────────────────────────────────────────────────────
+  const renderActiveView = () => {
+    if (viewState === 'empty') {
+      return (
+        <div className="empty-state">
+          <h2>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} coming soon</h2>
+          <p>We're polishing this feature for you!</p>
+        </div>
+      );
+    }
+    switch (activeTab) {
+      case 'explore':
+        return <MemoExploreView
+          key={exploreKey}
+          promptRef={promptRef}
+          onSelectPrompt={handleSelectPrompt}
+          onViewImage={handleViewImage}
+          onEditImage={handleEditImage}
+          onFetching={() => setIsGalleryReady(false)}
+          onReady={() => setIsGalleryReady(true)}
+        />;
+      case 'character':
+        return <CharacterView
+          onSelectCharacter={setSelectedCharacter}
+          selectedCharacter={selectedCharacter}
+          onCharacterCreated={handleCharacterCreated}
+        />;
+      case 'gallery':
+        return <MyImagesView
+          images={userGallery}
+          likedImages={likedGallery}
+          prompt={prompt}
+          onSelectPrompt={handleSelectPrompt}
+          onViewImage={handleViewImage}
+          onEditImage={handleEditImage}
+        />;
+      case 'style':
+        return activeStyle
+          ? <StyleGeneratorView
+              mood={activeStyle}
+              onBack={() => { setActiveStyle(null); setStyleImage(null); setStyleError(null); }}
+              onGenerate={handleStyleGenerate}
+              loading={styleLoading}
+              onViewImage={handleViewImage}
+              onEditImage={handleEditImage}
+              onSelectPrompt={handleSelectPrompt}
+              prompt={prompt}
+              selectedCharacter={selectedCharacter}
+              onSelectCharacter={setSelectedCharacter}
+              characters={userCharacters}
+              onCharacterCreated={handleCharacterCreated}
+            />
+          : <StyleView onSelectStyle={setActiveStyle} />;
+      case 'edit':
+        return <EditView
+          onGenerate={handleEditViewGenerate}
+          loading={editViewLoading}
+          image={editViewImage}
+          error={editViewError}
+          onViewImage={handleViewImage}
+          credits={credits}
+        />;
+      case 'faceswap':
+        return <FaceSwapView
+          onSwap={handleFaceSwap}
+          loading={faceswapLoading}
+          result={faceswapResult}
+          error={faceswapError}
+        />;
+      case 'settings':
+        return <SettingsView />;
+      default:
+        return <MemoExploreView
+          promptRef={promptRef}
+          onSelectPrompt={handleSelectPrompt}
+          onViewImage={handleViewImage}
+          onEditImage={handleEditImage}
+        />;
+    }
+  };
+
+  const promptBoxProps = {
+    prompt,
+    setPrompt,
+    aspectRatio,
+    setAspectRatio,
+    onGenerate: generateImage,
+    loading,
+    negativePrompt,
+    setNegativePrompt,
+    onOpenSidebar: () => setIsSidebarOpen(true),
+    selectedCharacter,
+    onSelectCharacter: setSelectedCharacter,
+    characters: userCharacters,
+    onCharacterCreated: handleCharacterCreated,
+  };
 
   return (
     <div className="master-wrapper" onClickCapture={handleGlobalClick}>
@@ -290,7 +620,6 @@ export default function App() {
           {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
         {isSidebarOpen && <div className="sidebar-mobile-overlay" onClick={() => setIsSidebarOpen(false)} />}
-
         <Sidebar
           activeTab={activeTab}
           onNavigate={handleNavigation}
@@ -303,61 +632,103 @@ export default function App() {
           currentNegativePrompt={negativePrompt}
           onTopUpClick={() => setTopUpModalOpen(true)}
         />
-
         <main className="main-content">
           {activeTab !== 'style' && activeTab !== 'character' && activeTab !== 'edit' && activeTab !== 'faceswap' && activeTab !== 'gallery' && activeTab !== 'settings' && (
             <header className={`top-header ${promptCollapsed ? 'collapsed' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '20px', position: 'relative' }}>
               <div style={{ flex: 1 }}>
                 <h1 className="aesthetic-title">What will you create?</h1>
               </div>
-
               <PromptBox {...promptBoxProps} collapsed={promptCollapsed} />
 
-              {/* NOTIFICATION BELL - top right on Explore only */}
+              {/* NOTIFICATION BELL - top right side of the explore page only */}
               <div ref={notificationRef} style={{ position: 'relative' }}>
                 <button
                   onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '8px',
+                  }}
                   title="Notifications"
                 >
                   <Bell size={24} />
                   {unreadCount > 0 && (
-                    <span style={{
-                      position: 'absolute', top: -2, right: -2,
-                      background: '#e63939', color: '#fff', fontSize: '10px',
-                      fontWeight: '700', minWidth: '18px', height: '18px',
-                      borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: -2,
+                        right: -2,
+                        background: '#e63939',
+                        color: '#fff',
+                        fontSize: '10px',
+                        fontWeight: '700',
+                        minWidth: '18px',
+                        height: '18px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
                 </button>
 
                 {showNotificationsDropdown && (
-                  <div style={{
-                    position: 'absolute', top: 'calc(100% + 8px)', right: 0, width: '340px',
-                    background: '#1f1f1f', border: '1px solid #333', borderRadius: '12px',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.4)', zIndex: 9999, overflow: 'hidden'
-                  }}>
-                    <div style={{ padding: '14px 20px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between' }}>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 'calc(100% + 8px)',
+                      right: 0,
+                      width: '340px',
+                      background: '#1f1f1f',
+                      border: '1px solid #333',
+                      borderRadius: '12px',
+                      boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+                      zIndex: 9999,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div style={{ padding: '14px 20px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <h4 style={{ margin: 0 }}>Notifications</h4>
-                      {unreadCount > 0 && <button onClick={markAllAsRead} style={{ fontSize: '13px', color: '#00d4ff' }}>Mark all read</button>}
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={markAllAsRead}
+                          style={{ fontSize: '13px', color: '#00d4ff' }}
+                        >
+                          Mark all read
+                        </button>
+                      )}
                     </div>
+
                     <div style={{ maxHeight: '380px', overflowY: 'auto' }}>
                       {notifications.length === 0 ? (
-                        <div style={{ padding: '40px 20px', textAlign: 'center', color: '#888' }}>No notifications yet</div>
+                        <div style={{ padding: '40px 20px', textAlign: 'center', color: '#888' }}>
+                          No notifications yet
+                        </div>
                       ) : (
-                        notifications.map(notif => (
+                        notifications.map((notif) => (
                           <div
                             key={notif.id}
-                            onClick={() => { if (!notif.read) markAsRead(notif.id); setShowNotificationsDropdown(false); }}
+                            onClick={() => {
+                              if (!notif.read) markAsRead(notif.id);
+                              setShowNotificationsDropdown(false);
+                            }}
                             style={{
-                              padding: '14px 20px', borderBottom: '1px solid #222', cursor: 'pointer',
-                              background: notif.read ? 'transparent' : '#2a2a2a'
+                              padding: '14px 20px',
+                              borderBottom: '1px solid #222',
+                              cursor: 'pointer',
+                              background: notif.read ? 'transparent' : '#2a2a2a',
                             }}
                           >
-                            <div style={{ fontWeight: notif.read ? 400 : 600 }}>{notif.title || notif.type.toUpperCase()}</div>
-                            <div style={{ fontSize: '14px', color: '#ccc', marginTop: '4px' }}>{notif.message}</div>
+                            <div style={{ fontWeight: notif.read ? 400 : 600, fontSize: '15px' }}>
+                              {notif.title || notif.type.toUpperCase()}
+                            </div>
+                            <div style={{ fontSize: '14px', color: '#ccc', marginTop: '4px' }}>
+                              {notif.message}
+                            </div>
                             <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
                               {new Date(notif.created_at).toLocaleString()}
                             </div>
@@ -370,19 +741,30 @@ export default function App() {
               </div>
             </header>
           )}
-
           <div className="scrollable-area" style={{ position: 'relative' }}>
             {activeTab === 'explore' && !isGalleryReady && (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg, #0f0f0f)', zIndex: 10 }}>
-                <div style={{ width: 40, height: 40, border: '3px solid rgba(255,255,255,0.1)', borderTop: '3px solid white', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              <div style={{
+                position: 'absolute', inset: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'var(--bg, #0f0f0f)', zIndex: 10
+              }}>
+                <div style={{
+                  width: 40, height: 40,
+                  border: '3px solid rgba(255,255,255,0.1)',
+                  borderTop: '3px solid white',
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite'
+                }} />
               </div>
             )}
-            <div style={{ opacity: activeTab === 'explore' ? (isGalleryReady ? 1 : 0) : 1, transition: 'opacity 0.4s ease' }}>
+            <div style={{
+              opacity: activeTab === 'explore' ? (isGalleryReady ? 1 : 0) : 1,
+              transition: 'opacity 0.4s ease'
+            }}>
               {renderActiveView()}
             </div>
           </div>
         </main>
-
         <LoginModal isOpen={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
         <TopUpModal
           isOpen={topUpModalOpen}
@@ -399,8 +781,10 @@ export default function App() {
             prompt={prompt}
             onClose={() => {
               setViewState('gallery');
-              setImage(null); setError(null);
-              setStyleImage(null); setStyleError(null);
+              setImage(null);
+              setError(null);
+              setStyleImage(null);
+              setStyleError(null);
             }}
             onRetry={activeStyle ? () => handleStyleGenerate(activeStyle.prompt, aspectRatio) : generateImage}
             onOpenEdit={handleEditImage}
@@ -430,7 +814,9 @@ export default function App() {
             }}
           />
         )}
-        {viewImageModalOpen && <ImageViewModal imageUrl={viewingImageUrl} onClose={() => setViewImageModalOpen(false)} />}
+        {viewImageModalOpen && (
+          <ImageViewModal imageUrl={viewingImageUrl} onClose={() => setViewImageModalOpen(false)} />
+        )}
         <InstallPrompt />
       </div>
     </div>
