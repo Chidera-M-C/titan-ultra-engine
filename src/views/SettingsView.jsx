@@ -86,18 +86,6 @@ export default function SettingsView() {
         const ext = avatarFile.name.split('.').pop()?.toLowerCase() || 'jpg';
         const path = `${user.id}/avatar.${ext}`;
 
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-
-        console.log('storage debug', {
-          userId: user?.id,
-          sessionUserId: sessionData?.session?.user?.id,
-          sessionError,
-          bucket: 'avatars',
-          path,
-          fileType: avatarFile?.type,
-          fileName: avatarFile?.name,
-        });
-
         const { error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(path, avatarFile, {
@@ -198,9 +186,7 @@ export default function SettingsView() {
             <span>Profile</span>
           </div>
 
-          <div
-            className="settings-avatar-row"
-          >
+          <div className="settings-avatar-row">
             <div
               className="settings-avatar-wrap"
               onClick={() => fileInputRef.current?.click()}
