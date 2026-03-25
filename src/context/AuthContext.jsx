@@ -31,20 +31,17 @@ export function AuthProvider({ children }) {
         const { data: newUser, error: createError } = await supabase
           .from('users')
           .insert({ id: authUser.id, credits: 6 })
-          .select('credits')
+          .select('credits, username, avatar_url')
           .single();
         if (createError) throw createError;
-        if (newUser) setCredits(newUser.credits);
-        setProfile({ username: data.username || '', avatar_url: data.avatar_url || '' });
-      } else if (error) {
-        throw error;
+        if (newUser) {
+          setCredits(newUser.credits);
+          setProfile({ username: newUser.username || '', avatar_url: newUser.avatar_url || '' });
+        }
       } else if (data) {
         setCredits(data.credits);
+        setProfile({ username: data.username || '', avatar_url: data.avatar_url || '' }); // ✅ move this here
       }
-    } catch (err) {
-      console.error('Error fetching/creating user:', err.message);
-    }
-  };
 
   useEffect(() => {
     let realtimeChannel = null;
