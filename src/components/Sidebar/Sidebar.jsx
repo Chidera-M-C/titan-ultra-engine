@@ -8,7 +8,7 @@ import NudelyLogo from '../../assets/nudely-logo.png';
 import './Sidebar.css';
 
 export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen, onPromptLoad, onNegativePromptLoad, currentPrompt, currentNegativePrompt }) {
-  const { user, loginWithGoogle, logout } = useAuth();
+  const { user, loginWithGoogle, logout, profile } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const profileRef = useRef(null);
 
