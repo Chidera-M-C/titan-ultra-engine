@@ -220,6 +220,19 @@ body, html {
   border-color: rgba(255, 255, 255, 0.5); 
 }
 
+.top-header-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.top-header-row .notif-bell-wrapper {
+  position: absolute;
+  right: 0;
+}
+
 .icon-btn:hover svg { stroke: #000000; }
 
 /* Tooltips - base styles */
