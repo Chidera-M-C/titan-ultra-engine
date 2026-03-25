@@ -19,6 +19,7 @@ import StyleGeneratorView from './views/StyleGeneratorView';
 import EditView from './views/EditView';
 import FaceSwapView from './views/FaceSwapView';
 import InstallPrompt from './components/InstallPrompt';
+import SettingsView from './views/SettingsView';
 
 const MemoExploreView = React.memo(ExploreView);
 
@@ -498,6 +499,8 @@ export default function App() {
           result={faceswapResult}
           error={faceswapError}
         />;
+      case 'settings':
+        return <SettingsView />;
       default:
         return <MemoExploreView
           promptRef={promptRef}
@@ -546,7 +549,7 @@ export default function App() {
         />
 
         <main className="main-content">
-          {activeTab !== 'style' && activeTab !== 'character' && activeTab !== 'edit' && activeTab !== 'faceswap' && activeTab !== 'gallery' && (
+          {activeTab !== 'style' && activeTab !== 'character' && activeTab !== 'edit' && activeTab !== 'faceswap' && activeTab !== 'gallery' && activeTab !== 'settings' && (
             <header className={`top-header ${promptCollapsed ? 'collapsed' : ''}`}>
               <h1 className="aesthetic-title">What will you create?</h1>
               <PromptBox {...promptBoxProps} collapsed={promptCollapsed} />
