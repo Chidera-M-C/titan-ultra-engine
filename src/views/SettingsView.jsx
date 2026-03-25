@@ -77,8 +77,13 @@ export default function SettingsView() {
       // Update profile
       const { error: updateError } = await supabase
         .from('users')
-        .update({ username: username.trim(), avatar_url: newAvatarUrl })
-        .eq('id', user.id);
+        .upsert({ 
+          id: user.id, 
+          username: username.trim(), 
+          avatar_url: newAvatarUrl,
+          updated_at: new Date().toISOString()
+        }); // Stop here. No .eq() needed.
+      
       if (updateError) throw updateError;
 
       setAvatarUrl(newAvatarUrl);
