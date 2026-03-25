@@ -375,6 +375,12 @@ body, html {
   }
 }
 
+@media (max-width: 768px) {
+  .top-header-row .notif-bell-wrapper {
+    top: 0;
+  }
+}
+
 @media (max-width: 480px) {
   .gallery-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
 }
