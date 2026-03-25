@@ -6,12 +6,18 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [credits, setCredits] = useState(0);
-  const [profile, setProfile] = useState({
-    username: '',
-    avatar_url: '',
-  });
+  const [profile, setProfile] = useState({ username: '', avatar_url: '' });
   const [loading, setLoading] = useState(true);
   const initializedUserRef = useRef(null);
+
+  const hideSplash = () => {
+    setLoading(false);
+    const splash = document.getElementById('splash');
+    if (splash) {
+      splash.classList.add('hidden');
+      setTimeout(() => splash.remove(), 500);
+    }
+  };
 
   const fetchOrCreateUser = async (authUser) => {
     try {
@@ -32,6 +38,7 @@ export function AuthProvider({ children }) {
         return;
       }
 
+      // New user — insert
       const { data: newUser, error: createError } = await supabase
         .from('users')
         .insert({
@@ -58,67 +65,76 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let realtimeChannel = null;
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event:', event, session?.user?.id);
-      const currentUser = session?.user ?? null;
+    // Safety timeout — never stay stuck on splash forever
+    const safetyTimeout = setTimeout(() => {
+      console.warn('Auth safety timeout fired — forcing splash hide');
+      hideSplash();
+    }, 5000);
 
-      if (event === 'SIGNED_IN' && currentUser?.id === initializedUserRef.current) {
-        console.log('Auth event: duplicate SIGNED_IN ignored');
-        return;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth event:', event, session?.user?.id);
+        const currentUser = session?.user ?? null;
+
+        // Ignore duplicate SIGNED_IN for the same user
+        if (event === 'SIGNED_IN' && currentUser?.id === initializedUserRef.current) {
+          console.log('Auth event: duplicate SIGNED_IN ignored');
+          return;
+        }
+
+        setUser(currentUser);
+
+        if (realtimeChannel) {
+          supabase.removeChannel(realtimeChannel);
+          realtimeChannel = null;
+        }
+
+        if (currentUser) {
+          initializedUserRef.current = currentUser.id;
+
+          // Fire and forget — never block loading on DB call
+          fetchOrCreateUser(currentUser);
+
+          realtimeChannel = supabase
+            .channel(`credits-${currentUser.id}`)
+            .on(
+              'postgres_changes',
+              {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'users',
+                filter: `id=eq.${currentUser.id}`,
+              },
+              (payload) => {
+                console.log('💳 Credits updated via realtime:', payload.new.credits);
+                setCredits(payload.new.credits ?? 0);
+                setProfile((prev) => ({
+                  ...prev,
+                  username: payload.new.username || prev.username,
+                  avatar_url: payload.new.avatar_url || prev.avatar_url,
+                }));
+              }
+            )
+            .subscribe();
+        } else {
+          initializedUserRef.current = null;
+          setCredits(0);
+          setProfile({ username: '', avatar_url: '' });
+        }
+
+        if (
+          event === 'INITIAL_SESSION' ||
+          event === 'SIGNED_IN' ||
+          event === 'SIGNED_OUT'
+        ) {
+          clearTimeout(safetyTimeout);
+          hideSplash();
+        }
       }
-
-      setUser(currentUser);
-
-      if (realtimeChannel) {
-        supabase.removeChannel(realtimeChannel);
-        realtimeChannel = null;
-      }
-
-      if (currentUser) {
-        initializedUserRef.current = currentUser.id;
-        await fetchOrCreateUser(currentUser);
-
-        realtimeChannel = supabase
-          .channel(`credits-${currentUser.id}`)
-          .on(
-            'postgres_changes',
-            {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'users',
-              filter: `id=eq.${currentUser.id}`,
-            },
-            (payload) => {
-              setCredits(payload.new.credits ?? 0);
-              setProfile((prev) => ({
-                ...prev,
-                username: payload.new.username || prev.username,
-                avatar_url: payload.new.avatar_url || prev.avatar_url,
-              }));
-            }
-          )
-          .subscribe();
-      } else {
-        initializedUserRef.current = null;
-        setCredits(0);
-        setProfile({
-          username: '',
-          avatar_url: '',
-        });
-      }
-
-      if (
-        event === 'INITIAL_SESSION' ||
-        event === 'SIGNED_IN' ||
-        event === 'SIGNED_OUT'
-      ) {
-        setLoading(false);
-      }
-    });
+    );
 
     return () => {
+      clearTimeout(safetyTimeout);
       subscription.unsubscribe();
       if (realtimeChannel) supabase.removeChannel(realtimeChannel);
     };
@@ -136,7 +152,6 @@ export function AuthProvider({ children }) {
           },
         },
       });
-
       if (error) throw error;
     } catch (error) {
       console.error('Login failed:', error.message);
@@ -174,10 +189,7 @@ export function AuthProvider({ children }) {
       if (error) throw error;
       setUser(null);
       setCredits(0);
-      setProfile({
-        username: '',
-        avatar_url: '',
-      });
+      setProfile({ username: '', avatar_url: '' });
       initializedUserRef.current = null;
     } catch (error) {
       console.error('Logout failed:', error.message);
@@ -199,7 +211,7 @@ export function AuthProvider({ children }) {
         loading,
       }}
     >
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
