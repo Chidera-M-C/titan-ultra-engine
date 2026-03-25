@@ -1,6 +1,7 @@
 .notif-panel {
   position: absolute;
-  top: calc(100% + 10px);
+  top: auto;
+  bottom: calc(100% + 10px);
   right: 0;
   width: 320px;
   background: #1a1a1a;
@@ -126,6 +127,13 @@
   background: #a855f7;
   flex-shrink: 0;
   margin-top: 6px;
+}
+
+@media (max-width: 768px) {
+  .notif-panel {
+    bottom: 0;
+    top: auto;
+  }
 }
 
 @media (max-width: 768px) {
