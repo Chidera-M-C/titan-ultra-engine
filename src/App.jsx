@@ -20,6 +20,7 @@ import EditView from './views/EditView';
 import FaceSwapView from './views/FaceSwapView';
 import InstallPrompt from './components/InstallPrompt';
 import SettingsView from './views/SettingsView';
+import NotificationBell from './components/Notifications/NotificationBell';
 
 const MemoExploreView = React.memo(ExploreView);
 
@@ -637,6 +638,7 @@ export default function App() {
             <header className={`top-header ${promptCollapsed ? 'collapsed' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '20px', position: 'relative' }}>
               <div style={{ flex: 1 }}>
                 <h1 className="aesthetic-title">What will you create?</h1>
+                <NotificationBell />   {/* 👈 add this */}
               </div>
               <PromptBox {...promptBoxProps} collapsed={promptCollapsed} />
 
