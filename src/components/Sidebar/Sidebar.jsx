@@ -19,7 +19,10 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
   };
 
   const handleLogout = () => { logout(); setIsDropdownOpen(false); };
-  const handleSettings = () => setIsDropdownOpen(false);
+  const handleSettings = () => {
+    setIsDropdownOpen(false);
+    onNavigate('settings');
+  };
   const handleSupport = () => setIsDropdownOpen(false);
 
   useEffect(() => {
