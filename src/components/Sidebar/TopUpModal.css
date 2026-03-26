@@ -25,7 +25,6 @@
   transition: filter 0.2s ease, opacity 0.2s ease;
 }
 
-/* Blur the TopUpModal when AccountDetailModal is open on top */
 .modal-content--blurred {
   filter: blur(4px);
   opacity: 100;
@@ -135,9 +134,7 @@
   gap: 4px;
 }
 
-.pack-info {
-  text-align: left;
-}
+.pack-info { text-align: left; }
 
 .pack-name {
   color: #888;
@@ -149,9 +146,7 @@
   margin-bottom: 8px;
 }
 
-.pack-credits {
-  margin-bottom: 20px;
-}
+.pack-credits { margin-bottom: 20px; }
 
 .credit-number {
   font-size: 42px;
@@ -196,6 +191,38 @@
   text-align: left;
 }
 
+/* ── PayPal button ─────────────────────────────────────────────────────── */
+.paypal-transfer-btn {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: transparent;
+  color: #555;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.25s ease;
+  letter-spacing: 0.2px;
+}
+
+.paypal-transfer-btn:hover:not(:disabled) {
+  color: #aaa;
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.paypal-transfer-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── Crypto button ─────────────────────────────────────────────────────── */
 .select-pack-btn {
   width: 100%;
   padding: 14px;
@@ -212,6 +239,7 @@
   justify-content: center;
   gap: 8px;
   margin-top: auto;
+  margin-bottom: 8px;
 }
 
 .select-pack-btn:disabled {
@@ -231,9 +259,9 @@
   border-color: #a855f7;
 }
 
+/* ── Bank transfer button ──────────────────────────────────────────────── */
 .bank-transfer-btn {
   width: 100%;
-  margin-top: 8px;
   padding: 10px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -261,9 +289,7 @@
   cursor: not-allowed;
 }
 
-.spinner-icon {
-  animation: spin 1s linear infinite;
-}
+.spinner-icon { animation: spin 1s linear infinite; }
 
 @keyframes spin {
   from { transform: rotate(0deg); }
@@ -279,7 +305,7 @@
   text-align: center;
 }
 
-/* ── Account Detail Modal ───────────────────────────────────────────────────── */
+/* ── Account Detail Modal (overlay) ───────────────────────────────────── */
 .account-detail-overlay {
   position: absolute;
   inset: 0;
@@ -326,7 +352,7 @@
   transform: rotate(90deg);
 }
 
-/* ── Mobile ─────────────────────────────────────────────────────────────────── */
+/* ── Mobile ────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .modal-overlay {
     padding: 16px;
@@ -342,9 +368,7 @@
     box-sizing: border-box;
   }
 
-  .modal-header {
-    margin-bottom: 20px;
-  }
+  .modal-header { margin-bottom: 20px; }
 
   .modal-title {
     font-size: 20px;
@@ -367,7 +391,7 @@
   .credit-pack-card {
     display: grid;
     grid-template-columns: 1fr auto auto;
-    grid-template-rows: auto auto;
+    grid-template-rows: auto auto auto;
     align-items: center;
     padding: 14px 16px;
     border-radius: 16px;
@@ -375,13 +399,9 @@
     box-sizing: border-box;
   }
 
-  .credit-pack-card.popular {
-    padding-top: 30px;
-  }
+  .credit-pack-card.popular { padding-top: 30px; }
 
-  .credit-pack-card:hover {
-    transform: none;
-  }
+  .credit-pack-card:hover { transform: none; }
 
   .popular-ribbon {
     position: absolute;
@@ -410,6 +430,7 @@
     justify-content: flex-end;
   }
 
+  /* Crypto button stays in row 1 col 3 */
   .select-pack-btn {
     grid-column: 3;
     grid-row: 1;
@@ -419,16 +440,31 @@
     font-size: 11px;
     border-radius: 10px;
     margin-top: 0;
+    margin-bottom: 0;
     white-space: nowrap;
   }
 
+  /* PayPal and Bank Transfer share row 2, side by side */
+  .paypal-transfer-btn {
+    grid-column: 1 / 3;
+    grid-row: 2;
+    margin-top: 10px;
+    margin-bottom: 0;
+    padding: 8px;
+    font-size: 11px;
+    border-radius: 8px;
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+  }
+
   .bank-transfer-btn {
-    grid-column: 1 / -1;
+    grid-column: 3 / 4;
     grid-row: 2;
     margin-top: 10px;
     padding: 8px;
     font-size: 11px;
-    border-radius: 8px;
+    border-radius: 0 8px 8px 0;
+    border-left: none;
   }
 
   .pack-name {
@@ -448,10 +484,10 @@
   }
 
   .credit-number { font-size: 24px; }
-  .credit-unit { font-size: 11px; }
-  .currency { font-size: 13px; margin-top: 3px; }
-  .price-amount { font-size: 24px; }
-  .pack-desc { display: none; }
+  .credit-unit   { font-size: 11px; }
+  .currency      { font-size: 13px; margin-top: 3px; }
+  .price-amount  { font-size: 24px; }
+  .pack-desc     { display: none; }
 
   .modal-footer {
     margin-top: 18px;
