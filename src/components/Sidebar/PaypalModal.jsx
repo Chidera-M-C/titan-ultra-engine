@@ -3,7 +3,7 @@ import { X, Copy, Check, Upload, ImagePlus, FileCheck, CheckCircle } from 'lucid
 import { useAuth } from '../../context/AuthContext';
 import './PaypalModal.css';
 
-const PAYPAL_EMAIL = 'your-paypal@email.com'; // ← replace with your PayPal email
+const PAYPAL_EMAIL = 'mmandu2022@gmail.com'; // ← replace with your PayPal email
 
 const NOTES = [
   'Send the exact amount shown to the PayPal email above.',
