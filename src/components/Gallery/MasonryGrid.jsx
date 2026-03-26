@@ -24,8 +24,9 @@ const downloadImage = async (e, url, imageId) => {
 
 function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
   const { user } = useAuth();
-  const [liked, setLiked] = useState(initialLiked);
-  const [likes, setLikes] = useState(initialLikes);
+  const [liked, setLiked]   = useState(initialLiked);
+  const [likes, setLikes]   = useState(initialLikes);
+  const [busy, setBusy]     = useState(false);
 
   useEffect(() => {
     setLiked(initialLiked);
@@ -34,40 +35,70 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
 
   const handleLike = async (e) => {
     e.stopPropagation();
-    if (!user) return;
-  
+    if (!user || busy) return;
+
+    setBusy(true);
     const newLiked = !liked;
+
+    // Optimistic update
     setLiked(newLiked);
-    setLikes(prev => newLiked ? prev + 1 : prev - 1);
-  
-    if (newLiked) {
-      await supabase.from('image_likes').insert({ user_id: user.id, image_id: imageId });
-      await supabase.from('images').update({ likes: likes + 1 }).eq('id', imageId);
-  
-      // Get the image owner and notify them (only if it's not their own image)
-      const { data: imgData } = await supabase
-        .from('images')
-        .select('user_id')
-        .eq('id', imageId)
-        .single();
-  
-      if (imgData && imgData.user_id !== user.id) {
-        await supabase.from('notifications').insert({
-          user_id: imgData.user_id,
-          type: 'like',
-          title: 'Someone liked your image',
-          message: 'Your image just got a like!',
-          image_id: imageId,
-        });
+    setLikes(prev => Math.max(0, newLiked ? prev + 1 : prev - 1));
+
+    try {
+      if (newLiked) {
+        // Insert like record
+        const { error: likeError } = await supabase
+          .from('image_likes')
+          .insert({ user_id: user.id, image_id: imageId });
+
+        if (likeError) throw likeError;
+
+        // Increment count via RPC — avoids stale state race condition
+        await supabase.rpc('increment_likes', { image_id: imageId });
+
+        // Notify image owner — non-fatal, run after like is confirmed
+        const { data: imgData } = await supabase
+          .from('images')
+          .select('user_id')
+          .eq('id', imageId)
+          .single();
+
+        if (imgData && imgData.user_id !== user.id) {
+          await supabase.from('notifications').insert({
+            user_id:  imgData.user_id,
+            type:     'like',
+            title:    'Someone liked your image',
+            message:  'Your image just got a like!',
+            image_id: imageId,
+          });
+        }
+
+      } else {
+        // Delete like record
+        const { error: unlikeError } = await supabase
+          .from('image_likes')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('image_id', imageId);
+
+        if (unlikeError) throw unlikeError;
+
+        // Decrement count via RPC
+        await supabase.rpc('decrement_likes', { image_id: imageId });
       }
-    } else {
-      await supabase.from('image_likes').delete().eq('user_id', user.id).eq('image_id', imageId);
-      await supabase.from('images').update({ likes: likes - 1 }).eq('id', imageId);
+
+    } catch (err) {
+      console.error('Like failed:', err.message);
+      // Revert optimistic update on failure
+      setLiked(!newLiked);
+      setLikes(prev => Math.max(0, newLiked ? prev - 1 : prev + 1));
+    } finally {
+      setBusy(false);
     }
   };
 
   return (
-    <div className="like-badge" onClick={handleLike}>
+    <div className="like-badge" onClick={handleLike} style={{ opacity: busy ? 0.6 : 1 }}>
       <Heart size={16} fill={liked ? '#ff4b4b' : 'none'} color={liked ? '#ff4b4b' : '#fff'} />
       <span>{likes}</span>
     </div>
@@ -75,7 +106,7 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
 }
 
 export default function MasonryGrid({ images, promptRef, onImageClick, onSelectPrompt, onEditImage }) {
-  const [openId, setOpenId] = useState(null);
+  const [openId, setOpenId]           = useState(null);
   const [currentPrompt, setCurrentPrompt] = useState(promptRef?.current || '');
 
   useEffect(() => {
