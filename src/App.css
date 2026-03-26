@@ -232,6 +232,9 @@ body, html {
   position: absolute;
   right: 0;
   top: 5px;
+  z-index: 9999;          /* A very high number to beat the prompt box */
+  isolation: isolate;     /* Creates a new stacking context */
+  pointer-events: auto;   /* Forces it to be clickable */
   transition: opacity 0.4s ease;
 }
 
@@ -379,6 +382,7 @@ body, html {
   .top-header-row .notif-bell-wrapper {
     top: -5px;
     left: -1px;
+    z-index: 9999; /* Re-confirm high z-index for mobile */
   }
 }
 
