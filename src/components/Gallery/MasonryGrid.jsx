@@ -36,33 +36,34 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
   const handleLike = async (e) => {
     e.stopPropagation();
     if (!user || busy) return;
-
+  
     setBusy(true);
     const newLiked = !liked;
-
+  
     // Optimistic update
     setLiked(newLiked);
     setLikes(prev => Math.max(0, newLiked ? prev + 1 : prev - 1));
-
+  
     try {
       if (newLiked) {
-        // Insert like record
         const { error: likeError } = await supabase
           .from('image_likes')
           .insert({ user_id: user.id, image_id: imageId });
-
         if (likeError) throw likeError;
-
-        // Increment count via RPC — avoids stale state race condition
-        await supabase.rpc('increment_likes', { image_id: imageId });
-
-        // Notify image owner — non-fatal, run after like is confirmed
+  
+        // Fetch current likes from DB then increment
         const { data: imgData } = await supabase
           .from('images')
-          .select('user_id')
+          .select('likes, user_id')
           .eq('id', imageId)
           .single();
-
+  
+        await supabase
+          .from('images')
+          .update({ likes: (imgData?.likes || 0) + 1 })
+          .eq('id', imageId);
+  
+        // Notify owner
         if (imgData && imgData.user_id !== user.id) {
           await supabase.from('notifications').insert({
             user_id:  imgData.user_id,
@@ -72,24 +73,29 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
             image_id: imageId,
           });
         }
-
+  
       } else {
-        // Delete like record
         const { error: unlikeError } = await supabase
           .from('image_likes')
           .delete()
           .eq('user_id', user.id)
           .eq('image_id', imageId);
-
         if (unlikeError) throw unlikeError;
-
-        // Decrement count via RPC
-        await supabase.rpc('decrement_likes', { image_id: imageId });
+  
+        const { data: imgData } = await supabase
+          .from('images')
+          .select('likes')
+          .eq('id', imageId)
+          .single();
+  
+        await supabase
+          .from('images')
+          .update({ likes: Math.max((imgData?.likes || 0) - 1, 0) })
+          .eq('id', imageId);
       }
-
+  
     } catch (err) {
       console.error('Like failed:', err.message);
-      // Revert optimistic update on failure
       setLiked(!newLiked);
       setLikes(prev => Math.max(0, newLiked ? prev - 1 : prev + 1));
     } finally {
