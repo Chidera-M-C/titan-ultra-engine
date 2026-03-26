@@ -43,7 +43,7 @@ export function AuthProvider({ children }) {
         .from('users')
         .insert({
           id: authUser.id,
-          credits: 10,
+          credits: 6,
           username: '',
           avatar_url: '',
         })
