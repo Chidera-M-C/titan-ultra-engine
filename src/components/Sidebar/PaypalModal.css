@@ -1,0 +1,53 @@
+/* PaypalModal uses AccountDetailModal base styles from AccountDetailModal.css */
+/* Only PayPal-specific additions here */
+
+.pp-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.pp-email-section {
+  margin-bottom: 16px;
+}
+
+.pp-email-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #555;
+  margin: 0 0 8px;
+}
+
+.pp-email-row {
+  margin-bottom: 8px;
+}
+
+.pp-copy-btn {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  background: rgba(168, 85, 247, 0.06);
+  color: #c084fc;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: all 0.25s ease;
+}
+
+.pp-copy-btn:hover {
+  background: rgba(168, 85, 247, 0.12);
+  border-color: rgba(168, 85, 247, 0.4);
+}
+
+.pp-copy-btn.copied {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.25);
+  color: #22c55e;
+}
