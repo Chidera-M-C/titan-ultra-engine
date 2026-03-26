@@ -8,9 +8,9 @@
   background: transparent;
   border: none;
   color: rgba(255, 255, 255, 0.6);
-  width: 46px;
-  height: 46px;
-  border-radius: 10px;
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -32,9 +32,9 @@
   color: #fff;
   font-size: 0.6rem;
   font-weight: 800;
-  min-width: 24px;
-  height: 24px;
-  border-radius: 12px;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
