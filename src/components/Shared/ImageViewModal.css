@@ -374,12 +374,12 @@
     border-left: none;
     border-top: 1px solid #1e1e1e;
     max-height: none;
-    overflow: hidden;
+    overflow-y: auto; /* ← this is the key */
   }
 
   .ivm-comments-list {
     flex: 1;
-    overflow-y: auto;
+    overflow-y: none;
   }
 
   .image-view-close {
