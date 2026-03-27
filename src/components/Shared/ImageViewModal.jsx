@@ -46,7 +46,6 @@ function Comment({ comment, imageOwnerId, depth = 0 }) {
     const newLiked = !liked;
     const newLikes = newLiked ? likes + 1 : Math.max(0, likes - 1);
 
-    // Optimistic update
     setLiked(newLiked);
     setLikes(newLikes);
 
@@ -60,7 +59,6 @@ function Comment({ comment, imageOwnerId, depth = 0 }) {
       }
     } catch (err) {
       console.error('Comment like failed:', err);
-      // Revert optimistic update
       setLiked(!newLiked);
       setLikes(likes);
     }
@@ -73,7 +71,7 @@ function Comment({ comment, imageOwnerId, depth = 0 }) {
     const { data, error } = await supabase
       .from('comments')
       .insert({ image_id: comment.image_id, user_id: user.id, parent_id: comment.id, content: replyText.trim() })
-      .select('*, profile:profiles!user_id(username, avatar_url)')
+      .select('*, profiles(username, avatar_url)')
       .single();
 
     if (error) {
@@ -84,13 +82,12 @@ function Comment({ comment, imageOwnerId, depth = 0 }) {
       setReplyText('');
       setReplying(false);
 
-      // Notify image owner if it's not themselves
       if (imageOwnerId && imageOwnerId !== user.id) {
         await supabase.from('notifications').insert({
           user_id: imageOwnerId,
           type: 'comment',
           title: 'New reply on your image',
-          message: `${data.profile?.username || 'Someone'} replied: "${replyText.trim().slice(0, 60)}"`,
+          message: `${data.profiles?.username || 'Someone'} replied: "${replyText.trim().slice(0, 60)}"`,
           image_id: comment.image_id,
         });
       }
@@ -100,10 +97,10 @@ function Comment({ comment, imageOwnerId, depth = 0 }) {
 
   return (
     <div className={`ivm-comment ${depth > 0 ? 'ivm-reply' : ''}`}>
-      <UserAvatar profile={comment.profile} size={depth > 0 ? 26 : 32} />
+      <UserAvatar profile={comment.profiles} size={depth > 0 ? 26 : 32} />
       <div className="ivm-comment-body">
         <div className="ivm-comment-header">
-          <span className="ivm-comment-name">{comment.profile?.username || 'User'}</span>
+          <span className="ivm-comment-name">{comment.profiles?.username || 'User'}</span>
           <span className="ivm-comment-time">{timeAgo(comment.created_at)}</span>
         </div>
         <p className="ivm-comment-text">{comment.content}</p>
@@ -165,7 +162,6 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
   const [submitting, setSubmitting] = useState(false);
   const commentInputRef = useRef(null);
 
-  // Fetch likes and comments
   useEffect(() => {
     if (!imageId) return;
 
@@ -192,31 +188,27 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
           setLiked(!!likeData);
         }
 
-        // Fetch top-level comments with profiles
+        // Fetch top-level comments + profiles
         const { data: commentsData, error: commentsError } = await supabase
           .from('comments')
-          .select('*, profile:profiles!user_id(username, avatar_url)')
+          .select('*, profiles(username, avatar_url)')
           .eq('image_id', imageId)
           .is('parent_id', null)
           .order('created_at', { ascending: false });
 
-        if (commentsError) {
-          console.error('Comments fetch error:', commentsError);
-        }
+        if (commentsError) console.error('Comments fetch error:', commentsError);
 
         if (commentsData) {
-          // Fetch replies for each comment
           const commentsWithReplies = await Promise.all(
             commentsData.map(async (c) => {
               const { data: repliesData, error: repliesError } = await supabase
                 .from('comments')
-                .select('*, profile:profiles!user_id(username, avatar_url)')
+                .select('*, profiles(username, avatar_url)')
                 .eq('parent_id', c.id)
                 .order('created_at', { ascending: true });
 
               if (repliesError) console.error('Replies fetch error:', repliesError);
 
-              // Check liked status for each comment + replies
               let commentLiked = false;
               let replyLiked = {};
               if (user) {
@@ -289,7 +281,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
     const { data, error } = await supabase
       .from('comments')
       .insert({ image_id: imageId, user_id: user.id, content: commentText.trim() })
-      .select('*, profile:profiles!user_id(username, avatar_url)')
+      .select('*, profiles(username, avatar_url)')
       .single();
 
     if (error) {
@@ -298,13 +290,12 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
       setComments(prev => [{ ...data, liked: false, likes: 0, replies: [] }, ...prev]);
       setCommentText('');
 
-      // Notify owner
       if (imageOwnerId && imageOwnerId !== user.id) {
         await supabase.from('notifications').insert({
           user_id: imageOwnerId,
           type: 'comment',
           title: 'New comment on your image',
-          message: `${data.profile?.username || 'Someone'} commented: "${commentText.trim().slice(0, 60)}"`,
+          message: `${data.profiles?.username || 'Someone'} commented: "${commentText.trim().slice(0, 60)}"`,
           image_id: imageId,
         });
       }
@@ -317,18 +308,13 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
     <div className="image-view-modal" onClick={onClose}>
       <div className="image-view-content" onClick={e => e.stopPropagation()}>
 
-        {/* Close */}
         <button className="image-view-close" onClick={onClose}><X size={18} /></button>
 
-        {/* Left — Image */}
         <div className="ivm-image-side">
           <img src={imageUrl} alt="Full view" className="image-view-img" />
         </div>
 
-        {/* Right — Sidebar */}
         <div className="ivm-sidebar">
-
-          {/* Likes bar */}
           <div className="ivm-likes-bar">
             <button className={`ivm-like-btn ${liked ? 'liked' : ''}`} onClick={handleLikeImage}>
               <Heart size={18} fill={liked ? '#ff4b4b' : 'none'} color={liked ? '#ff4b4b' : '#fff'} />
@@ -336,7 +322,6 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
             </button>
           </div>
 
-          {/* Comments list */}
           <div className="ivm-comments-list">
             {loadingComments ? (
               <div className="ivm-comments-loading">Loading comments...</div>
@@ -349,7 +334,6 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
             )}
           </div>
 
-          {/* Comment input */}
           {user ? (
             <div className="ivm-comment-input-row">
               <input
