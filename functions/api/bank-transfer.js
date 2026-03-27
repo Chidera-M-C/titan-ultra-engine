@@ -24,6 +24,8 @@ export async function onRequestPost(context) {
     const pack    = formData.get('pack');
     const receipt = formData.get('receipt'); // File object
 
+    const payment_method = formData.get('payment_method') || 'bank_transfer';
+
     if (!userId || !credits || !receipt) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400,
