@@ -60,7 +60,7 @@ function Comment({ comment, imageOwnerId, onReply, depth = 0 }) {
     const { data, error } = await supabase
       .from('comments')
       .insert({ image_id: comment.image_id, user_id: user.id, parent_id: comment.id, content: replyText.trim() })
-      .select('*, profile:users(username, avatar_url)')
+      .select('*, profile:users!user_id(username, avatar_url)')   // ← fixed
       .single();
     if (!error && data) {
       setReplies(prev => [...prev, { ...data, liked: false, likes: 0, replies: [] }]);
@@ -171,14 +171,14 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
           .select('id')
           .eq('image_id', imageId)
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();   // ← this prevents 406
         setLiked(!!likeData);
       }
 
       // Fetch top-level comments with profiles and replies
       const { data: commentsData } = await supabase
         .from('comments')
-        .select('*, profile:users(username, avatar_url)')
+        .select('*, profile:users!user_id(username, avatar_url)')
         .eq('image_id', imageId)
         .is('parent_id', null)
         .order('created_at', { ascending: false });
@@ -189,7 +189,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
           commentsData.map(async (c) => {
             const { data: repliesData } = await supabase
               .from('comments')
-              .select('*, profile:users(username, avatar_url)')
+              .select('*, profile:users!user_id(username, avatar_url)')
               .eq('parent_id', c.id)
               .order('created_at', { ascending: true });
 
@@ -249,9 +249,10 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
     if (!commentText.trim() || submitting || !user) return;
     setSubmitting(true);
     const { data, error } = await supabase
+    if (error) console.error('Supabase error:', error);
       .from('comments')
       .insert({ image_id: imageId, user_id: user.id, content: commentText.trim() })
-      .select('*, profile:users(username, avatar_url)')
+      .select('*, profile:users!user_id(username, avatar_url)')
       .single();
     if (!error && data) {
       setComments(prev => [{ ...data, liked: false, likes: 0, replies: [] }, ...prev]);
