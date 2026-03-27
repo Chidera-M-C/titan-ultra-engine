@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Heart, Send, ChevronDown, ChevronUp, CornerDownRight } from 'lucide-react';
+import { X, Heart, Send, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '../../lib/supabase.js';
 import { useAuth } from '../../context/AuthContext';
 import './ImageViewModal.css';
@@ -29,7 +29,7 @@ function UserAvatar({ profile, size = 32 }) {
 }
 
 // ── Single Comment ───────────────────────────────────────────────────────────
-function Comment({ comment, imageOwnerId, onReply, depth = 0 }) {
+function Comment({ comment, imageOwnerId, depth = 0 }) {
   const { user } = useAuth();
   const [liked, setLiked] = useState(comment.liked || false);
   const [likes, setLikes] = useState(comment.likes || 0);
@@ -42,27 +42,43 @@ function Comment({ comment, imageOwnerId, onReply, depth = 0 }) {
   const handleLike = async (e) => {
     e.stopPropagation();
     if (!user) return;
+
     const newLiked = !liked;
+    const newLikes = newLiked ? likes + 1 : Math.max(0, likes - 1);
+
+    // Optimistic update
     setLiked(newLiked);
-    setLikes(prev => newLiked ? prev + 1 : prev - 1);
-    if (newLiked) {
-      await supabase.from('comment_likes').insert({ comment_id: comment.id, user_id: user.id });
-      await supabase.from('comments').update({ likes: likes + 1 }).eq('id', comment.id);
-    } else {
-      await supabase.from('comment_likes').delete().eq('comment_id', comment.id).eq('user_id', user.id);
-      await supabase.from('comments').update({ likes: likes - 1 }).eq('id', comment.id);
+    setLikes(newLikes);
+
+    try {
+      if (newLiked) {
+        await supabase.from('comment_likes').insert({ comment_id: comment.id, user_id: user.id });
+        await supabase.from('comments').update({ likes: newLikes }).eq('id', comment.id);
+      } else {
+        await supabase.from('comment_likes').delete().eq('comment_id', comment.id).eq('user_id', user.id);
+        await supabase.from('comments').update({ likes: newLikes }).eq('id', comment.id);
+      }
+    } catch (err) {
+      console.error('Comment like failed:', err);
+      // Revert optimistic update
+      setLiked(!newLiked);
+      setLikes(likes);
     }
   };
 
   const handleReplySubmit = async () => {
     if (!replyText.trim() || submitting || !user) return;
     setSubmitting(true);
+
     const { data, error } = await supabase
       .from('comments')
       .insert({ image_id: comment.image_id, user_id: user.id, parent_id: comment.id, content: replyText.trim() })
-      .select('*, profile:users!user_id(username, avatar_url)')   // ← fixed
+      .select('*, profile:profiles!user_id(username, avatar_url)')
       .single();
-    if (!error && data) {
+
+    if (error) {
+      console.error('Supabase reply insert error:', error);
+    } else if (data) {
       setReplies(prev => [...prev, { ...data, liked: false, likes: 0, replies: [] }]);
       setShowReplies(true);
       setReplyText('');
@@ -129,7 +145,7 @@ function Comment({ comment, imageOwnerId, onReply, depth = 0 }) {
         {showReplies && replies.length > 0 && (
           <div className="ivm-replies">
             {replies.map(reply => (
-              <Comment key={reply.id} comment={reply} imageOwnerId={imageOwnerId} onReply={onReply} depth={1} />
+              <Comment key={reply.id} comment={reply} imageOwnerId={imageOwnerId} depth={1} />
             ))}
           </div>
         )}
@@ -156,67 +172,79 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
     const fetchData = async () => {
       setLoadingComments(true);
 
-      // Fetch image likes count
-      const { data: imgData } = await supabase
-        .from('images')
-        .select('likes')
-        .eq('id', imageId)
-        .single();
-      if (imgData) setLikes(imgData.likes || 0);
+      try {
+        // Fetch image likes count
+        const { data: imgData } = await supabase
+          .from('images')
+          .select('likes')
+          .eq('id', imageId)
+          .single();
+        if (imgData) setLikes(imgData.likes || 0);
 
-      // Check if current user liked this image
-      if (user) {
-        const { data: likeData } = await supabase
-          .from('image_likes')
-          .select('id')
+        // Check if current user liked this image
+        if (user) {
+          const { data: likeData } = await supabase
+            .from('image_likes')
+            .select('id')
+            .eq('image_id', imageId)
+            .eq('user_id', user.id)
+            .maybeSingle();
+          setLiked(!!likeData);
+        }
+
+        // Fetch top-level comments with profiles
+        const { data: commentsData, error: commentsError } = await supabase
+          .from('comments')
+          .select('*, profile:profiles!user_id(username, avatar_url)')
           .eq('image_id', imageId)
-          .eq('user_id', user.id)
-          .maybeSingle();   // ← this prevents 406
-        setLiked(!!likeData);
+          .is('parent_id', null)
+          .order('created_at', { ascending: false });
+
+        if (commentsError) {
+          console.error('Comments fetch error:', commentsError);
+        }
+
+        if (commentsData) {
+          // Fetch replies for each comment
+          const commentsWithReplies = await Promise.all(
+            commentsData.map(async (c) => {
+              const { data: repliesData, error: repliesError } = await supabase
+                .from('comments')
+                .select('*, profile:profiles!user_id(username, avatar_url)')
+                .eq('parent_id', c.id)
+                .order('created_at', { ascending: true });
+
+              if (repliesError) console.error('Replies fetch error:', repliesError);
+
+              // Check liked status for each comment + replies
+              let commentLiked = false;
+              let replyLiked = {};
+              if (user) {
+                const commentIds = [c.id, ...(repliesData || []).map(r => r.id)];
+                const { data: cl } = await supabase
+                  .from('comment_likes')
+                  .select('comment_id')
+                  .eq('user_id', user.id)
+                  .in('comment_id', commentIds);
+                const likedIds = new Set((cl || []).map(l => l.comment_id));
+                commentLiked = likedIds.has(c.id);
+                replyLiked = Object.fromEntries((repliesData || []).map(r => [r.id, likedIds.has(r.id)]));
+              }
+
+              return {
+                ...c,
+                liked: commentLiked,
+                replies: (repliesData || []).map(r => ({ ...r, liked: replyLiked[r.id] || false, replies: [] })),
+              };
+            })
+          );
+          setComments(commentsWithReplies);
+        }
+      } catch (err) {
+        console.error('Error loading comments/likes:', err);
+      } finally {
+        setLoadingComments(false);
       }
-
-      // Fetch top-level comments with profiles and replies
-      const { data: commentsData } = await supabase
-        .from('comments')
-        .select('*, profile:users!user_id(username, avatar_url)')
-        .eq('image_id', imageId)
-        .is('parent_id', null)
-        .order('created_at', { ascending: false });
-
-      if (commentsData) {
-        // Fetch replies for each comment
-        const commentsWithReplies = await Promise.all(
-          commentsData.map(async (c) => {
-            const { data: repliesData } = await supabase
-              .from('comments')
-              .select('*, profile:users!user_id(username, avatar_url)')
-              .eq('parent_id', c.id)
-              .order('created_at', { ascending: true });
-
-            // Check liked status for each comment
-            let commentLiked = false;
-            let replyLiked = {};
-            if (user) {
-              const { data: cl } = await supabase
-                .from('comment_likes')
-                .select('comment_id')
-                .eq('user_id', user.id)
-                .in('comment_id', [c.id, ...(repliesData || []).map(r => r.id)]);
-              const likedIds = new Set((cl || []).map(l => l.comment_id));
-              commentLiked = likedIds.has(c.id);
-              replyLiked = Object.fromEntries((repliesData || []).map(r => [r.id, likedIds.has(r.id)]));
-            }
-
-            return {
-              ...c,
-              liked: commentLiked,
-              replies: (repliesData || []).map(r => ({ ...r, liked: replyLiked[r.id] || false, replies: [] })),
-            };
-          })
-        );
-        setComments(commentsWithReplies);
-      }
-      setLoadingComments(false);
     };
 
     fetchData();
@@ -225,23 +253,32 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
   const handleLikeImage = async () => {
     if (!user) return;
     const newLiked = !liked;
+    const newLikes = newLiked ? likes + 1 : Math.max(0, likes - 1);
+
     setLiked(newLiked);
-    setLikes(prev => newLiked ? prev + 1 : prev - 1);
-    if (newLiked) {
-      await supabase.from('image_likes').insert({ user_id: user.id, image_id: imageId });
-      await supabase.from('images').update({ likes: likes + 1 }).eq('id', imageId);
-      if (imageOwnerId && imageOwnerId !== user.id) {
-        await supabase.from('notifications').insert({
-          user_id: imageOwnerId,
-          type: 'like',
-          title: 'Someone liked your image',
-          message: 'Your image just got a like!',
-          image_id: imageId,
-        });
+    setLikes(newLikes);
+
+    try {
+      if (newLiked) {
+        await supabase.from('image_likes').insert({ user_id: user.id, image_id: imageId });
+        await supabase.from('images').update({ likes: newLikes }).eq('id', imageId);
+        if (imageOwnerId && imageOwnerId !== user.id) {
+          await supabase.from('notifications').insert({
+            user_id: imageOwnerId,
+            type: 'like',
+            title: 'Someone liked your image',
+            message: 'Your image just got a like!',
+            image_id: imageId,
+          });
+        }
+      } else {
+        await supabase.from('image_likes').delete().eq('user_id', user.id).eq('image_id', imageId);
+        await supabase.from('images').update({ likes: newLikes }).eq('id', imageId);
       }
-    } else {
-      await supabase.from('image_likes').delete().eq('user_id', user.id).eq('image_id', imageId);
-      await supabase.from('images').update({ likes: likes - 1 }).eq('id', imageId);
+    } catch (err) {
+      console.error('Image like failed:', err);
+      setLiked(!newLiked);
+      setLikes(likes);
     }
   };
 
@@ -252,7 +289,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
     const { data, error } = await supabase
       .from('comments')
       .insert({ image_id: imageId, user_id: user.id, content: commentText.trim() })
-      .select('*, profile:users!user_id(username, avatar_url)')
+      .select('*, profile:profiles!user_id(username, avatar_url)')
       .single();
 
     if (error) {
@@ -260,7 +297,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
     } else if (data) {
       setComments(prev => [{ ...data, liked: false, likes: 0, replies: [] }, ...prev]);
       setCommentText('');
-      
+
       // Notify owner
       if (imageOwnerId && imageOwnerId !== user.id) {
         await supabase.from('notifications').insert({
