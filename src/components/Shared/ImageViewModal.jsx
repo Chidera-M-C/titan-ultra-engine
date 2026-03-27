@@ -58,7 +58,7 @@ function Comment({ comment, imageOwnerId, depth = 0 }) {
         await supabase.from('comments').update({ likes: newLikes }).eq('id', comment.id);
       }
 
-      // NEW: Notify the comment/reply owner when someone likes it
+      // NEW: Notify comment/reply owner on like
       if (comment.user_id && comment.user_id !== user.id) {
         await supabase.from('notifications').insert({
           user_id: comment.user_id,
@@ -93,7 +93,6 @@ function Comment({ comment, imageOwnerId, depth = 0 }) {
     if (error) {
       console.error('Supabase reply insert error:', error);
     } else if (newReply) {
-      // Fetch profile for the new reply
       const { data: profileData } = await supabase
         .from('profiles')
         .select('username, avatar_url')
@@ -113,24 +112,13 @@ function Comment({ comment, imageOwnerId, depth = 0 }) {
       setReplyText('');
       setReplying(false);
 
-      // NEW: Notify the parent comment/reply owner
+      // NEW: Notify parent comment/reply author
       if (comment.user_id && comment.user_id !== user.id) {
         await supabase.from('notifications').insert({
           user_id: comment.user_id,
           type: 'comment',
           title: 'New reply to your comment',
-          message: `${profileData?.username || 'Someone'} replied to your comment: "${replyText.trim().slice(0, 60)}"`,
-          image_id: comment.image_id,
-        });
-      }
-
-      // Keep existing image owner notification (optional but nice)
-      if (imageOwnerId && imageOwnerId !== user.id && imageOwnerId !== comment.user_id) {
-        await supabase.from('notifications').insert({
-          user_id: imageOwnerId,
-          type: 'comment',
-          title: 'New reply on your image',
-          message: `${profileData?.username || 'Someone'} replied: "${replyText.trim().slice(0, 60)}"`,
+          message: `${profileData?.username || 'Someone'} replied to your comment`,
           image_id: comment.image_id,
         });
       }
@@ -194,7 +182,7 @@ function Comment({ comment, imageOwnerId, depth = 0 }) {
   );
 }
 
-// ── Main Modal (unchanged except for cleaner structure) ───────────────────────
+// ── Main Modal ───────────────────────────────────────────────────────────────
 export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClose }) {
   const { user } = useAuth();
   const [likes, setLikes] = useState(0);
@@ -282,12 +270,80 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
     fetchData();
   }, [imageId, user]);
 
-  const handleLikeImage = async () => { /* unchanged - already working */ 
-    /* ... (same as previous version) ... */
+  const handleLikeImage = async () => {
+    if (!user) return;
+    const newLiked = !liked;
+    const newLikes = newLiked ? likes + 1 : Math.max(0, likes - 1);
+
+    setLiked(newLiked);
+    setLikes(newLikes);
+
+    try {
+      if (newLiked) {
+        await supabase.from('image_likes').insert({ user_id: user.id, image_id: imageId });
+        await supabase.from('images').update({ likes: newLikes }).eq('id', imageId);
+        if (imageOwnerId && imageOwnerId !== user.id) {
+          await supabase.from('notifications').insert({
+            user_id: imageOwnerId,
+            type: 'like',
+            title: 'Someone liked your image',
+            message: 'Your image just got a like!',
+            image_id: imageId,
+          });
+        }
+      } else {
+        await supabase.from('image_likes').delete().eq('user_id', user.id).eq('image_id', imageId);
+        await supabase.from('images').update({ likes: newLikes }).eq('id', imageId);
+      }
+    } catch (err) {
+      console.error('Image like failed:', err);
+      setLiked(!newLiked);
+      setLikes(likes);
+    }
   };
 
-  const handleCommentSubmit = async () => { /* unchanged - already working */ 
-    /* ... (same as previous version) ... */
+  const handleCommentSubmit = async () => {
+    if (!commentText.trim() || submitting || !user) return;
+    setSubmitting(true);
+
+    const { data: newComment, error } = await supabase
+      .from('comments')
+      .insert({ image_id: imageId, user_id: user.id, content: commentText.trim() })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase comment insert error:', error);
+    } else if (newComment) {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('username, avatar_url')
+        .eq('id', user.id)
+        .single();
+
+      const commentWithProfile = {
+        ...newComment,
+        profiles: profileData || null,
+        liked: false,
+        likes: 0,
+        replies: []
+      };
+
+      setComments(prev => [commentWithProfile, ...prev]);
+      setCommentText('');
+
+      if (imageOwnerId && imageOwnerId !== user.id) {
+        await supabase.from('notifications').insert({
+          user_id: imageOwnerId,
+          type: 'comment',
+          title: 'New comment on your image',
+          message: `${profileData?.username || 'Someone'} commented: "${commentText.trim().slice(0, 60)}"`,
+          image_id: imageId,
+        });
+      }
+    }
+
+    setSubmitting(false);
   };
 
   return (
