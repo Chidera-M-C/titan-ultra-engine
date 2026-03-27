@@ -396,6 +396,7 @@
     max-height: none;
     background: #000;
     transition: flex 0.3s ease;
+    overflow: hidden;
   }
 
   .ivm-image-side.collapsed {
@@ -406,8 +407,8 @@
     width: 100%;
     height: 100%;
     max-width: 100%;
-    object-fit: contain;
-    object-position: center;
+    object-fit: cover;
+    object-position: top;
   }
 
   .ivm-sidebar {
@@ -416,15 +417,18 @@
     border-left: none;
     border-top: 1px solid #1e1e1e;
     max-height: none;
-    overflow-y: auto;           /* ← whole sidebar scrolls */
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #0a0a0a #111;
   }
 
-  .ivm-comment-input-row {
-    position: sticky;
-    bottom: 0;
-    z-index: 20;
-    background: #111;
-    border-top: 1px solid #1e1e1e;
+  .ivm-sidebar::-webkit-scrollbar { width: 4px; }
+  .ivm-sidebar::-webkit-scrollbar-track { background: #111; }
+  .ivm-sidebar::-webkit-scrollbar-thumb { background: #0a0a0a; border-radius: 4px; }
+
+  .ivm-comments-list {
+    flex: 1;
+    overflow-y: visible;
   }
 
   .image-view-close {
