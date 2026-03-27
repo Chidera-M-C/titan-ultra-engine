@@ -338,20 +338,6 @@
     background: #000;
   }
 
-  .image-view-close {
-    top: 12px;
-    left: 12px;
-    right: auto;
-  }
-
-  .ivm-image-side {
-    transition: flex 0.3s ease;
-  }
-  
-  .ivm-image-side.collapsed {
-    flex: 0 0 25%;
-  }
-
   .image-view-content {
     flex-direction: column;
     width: 100%;
@@ -367,6 +353,11 @@
     width: 100%;
     max-height: none;
     background: #000;
+    transition: flex 0.3s ease;
+  }
+
+  .ivm-image-side.collapsed {
+    flex: 0 0 25%;
   }
 
   .image-view-img {
@@ -393,7 +384,8 @@
 
   .image-view-close {
     top: 12px;
-    right: 12px;
+    left: 12px;
+    right: auto;
     background: rgba(0, 0, 0, 0.65);
   }
 }
