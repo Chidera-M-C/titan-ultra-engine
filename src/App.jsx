@@ -60,6 +60,8 @@ export default function App() {
   const [likedGallery, setLikedGallery] = useState([]);
   const [viewingImageId, setViewingImageId] = useState(null);
   const [viewingImageOwnerId, setViewingImageOwnerId] = useState(null);
+  const [viewingImagePrompt, setViewingImagePrompt] = useState(null);
+  const [viewingImageNegativePrompt, setViewingImageNegativePrompt] = useState(null);
 
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
   const promptRef = useRef(prompt);
@@ -415,6 +417,8 @@ export default function App() {
     setViewingImageUrl(img.url);
     setViewingImageId(img.id || null);
     setViewingImageOwnerId(img.userId || null);
+    setViewingImagePrompt(img.prompt || null);        // 👈 add
+    setViewingImageNegativePrompt(img.negativePrompt || null); // 👈 add
     setViewImageModalOpen(true);
   }, []);
 
@@ -653,6 +657,8 @@ export default function App() {
             imageUrl={viewingImageUrl}
             imageId={viewingImageId}
             imageOwnerId={viewingImageOwnerId}
+            imagePrompt={viewingImagePrompt}
+            imageNegativePrompt={viewingImageNegativePrompt}
             onClose={() => setViewImageModalOpen(false)}
           />
         )}
