@@ -83,6 +83,47 @@
 .ivm-like-btn:hover { opacity: 0.75; }
 .ivm-like-btn.liked span { color: #ff4b4b; }
 
+/* ── Prompt section ──────────────────────────────────────────────────────── */
+.ivm-prompt-section {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.ivm-prompt-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ivm-prompt-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #a855f7;
+}
+
+.ivm-prompt-label.negative {
+  color: #f97316;
+}
+
+.ivm-prompt-text {
+  font-size: 0.78rem;
+  color: #666;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.ivm-section-divider {
+  height: 1px;
+  background: #1e1e1e;
+  flex-shrink: 0;
+  margin: 0 16px;
+}
+
 /* ── Comments list ───────────────────────────────────────────────────────── */
 .ivm-comments-list {
   flex: 1;
@@ -92,11 +133,12 @@
   flex-direction: column;
   gap: 16px;
   scrollbar-width: thin;
-  scrollbar-color: #2a2a2a #111;
+  scrollbar-color: #1a1a1a #111;
 }
 
 .ivm-comments-list::-webkit-scrollbar { width: 4px; }
-.ivm-comments-list::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
+.ivm-comments-list::-webkit-scrollbar-track { background: #111; }
+.ivm-comments-list::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 4px; }
 
 .ivm-comments-loading,
 .ivm-comments-empty {
@@ -354,6 +396,7 @@
     max-height: none;
     background: #000;
     transition: flex 0.3s ease;
+    overflow: hidden;
   }
 
   .ivm-image-side.collapsed {
@@ -374,12 +417,18 @@
     border-left: none;
     border-top: 1px solid #1e1e1e;
     max-height: none;
-    overflow-y: auto; /* ← this is the key */
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #0a0a0a #111;
   }
+
+  .ivm-sidebar::-webkit-scrollbar { width: 4px; }
+  .ivm-sidebar::-webkit-scrollbar-track { background: #111; }
+  .ivm-sidebar::-webkit-scrollbar-thumb { background: #0a0a0a; border-radius: 4px; }
 
   .ivm-comments-list {
     flex: 1;
-    overflow-y: none;
+    overflow-y: visible;
   }
 
   .image-view-close {
