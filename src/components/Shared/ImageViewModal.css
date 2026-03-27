@@ -434,3 +434,17 @@
     background: rgba(0, 0, 0, 0.65);
   }
 }
+
+/* ── Prompt floats on top of image when scrolling (mobile) ───────────────── */
+@media (max-width: 768px) {
+  .ivm-prompt-section {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background: #111;
+    margin: 0 -16px 0 -16px;
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid #1e1e1e;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  }
+}
