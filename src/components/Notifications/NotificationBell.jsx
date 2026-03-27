@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import NotificationPanel from './NotificationPanel';
 import './NotificationBell.css';
 
-export default function NotificationBell() {
+export default function NotificationBell({ onOpenImage }) {
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -97,6 +97,7 @@ export default function NotificationBell() {
 
       {panelOpen && (
         <NotificationPanel
+          onOpenImage={onOpenImage}
           notifications={notifications}
           onMarkAllRead={markAllRead}
           onMarkOneRead={markOneRead}
