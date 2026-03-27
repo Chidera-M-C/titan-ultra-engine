@@ -16,43 +16,46 @@
 .image-view-content {
   position: relative;
   display: flex;
-  width: 100%;
-  max-width: 1000px;
+  flex-direction: row;
+  width: fit-content;
+  max-width: 90vw;
   max-height: 90vh;
   background: #111;
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.9);
   animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  gap: 0 !important; /* ← This makes them touch with no gap */
+  gap: 0;
+  margin: auto;
 }
 
 /* ── Image side ──────────────────────────────────────────────────────────── */
 .ivm-image-side {
-  flex: 1;
-  min-width: 0;
+  flex-shrink: 0;
   background: #000;
   display: flex;
   align-items: center;
   justify-content: center;
   max-height: 90vh;
+  width: auto;
 }
 
 .image-view-img {
-  width: 100%;
-  height: 100%;
-  max-height: 90vh;
+  display: block;
+  height: 90vh;
+  width: auto;
+  max-width: 60vw;
   object-fit: contain;
 }
 
 /* ── Right sidebar ───────────────────────────────────────────────────────── */
 .ivm-sidebar {
-  width: 320px;
+  width: 300px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  border-left: none;
   background: #111;
+  border-left: 1px solid #1e1e1e;
   max-height: 90vh;
 }
 
@@ -331,13 +334,23 @@
 @media (max-width: 768px) {
   .image-view-content {
     flex-direction: column;
+    width: 100%;
+    max-width: 100%;
     max-height: 95vh;
     border-radius: 16px;
   }
 
   .ivm-image-side {
     max-height: 45vh;
+    width: 100%;
     flex-shrink: 0;
+  }
+
+  .image-view-img {
+    height: 45vh;
+    width: 100%;
+    max-width: 100%;
+    object-fit: contain;
   }
 
   .ivm-sidebar {
