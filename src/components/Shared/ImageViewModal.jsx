@@ -57,7 +57,7 @@ function Comment({ comment, imageOwnerId, depth = 0 }) {
       if (comment.user_id && comment.user_id !== user.id) {
         await supabase.from('notifications').insert({
           user_id: comment.user_id,
-          type: 'comment_like',
+          type: 'comment',
           title: 'Someone liked your comment',
           message: 'Your comment just got a like!',
           image_id: comment.image_id,
@@ -75,17 +75,12 @@ function Comment({ comment, imageOwnerId, depth = 0 }) {
     setSubmitting(true);
     const { data: newReply, error } = await supabase
       .from('comments')
-      .insert({
-        image_id: comment.image_id,
-        user_id: user.id,
-        parent_id: comment.id,
-        content: replyText.trim()
-      })
+      .insert({ image_id: comment.image_id, user_id: user.id, parent_id: comment.id, content: replyText.trim() })
       .select()
       .single();
 
     if (error) {
-      console.error('Supabase reply insert error:', error);
+      console.error('Reply insert error:', error);
     } else if (newReply) {
       const { data: profileData } = await supabase
         .from('users')
@@ -93,14 +88,7 @@ function Comment({ comment, imageOwnerId, depth = 0 }) {
         .eq('id', user.id)
         .single();
 
-      const replyWithProfile = {
-        ...newReply,
-        profiles: profileData || null,
-        liked: false,
-        likes: 0,
-        replies: []
-      };
-      setReplies(prev => [...prev, replyWithProfile]);
+      setReplies(prev => [...prev, { ...newReply, profiles: profileData || null, liked: false, likes: 0, replies: [] }]);
       setShowReplies(true);
       setReplyText('');
       setReplying(false);
@@ -173,7 +161,7 @@ function Comment({ comment, imageOwnerId, depth = 0 }) {
 }
 
 // ── Main Modal ───────────────────────────────────────────────────────────────
-export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClose }) {
+export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, imagePrompt, imageNegativePrompt, onClose }) {
   const { user } = useAuth();
   const [likes, setLikes] = useState(0);
   const [liked, setLiked] = useState(false);
@@ -186,13 +174,11 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
   const commentsListRef = useRef(null);
   const sidebarRef = useRef(null);
 
-  // ── Collapse image on scroll (mobile only) ───────────────────────────────
+  // Collapse image on scroll (mobile only)
   useEffect(() => {
     const el = sidebarRef.current;
     if (!el) return;
-    const handleScroll = () => {
-      setImageCollapsed(el.scrollTop > 40);
-    };
+    const handleScroll = () => setImageCollapsed(el.scrollTop > 40);
     el.addEventListener('scroll', handleScroll);
     return () => el.removeEventListener('scroll', handleScroll);
   }, []);
@@ -264,7 +250,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
           setComments([]);
         }
       } catch (err) {
-        console.error('Error loading comments/likes:', err);
+        console.error('Error loading data:', err);
       } finally {
         setLoadingComments(false);
       }
@@ -272,7 +258,35 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
     fetchData();
   }, [imageId, user]);
 
-  const handleLikeImage = async () => { /* unchanged */ };
+  const handleLikeImage = async () => {
+    if (!user) return;
+    const newLiked = !liked;
+    const newLikes = newLiked ? likes + 1 : Math.max(0, likes - 1);
+    setLiked(newLiked);
+    setLikes(newLikes);
+    try {
+      if (newLiked) {
+        await supabase.from('image_likes').insert({ user_id: user.id, image_id: imageId });
+        await supabase.from('images').update({ likes: newLikes }).eq('id', imageId);
+        if (imageOwnerId && imageOwnerId !== user.id) {
+          await supabase.from('notifications').insert({
+            user_id: imageOwnerId,
+            type: 'like',
+            title: 'Someone liked your image',
+            message: 'Your image just got a like!',
+            image_id: imageId,
+          });
+        }
+      } else {
+        await supabase.from('image_likes').delete().eq('user_id', user.id).eq('image_id', imageId);
+        await supabase.from('images').update({ likes: newLikes }).eq('id', imageId);
+      }
+    } catch (err) {
+      console.error('Image like failed:', err);
+      setLiked(!newLiked);
+      setLikes(likes);
+    }
+  };
 
   const handleCommentSubmit = async () => {
     if (!commentText.trim() || submitting || !user) return;
@@ -284,7 +298,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
       .single();
 
     if (error) {
-      console.error('Supabase comment insert error:', error);
+      console.error('Comment insert error:', error);
     } else if (newComment) {
       const { data: profileData } = await supabase
         .from('users')
@@ -292,14 +306,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
         .eq('id', user.id)
         .single();
 
-      const commentWithProfile = {
-        ...newComment,
-        profiles: profileData || null,
-        liked: false,
-        likes: 0,
-        replies: []
-      };
-      setComments(prev => [commentWithProfile, ...prev]);
+      setComments(prev => [{ ...newComment, profiles: profileData || null, liked: false, likes: 0, replies: [] }, ...prev]);
       setCommentText('');
 
       if (imageOwnerId && imageOwnerId !== user.id) {
@@ -320,11 +327,15 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
       <div className="image-view-content" onClick={e => e.stopPropagation()}>
         <button className="image-view-close" onClick={onClose}><X size={18} /></button>
 
+        {/* Image */}
         <div className={`ivm-image-side ${imageCollapsed ? 'collapsed' : ''}`}>
           <img src={imageUrl} alt="Full view" className="image-view-img" />
         </div>
 
+        {/* Sidebar */}
         <div className="ivm-sidebar" ref={sidebarRef}>
+
+          {/* Likes */}
           <div className="ivm-likes-bar">
             <button className={`ivm-like-btn ${liked ? 'liked' : ''}`} onClick={handleLikeImage}>
               <Heart size={18} fill={liked ? '#ff4b4b' : 'none'} color={liked ? '#ff4b4b' : '#fff'} />
@@ -332,6 +343,28 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
             </button>
           </div>
 
+          {/* Prompt description */}
+          {(imagePrompt || imageNegativePrompt) && (
+            <div className="ivm-prompt-section">
+              {imagePrompt && (
+                <div className="ivm-prompt-block">
+                  <span className="ivm-prompt-label">Prompt</span>
+                  <p className="ivm-prompt-text">{imagePrompt}</p>
+                </div>
+              )}
+              {imageNegativePrompt && (
+                <div className="ivm-prompt-block">
+                  <span className="ivm-prompt-label negative">Negative</span>
+                  <p className="ivm-prompt-text">{imageNegativePrompt}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Divider */}
+          <div className="ivm-section-divider" />
+
+          {/* Comments */}
           <div className="ivm-comments-list" ref={commentsListRef}>
             {loadingComments ? (
               <div className="ivm-comments-loading">Loading comments...</div>
@@ -344,6 +377,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
             )}
           </div>
 
+          {/* Comment input */}
           {user ? (
             <div className="ivm-comment-input-row">
               <input
