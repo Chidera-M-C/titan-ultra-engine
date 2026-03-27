@@ -427,11 +427,6 @@
     border-top: 1px solid #1e1e1e;
   }
 
-  .ivm-comments-list {
-    flex: 1;
-    overflow-y: auto;
-  }
-
   .image-view-close {
     top: 12px;
     left: 12px;
