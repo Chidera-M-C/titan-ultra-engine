@@ -248,15 +248,20 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
   const handleCommentSubmit = async () => {
     if (!commentText.trim() || submitting || !user) return;
     setSubmitting(true);
+
     const { data, error } = await supabase
-    if (error) console.error('Supabase error:', error);
       .from('comments')
       .insert({ image_id: imageId, user_id: user.id, content: commentText.trim() })
       .select('*, profile:users!user_id(username, avatar_url)')
       .single();
-    if (!error && data) {
+
+    if (error) {
+      console.error('Supabase comment insert error:', error);
+    } else if (data) {
       setComments(prev => [{ ...data, liked: false, likes: 0, replies: [] }, ...prev]);
       setCommentText('');
+      
+      // Notify owner
       if (imageOwnerId && imageOwnerId !== user.id) {
         await supabase.from('notifications').insert({
           user_id: imageOwnerId,
@@ -267,6 +272,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
         });
       }
     }
+
     setSubmitting(false);
   };
 
