@@ -88,7 +88,7 @@ function Comment({ comment, imageOwnerId, depth = 0 }) {
       console.error('Supabase reply insert error:', error);
     } else if (newReply) {
       const { data: profileData } = await supabase
-        .from('users')                    // ← changed to users
+        .from('users')
         .select('username, avatar_url')
         .eq('id', user.id)
         .single();
@@ -181,7 +181,20 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
   const [commentText, setCommentText] = useState('');
   const [loadingComments, setLoadingComments] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [imageCollapsed, setImageCollapsed] = useState(false);
   const commentInputRef = useRef(null);
+  const commentsListRef = useRef(null);
+
+  // ── Collapse image on scroll (mobile only) ───────────────────────────────
+  useEffect(() => {
+    const el = commentsListRef.current;
+    if (!el) return;
+    const handleScroll = () => {
+      setImageCollapsed(el.scrollTop > 40);
+    };
+    el.addEventListener('scroll', handleScroll);
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     if (!imageId) return;
@@ -227,7 +240,6 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
             })
           );
 
-          // ← CHANGED TO users TABLE
           const { data: allProfiles } = await supabase
             .from('users')
             .select('id, username, avatar_url')
@@ -260,6 +272,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
   }, [imageId, user]);
 
   const handleLikeImage = async () => { /* unchanged */ };
+
   const handleCommentSubmit = async () => {
     if (!commentText.trim() || submitting || !user) return;
     setSubmitting(true);
@@ -273,7 +286,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
       console.error('Supabase comment insert error:', error);
     } else if (newComment) {
       const { data: profileData } = await supabase
-        .from('users')                    // ← CHANGED TO users
+        .from('users')
         .select('username, avatar_url')
         .eq('id', user.id)
         .single();
@@ -305,9 +318,11 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
     <div className="image-view-modal" onClick={onClose}>
       <div className="image-view-content" onClick={e => e.stopPropagation()}>
         <button className="image-view-close" onClick={onClose}><X size={18} /></button>
-        <div className="ivm-image-side">
+
+        <div className={`ivm-image-side ${imageCollapsed ? 'collapsed' : ''}`}>
           <img src={imageUrl} alt="Full view" className="image-view-img" />
         </div>
+
         <div className="ivm-sidebar">
           <div className="ivm-likes-bar">
             <button className={`ivm-like-btn ${liked ? 'liked' : ''}`} onClick={handleLikeImage}>
@@ -315,7 +330,8 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
               <span>{likes} {likes === 1 ? 'like' : 'likes'}</span>
             </button>
           </div>
-          <div className="ivm-comments-list">
+
+          <div className="ivm-comments-list" ref={commentsListRef}>
             {loadingComments ? (
               <div className="ivm-comments-loading">Loading comments...</div>
             ) : comments.length === 0 ? (
@@ -326,6 +342,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
               ))
             )}
           </div>
+
           {user ? (
             <div className="ivm-comment-input-row">
               <input
