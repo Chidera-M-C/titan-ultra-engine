@@ -406,12 +406,11 @@
   }
 
   .image-view-img {
-    width: 100% !important;
-    height: 55vh; /* Force the height to match the container */
-    max-width: 100% !important;
-    max-height: 55vh;
-    object-fit: cover; /* This "fills" the width and height completely */
-    object-position: center;
+    width: 100% !important;      /* Forces it to touch the left and right edges */
+    height: auto !important;     /* Lets the height adjust naturally to the image shape */
+    max-height: 70vh;            /* Optional: prevents super-long images from taking over the whole screen */
+    object-fit: contain;         /* Now "contain" works perfectly because width is 100% */
+    object-position: top center; /* Ensures the top of the image is the priority */
     display: block;
   }
 
