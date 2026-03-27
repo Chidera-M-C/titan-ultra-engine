@@ -57,7 +57,22 @@
   background: #111;
   border-left: 1px solid #1e1e1e;
   max-height: 90vh;
+  position: relative;
 }
+
+/* ── Scrollable area (likes + prompt + comments) ─────────────────────────── */
+.ivm-scrollable {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: #1a1a1a #111;
+}
+
+.ivm-scrollable::-webkit-scrollbar { width: 4px; }
+.ivm-scrollable::-webkit-scrollbar-track { background: #111; }
+.ivm-scrollable::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 4px; }
 
 /* ── Likes bar ───────────────────────────────────────────────────────────── */
 .ivm-likes-bar {
@@ -127,18 +142,11 @@
 /* ── Comments list ───────────────────────────────────────────────────────── */
 .ivm-comments-list {
   flex: 1;
-  overflow-y: auto;
   padding: 12px 16px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  scrollbar-width: thin;
-  scrollbar-color: #1a1a1a #111;
 }
-
-.ivm-comments-list::-webkit-scrollbar { width: 4px; }
-.ivm-comments-list::-webkit-scrollbar-track { background: #111; }
-.ivm-comments-list::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 4px; }
 
 .ivm-comments-loading,
 .ivm-comments-empty {
@@ -283,7 +291,7 @@
 .ivm-reply-input:focus { border-color: rgba(168, 85, 247, 0.4); }
 .ivm-reply-input::placeholder { color: #444; }
 
-/* ── Comment input ───────────────────────────────────────────────────────── */
+/* ── Comment input — sticky at bottom on desktop ─────────────────────────── */
 .ivm-comment-input-row {
   display: flex;
   align-items: center;
@@ -292,6 +300,9 @@
   border-top: 1px solid #1e1e1e;
   flex-shrink: 0;
   background: #111;
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
 }
 
 .ivm-comment-input {
@@ -334,6 +345,10 @@
   text-align: center;
   font-size: 0.8rem;
   color: #444;
+  position: sticky;
+  bottom: 0;
+  background: #111;
+  z-index: 5;
 }
 
 /* ── Close button ────────────────────────────────────────────────────────── */
@@ -370,48 +385,6 @@
 @keyframes scaleIn {
   from { transform: scale(0.95); opacity: 0; }
   to   { transform: scale(1); opacity: 1; }
-}
-
-/* ── True Desktop Refinement (Laptops & Monitors) ── */
-@media (min-width: 1024px) {
-  
-  .ivm-sidebar {
-    display: flex;
-    flex-direction: column;
-    /* This makes the WHOLE sidebar scroll as one unit */
-    overflow-y: auto; 
-    overflow-x: hidden;
-    height: 100%; 
-    position: relative;
-    scrollbar-width: thin;
-  }
-
-  /* Sticky Top: The Likes bar stays put while you scroll the prompt */
-  .ivm-likes-bar {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: #111; 
-    border-bottom: 1px solid #1e1e1e;
-  }
-
-  /* The Content: Turn off individual scrolling so they scroll with the parent */
-  .ivm-prompt-section,
-  .ivm-comments-list {
-    overflow-y: visible !important; 
-    flex: none; 
-  }
-
-  /* Sticky Bottom: The Comment Input floats at the very bottom of the sidebar */
-  .ivm-comment-input-row,
-  .ivm-login-hint {
-    position: sticky;
-    bottom: 0;
-    z-index: 10;
-    background: #111;
-    border-top: 1px solid #1e1e1e;
-    margin-top: auto; /* Pushes it down if there are 0 comments */
-  }
 }
 
 /* ── Mobile ──────────────────────────────────────────────────────────────── */
@@ -461,6 +434,10 @@
     border-left: none;
     border-top: 1px solid #1e1e1e;
     max-height: none;
+    overflow-y: visible;
+  }
+
+  .ivm-scrollable {
     overflow-y: visible;
   }
 
