@@ -338,6 +338,12 @@
     background: #000;
   }
 
+  .image-view-close {
+    top: 12px;
+    left: 12px;
+    right: auto;
+  }
+
   .image-view-content {
     flex-direction: column;
     width: 100%;
