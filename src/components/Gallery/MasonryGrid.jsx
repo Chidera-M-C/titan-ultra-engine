@@ -22,58 +22,83 @@ const downloadImage = async (e, url, imageId) => {
   }
 };
 
+// ── HeartButton — fetches its own liked state from DB on mount ────────────
 function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
   const { user } = useAuth();
-  const [liked, setLiked]   = useState(initialLiked);
-  const [likes, setLikes]   = useState(initialLikes);
-  const [busy, setBusy]     = useState(false);
+  const [liked, setLiked] = useState(initialLiked);
+  const [likes, setLikes] = useState(initialLikes);
+  const [busy, setBusy] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
+  // On mount (or when user/imageId changes), fetch the real liked state from DB
   useEffect(() => {
-    setLiked(initialLiked);
+    if (!user || !imageId) {
+      setLiked(false);
+      setHydrated(true);
+      return;
+    }
+    let cancelled = false;
+    const fetchLiked = async () => {
+      try {
+        const { data } = await supabase
+          .from('image_likes')
+          .select('image_id')
+          .eq('user_id', user.id)
+          .eq('image_id', imageId)
+          .maybeSingle();
+        if (!cancelled) {
+          setLiked(!!data);
+          setHydrated(true);
+        }
+      } catch {
+        if (!cancelled) setHydrated(true);
+      }
+    };
+    fetchLiked();
+    return () => { cancelled = true; };
+  }, [user?.id, imageId]);
+
+  // Keep likes count in sync with parent
+  useEffect(() => {
     setLikes(initialLikes);
-  }, [initialLiked, initialLikes]);
+  }, [initialLikes]);
 
   const handleLike = async (e) => {
     e.stopPropagation();
     if (!user || busy) return;
-  
+
     setBusy(true);
     const newLiked = !liked;
-  
-    // Optimistic update
     setLiked(newLiked);
     setLikes(prev => Math.max(0, newLiked ? prev + 1 : prev - 1));
-  
+
     try {
       if (newLiked) {
         const { error: likeError } = await supabase
           .from('image_likes')
           .insert({ user_id: user.id, image_id: imageId });
         if (likeError) throw likeError;
-  
-        // Fetch current likes from DB then increment
+
         const { data: imgData } = await supabase
           .from('images')
           .select('likes, user_id')
           .eq('id', imageId)
           .single();
-  
+
         await supabase
           .from('images')
           .update({ likes: (imgData?.likes || 0) + 1 })
           .eq('id', imageId);
-  
-        // Notify owner
+
         if (imgData && imgData.user_id !== user.id) {
           await supabase.from('notifications').insert({
-            user_id:  imgData.user_id,
-            type:     'like',
-            title:    'Someone liked your image',
-            message:  'Your image just got a like!',
+            user_id: imgData.user_id,
+            type: 'like',
+            title: 'Someone liked your image',
+            message: 'Your image just got a like!',
             image_id: imageId,
           });
         }
-  
       } else {
         const { error: unlikeError } = await supabase
           .from('image_likes')
@@ -81,19 +106,18 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
           .eq('user_id', user.id)
           .eq('image_id', imageId);
         if (unlikeError) throw unlikeError;
-  
+
         const { data: imgData } = await supabase
           .from('images')
           .select('likes')
           .eq('id', imageId)
           .single();
-  
+
         await supabase
           .from('images')
           .update({ likes: Math.max((imgData?.likes || 0) - 1, 0) })
           .eq('id', imageId);
       }
-  
     } catch (err) {
       console.error('Like failed:', err.message);
       setLiked(!newLiked);
@@ -104,15 +128,23 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
   };
 
   return (
-    <div className="like-badge" onClick={handleLike} style={{ opacity: busy ? 0.6 : 1 }}>
-      <Heart size={16} fill={liked ? '#ff4b4b' : 'none'} color={liked ? '#ff4b4b' : '#fff'} />
+    <div
+      className="like-badge"
+      onClick={handleLike}
+      style={{ opacity: busy || !hydrated ? 0.6 : 1 }}
+    >
+      <Heart
+        size={16}
+        fill={liked ? '#ff4b4b' : 'none'}
+        color={liked ? '#ff4b4b' : '#fff'}
+      />
       <span>{likes}</span>
     </div>
   );
 }
 
 export default function MasonryGrid({ images, promptRef, onImageClick, onSelectPrompt, onEditImage }) {
-  const [openId, setOpenId]           = useState(null);
+  const [openId, setOpenId] = useState(null);
   const [currentPrompt, setCurrentPrompt] = useState(promptRef?.current || '');
 
   useEffect(() => {
