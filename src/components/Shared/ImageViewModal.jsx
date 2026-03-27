@@ -334,7 +334,6 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, imageP
 
         {/* Sidebar */}
         <div className="ivm-sidebar" ref={sidebarRef}>
-
           {/* Likes */}
           <div className="ivm-likes-bar">
             <button className={`ivm-like-btn ${liked ? 'liked' : ''}`} onClick={handleLikeImage}>
@@ -377,7 +376,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, imageP
             )}
           </div>
 
-          {/* Comment input */}
+          {/* Comment input - now sticky on mobile */}
           {user ? (
             <div className="ivm-comment-input-row">
               <input
