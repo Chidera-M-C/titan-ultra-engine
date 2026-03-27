@@ -171,11 +171,15 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, imageP
   const [submitting, setSubmitting] = useState(false);
   const [imageCollapsed, setImageCollapsed] = useState(false);
   const commentInputRef = useRef(null);
-  const sidebarRef = useRef(null);   // ← restored exactly as you wanted
+  const scrollableRef = useRef(null); // ← scrollable inner div (desktop)
+  const sidebarRef = useRef(null);    // ← whole sidebar (mobile scroll)
 
-  // Collapse image on scroll of the WHOLE sidebar
+  // ── Collapse image on scroll ─────────────────────────────────────────────
+  // Desktop: watches .ivm-scrollable
+  // Mobile: watches .ivm-sidebar (whole sidebar scrolls via image-view-content)
   useEffect(() => {
-    const el = sidebarRef.current;
+    const isMobile = window.innerWidth <= 768;
+    const el = isMobile ? sidebarRef.current : scrollableRef.current;
     if (!el) return;
     const handleScroll = () => setImageCollapsed(el.scrollTop > 40);
     el.addEventListener('scroll', handleScroll);
@@ -331,51 +335,57 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, imageP
           <img src={imageUrl} alt="Full view" className="image-view-img" />
         </div>
 
-        {/* Sidebar — scroll listener is here (whole sidebar scrolls) */}
+        {/* Sidebar */}
         <div className="ivm-sidebar" ref={sidebarRef}>
-          {/* Likes */}
-          <div className="ivm-likes-bar">
-            <button className={`ivm-like-btn ${liked ? 'liked' : ''}`} onClick={handleLikeImage}>
-              <Heart size={18} fill={liked ? '#ff4b4b' : 'none'} color={liked ? '#ff4b4b' : '#fff'} />
-              <span>{likes} {likes === 1 ? 'like' : 'likes'}</span>
-            </button>
-          </div>
 
-          {/* Prompt description */}
-          {(imagePrompt || imageNegativePrompt) && (
-            <div className="ivm-prompt-section">
-              {imagePrompt && (
-                <div className="ivm-prompt-block">
-                  <span className="ivm-prompt-label">Prompt</span>
-                  <p className="ivm-prompt-text">{imagePrompt}</p>
-                </div>
-              )}
-              {imageNegativePrompt && (
-                <div className="ivm-prompt-block">
-                  <span className="ivm-prompt-label negative">Negative</span>
-                  <p className="ivm-prompt-text">{imageNegativePrompt}</p>
-                </div>
+          {/* ── Scrollable area (desktop) ── */}
+          <div className="ivm-scrollable" ref={scrollableRef}>
+
+            {/* Likes */}
+            <div className="ivm-likes-bar">
+              <button className={`ivm-like-btn ${liked ? 'liked' : ''}`} onClick={handleLikeImage}>
+                <Heart size={18} fill={liked ? '#ff4b4b' : 'none'} color={liked ? '#ff4b4b' : '#fff'} />
+                <span>{likes} {likes === 1 ? 'like' : 'likes'}</span>
+              </button>
+            </div>
+
+            {/* Prompt */}
+            {(imagePrompt || imageNegativePrompt) && (
+              <div className="ivm-prompt-section">
+                {imagePrompt && (
+                  <div className="ivm-prompt-block">
+                    <span className="ivm-prompt-label">Prompt</span>
+                    <p className="ivm-prompt-text">{imagePrompt}</p>
+                  </div>
+                )}
+                {imageNegativePrompt && (
+                  <div className="ivm-prompt-block">
+                    <span className="ivm-prompt-label negative">Negative</span>
+                    <p className="ivm-prompt-text">{imageNegativePrompt}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="ivm-section-divider" />
+
+            {/* Comments */}
+            <div className="ivm-comments-list">
+              {loadingComments ? (
+                <div className="ivm-comments-loading">Loading comments...</div>
+              ) : comments.length === 0 ? (
+                <div className="ivm-comments-empty">No comments yet. Be the first!</div>
+              ) : (
+                comments.map(c => (
+                  <Comment key={c.id} comment={c} imageOwnerId={imageOwnerId} depth={0} />
+                ))
               )}
             </div>
-          )}
 
-          {/* Divider */}
-          <div className="ivm-section-divider" />
-
-          {/* Comments */}
-          <div className="ivm-comments-list">
-            {loadingComments ? (
-              <div className="ivm-comments-loading">Loading comments...</div>
-            ) : comments.length === 0 ? (
-              <div className="ivm-comments-empty">No comments yet. Be the first!</div>
-            ) : (
-              comments.map(c => (
-                <Comment key={c.id} comment={c} imageOwnerId={imageOwnerId} depth={0} />
-              ))
-            )}
           </div>
+          {/* ── End scrollable ── */}
 
-          {/* Comment input — sticky at bottom */}
+          {/* Comment input — always stuck to bottom of sidebar */}
           {user ? (
             <div className="ivm-comment-input-row">
               <input
@@ -397,6 +407,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, imageP
           ) : (
             <div className="ivm-login-hint">Sign in to like and comment</div>
           )}
+
         </div>
       </div>
     </div>
