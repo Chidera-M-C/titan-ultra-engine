@@ -184,10 +184,11 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
   const [imageCollapsed, setImageCollapsed] = useState(false);
   const commentInputRef = useRef(null);
   const commentsListRef = useRef(null);
+  const sidebarRef = useRef(null);
 
   // ── Collapse image on scroll (mobile only) ───────────────────────────────
   useEffect(() => {
-    const el = commentsListRef.current;
+    const el = sidebarRef.current;
     if (!el) return;
     const handleScroll = () => {
       setImageCollapsed(el.scrollTop > 40);
@@ -323,7 +324,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, onClos
           <img src={imageUrl} alt="Full view" className="image-view-img" />
         </div>
 
-        <div className="ivm-sidebar">
+        <div className="ivm-sidebar" ref={sidebarRef}>
           <div className="ivm-likes-bar">
             <button className={`ivm-like-btn ${liked ? 'liked' : ''}`} onClick={handleLikeImage}>
               <Heart size={18} fill={liked ? '#ff4b4b' : 'none'} color={liked ? '#ff4b4b' : '#fff'} />
