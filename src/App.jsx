@@ -58,6 +58,8 @@ export default function App() {
   const [faceswapLoading, setFaceswapLoading] = useState(false);
   const [faceswapError, setFaceswapError]     = useState(null);
   const [likedGallery, setLikedGallery] = useState([]);
+  const [viewingImageId, setViewingImageId] = useState(null);
+  const [viewingImageOwnerId, setViewingImageOwnerId] = useState(null);
 
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
   const promptRef = useRef(prompt);
@@ -411,6 +413,8 @@ export default function App() {
 
   const handleViewImage = useCallback((img) => {
     setViewingImageUrl(img.url);
+    setViewingImageId(img.id || null);
+    setViewingImageOwnerId(img.userId || null);
     setViewImageModalOpen(true);
   }, []);
 
@@ -555,7 +559,12 @@ export default function App() {
               <div className="top-header-row">
                 <h1 className="aesthetic-title">What will you create?</h1>
                 <div className="notif-bell-wrapper">
-                  <NotificationBell />
+                  <NotificationBell onOpenImage={(img) => {
+                    setViewingImageUrl(img.url);
+                    setViewingImageId(img.id);
+                    setViewingImageOwnerId(img.userId);
+                    setViewImageModalOpen(true);
+                  }} />
                 </div>
               </div>
               <PromptBox {...promptBoxProps} collapsed={promptCollapsed} />
@@ -640,7 +649,12 @@ export default function App() {
         )}
 
         {viewImageModalOpen && (
-          <ImageViewModal imageUrl={viewingImageUrl} onClose={() => setViewImageModalOpen(false)} />
+          <ImageViewModal
+            imageUrl={viewingImageUrl}
+            imageId={viewingImageId}
+            imageOwnerId={viewingImageOwnerId}
+            onClose={() => setViewImageModalOpen(false)}
+          />
         )}
 
         <InstallPrompt />
