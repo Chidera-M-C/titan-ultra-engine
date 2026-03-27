@@ -372,6 +372,48 @@
   to   { transform: scale(1); opacity: 1; }
 }
 
+/* ── True Desktop Refinement (Laptops & Monitors) ── */
+@media (min-width: 1024px) {
+  
+  .ivm-sidebar {
+    display: flex;
+    flex-direction: column;
+    /* This makes the WHOLE sidebar scroll as one unit */
+    overflow-y: auto; 
+    overflow-x: hidden;
+    height: 100%; 
+    position: relative;
+    scrollbar-width: thin;
+  }
+
+  /* Sticky Top: The Likes bar stays put while you scroll the prompt */
+  .ivm-likes-bar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #111; 
+    border-bottom: 1px solid #1e1e1e;
+  }
+
+  /* The Content: Turn off individual scrolling so they scroll with the parent */
+  .ivm-prompt-section,
+  .ivm-comments-list {
+    overflow-y: visible !important; 
+    flex: none; 
+  }
+
+  /* Sticky Bottom: The Comment Input floats at the very bottom of the sidebar */
+  .ivm-comment-input-row,
+  .ivm-login-hint {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    background: #111;
+    border-top: 1px solid #1e1e1e;
+    margin-top: auto; /* Pushes it down if there are 0 comments */
+  }
+}
+
 /* ── Mobile ──────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .image-view-modal {
