@@ -95,6 +95,7 @@ export async function onRequestPost(context) {
         amount_usd:  price,
         pack_name:   pack,
         receipt_url: publicUrl,
+        payment_method: payment_method,
         status:      'pending'
       });
 
