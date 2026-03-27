@@ -171,10 +171,9 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, imageP
   const [submitting, setSubmitting] = useState(false);
   const [imageCollapsed, setImageCollapsed] = useState(false);
   const commentInputRef = useRef(null);
-  const commentsListRef = useRef(null);
-  const sidebarRef = useRef(null);
+  const sidebarRef = useRef(null);   // ← restored exactly as you wanted
 
-  // Collapse image on scroll (mobile only)
+  // Collapse image on scroll of the WHOLE sidebar
   useEffect(() => {
     const el = sidebarRef.current;
     if (!el) return;
@@ -332,9 +331,8 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, imageP
           <img src={imageUrl} alt="Full view" className="image-view-img" />
         </div>
 
-        {/* Sidebar */}
+        {/* Sidebar — scroll listener is here (whole sidebar scrolls) */}
         <div className="ivm-sidebar" ref={sidebarRef}>
-
           {/* Likes */}
           <div className="ivm-likes-bar">
             <button className={`ivm-like-btn ${liked ? 'liked' : ''}`} onClick={handleLikeImage}>
@@ -365,7 +363,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, imageP
           <div className="ivm-section-divider" />
 
           {/* Comments */}
-          <div className="ivm-comments-list" ref={commentsListRef}>
+          <div className="ivm-comments-list">
             {loadingComments ? (
               <div className="ivm-comments-loading">Loading comments...</div>
             ) : comments.length === 0 ? (
@@ -377,7 +375,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, imageP
             )}
           </div>
 
-          {/* Comment input */}
+          {/* Comment input — sticky at bottom */}
           {user ? (
             <div className="ivm-comment-input-row">
               <input
