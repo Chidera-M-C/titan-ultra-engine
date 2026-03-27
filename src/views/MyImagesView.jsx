@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wand2, Download, Heart, RotateCcw, ArrowLeft, Sparkles, ImageIcon, User, Shuffle, Pencil } from 'lucide-react';
+import { Wand2, Download, Heart, RotateCcw, ArrowLeft, Sparkles, User, Shuffle, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../context/AuthContext';
 import EmptyState from '../components/Shared/EmptyState';
@@ -59,15 +59,21 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
   );
 }
 
+// ── Sort by created_at descending ─────────────────────────────────────────
+const sortByDate = (arr) =>
+  [...arr].sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0));
+
 function ImageGrid({ images, onSelectPrompt, onViewImage, onEditImage, prompt }) {
   const [openId, setOpenId] = useState(null);
   const [ready, setReady] = useState(false);
 
+  const sorted = sortByDate(images || []);
+
   useEffect(() => {
     setReady(false);
-    if (!images || images.length === 0) { setReady(true); return; }
+    if (!sorted || sorted.length === 0) { setReady(true); return; }
     Promise.all(
-      images.map(img => new Promise(resolve => {
+      sorted.map(img => new Promise(resolve => {
         const i = new Image();
         i.onload = resolve;
         i.onerror = resolve;
@@ -82,13 +88,12 @@ function ImageGrid({ images, onSelectPrompt, onViewImage, onEditImage, prompt })
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  if (!images || images.length === 0) {
+  if (!sorted || sorted.length === 0) {
     return <div className="myimages-empty"><p>No images here yet</p></div>;
   }
 
   return (
     <div style={{ position: 'relative', minHeight: '200px' }}>
-      {/* Spinner shown while preloading */}
       {!ready && (
         <div style={{
           position: 'absolute', inset: 0,
@@ -107,12 +112,12 @@ function ImageGrid({ images, onSelectPrompt, onViewImage, onEditImage, prompt })
         </div>
       )}
 
-      {/* Grid fades in once ready */}
+      {/* ── Grid — uses columns layout same as masonry but fills properly ── */}
       <div
         className="my-images-grid"
         style={{ opacity: ready ? 1 : 0, transition: 'opacity 0.4s ease' }}
       >
-        {images.map((img) => (
+        {sorted.map((img) => (
           <div
             key={img.id}
             className="gallery-card"
@@ -189,7 +194,7 @@ const CATEGORIES = [
     description: 'Images you have liked',
     icon: Heart,
     accent: '#e11d48',
-    filter: (img) => img.liked,
+    filter: null,
   },
   {
     key: 'character',
@@ -223,8 +228,8 @@ export default function MyImagesView({ images, likedImages, onSelectPrompt, onVi
   const allImages = images || [];
 
   const getImages = (cat) => {
-    if (cat.key === 'liked') return likedImages || [];
-    return allImages.filter(cat.filter);
+    if (cat.key === 'liked') return sortByDate(likedImages || []);
+    return sortByDate(allImages.filter(cat.filter));
   };
 
   if (activeCategory) {
