@@ -407,10 +407,10 @@
 
   .image-view-img {
     width: 100% !important;
-    height: auto;
+    height: 55vh; /* Force the height to match the container */
     max-width: 100% !important;
     max-height: 55vh;
-    object-fit: contain;
+    object-fit: cover; /* This "fills" the width and height completely */
     object-position: center;
     display: block;
   }
