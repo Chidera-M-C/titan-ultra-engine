@@ -96,18 +96,16 @@ export default function App() {
 
       const likedSet = new Set((userLikes || []).map(l => l.image_id));
 
-      // ✅ include created_at so sortByDate works correctly
       setUserGallery((images || []).map(doc => ({
         id: doc.id,
         url: doc.image_url,
         prompt: doc.prompt,
         likes: doc.likes || 0,
         liked: likedSet.has(doc.id),
-        category: doc.category || '',
+        category: doc.style || doc.category || '',
         created_at: doc.created_at,
       })));
 
-      // Fetch full liked images (from any user, liked by current user)
       if (userLikes && userLikes.length > 0) {
         const likedIds = userLikes.map(l => l.image_id);
         const { data: likedImagesData } = await supabase
@@ -116,14 +114,13 @@ export default function App() {
           .in('id', likedIds)
           .order('created_at', { ascending: false });
 
-        // ✅ include created_at so sortByDate works correctly
         setLikedGallery((likedImagesData || []).map(doc => ({
           id: doc.id,
           url: doc.image_url,
           prompt: doc.prompt,
           likes: doc.likes || 0,
           liked: true,
-          category: doc.category || '',
+          category: doc.style || doc.category || '',
           created_at: doc.created_at,
         })));
       } else {
@@ -277,7 +274,7 @@ export default function App() {
               likes: 0,
               liked: false,
               category: styleId || '',
-              created_at: new Date().toISOString(), // ✅ include created_at
+              created_at: new Date().toISOString(),
             }, ...prev]);
           } catch (err) { console.error('❌ Post-generation save failed:', err); }
         })();
