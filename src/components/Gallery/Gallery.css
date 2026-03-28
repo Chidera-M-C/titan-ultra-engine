@@ -52,6 +52,18 @@
   box-sizing: border-box;
 }
 
+.my-images-grid {
+  width: 100%;
+  columns: 5;
+  column-gap: 12px;
+}
+
+.my-images-grid .gallery-card {
+  break-inside: avoid;
+  margin-bottom: 12px;
+  display: inline-block;
+}
+
 .gallery-card {
   position: relative;
   border-radius: 12px;
