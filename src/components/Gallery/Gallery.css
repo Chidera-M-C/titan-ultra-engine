@@ -53,15 +53,17 @@
 }
 
 .my-images-grid {
-  width: 100%;
-  columns: 5;
-  column-gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  align-items: start;
 }
 
 .my-images-grid .gallery-card {
-  break-inside: avoid;
-  margin-bottom: 12px;
-  display: inline-block;
+  break-inside: unset;
+  margin-bottom: 0;
+  display: block;
+  width: 100%;
 }
 
 .gallery-card {
@@ -410,6 +412,10 @@
   color: #555;
   font-size: 0.9rem;
 }
+
+@media (max-width: 1200px) { .my-images-grid { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 992px)  { .my-images-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 768px)  { .my-images-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; } }
 
 @media (max-width: 768px) {
   .myimages-cards {
