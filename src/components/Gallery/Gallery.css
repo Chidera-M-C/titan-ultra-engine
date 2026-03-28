@@ -44,7 +44,7 @@
   background: #fff;
 }
 
-/* ── Masonry (Explore) ─────────────────────────────────────────────── */
+/* ── Masonry (Explore View) - UNCHANGED ───────────────────────────────── */
 .masonry-grid {
   width: 100%;
   columns: 5;
@@ -54,7 +54,7 @@
   box-sizing: border-box;
 }
 
-/* ── MyImages Grid – FIXED: now uses CSS Grid (no gaps, fills every row) ───── */
+/* ── MyImages Grid - FIXED: now uses CSS Grid (fills every row completely) ── */
 .my-images-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -69,7 +69,7 @@
   margin-bottom: 0;
 }
 
-/* Gallery card styles (unchanged) */
+/* Gallery card styles (restored to original) */
 .gallery-card {
   position: relative;
   border-radius: 12px;
@@ -113,7 +113,7 @@
   transform: scale(1.05);
 }
 
-/* Overlay styles */
+/* Overlay */
 .gallery-overlay,
 .pin-overlay {
   position: absolute;
@@ -439,7 +439,7 @@
   }
 }
 
-/* Hover effects for desktop */
+/* Desktop hover */
 @media (hover: hover) {
   .more-btn {
     opacity: 0;
