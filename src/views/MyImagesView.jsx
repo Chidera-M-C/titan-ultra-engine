@@ -100,11 +100,14 @@ function ImageGrid({ images, onSelectPrompt, onViewImage, onEditImage, prompt })
   }
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', minHeight: '200px' }}>
       {!ready && (
         <div style={{
+          position: 'absolute', inset: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          padding: '4rem 0',
+          background: 'var(--bg, #0f0f0f)',
+          zIndex: 10,
+          minHeight: '200px',
         }}>
           <div style={{
             width: 40, height: 40,
