@@ -24,16 +24,15 @@ import NotificationBell from './components/Notifications/NotificationBell';
 
 const MemoExploreView = React.memo(ExploreView);
 
-// ── Pull to refresh hook (mobile only) ───────────────────────────────────────
-function usePullToRefresh(onRefresh) {
-  const [pulling, setPulling]     = useState(false);
-  const [pullY, setPullY]         = useState(0);
-  const [refreshing, setRefreshing] = useState(false);
+// ── Pull to refresh (mobile only, full reload) ────────────────────────────────
+function usePullToRefresh() {
+  const [pullY, setPullY]       = useState(0);
+  const [pulling, setPulling]   = useState(false);
+  const [releasing, setReleasing] = useState(false);
   const startYRef = useRef(null);
-  const THRESHOLD = 80;
+  const THRESHOLD = 72;
 
   useEffect(() => {
-    // Only activate on touch devices
     if (window.innerWidth > 768) return;
 
     const scrollable = document.querySelector('.scrollable-area');
@@ -42,6 +41,8 @@ function usePullToRefresh(onRefresh) {
     const onTouchStart = (e) => {
       if (scrollable.scrollTop === 0) {
         startYRef.current = e.touches[0].clientY;
+        setPulling(false);
+        setReleasing(false);
       }
     };
 
@@ -51,20 +52,17 @@ function usePullToRefresh(onRefresh) {
       if (delta > 0 && scrollable.scrollTop === 0) {
         e.preventDefault();
         setPulling(true);
-        setPullY(Math.min(delta * 0.5, THRESHOLD + 20));
+        setPullY(Math.min(delta * 0.45, THRESHOLD + 24));
       }
     };
 
-    const onTouchEnd = async () => {
+    const onTouchEnd = () => {
+      if (startYRef.current === null) return;
       if (pullY >= THRESHOLD) {
-        setRefreshing(true);
-        setPullY(0);
-        setPulling(false);
-        try {
-          await onRefresh();
-        } finally {
-          setRefreshing(false);
-        }
+        setReleasing(true);
+        setPullY(THRESHOLD);
+        // brief pause so user sees the spinner, then reload
+        setTimeout(() => window.location.reload(), 600);
       } else {
         setPulling(false);
         setPullY(0);
@@ -73,17 +71,17 @@ function usePullToRefresh(onRefresh) {
     };
 
     scrollable.addEventListener('touchstart', onTouchStart, { passive: true });
-    scrollable.addEventListener('touchmove', onTouchMove, { passive: false });
-    scrollable.addEventListener('touchend', onTouchEnd);
+    scrollable.addEventListener('touchmove',  onTouchMove,  { passive: false });
+    scrollable.addEventListener('touchend',   onTouchEnd);
 
     return () => {
       scrollable.removeEventListener('touchstart', onTouchStart);
-      scrollable.removeEventListener('touchmove', onTouchMove);
-      scrollable.removeEventListener('touchend', onTouchEnd);
+      scrollable.removeEventListener('touchmove',  onTouchMove);
+      scrollable.removeEventListener('touchend',   onTouchEnd);
     };
-  }, [pullY, onRefresh]);
+  }, [pullY]);
 
-  return { pulling, pullY, refreshing };
+  return { pullY, pulling, releasing };
 }
 
 export default function App() {
@@ -124,6 +122,10 @@ export default function App() {
   const [viewingImageOwnerId, setViewingImageOwnerId] = useState(null);
   const [viewingImagePrompt, setViewingImagePrompt] = useState(null);
   const [viewingImageNegativePrompt, setViewingImageNegativePrompt] = useState(null);
+
+  const { pullY, pulling, releasing } = usePullToRefresh();
+  const showPullIndicator = pulling || releasing;
+  const THRESHOLD = 72;
 
   const delay = (ms) => new Promise(res => setTimeout(res, ms));
   const promptRef = useRef(prompt);
@@ -204,18 +206,6 @@ export default function App() {
       return () => clearTimeout(timer);
     }
   }, [user, authLoading]);
-
-  // ── Pull to refresh — triggers based on active tab ────────────────────
-  const handleRefresh = useCallback(async () => {
-    if (activeTab === 'gallery') {
-      await loadGallery();
-    } else if (activeTab === 'explore') {
-      setIsGalleryReady(false);
-      setExploreKey(k => k + 1);
-    }
-  }, [activeTab, loadGallery]);
-
-  const { pulling, pullY, refreshing } = usePullToRefresh(handleRefresh);
 
   // ── Scroll collapse ───────────────────────────────────────────────────
   useEffect(() => {
@@ -611,19 +601,54 @@ export default function App() {
     setPrompt,
     aspectRatio,
     setAspectRatio,
-    onGenerate:          generateImage,
+    onGenerate:         generateImage,
     loading,
     negativePrompt,
     setNegativePrompt,
-    onOpenSidebar:       () => setIsSidebarOpen(true),
+    onOpenSidebar:      () => setIsSidebarOpen(true),
     selectedCharacter,
-    onSelectCharacter:   setSelectedCharacter,
-    characters:          userCharacters,
-    onCharacterCreated:  handleCharacterCreated,
+    onSelectCharacter:  setSelectedCharacter,
+    characters:         userCharacters,
+    onCharacterCreated: handleCharacterCreated,
   };
+
+  // pull progress 0→1
+  const pullProgress = Math.min(pullY / THRESHOLD, 1);
 
   return (
     <div className="master-wrapper" onClickCapture={handleGlobalClick}>
+
+      {/* ── Pull to refresh indicator — fixed to very top of screen, mobile only ── */}
+      {showPullIndicator && (
+        <div style={{
+          position:       'fixed',
+          top:            0,
+          left:           0,
+          right:          0,
+          height:         `${Math.max(pullY, releasing ? THRESHOLD : 0)}px`,
+          display:        'flex',
+          alignItems:     'center',
+          justifyContent: 'center',
+          zIndex:         99999,
+          pointerEvents:  'none',
+          background:     'linear-gradient(to bottom, rgba(124,58,237,0.08), transparent)',
+          transition:     releasing ? 'height 0.25s ease' : 'none',
+          overflow:       'hidden',
+        }}>
+          <div style={{
+            width:        28,
+            height:       28,
+            border:       '2.5px solid rgba(168,85,247,0.25)',
+            borderTop:    '2.5px solid #a855f7',
+            borderRadius: '50%',
+            opacity:      pullProgress,
+            animation:    releasing ? 'spin 0.6s linear infinite' : 'none',
+            transform:    releasing ? undefined : `rotate(${pullProgress * 300}deg)`,
+            transition:   releasing ? 'none' : 'opacity 0.1s',
+          }} />
+        </div>
+      )}
+
       <div className="app-shell">
         <button className="mobile-menu-toggle" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
           {isSidebarOpen ? <X size={22} /> : <Menu size={22} />}
@@ -661,38 +686,14 @@ export default function App() {
             </header>
           )}
 
-          <div className="scrollable-area" style={{ position: 'relative' }}>
-
-            {/* ── Pull to refresh indicator (mobile only) ── */}
-            {(pulling || refreshing) && (
-              <div style={{
-                position:        'absolute',
-                top:             0,
-                left:            0,
-                right:           0,
-                display:         'flex',
-                alignItems:      'center',
-                justifyContent:  'center',
-                height:          `${Math.max(pullY, refreshing ? 56 : 0)}px`,
-                zIndex:          20,
-                pointerEvents:   'none',
-                transition:      pulling ? 'none' : 'height 0.3s ease',
-                overflow:        'hidden',
-              }}>
-                <div style={{
-                  width:        28,
-                  height:       28,
-                  border:       '2.5px solid rgba(168,85,247,0.2)',
-                  borderTop:    '2.5px solid #a855f7',
-                  borderRadius: '50%',
-                  animation:    refreshing ? 'spin 0.7s linear infinite' : 'none',
-                  transform:    refreshing ? undefined : `rotate(${(pullY / 80) * 360}deg)`,
-                  opacity:      Math.min(pullY / 40, 1),
-                  transition:   pulling ? 'none' : 'opacity 0.2s',
-                }} />
-              </div>
-            )}
-
+          <div
+            className="scrollable-area"
+            style={{
+              position:  'relative',
+              transform: showPullIndicator ? `translateY(${pullY * 0.3}px)` : 'translateY(0)',
+              transition: releasing ? 'transform 0.25s ease' : 'none',
+            }}
+          >
             {activeTab === 'explore' && !isGalleryReady && (
               <div style={{
                 position: 'absolute', inset: 0,
@@ -708,12 +709,9 @@ export default function App() {
                 }} />
               </div>
             )}
-
             <div style={{
               opacity:    activeTab === 'explore' ? (isGalleryReady ? 1 : 0) : 1,
               transition: 'opacity 0.4s ease',
-              transform:  pulling ? `translateY(${pullY}px)` : 'translateY(0)',
-              transition: pulling ? 'none' : 'transform 0.3s ease',
             }}>
               {renderActiveView()}
             </div>
