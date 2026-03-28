@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase.js';
 // Generate your VAPID keys by running this in your terminal:
 //   npx web-push generate-vapid-keys
 // Then paste your PUBLIC key below, and keep the PRIVATE key in your server env
-const VAPID_PUBLIC_KEY = 'YOUR_VAPID_PUBLIC_KEY_HERE';
+const VAPID_PUBLIC_KEY = 'BPiIGI7c0AN4HKbo9trAWPIr1G2n2qlAjqFOgROYx3Yo40siI2fG2DTMMiYkYVN7fEBajM0D9nZ75QbLyLBqq0w';
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
