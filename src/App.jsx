@@ -24,6 +24,68 @@ import NotificationBell from './components/Notifications/NotificationBell';
 
 const MemoExploreView = React.memo(ExploreView);
 
+// ── Pull to refresh hook (mobile only) ───────────────────────────────────────
+function usePullToRefresh(onRefresh) {
+  const [pulling, setPulling]     = useState(false);
+  const [pullY, setPullY]         = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const startYRef = useRef(null);
+  const THRESHOLD = 80;
+
+  useEffect(() => {
+    // Only activate on touch devices
+    if (window.innerWidth > 768) return;
+
+    const scrollable = document.querySelector('.scrollable-area');
+    if (!scrollable) return;
+
+    const onTouchStart = (e) => {
+      if (scrollable.scrollTop === 0) {
+        startYRef.current = e.touches[0].clientY;
+      }
+    };
+
+    const onTouchMove = (e) => {
+      if (startYRef.current === null) return;
+      const delta = e.touches[0].clientY - startYRef.current;
+      if (delta > 0 && scrollable.scrollTop === 0) {
+        e.preventDefault();
+        setPulling(true);
+        setPullY(Math.min(delta * 0.5, THRESHOLD + 20));
+      }
+    };
+
+    const onTouchEnd = async () => {
+      if (pullY >= THRESHOLD) {
+        setRefreshing(true);
+        setPullY(0);
+        setPulling(false);
+        try {
+          await onRefresh();
+        } finally {
+          setRefreshing(false);
+        }
+      } else {
+        setPulling(false);
+        setPullY(0);
+      }
+      startYRef.current = null;
+    };
+
+    scrollable.addEventListener('touchstart', onTouchStart, { passive: true });
+    scrollable.addEventListener('touchmove', onTouchMove, { passive: false });
+    scrollable.addEventListener('touchend', onTouchEnd);
+
+    return () => {
+      scrollable.removeEventListener('touchstart', onTouchStart);
+      scrollable.removeEventListener('touchmove', onTouchMove);
+      scrollable.removeEventListener('touchend', onTouchEnd);
+    };
+  }, [pullY, onRefresh]);
+
+  return { pulling, pullY, refreshing };
+}
+
 export default function App() {
   const { user, credits, setCredits, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab]         = useState('explore');
@@ -79,7 +141,7 @@ export default function App() {
   }, [user]);
 
   // ── Load gallery ──────────────────────────────────────────────────────
-  const loadGallery = async () => {
+  const loadGallery = useCallback(async () => {
     if (!user) { setUserGallery([]); setLikedGallery([]); return; }
     try {
       const { data: images, error: imagesError } = await supabase
@@ -97,12 +159,12 @@ export default function App() {
       const likedSet = new Set((userLikes || []).map(l => l.image_id));
 
       setUserGallery((images || []).map(doc => ({
-        id: doc.id,
-        url: doc.image_url,
-        prompt: doc.prompt,
-        likes: doc.likes || 0,
-        liked: likedSet.has(doc.id),
-        category: doc.style || doc.category || '',
+        id:         doc.id,
+        url:        doc.image_url,
+        prompt:     doc.prompt,
+        likes:      doc.likes || 0,
+        liked:      likedSet.has(doc.id),
+        category:   doc.style || doc.category || '',
         created_at: doc.created_at,
       })));
 
@@ -115,12 +177,12 @@ export default function App() {
           .order('created_at', { ascending: false });
 
         setLikedGallery((likedImagesData || []).map(doc => ({
-          id: doc.id,
-          url: doc.image_url,
-          prompt: doc.prompt,
-          likes: doc.likes || 0,
-          liked: true,
-          category: doc.style || doc.category || '',
+          id:         doc.id,
+          url:        doc.image_url,
+          prompt:     doc.prompt,
+          likes:      doc.likes || 0,
+          liked:      true,
+          category:   doc.style || doc.category || '',
           created_at: doc.created_at,
         })));
       } else {
@@ -129,7 +191,7 @@ export default function App() {
     } catch (err) {
       console.error('Supabase Sync error:', err);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -142,6 +204,18 @@ export default function App() {
       return () => clearTimeout(timer);
     }
   }, [user, authLoading]);
+
+  // ── Pull to refresh — triggers based on active tab ────────────────────
+  const handleRefresh = useCallback(async () => {
+    if (activeTab === 'gallery') {
+      await loadGallery();
+    } else if (activeTab === 'explore') {
+      setIsGalleryReady(false);
+      setExploreKey(k => k + 1);
+    }
+  }, [activeTab, loadGallery]);
+
+  const { pulling, pullY, refreshing } = usePullToRefresh(handleRefresh);
 
   // ── Scroll collapse ───────────────────────────────────────────────────
   useEffect(() => {
@@ -268,12 +342,12 @@ export default function App() {
             await deductCreditsLive(2);
             const publicUrl = await saveAiImage(user.id, base64Image, prompt, styleId);
             setUserGallery(prev => [{
-              id: Date.now(),
-              url: publicUrl,
+              id:         Date.now(),
+              url:        publicUrl,
               prompt,
-              likes: 0,
-              liked: false,
-              category: styleId || '',
+              likes:      0,
+              liked:      false,
+              category:   styleId || '',
               created_at: new Date().toISOString(),
             }, ...prev]);
           } catch (err) { console.error('❌ Post-generation save failed:', err); }
@@ -303,8 +377,8 @@ export default function App() {
       const characterPayload = selectedCharacter?.face_embedding ? {
         face_embedding: selectedCharacter.face_embedding,
         character: {
-          name: selectedCharacter.name,
-          race: selectedCharacter.race,
+          name:      selectedCharacter.name,
+          race:      selectedCharacter.race,
           body_type: selectedCharacter.body_type,
         }
       } : {};
@@ -313,8 +387,8 @@ export default function App() {
         aspect_ratio: aspectRatio,
         negative_prompt: negativePrompt,
         setLoadingFn: setLoading,
-        setErrorFn: setError,
-        setImageFn: setImage,
+        setErrorFn:   setError,
+        setImageFn:   setImage,
         styleId: selectedCharacter?.face_embedding ? 'character' : null,
         ...characterPayload,
       });
@@ -336,19 +410,19 @@ export default function App() {
       const characterPayload = selectedCharacter?.face_embedding ? {
         face_embedding: selectedCharacter.face_embedding,
         character: {
-          name: selectedCharacter.name,
-          race: selectedCharacter.race,
+          name:      selectedCharacter.name,
+          race:      selectedCharacter.race,
           body_type: selectedCharacter.body_type,
         }
       } : {};
       await runGeneration({
-        prompt: finalPrompt,
-        aspect_ratio: aspectRatio,
+        prompt:          finalPrompt,
+        aspect_ratio:    aspectRatio,
         negative_prompt: negativePrompt,
-        image: attachedImage,
-        setLoadingFn: setStyleLoading,
-        setErrorFn: setStyleError,
-        setImageFn: setStyleImage,
+        image:           attachedImage,
+        setLoadingFn:    setStyleLoading,
+        setErrorFn:      setStyleError,
+        setImageFn:      setStyleImage,
         styleId: selectedCharacter?.face_embedding ? 'character' : activeStyle.id,
         ...characterPayload,
       });
@@ -370,7 +444,9 @@ export default function App() {
       await runGeneration({
         prompt, aspect_ratio: '9:16', image,
         negative_prompt: negativePrompt,
-        setLoadingFn: setEditViewLoading, setErrorFn: setEditViewError, setImageFn: setEditViewImage,
+        setLoadingFn: setEditViewLoading,
+        setErrorFn:   setEditViewError,
+        setImageFn:   setEditViewImage,
         styleId: 'edit',
       });
     } catch (err) {
@@ -535,15 +611,15 @@ export default function App() {
     setPrompt,
     aspectRatio,
     setAspectRatio,
-    onGenerate: generateImage,
+    onGenerate:          generateImage,
     loading,
     negativePrompt,
     setNegativePrompt,
-    onOpenSidebar: () => setIsSidebarOpen(true),
+    onOpenSidebar:       () => setIsSidebarOpen(true),
     selectedCharacter,
-    onSelectCharacter: setSelectedCharacter,
-    characters: userCharacters,
-    onCharacterCreated: handleCharacterCreated,
+    onSelectCharacter:   setSelectedCharacter,
+    characters:          userCharacters,
+    onCharacterCreated:  handleCharacterCreated,
   };
 
   return (
@@ -584,7 +660,39 @@ export default function App() {
               <PromptBox {...promptBoxProps} collapsed={promptCollapsed} />
             </header>
           )}
+
           <div className="scrollable-area" style={{ position: 'relative' }}>
+
+            {/* ── Pull to refresh indicator (mobile only) ── */}
+            {(pulling || refreshing) && (
+              <div style={{
+                position:        'absolute',
+                top:             0,
+                left:            0,
+                right:           0,
+                display:         'flex',
+                alignItems:      'center',
+                justifyContent:  'center',
+                height:          `${Math.max(pullY, refreshing ? 56 : 0)}px`,
+                zIndex:          20,
+                pointerEvents:   'none',
+                transition:      pulling ? 'none' : 'height 0.3s ease',
+                overflow:        'hidden',
+              }}>
+                <div style={{
+                  width:        28,
+                  height:       28,
+                  border:       '2.5px solid rgba(168,85,247,0.2)',
+                  borderTop:    '2.5px solid #a855f7',
+                  borderRadius: '50%',
+                  animation:    refreshing ? 'spin 0.7s linear infinite' : 'none',
+                  transform:    refreshing ? undefined : `rotate(${(pullY / 80) * 360}deg)`,
+                  opacity:      Math.min(pullY / 40, 1),
+                  transition:   pulling ? 'none' : 'opacity 0.2s',
+                }} />
+              </div>
+            )}
+
             {activeTab === 'explore' && !isGalleryReady && (
               <div style={{
                 position: 'absolute', inset: 0,
@@ -600,9 +708,12 @@ export default function App() {
                 }} />
               </div>
             )}
+
             <div style={{
-              opacity: activeTab === 'explore' ? (isGalleryReady ? 1 : 0) : 1,
-              transition: 'opacity 0.4s ease'
+              opacity:    activeTab === 'explore' ? (isGalleryReady ? 1 : 0) : 1,
+              transition: 'opacity 0.4s ease',
+              transform:  pulling ? `translateY(${pullY}px)` : 'translateY(0)',
+              transition: pulling ? 'none' : 'transform 0.3s ease',
             }}>
               {renderActiveView()}
             </div>
@@ -652,11 +763,11 @@ export default function App() {
             }}
             onRetry={(newPrompt) => {
               handleEditViewGenerate({
-                image: editingImage?.url,
-                prompt: newPrompt,
+                image:          editingImage?.url,
+                prompt:         newPrompt,
                 negativePrompt: '',
-                poseStrength: 0.6,
-                cannyStrength: 0.4,
+                poseStrength:   0.6,
+                cannyStrength:  0.4,
               });
             }}
           />
