@@ -380,7 +380,7 @@ body, html {
 
 @media (max-width: 768px) {
   .top-header-row .notif-bell-wrapper {
-    top: -5px;
+    top: -3px;
     left: -1px;
     z-index: 9999; /* Re-confirm high z-index for mobile */
   }
