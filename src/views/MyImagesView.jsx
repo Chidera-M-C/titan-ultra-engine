@@ -61,7 +61,11 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
 
 // ── Sort by created_at descending ─────────────────────────────────────────
 const sortByDate = (arr) =>
-  [...arr].sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0));
+  [...arr].sort((a, b) => {
+    const dateA = new Date(a.created_at || a.createdAt || 0).getTime();
+    const dateB = new Date(b.created_at || b.createdAt || 0).getTime();
+    return dateB - dateA;
+  });
 
 function ImageGrid({ images, onSelectPrompt, onViewImage, onEditImage, prompt }) {
   const [openId, setOpenId] = useState(null);
@@ -114,7 +118,7 @@ function ImageGrid({ images, onSelectPrompt, onViewImage, onEditImage, prompt })
 
       {/* ── Grid — uses columns layout same as masonry but fills properly ── */}
       <div
-        className="my-images-grid"
+        className="masonry-grid"
         style={{ opacity: ready ? 1 : 0, transition: 'opacity 0.4s ease' }}
       >
         {sorted.map((img) => (
