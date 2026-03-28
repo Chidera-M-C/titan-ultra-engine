@@ -78,7 +78,7 @@ export default function App() {
       .then(({ data }) => setUserCharacters(data || []));
   }, [user]);
 
-  // ── 1. UPDATE loadGallery to include category and liked images ────────────
+  // ── Load gallery ──────────────────────────────────────────────────────
   const loadGallery = async () => {
     if (!user) { setUserGallery([]); setLikedGallery([]); return; }
     try {
@@ -88,14 +88,15 @@ export default function App() {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       if (imagesError) throw imagesError;
-   
+
       const { data: userLikes } = await supabase
         .from('image_likes')
         .select('image_id')
         .eq('user_id', user.id);
-   
+
       const likedSet = new Set((userLikes || []).map(l => l.image_id));
-   
+
+      // ✅ include created_at so sortByDate works correctly
       setUserGallery((images || []).map(doc => ({
         id: doc.id,
         url: doc.image_url,
@@ -103,8 +104,9 @@ export default function App() {
         likes: doc.likes || 0,
         liked: likedSet.has(doc.id),
         category: doc.category || '',
+        created_at: doc.created_at,
       })));
-   
+
       // Fetch full liked images (from any user, liked by current user)
       if (userLikes && userLikes.length > 0) {
         const likedIds = userLikes.map(l => l.image_id);
@@ -113,7 +115,8 @@ export default function App() {
           .select('*')
           .in('id', likedIds)
           .order('created_at', { ascending: false });
-   
+
+        // ✅ include created_at so sortByDate works correctly
         setLikedGallery((likedImagesData || []).map(doc => ({
           id: doc.id,
           url: doc.image_url,
@@ -121,6 +124,7 @@ export default function App() {
           likes: doc.likes || 0,
           liked: true,
           category: doc.category || '',
+          created_at: doc.created_at,
         })));
       } else {
         setLikedGallery([]);
@@ -136,6 +140,7 @@ export default function App() {
       loadGallery();
     } else {
       setUserGallery([]);
+      setLikedGallery([]);
       const timer = setTimeout(() => setLoginModalOpen(true), 3000);
       return () => clearTimeout(timer);
     }
@@ -265,7 +270,15 @@ export default function App() {
           try {
             await deductCreditsLive(2);
             const publicUrl = await saveAiImage(user.id, base64Image, prompt, styleId);
-            setUserGallery(prev => [{ id: Date.now(), url: publicUrl, prompt, likes: 0, liked: false, category: styleId || '' }, ...prev]);
+            setUserGallery(prev => [{
+              id: Date.now(),
+              url: publicUrl,
+              prompt,
+              likes: 0,
+              liked: false,
+              category: styleId || '',
+              created_at: new Date().toISOString(), // ✅ include created_at
+            }, ...prev]);
           } catch (err) { console.error('❌ Post-generation save failed:', err); }
         })();
       } else if (statusData.status === 'FAILED') {
@@ -417,8 +430,8 @@ export default function App() {
     setViewingImageUrl(img.url);
     setViewingImageId(img.id || null);
     setViewingImageOwnerId(img.userId || null);
-    setViewingImagePrompt(img.prompt || null);        // 👈 add
-    setViewingImageNegativePrompt(img.negativePrompt || null); // 👈 add
+    setViewingImagePrompt(img.prompt || null);
+    setViewingImageNegativePrompt(img.negativePrompt || null);
     setViewImageModalOpen(true);
   }, []);
 
@@ -533,7 +546,7 @@ export default function App() {
     selectedCharacter,
     onSelectCharacter: setSelectedCharacter,
     characters: userCharacters,
-    onCharacterCreated: handleCharacterCreated,  // ← add this
+    onCharacterCreated: handleCharacterCreated,
   };
 
   return (
