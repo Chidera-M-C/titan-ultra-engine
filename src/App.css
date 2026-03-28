@@ -232,12 +232,17 @@ body, html {
   position: absolute;
   right: 0;
   top: 5px;
-  z-index: 9999;          /* A very high number to beat the prompt box */
-  isolation: isolate;     /* Creates a new stacking context */
-  pointer-events: auto;   /* Forces it to be clickable */
-  transition: opacity 0.4s ease;
-  transform: scale(1.35);
+  z-index: 9999;
+  isolation: isolate;
+  pointer-events: auto;
+  transition: opacity 0.4s ease, transform 0.2s ease;
 }
+
+/* Only make it bigger on desktop and tablet */
+@media (min-width: 769px) {
+  .top-header-row .notif-bell-wrapper {
+    transform: scale(0.75);
+  }
 
 .top-header.collapsed .notif-bell-wrapper {
   opacity: 0;
