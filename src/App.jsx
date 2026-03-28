@@ -21,8 +21,6 @@ import FaceSwapView from './views/FaceSwapView';
 import InstallPrompt from './components/InstallPrompt';
 import SettingsView from './views/SettingsView';
 import NotificationBell from './components/Notifications/NotificationBell';
-import PullToRefresh from './components/Shared/PullToRefresh';
-
 
 const MemoExploreView = React.memo(ExploreView);
 
@@ -587,39 +585,27 @@ export default function App() {
             </header>
           )}
           <div className="scrollable-area" style={{ position: 'relative' }}>
-            <PullToRefresh
-              onRefresh={async () => {
-                if (activeTab === 'explore') {
-                  setIsGalleryReady(false);
-                  setExploreKey(k => k + 1);
-                } else if (activeTab === 'gallery') {
-                  await loadGallery();
-                }
-              }}
-              disabled={!user}
-            >
-              {activeTab === 'explore' && !isGalleryReady && (
-                <div style={{
-                  position: 'absolute', inset: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: 'var(--bg, #0f0f0f)', zIndex: 10
-                }}>
-                  <div style={{
-                    width: 40, height: 40,
-                    border: '3px solid rgba(255,255,255,0.1)',
-                    borderTop: '3px solid white',
-                    borderRadius: '50%',
-                    animation: 'spin 0.8s linear infinite'
-                  }} />
-                </div>
-              )}
+            {activeTab === 'explore' && !isGalleryReady && (
               <div style={{
-                opacity: activeTab === 'explore' ? (isGalleryReady ? 1 : 0) : 1,
-                transition: 'opacity 0.4s ease'
+                position: 'absolute', inset: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'var(--bg, #0f0f0f)', zIndex: 10
               }}>
-                {renderActiveView()}
+                <div style={{
+                  width: 40, height: 40,
+                  border: '3px solid rgba(255,255,255,0.1)',
+                  borderTop: '3px solid white',
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite'
+                }} />
               </div>
-            </PullToRefresh>
+            )}
+            <div style={{
+              opacity: activeTab === 'explore' ? (isGalleryReady ? 1 : 0) : 1,
+              transition: 'opacity 0.4s ease'
+            }}>
+              {renderActiveView()}
+            </div>
           </div>
         </main>
 
