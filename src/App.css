@@ -236,13 +236,8 @@ body, html {
   isolation: isolate;
   pointer-events: auto;
   transition: opacity 0.4s ease, transform 0.2s ease;
+  transform: scale(1);
 }
-
-/* Only make it bigger on desktop and tablet */
-@media (min-width: 769px) {
-  .top-header-row .notif-bell-wrapper {
-    transform: scale(0.75);
-  }
 
 .top-header.collapsed .notif-bell-wrapper {
   opacity: 0;
@@ -389,6 +384,7 @@ body, html {
     top: -7px;
     left: -1px;
     z-index: 9999; /* Re-confirm high z-index for mobile */
+    transform: none;
   }
 }
 
