@@ -1,4 +1,6 @@
 /* src/components/Gallery/Gallery.css */
+
+/* Category tabs */
 .category-tabs {
   display: flex;
   gap: 24px;
@@ -42,7 +44,7 @@
   background: #fff;
 }
 
-/* ── Masonry via CSS columns ─────────────────────────────────────────────── */
+/* ── Masonry (Explore) ─────────────────────────────────────────────── */
 .masonry-grid {
   width: 100%;
   columns: 5;
@@ -52,22 +54,22 @@
   box-sizing: border-box;
 }
 
+/* ── MyImages Grid – FIXED: now uses CSS Grid (no gaps, fills every row) ───── */
 .my-images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
   width: 100%;
-  columns: 5;
-  column-gap: 12px;
-  margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
 .my-images-grid .gallery-card {
-  break-inside: avoid;
-  margin-bottom: 12px;
-  display: inline-block;
   width: 100%;
+  margin-bottom: 0;
 }
 
+/* Gallery card styles (unchanged) */
 .gallery-card {
   position: relative;
   border-radius: 12px;
@@ -76,9 +78,6 @@
   cursor: pointer;
   border: 1px solid #2a2a2a;
   width: 100%;
-  break-inside: avoid;
-  margin-bottom: 12px;
-  display: inline-block;
 }
 
 .gallery-card img {
@@ -114,7 +113,7 @@
   transform: scale(1.05);
 }
 
-/* ── Overlay ─────────────────────────────────────────────────────────────── */
+/* Overlay styles */
 .gallery-overlay,
 .pin-overlay {
   position: absolute;
@@ -137,7 +136,7 @@
   gap: 10px;
 }
 
-/* ── Icon buttons ────────────────────────────────────────────────────────── */
+/* Icon buttons */
 .icon-btn {
   width: 36px;
   height: 36px;
@@ -161,7 +160,7 @@
   border-color: rgba(255,75,75,0.3);
 }
 
-/* ── Pin card (ImageCard) ────────────────────────────────────────────────── */
+/* Pin card */
 .pin-item {
   position: relative;
   border-radius: 12px;
@@ -190,7 +189,7 @@
 }
 .use-btn:hover { background: #e0e0e0; }
 
-/* ── More button & dropdown ─────────────────────────────── */
+/* More button & dropdown */
 .more-btn {
   position: absolute;
   top: 8px;
@@ -254,7 +253,7 @@
   flex-shrink: 0;
 }
 
-/* ── MyImages Overview ───────────────────────────────────── */
+/* MyImages Overview */
 .myimages-overview {
   padding: 1rem 0;
 }
@@ -283,7 +282,7 @@
 
 .myimages-cat-cover {
   height: 0;
-  padding-bottom: 130%; /* 4:6 aspect ratio */
+  padding-bottom: 130%;
   position: relative;
 }
 
@@ -356,7 +355,7 @@
   flex-shrink: 0;
 }
 
-/* ── Drilldown ───────────────────────────────────────────── */
+/* Drilldown */
 .myimages-drilldown {
   padding-top: 0.5rem;
 }
@@ -415,83 +414,40 @@
   font-size: 0.9rem;
 }
 
-@media (max-width: 1200px) { .my-images-grid { columns: 4; } }
-@media (max-width: 992px)  { .my-images-grid { columns: 3; } }
-@media (max-width: 768px)  { .my-images-grid { columns: 2; column-gap: 8px; } }
+/* Responsive */
+@media (max-width: 1200px) {
+  .masonry-grid { columns: 4; }
+  .my-images-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+}
+
+@media (max-width: 992px) {
+  .masonry-grid { columns: 3; }
+  .my-images-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+}
 
 @media (max-width: 768px) {
+  .masonry-grid {
+    columns: 2;
+    column-gap: 8px;
+  }
+  .my-images-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
   .myimages-cards {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-/* ── Responsive ──────────────────────────────────────────────────────────── */
-@media (max-width: 1200px) {
-  .masonry-grid { columns: 4; }
-}
-@media (max-width: 992px) {
-  .masonry-grid { columns: 3; }
-}
-@media (max-width: 768px) {
-  .category-tabs { justify-content: flex-start; }
-
-  .masonry-grid {
-    columns: 2;
-    column-gap: 8px;
-  }
-
-  .gallery-card,
-  .pin-item {
-    border-radius: 8px;
-    margin-bottom: 8px;
-  }
-
-  .gallery-overlay,
-  .pin-overlay {
-    opacity: 1;
-    padding: 8px;
-    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 40%);
-  }
-
-  .overlay-actions {
-    gap: 4px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .gallery-card img {
-  width: 100%;
-  height: auto;
-  display: block;
-  min-height: 100px;  /* prevents zero-height flash */
-  background: #1a1a1a; /* placeholder color while loading */
-}
-
-  .icon-btn {
-    width: 32px !important;
-    height: 32px !important;
-    min-width: 32px !important;
-    padding: 0 !important;
-    border-radius: 8px !important;
-  }
-  .icon-btn svg {
-    width: 15px !important;
-    height: 15px !important;
-  }
-}
-
-/* Hide more-btn by default on desktop, show on card hover */
+/* Hover effects for desktop */
 @media (hover: hover) {
   .more-btn {
     opacity: 0;
     transition: opacity 0.2s ease;
   }
-
   .gallery-card:hover .more-btn {
     opacity: 1;
   }
-
-  /* Keep it visible when dropdown is open */
   .more-btn.open {
     opacity: 1;
   }
