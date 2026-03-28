@@ -1,6 +1,4 @@
 /* src/components/Gallery/Gallery.css */
-
-/* Category tabs */
 .category-tabs {
   display: flex;
   gap: 24px;
@@ -44,7 +42,7 @@
   background: #fff;
 }
 
-/* Masonry (Explore) - UNCHANGED */
+/* ── Masonry via CSS columns ─────────────────────────────────────────────── */
 .masonry-grid {
   width: 100%;
   columns: 5;
@@ -54,22 +52,19 @@
   box-sizing: border-box;
 }
 
-/* MyImages Grid - FIXED (fills every row completely) */
 .my-images-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
   width: 100%;
-  padding: 0;
-  box-sizing: border-box;
+  columns: 5;
+  column-gap: 12px;
+  column-fill: auto; /* ← add this */
 }
 
 .my-images-grid .gallery-card {
-  width: 100%;
-  margin-bottom: 0;
+  break-inside: avoid;
+  margin-bottom: 12px;
+  display: inline-block;
 }
 
-/* Gallery card styles - UNCHANGED */
 .gallery-card {
   position: relative;
   border-radius: 12px;
@@ -78,6 +73,9 @@
   cursor: pointer;
   border: 1px solid #2a2a2a;
   width: 100%;
+  break-inside: avoid;
+  margin-bottom: 12px;
+  display: inline-block;
 }
 
 .gallery-card img {
@@ -113,57 +111,381 @@
   transform: scale(1.05);
 }
 
-/* All other styles below are 100% original */
-.gallery-overlay, .pin-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 60%); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: flex-end; justify-content: center; padding: 15px; }
-.gallery-card:hover .gallery-overlay, .pin-item:hover .pin-overlay { opacity: 1; }
-.overlay-actions { display: flex; gap: 10px; }
-.icon-btn { width: 36px; height: 36px; min-width: 36px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(20,20,20,0.7); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; backdrop-filter: blur(4px); }
-.icon-btn:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.2); }
-.icon-btn.active-heart { background: rgba(255,75,75,0.15); border-color: rgba(255,75,75,0.3); }
-.pin-item { position: relative; border-radius: 12px; overflow: hidden; cursor: pointer; break-inside: avoid; margin-bottom: 12px; display: inline-block; width: 100%; }
-.pin-item img { width: 100%; height: auto; display: block; }
-.use-btn { padding: 8px 18px; border-radius: 20px; border: none; background: #fff; color: #000; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
-.use-btn:hover { background: #e0e0e0; }
-.more-btn { position: absolute; top: 8px; right: 8px; cursor: pointer; color: #fff; font-size: 20px; font-weight: bold; letter-spacing: 1px; line-height: 1; z-index: 3; padding: 4px 6px; border-radius: 6px; background: rgba(0, 0, 0, 0.25); backdrop-filter: blur(4px); user-select: none; }
-.more-dropdown { display: none; position: absolute; top: calc(100% + 6px); right: 0; background: #1e1e1e; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 6px; flex-direction: column; gap: 2px; min-width: 160px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); z-index: 10; }
-.more-btn.open .more-dropdown { display: flex; }
-.dropdown-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; background: transparent; border: none; color: #fff; font-size: 13px; cursor: pointer; text-align: left; width: 100%; transition: background 0.15s ease; }
-.dropdown-item:hover { background: rgba(255,255,255,0.08); }
-.dropdown-item svg { opacity: 0.75; flex-shrink: 0; }
-.myimages-overview { padding: 1rem 0; }
-.myimages-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-.myimages-cat-card { display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: #161616; border: 1px solid rgba(255,255,255,0.06); cursor: pointer; transition: transform 0.2s ease, border-color 0.2s ease; }
-.myimages-cat-card:hover { transform: translateY(-2px); border-color: var(--cat-accent, #7c3aed44); }
-.myimages-cat-cover { height: 0; padding-bottom: 130%; position: relative; }
-.myimages-cat-cover img, .myimages-cat-empty-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
-.myimages-cat-card:hover .myimages-cat-cover img { transform: scale(1.04); }
-.myimages-cat-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.7)); }
-.myimages-cat-empty-cover { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #111; }
-.myimages-cat-info { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
-.myimages-cat-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.myimages-cat-text { flex: 1; }
-.myimages-cat-text h3 { font-size: 0.95rem; font-weight: 600; color: #fff; margin: 0 0 2px 0; }
-.myimages-cat-text p { font-size: 0.75rem; color: #666; margin: 0; }
-.myimages-cat-count { font-size: 1.1rem; font-weight: 700; flex-shrink: 0; }
-.myimages-drilldown { padding-top: 0.5rem; }
-.myimages-drilldown-header { display: flex; align-items: center; gap: 16px; padding: 0 0 1rem 0; border-bottom: 1px solid #222; margin-bottom: 1rem; }
-.myimages-back-btn { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 0.85rem; padding: 6px 12px; cursor: pointer; transition: background 0.2s ease; }
-.myimages-back-btn:hover { background: rgba(255,255,255,0.1); }
-.myimages-drilldown-title { display: flex; align-items: center; gap: 8px; }
-.myimages-drilldown-title h2 { font-size: 1rem; font-weight: 700; margin: 0; }
-.myimages-count { font-size: 0.8rem; color: #666; background: #222; border-radius: 20px; padding: 2px 8px; }
-.myimages-empty { text-align: center; padding: 3rem 1rem; color: #555; font-size: 0.9rem; }
-
-@media (max-width: 1200px) { .masonry-grid { columns: 4; } .my-images-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); } }
-@media (max-width: 992px)  { .masonry-grid { columns: 3; } .my-images-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); } }
-@media (max-width: 768px)  { 
-  .masonry-grid { columns: 2; column-gap: 8px; } 
-  .my-images-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; } 
-  .myimages-cards { grid-template-columns: repeat(2, 1fr); }
+/* ── Overlay ─────────────────────────────────────────────────────────────── */
+.gallery-overlay,
+.pin-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 15px;
+}
+.gallery-card:hover .gallery-overlay,
+.pin-item:hover .pin-overlay {
+  opacity: 1;
 }
 
+.overlay-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* ── Icon buttons ────────────────────────────────────────────────────────── */
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(20,20,20,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+.icon-btn:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.2);
+}
+.icon-btn.active-heart {
+  background: rgba(255,75,75,0.15);
+  border-color: rgba(255,75,75,0.3);
+}
+
+/* ── Pin card (ImageCard) ────────────────────────────────────────────────── */
+.pin-item {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  break-inside: avoid;
+  margin-bottom: 12px;
+  display: inline-block;
+  width: 100%;
+}
+.pin-item img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.use-btn {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: none;
+  background: #fff;
+  color: #000;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.use-btn:hover { background: #e0e0e0; }
+
+/* ── More button & dropdown ─────────────────────────────── */
+.more-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  cursor: pointer;
+  color: #fff;
+  font-size: 20px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  line-height: 1;
+  z-index: 3;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(4px);
+  user-select: none;
+}
+
+.more-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #1e1e1e;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 6px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 160px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  z-index: 10;
+}
+
+.more-btn.open .more-dropdown {
+  display: flex;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background 0.15s ease;
+}
+
+.dropdown-item:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.dropdown-item svg {
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+
+/* ── MyImages Overview ───────────────────────────────────── */
+.myimages-overview {
+  padding: 1rem 0;
+}
+
+.myimages-cards {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.myimages-cat-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #161616;
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.myimages-cat-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--cat-accent, #7c3aed44);
+}
+
+.myimages-cat-cover {
+  height: 0;
+  padding-bottom: 130%; /* 4:6 aspect ratio */
+  position: relative;
+}
+
+.myimages-cat-cover img,
+.myimages-cat-empty-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.myimages-cat-card:hover .myimages-cat-cover img {
+  transform: scale(1.04);
+}
+
+.myimages-cat-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.7));
+}
+
+.myimages-cat-empty-cover {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #111;
+}
+
+.myimages-cat-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.myimages-cat-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.myimages-cat-text {
+  flex: 1;
+}
+
+.myimages-cat-text h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 2px 0;
+}
+
+.myimages-cat-text p {
+  font-size: 0.75rem;
+  color: #666;
+  margin: 0;
+}
+
+.myimages-cat-count {
+  font-size: 1.1rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ── Drilldown ───────────────────────────────────────────── */
+.myimages-drilldown {
+  padding-top: 0.5rem;
+}
+
+.myimages-drilldown-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 0 1rem 0;
+  border-bottom: 1px solid #222;
+  margin-bottom: 1rem;
+}
+
+.myimages-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.myimages-back-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.myimages-drilldown-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.myimages-drilldown-title h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.myimages-count {
+  font-size: 0.8rem;
+  color: #666;
+  background: #222;
+  border-radius: 20px;
+  padding: 2px 8px;
+}
+
+.myimages-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .myimages-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .masonry-grid { columns: 4; }
+}
+@media (max-width: 992px) {
+  .masonry-grid { columns: 3; }
+}
+@media (max-width: 768px) {
+  .category-tabs { justify-content: flex-start; }
+
+  .masonry-grid {
+    columns: 2;
+    column-gap: 8px;
+  }
+
+  .gallery-card,
+  .pin-item {
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+
+  .gallery-overlay,
+  .pin-overlay {
+    opacity: 1;
+    padding: 8px;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent 40%);
+  }
+
+  .overlay-actions {
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .gallery-card img {
+  width: 100%;
+  height: auto;
+  display: block;
+  min-height: 100px;  /* prevents zero-height flash */
+  background: #1a1a1a; /* placeholder color while loading */
+}
+
+  .icon-btn {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    padding: 0 !important;
+    border-radius: 8px !important;
+  }
+  .icon-btn svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+}
+
+/* Hide more-btn by default on desktop, show on card hover */
 @media (hover: hover) {
-  .more-btn { opacity: 0; transition: opacity 0.2s ease; }
-  .gallery-card:hover .more-btn { opacity: 1; }
-  .more-btn.open { opacity: 1; }
+  .more-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .gallery-card:hover .more-btn {
+    opacity: 1;
+  }
+
+  /* Keep it visible when dropdown is open */
+  .more-btn.open {
+    opacity: 1;
+  }
 }
