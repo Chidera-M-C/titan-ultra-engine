@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Wand2, Download, Heart, RotateCcw, ArrowLeft, Sparkles, User, Shuffle, Pencil } from 'lucide-react';
 import { supabase } from '../lib/supabase.js';
 import { useAuth } from '../context/AuthContext';
@@ -59,9 +59,9 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
   );
 }
 
-// ── Sort newest first ────────────────────────────────────────────────────────
+// ── Sort by created_at descending ─────────────────────────────────────────
 const sortByDate = (arr) =>
-  [...(arr || [])].sort((a, b) => {
+  [...arr].sort((a, b) => {
     const dateA = new Date(a.created_at || a.createdAt || 0).getTime();
     const dateB = new Date(b.created_at || b.createdAt || 0).getTime();
     return dateB - dateA;
@@ -71,13 +71,11 @@ function ImageGrid({ images, onSelectPrompt, onViewImage, onEditImage, prompt })
   const [openId, setOpenId] = useState(null);
   const [ready, setReady] = useState(false);
 
-  // Sort is memoised — only recalculates when images array reference changes
-  const sorted = useMemo(() => sortByDate(images), [images]);
+  const sorted = sortByDate(images || []);
 
   useEffect(() => {
     setReady(false);
     if (!sorted || sorted.length === 0) { setReady(true); return; }
-    let cancelled = false;
     Promise.all(
       sorted.map(img => new Promise(resolve => {
         const i = new Image();
@@ -85,9 +83,8 @@ function ImageGrid({ images, onSelectPrompt, onViewImage, onEditImage, prompt })
         i.onerror = resolve;
         i.src = img.url;
       }))
-    ).then(() => { if (!cancelled) setReady(true); });
-    return () => { cancelled = true; };
-  }, [sorted]);
+    ).then(() => setReady(true));
+  }, [images]);
 
   useEffect(() => {
     const handleClickOutside = () => setOpenId(null);
@@ -119,8 +116,9 @@ function ImageGrid({ images, onSelectPrompt, onViewImage, onEditImage, prompt })
         </div>
       )}
 
+      {/* ── Grid — uses columns layout same as masonry but fills properly ── */}
       <div
-        className="my-images-grid"
+        className="masonry-grid"
         style={{ opacity: ready ? 1 : 0, transition: 'opacity 0.4s ease' }}
       >
         {sorted.map((img) => (
