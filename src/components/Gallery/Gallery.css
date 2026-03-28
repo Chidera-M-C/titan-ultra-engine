@@ -56,13 +56,13 @@
   width: 100%;
   columns: 5;
   column-gap: 12px;
-  column-fill: auto; /* ← add this */
 }
 
 .my-images-grid .gallery-card {
   break-inside: avoid;
   margin-bottom: 12px;
   display: inline-block;
+  width: 100%;
 }
 
 .gallery-card {
