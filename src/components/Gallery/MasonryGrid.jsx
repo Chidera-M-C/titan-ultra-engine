@@ -5,7 +5,6 @@ import { supabase } from '../../lib/supabase.js';
 import { useAuth } from '../../context/AuthContext';
 import { sendPush } from '../../lib/sendPush.js';
 
-
 const downloadImage = async (e, url, imageId) => {
   e.stopPropagation();
   try {
@@ -24,15 +23,14 @@ const downloadImage = async (e, url, imageId) => {
   }
 };
 
-// ── HeartButton — fetches its own liked state from DB on mount ────────────
 function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
   const { user } = useAuth();
-  const [liked, setLiked] = useState(initialLiked);
-  const [likes, setLikes] = useState(initialLikes);
-  const [busy, setBusy] = useState(false);
+  const [liked, setLiked]       = useState(initialLiked);
+  const [likes, setLikes]       = useState(initialLikes);
+  const [busy, setBusy]         = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
-  // On mount (or when user/imageId changes), fetch the real liked state from DB
+  // Fetch real liked state from DB on mount
   useEffect(() => {
     if (!user || !imageId) {
       setLiked(false);
@@ -92,22 +90,25 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
           .update({ likes: (imgData?.likes || 0) + 1 })
           .eq('id', imageId);
 
+        // Only notify if liking someone else's image
         if (imgData && imgData.user_id !== user.id) {
           await supabase.from('notifications').insert({
-            user_id: imgData.user_id,
-            type: 'like',
-            title: 'Someone liked your image',
-            message: 'Your image just got a like!',
+            user_id:  imgData.user_id,  // ✅ correct — owner of the image
+            type:     'like',
+            title:    'Someone liked your image',
+            message:  'Your image just got a like!',
             image_id: imageId,
           });
 
-        await sendPush({
-          userId: imageOwnerId,
-          title: 'Someone liked your image',
-          body: 'Your image just got a like!',
-          url: '/' });
-          
+          // ✅ sendPush uses imgData.user_id, not imageOwnerId (which doesn't exist here)
+          await sendPush({
+            userId: imgData.user_id,
+            title:  'Someone liked your image',
+            body:   'Your image just got a like!',
+            url:    '/',
+          });
         }
+
       } else {
         const { error: unlikeError } = await supabase
           .from('image_likes')
@@ -153,8 +154,8 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
 }
 
 export default function MasonryGrid({ images, promptRef, onImageClick, onSelectPrompt, onEditImage }) {
-  const [openId, setOpenId] = useState(null);
-  const [currentPrompt, setCurrentPrompt] = useState(promptRef?.current || '');
+  const [openId, setOpenId]                   = useState(null);
+  const [currentPrompt, setCurrentPrompt]     = useState(promptRef?.current || '');
 
   useEffect(() => {
     const interval = setInterval(() => {
