@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Wand2, Download, Heart, RotateCcw } from 'lucide-react';
 import { supabase } from '../../lib/supabase.js';
 import { useAuth } from '../../context/AuthContext';
+import { sendPush } from '../../lib/sendPush.js';
+
 
 const downloadImage = async (e, url, imageId) => {
   e.stopPropagation();
@@ -98,6 +100,13 @@ function HeartButton({ imageId, initialLikes = 0, initialLiked = false }) {
             message: 'Your image just got a like!',
             image_id: imageId,
           });
+
+        await sendPush({
+          userId: imageOwnerId,
+          title: 'Someone liked your image',
+          body: 'Your image just got a like!',
+          url: '/' });
+          
         }
       } else {
         const { error: unlikeError } = await supabase
