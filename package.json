@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "web-push": "^3.6.7",
+    "@pushforge/builder": "^2.0.2",
     "@aws-sdk/client-s3": "^3.454.0",
     "formidable": "^3.5.1",
     "@supabase/supabase-js": "^2.48.0",
