@@ -552,21 +552,7 @@ export default function App() {
           onEditImage={handleEditImage}
         />;
       case 'style':
-        return activeStyle
-          ? <StyleGeneratorView
-              mood={activeStyle}
-              onBack={() => { setActiveStyle(null); setStyleImage(null); setStyleError(null); }}
-              onGenerate={handleStyleGenerate}
-              loading={styleLoading}
-              onViewImage={handleViewImage}
-              onEditImage={handleEditImage}
-              onSelectPrompt={handleSelectPrompt}
-              prompt={prompt}
-              selectedCharacter={selectedCharacter}
-              onSelectCharacter={setSelectedCharacter}
-              characters={userCharacters}
-              onCharacterCreated={handleCharacterCreated}
-            />
+        return <div className="empty-state"><h2>Coming Soon</h2><p>We're polishing this for you!</p></div>;
           : <StyleView onSelectStyle={setActiveStyle} />;
       case 'edit':
         return <EditView
