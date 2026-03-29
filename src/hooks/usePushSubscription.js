@@ -18,7 +18,7 @@
 import { supabase } from '../lib/supabase.js';
 
 // ── Paste your PUBLIC key here (from npx @pushforge/builder generate-keys) ──
-const VAPID_PUBLIC_KEY = 'YOUR_VAPID_PUBLIC_KEY_HERE';
+const VAPID_PUBLIC_KEY = 'BIBCMPJntRS_yF9MsZjW-1q7s-0qY1_BHl3fwSWy4Epr9iYJkMl7pOTlituyJjcti7GLaP-FMwWUqpobK0v1A-I';
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
