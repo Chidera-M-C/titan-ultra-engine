@@ -1,13 +1,24 @@
-// ── usePushSubscription.js — place in src/hooks/ ──────────────────────────
-// Usage: call subscribeToPush() after user logs in
+// ── src/hooks/usePushSubscription.js ─────────────────────────────────────
+//
+// HOW TO GENERATE VAPID KEYS FOR PUSHFORGE (Cloudflare compatible):
+//
+//   Run this ONCE in your terminal:
+//   npx @pushforge/builder generate-keys
+//
+//   This outputs:
+//     PUBLIC KEY (base64url string)  → paste into VAPID_PUBLIC_KEY below
+//     PRIVATE KEY (JWK JSON string)  → paste into Cloudflare env var VAPID_PRIVATE_KEY
+//
+//   The private key MUST be the full JWK JSON string, e.g.:
+//   {"kty":"EC","crv":"P-256","x":"...","y":"...","d":"..."}
+//
+//   Keep the private key ONLY in your Cloudflare environment variables.
+//   Never expose it in frontend code.
 
 import { supabase } from '../lib/supabase.js';
 
-// ── Your VAPID public key ─────────────────────────────────────────────────
-// Generate your VAPID keys by running this in your terminal:
-//   npx web-push generate-vapid-keys
-// Then paste your PUBLIC key below, and keep the PRIVATE key in your server env
-const VAPID_PUBLIC_KEY = 'BPiIGI7c0AN4HKbo9trAWPIr1G2n2qlAjqFOgROYx3Yo40siI2fG2DTMMiYkYVN7fEBajM0D9nZ75QbLyLBqq0w';
+// ── Paste your PUBLIC key here (from npx @pushforge/builder generate-keys) ──
+const VAPID_PUBLIC_KEY = 'YOUR_VAPID_PUBLIC_KEY_HERE';
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -27,6 +38,20 @@ export async function subscribeToPush(userId) {
     const reg = await navigator.serviceWorker.register('/sw.js');
     await navigator.serviceWorker.ready;
 
+    // Check if already subscribed
+    const existing = await reg.pushManager.getSubscription();
+    if (existing) {
+      // Already subscribed — just make sure it's saved in DB
+      const subJson = existing.toJSON();
+      await supabase.from('push_subscriptions').upsert({
+        user_id:  userId,
+        endpoint: subJson.endpoint,
+        p256dh:   subJson.keys.p256dh,
+        auth:     subJson.keys.auth,
+      }, { onConflict: 'endpoint' });
+      return existing;
+    }
+
     // Ask permission
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
@@ -42,14 +67,19 @@ export async function subscribeToPush(userId) {
 
     // Save subscription to Supabase
     const subJson = subscription.toJSON();
-    await supabase.from('push_subscriptions').upsert({
+    const { error } = await supabase.from('push_subscriptions').upsert({
       user_id:  userId,
       endpoint: subJson.endpoint,
       p256dh:   subJson.keys.p256dh,
       auth:     subJson.keys.auth,
     }, { onConflict: 'endpoint' });
 
-    console.log('Push subscription saved');
+    if (error) {
+      console.error('Failed to save push subscription:', error);
+    } else {
+      console.log('Push subscription saved successfully');
+    }
+
     return subscription;
   } catch (err) {
     console.error('Push subscription failed:', err);
@@ -65,7 +95,11 @@ export async function unsubscribeFromPush(userId) {
     if (!sub) return;
     const endpoint = sub.endpoint;
     await sub.unsubscribe();
-    await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint);
+    await supabase
+      .from('push_subscriptions')
+      .delete()
+      .eq('endpoint', endpoint);
+    console.log('Push subscription removed');
   } catch (err) {
     console.error('Unsubscribe failed:', err);
   }
