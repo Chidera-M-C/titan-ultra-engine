@@ -14,16 +14,16 @@ const shuffleArray = (arr) => {
 };
 
 const CATEGORY_STYLE_MAP = {
-  'Female Nude':   'female_nude_portrait',
-  'Missionary':    'missionary_style',
-  'Doggy Style':   'doggy_style',
-  'Dressed/Naked': 'dressed_vs_naked',
-  'Cowgirl':       'cowgirl_style',
-  'Anal':          'anal_sex',
-  'Oral':          'oral_sex',
-  'Threesome':     'threesome_sex',
-  'Cum on Face':   'cum_on_face',
-  'Lesbian':       'lesbian_sex',
+  'Fine Art':      'fine_art_portrait',
+  'Classic':       'classic_pose_style',
+  'Candid':        'candid_lifestyle_style',
+  'Studio/Street': 'studio_vs_street_lighting',
+  'Action':        'dynamic_action_pose',
+  'Editorial':     'high_fashion_editorial',
+  'Minimalist':    'minimalist_composition',
+  'Group':         'group_portrait_composition',
+  'Close-up':      'macro_facial_detail',
+  'Atmospheric':   'atmospheric_mood_lighting',
 };
 
 const CATEGORIES = ['All', ...Object.keys(CATEGORY_STYLE_MAP)];
