@@ -718,13 +718,6 @@ export default function App() {
         />;
       case 'settings':
         return <SettingsView />;
-      default:
-        return <MemoExploreView
-          promptRef={promptRef}
-          onSelectPrompt={handleSelectPrompt}
-          onViewImage={handleViewImage}
-          onEditImage={handleEditImage}
-        />;
         
       case 'text_to_video':
         return <TextToVideoView
@@ -774,6 +767,14 @@ export default function App() {
         return <MyVideosView
           videos={userVideos}
           likedVideos={likedVideos}
+        />;
+
+      default:
+        return <MemoExploreView
+          promptRef={promptRef}
+          onSelectPrompt={handleSelectPrompt}
+          onViewImage={handleViewImage}
+          onEditImage={handleEditImage}
         />;
     }
   };
