@@ -1,0 +1,60 @@
+/* src/components/Video/VideoControls.css */
+.video-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.video-slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.video-slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #888;
+}
+
+.video-slider-value {
+  color: #a855f7;
+  font-weight: 700;
+}
+
+.video-slider {
+  width: 100%;
+  accent-color: #a855f7;
+  cursor: pointer;
+  height: 4px;
+}
+
+.video-slider:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.video-slider-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: #444;
+}
+
+.video-slider-ticks .active {
+  color: #a855f7;
+  font-weight: 700;
+}
+
+.video-slider-hints {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: #444;
+}
