@@ -1,6 +1,5 @@
-// src/views/MyVideosView.jsx
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, Video, Heart, MessageSquare, Download } from 'lucide-react';
+import { ArrowLeft, Video, Heart, Download } from 'lucide-react';
 import EmptyState from '../components/Shared/EmptyState';
 import './MyVideosView.css';
 
@@ -27,7 +26,7 @@ const CATEGORIES = [
     label: 'Liked',
     icon: Heart,
     accent: '#e11d48',
-    filter: null, // handled separately with likedVideos
+    filter: null,
   },
 ];
 
@@ -77,9 +76,8 @@ function VideoGrid({ videos }) {
               controls={playingId === v.id}
             />
           )}
-          {playingId !== v.id && (
-            <div className="myvideos-play-icon">▶</div>
-          )}
+          {playingId !== v.id && <div className="myvideos-play-icon">▶</div>}
+
           <div className="myvideos-card-footer">
             <span className="myvideos-duration">{v.duration}s</span>
             <div className="myvideos-actions">
@@ -111,9 +109,8 @@ export default function MyVideosView({ videos, likedVideos }) {
     return sortByDate(allVideos.filter(cat.filter));
   };
 
-  if (!allVideos.length && !likedVideos?.length) {
-    return <EmptyState title="No videos yet" description="Generate your first video!" />;
-  }
+  // ←←← REMOVED the early EmptyState return ←←←
+  // We now always show the category overview, just like MyImagesView
 
   if (activeCategory) {
     const cat = CATEGORIES.find(c => c.key === activeCategory);
