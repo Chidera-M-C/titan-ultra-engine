@@ -530,6 +530,76 @@ export default function App() {
     }
   };
 
+  // 5. ADD handleVideoGenerate function (after handleFaceSwap):
+  const handleVideoGenerate = async (params) => {
+    if (!user) { setLoginModalOpen(true); return; }
+    setVideoLoading(true);
+    setVideoError(null);
+    setVideoResult(null);
+   
+    try {
+      const response = await fetch('/api/generate-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
+   
+      if (!response.ok) throw new Error('Server error starting video generation');
+      const { jobId, endpointId } = await response.json();
+      if (!jobId) throw new Error('Failed to start video job');
+   
+      // Poll for completion
+      let completed = false, attempts = 0;
+      while (!completed && attempts < 150) {
+        attempts++;
+        const statusRes = await fetch('/api/check-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobId, endpointId }),
+        });
+        const statusData = await statusRes.json();
+   
+        if (statusData.status === 'COMPLETED') {
+          const output = statusData.output;
+          const base64Video = output?.video || output?.videos?.[0] || output?.[0]?.video || output?.[0] || null;
+          if (!base64Video) throw new Error('Video data not found in response');
+   
+          setVideoResult(base64Video);
+          setVideoLoading(false);
+          completed = true;
+   
+          // Save in background
+          (async () => {
+            try {
+              await deductCreditsLive(4); // videos cost more
+              await saveVideo(user.id, base64Video, {
+                prompt:         params.prompt,
+                negativePrompt: params.negativePrompt,
+                aspectRatio:    params.aspectRatio,
+                style:          params.style,
+                duration:       params.duration,
+                motionStrength: params.motionStrength,
+                startImageUrl:  params.startImage || null,
+                endImageUrl:    params.endImage || null,
+                characterId:    selectedCharacter?.id || null,
+                generationType: params.type,
+              });
+              loadVideos(); // refresh my videos
+            } catch (err) { console.error('Post-video save failed:', err); }
+          })();
+        } else if (statusData.status === 'FAILED') {
+          throw new Error('Video generation failed');
+        } else {
+          await delay(3000); // videos take longer
+        }
+      }
+      if (!completed) throw new Error('Video generation timed out.');
+    } catch (err) {
+      setVideoError(err.message);
+      setVideoLoading(false);
+    }
+  };
+
   // ── Navigation ────────────────────────────────────────────────────────
   const handleNavigation = (tab) => {
     if (activeTab === 'explore' && tab !== 'explore') {
