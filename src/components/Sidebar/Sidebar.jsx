@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Compass, Images, Sparkles, Wand2, User, Repeat2, MoreHorizontal, Settings, HelpCircle, LogOut } from 'lucide-react';
+import { Compass, Images, Sparkles, Wand2, User, Repeat2, MoreHorizontal, Settings, HelpCircle, LogOut, Type, Film, Clapperboard, PlaySquare } from 'lucide-react';
 import NavItem from './NavItem';
 import CreditsCard from './CreditsCard';
 import Promptimize from './Promptimize';
@@ -18,16 +18,8 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
     return 'U';
   };
 
-  const handleLogout = () => {
-    logout();
-    setIsDropdownOpen(false);
-  };
-
-  const handleSettings = () => {
-    setIsDropdownOpen(false);
-    onNavigate('settings');
-  };
-
+  const handleLogout = () => { logout(); setIsDropdownOpen(false); };
+  const handleSettings = () => { setIsDropdownOpen(false); onNavigate('settings'); };
   const handleSupport = () => setIsDropdownOpen(false);
 
   useEffect(() => {
@@ -46,6 +38,7 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
         <div className="brand">
           <img src={NudelyLogo} alt="Nudely" style={{ height: '24px', width: 'auto' }} />
         </div>
+
         <nav className="side-nav">
           {/* Section 1 */}
           <div className="nav-section">
@@ -55,6 +48,7 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
               <NavItem icon={Images} label="My Images" isActive={activeTab === 'gallery'} onClick={() => onNavigate('gallery')} />
             )}
           </div>
+
           {/* Section 2 — Deep Dive */}
           <div className="nav-section">
             <p className="nav-section-title">Deep Dive</p>
@@ -62,13 +56,32 @@ export default function Sidebar({ activeTab, onNavigate, credits, userId, isOpen
             <NavItem icon={User} label="Character" isActive={activeTab === 'character'} onClick={() => onNavigate('character')} />
             <NavItem icon={Repeat2} label="Face Swap" isActive={activeTab === 'faceswap'} onClick={() => onNavigate('faceswap')} />
           </div>
+
+          {/* Section 3 — Video */}
+          <div className="nav-section">
+            <p className="nav-section-title">Video</p>
+            <NavItem icon={Type} label="Text→Video" isActive={activeTab === 'text_to_video'} onClick={() => onNavigate('text_to_video')} />
+            <NavItem icon={Film} label="Image→Video" isActive={activeTab === 'image_to_video'} onClick={() => onNavigate('image_to_video')} />
+            <NavItem icon={Clapperboard} label="Styles" isActive={activeTab === 'video_styles'} onClick={() => onNavigate('video_styles')} />
+            {user && (
+              <NavItem icon={PlaySquare} label="My Videos" isActive={activeTab === 'my_videos'} onClick={() => onNavigate('my_videos')} />
+            )}
+          </div>
         </nav>
+
         <div className="sidebar-promptimize">
-          <Promptimize onLoad={onPromptLoad} onNegativePromptLoad={onNegativePromptLoad} currentPrompt={currentPrompt} currentNegativePrompt={currentNegativePrompt} />
+          <Promptimize
+            onLoad={onPromptLoad}
+            onNegativePromptLoad={onNegativePromptLoad}
+            currentPrompt={currentPrompt}
+            currentNegativePrompt={currentNegativePrompt}
+          />
         </div>
       </div>
+
       <div className="sidebar-bottom">
         <CreditsCard credits={credits} userId={userId} onTopUpClick={onTopUpClick} />
+
         {user ? (
           <div className="user-profile" ref={profileRef}>
             <div className="user-info">
