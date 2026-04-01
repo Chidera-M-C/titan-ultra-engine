@@ -21,6 +21,12 @@ import FaceSwapView from './views/FaceSwapView';
 import InstallPrompt from './components/InstallPrompt';
 import SettingsView from './views/SettingsView';
 import NotificationBell from './components/Notifications/NotificationBell';
+import TextToVideoView from './views/TextToVideoView';
+import ImageToVideoView from './views/ImageToVideoView';
+import VideoStyleView from './views/VideoStyleView';
+import VideoStyleGeneratorView from './views/VideoStyleGeneratorView';
+import MyVideosView from './views/MyVideosView';
+import { saveVideo } from './lib/videoService.js';
 
 const MemoExploreView = React.memo(ExploreView);
 
@@ -122,6 +128,12 @@ export default function App() {
   const [viewingImageOwnerId, setViewingImageOwnerId] = useState(null);
   const [viewingImagePrompt, setViewingImagePrompt] = useState(null);
   const [viewingImageNegativePrompt, setViewingImageNegativePrompt] = useState(null);
+  const [videoResult, setVideoResult]         = useState(null);
+  const [videoLoading, setVideoLoading]       = useState(false);
+  const [videoError, setVideoError]           = useState(null);
+  const [activeVideoStyle, setActiveVideoStyle] = useState(null);
+  const [userVideos, setUserVideos]           = useState([]);
+  const [likedVideos, setLikedVideos]         = useState([]);
 
   const { pullY, pulling, releasing } = usePullToRefresh();
   const showPullIndicator = pulling || releasing;
@@ -199,6 +211,56 @@ export default function App() {
     if (authLoading) return;
     if (user) {
       loadGallery();
+    } else {
+      setUserGallery([]);
+      setLikedGallery([]);
+      const timer = setTimeout(() => setLoginModalOpen(true), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [user, authLoading]);
+  
+  // 3. ADD loadVideos function (after loadGallery):
+  const loadVideos = useCallback(async () => {
+    if (!user) { setUserVideos([]); setLikedVideos([]); return; }
+    try {
+      const { data: videos } = await supabase
+        .from('videos')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+   
+      const { data: vLikes } = await supabase
+        .from('video_likes')
+        .select('video_id')
+        .eq('user_id', user.id);
+   
+      const likedSet = new Set((vLikes || []).map(l => l.video_id));
+   
+      setUserVideos((videos || []).map(v => ({
+        ...v,
+        liked: likedSet.has(v.id),
+      })));
+   
+      if (vLikes && vLikes.length > 0) {
+        const likedIds = vLikes.map(l => l.video_id);
+        const { data: likedVids } = await supabase
+          .from('videos')
+          .select('*')
+          .in('id', likedIds)
+          .order('created_at', { ascending: false });
+        setLikedVideos((likedVids || []).map(v => ({ ...v, liked: true })));
+      } else {
+        setLikedVideos([]);
+      }
+    } catch (err) {
+      console.error('loadVideos error:', err);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (user) {
+      loadGallery(); loadVideos();
     } else {
       setUserGallery([]);
       setLikedGallery([]);
