@@ -851,7 +851,16 @@ export default function App() {
         />
 
         <main className="main-content">
-          {activeTab !== 'style' && activeTab !== 'character' && activeTab !== 'edit' && activeTab !== 'faceswap' && activeTab !== 'gallery' && activeTab !== 'settings' && activeTab !== 'text_to_video' && activeTab !== 'image_to_video' && activeTab !== 'video_styles' && activeTab !== 'my_videos'(
+          {activeTab !== 'style' && 
+           activeTab !== 'character' && 
+           activeTab !== 'edit' && 
+           activeTab !== 'faceswap' && 
+           activeTab !== 'gallery' && 
+           activeTab !== 'settings' && 
+           activeTab !== 'text_to_video' && 
+           activeTab !== 'image_to_video' && 
+           activeTab !== 'video_styles' && 
+           activeTab !== 'my_videos' && (
             <header className={`top-header ${promptCollapsed ? 'collapsed' : ''}`}>
               <div className="top-header-row">
                 <h1 className="aesthetic-title">What will you create?</h1>
