@@ -1,0 +1,237 @@
+/* src/views/MyVideosView.css */
+.myvideos-overview {
+  padding: 1.5rem 0;
+}
+
+.myvideos-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Category cards */
+.myvideos-cat-card {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #1e1e1e;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s;
+  background: #111;
+}
+
+.myvideos-cat-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(var(--cat-accent-rgb, 168,85,247), 0.3);
+}
+
+.myvideos-cat-cover {
+  position: relative;
+  height: 100px;
+  background: #1a1a1a;
+  overflow: hidden;
+}
+
+.myvideos-cat-cover img,
+.myvideos-cover-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.myvideos-cat-empty-cover {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.myvideos-cat-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%);
+}
+
+.myvideos-cat-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.myvideos-cat-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.myvideos-cat-text h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.myvideos-cat-count {
+  margin-left: auto;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+/* Drilldown */
+.myvideos-drilldown { padding: 1.5rem 0; }
+
+.myvideos-drilldown-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 1.5rem;
+}
+
+.myvideos-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid #2a2a2a;
+  color: #888;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.myvideos-back-btn:hover { border-color: #444; color: #fff; }
+
+.myvideos-drilldown-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.myvideos-drilldown-title h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.myvideos-count {
+  font-size: 0.78rem;
+  color: #555;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+/* Video grid */
+.myvideos-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.myvideos-card {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #111;
+  border: 1px solid #1e1e1e;
+  cursor: pointer;
+  aspect-ratio: 9/16;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.myvideos-card:hover { transform: scale(1.02); box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+
+.myvideos-thumb,
+.myvideos-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.myvideos-play-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 0.9rem;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.myvideos-card-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 10px;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.myvideos-duration {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.7);
+}
+
+.myvideos-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.myvideos-stat {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: rgba(255,255,255,0.7);
+  font-size: 0.7rem;
+}
+
+.myvideos-download {
+  background: rgba(255,255,255,0.12);
+  border: none;
+  color: #fff;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.myvideos-download:hover { background: rgba(255,255,255,0.25); }
+
+.myvideos-empty {
+  text-align: center;
+  color: #444;
+  font-size: 0.85rem;
+  padding: 3rem 0;
+}
+
+@media (min-width: 769px) {
+  .myvideos-grid { grid-template-columns: repeat(4, 1fr); }
+  .myvideos-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .myvideos-cat-cover { height: 120px; }
+}
