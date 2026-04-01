@@ -609,7 +609,7 @@ export default function App() {
     setActiveTab(tab);
     setIsSidebarOpen(false);
     setPromptCollapsed(false);
-    if (['explore', 'gallery', 'style', 'edit', 'character', 'faceswap', 'settings'].includes(tab)) {
+    if (['explore', 'gallery', 'style', 'edit', 'character', 'faceswap', 'settings', 'text_to_video','image_to_video','video_styles','my_videos'].includes(tab)) {
       setViewState('gallery');
     } else {
       setViewState('empty');
@@ -657,7 +657,7 @@ export default function App() {
         </div>
       );
     }
-    switch (activeTab) {
+    switch (activeTab) {      
       case 'explore':
         return <MemoExploreView
           key={exploreKey}
@@ -724,6 +724,56 @@ export default function App() {
           onSelectPrompt={handleSelectPrompt}
           onViewImage={handleViewImage}
           onEditImage={handleEditImage}
+        />;
+        
+      case 'text_to_video':
+        return <TextToVideoView
+          onGenerate={handleVideoGenerate}
+          loading={videoLoading}
+          error={videoError}
+          result={videoResult}
+          selectedCharacter={selectedCharacter}
+          onSelectCharacter={setSelectedCharacter}
+          characters={userCharacters}
+          onCharacterCreated={handleCharacterCreated}
+        />;
+       
+      case 'image_to_video':
+        return <ImageToVideoView
+          onGenerate={handleVideoGenerate}
+          loading={videoLoading}
+          error={videoError}
+          result={videoResult}
+          selectedCharacter={selectedCharacter}
+          onSelectCharacter={setSelectedCharacter}
+          characters={userCharacters}
+          onCharacterCreated={handleCharacterCreated}
+          userImages={userGallery}
+          likedImages={likedGallery}
+        />;
+       
+      case 'video_styles':
+        return activeVideoStyle
+          ? <VideoStyleGeneratorView
+              style={activeVideoStyle}
+              onBack={() => { setActiveVideoStyle(null); setVideoResult(null); setVideoError(null); }}
+              onGenerate={handleVideoGenerate}
+              loading={videoLoading}
+              error={videoError}
+              result={videoResult}
+              selectedCharacter={selectedCharacter}
+              onSelectCharacter={setSelectedCharacter}
+              characters={userCharacters}
+              onCharacterCreated={handleCharacterCreated}
+              userImages={userGallery}
+              likedImages={likedGallery}
+            />
+          : <VideoStyleView onSelectStyle={setActiveVideoStyle} />;
+       
+      case 'my_videos':
+        return <MyVideosView
+          videos={userVideos}
+          likedVideos={likedVideos}
         />;
     }
   };
