@@ -634,6 +634,12 @@
   border: 2px solid #a855f7;
 }
 
+/* Optional: slight hover effect */
+.style-picker-item:hover .style-picker-image {
+  transform: scale(1.04);
+  transition: transform 0.2s ease;
+}
+
 /* ── Spinner ─────────────────────────────────────────────────────────────── */
 .spinner {
   width: 18px;
