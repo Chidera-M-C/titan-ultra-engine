@@ -49,16 +49,17 @@
   display: flex;
   align-items: flex-end;
   gap: 12px;
+  max-width: 280px;
 }
 
-.vsg-image-box-wrap { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.vsg-image-box-wrap { display: flex; flex-direction: column; gap: 6px; flex: 1; max-width: 120px; }
 .vsg-box-label { font-size: 0.82rem; font-weight: 600; color: #888; }
 .vsg-required { color: #a855f7; }
 .vsg-optional { color: #444; font-weight: 400; }
 
 .vsg-image-box {
-  aspect-ratio: 9/12;
-  border-radius: 14px;
+  aspect-ratio: 3/4;
+  border-radius: 10px;
   border: 1.5px dashed #2a2a2a;
   background: #1a1a1a;
   cursor: pointer;
