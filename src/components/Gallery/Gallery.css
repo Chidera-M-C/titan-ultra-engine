@@ -415,6 +415,110 @@
   font-size: 0.9rem;
 }
 
+/* ── Added to MyImagesView.css ───────────────────────────────────────────── */
+
+.added-images-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.added-upload-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(99,102,241,0.3);
+  background: rgba(99,102,241,0.08);
+  color: #818cf8;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.added-upload-btn:hover:not(:disabled) {
+  background: rgba(99,102,241,0.15);
+  border-color: rgba(99,102,241,0.5);
+}
+
+.added-upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.added-upload-btn-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(99,102,241,0.3);
+  background: rgba(99,102,241,0.08);
+  color: #818cf8;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: auto;
+}
+
+.added-upload-btn-header:hover:not(:disabled) {
+  background: rgba(99,102,241,0.15);
+}
+
+.added-upload-btn-lg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(99,102,241,0.3);
+  background: rgba(99,102,241,0.08);
+  color: #818cf8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: all 0.2s;
+}
+
+.added-upload-btn-lg:hover { background: rgba(99,102,241,0.15); }
+
+.added-delete-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  z-index: 5;
+  opacity: 0;
+}
+
+.gallery-card:hover .added-delete-btn { opacity: 1; }
+
+.added-delete-btn:hover {
+  background: rgba(255,77,77,0.5);
+  border-color: rgba(255,77,77,0.4);
+}
+
+.added-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(129,140,248,0.3);
+  border-top: 2px solid #818cf8;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
 @media (max-width: 1200px) { .my-images-grid { columns: 4; } }
 @media (max-width: 992px)  { .my-images-grid { columns: 3; } }
 @media (max-width: 768px)  { .my-images-grid { columns: 2; column-gap: 8px; } }
