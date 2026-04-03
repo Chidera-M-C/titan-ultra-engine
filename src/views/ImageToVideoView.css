@@ -35,7 +35,7 @@
 
 /* ── Image boxes ─────────────────────────────────────────────────────────── */
 .i2v-image-box {
-  aspect-ratio: 9/12;           /* Portrait on BOTH mobile and desktop */
+  aspect-ratio: 9/12;           /* Force portrait on ALL devices */
   border-radius: 14px;
   border: 1.5px dashed #2a2a2a;
   background: #1a1a1a;
@@ -47,8 +47,8 @@
   align-items: center;
   justify-content: center;
   
-  max-height: 340px;            /* Mobile size - unchanged */
   width: 100%;
+  max-height: 340px;            /* Mobile size (unchanged) */
 }
 
 .i2v-image-box:hover {
@@ -64,11 +64,11 @@
 /* Desktop only - make smaller while keeping portrait */
 @media (min-width: 769px) {
   .i2v-image-box {
-    max-height: 220px;          /* ← Smaller on desktop only */
+    max-height: 210px;          /* Smaller on desktop only */
   }
   
   .i2v-image-boxes {
-    gap: 16px;                  /* Optional: slightly nicer spacing */
+    gap: 16px;
   }
 }
 
