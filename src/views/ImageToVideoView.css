@@ -33,8 +33,9 @@
 .i2v-required { color: #a855f7; }
 .i2v-optional { color: #444; font-weight: 400; }
 
+/* ── Image boxes ─────────────────────────────────────────────────────────── */
 .i2v-image-box {
-  aspect-ratio: 9/12;
+  aspect-ratio: 9/12;           /* Portrait on ALL devices */
   border-radius: 14px;
   border: 1.5px dashed #2a2a2a;
   background: #1a1a1a;
@@ -45,6 +46,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  
+  /* Good size for mobile */
+  max-height: 340px;
+}
+
+/* Make them smaller on desktop only */
+@media (min-width: 769px) {
+  .i2v-image-box {
+    max-height: 220px;          /* ← This makes it smaller on desktop */
+  }
+  
+  /* Optional: tighten the gap a bit on desktop */
+  .i2v-image-boxes {
+    gap: 14px;
+  }
 }
 
 .i2v-image-box:hover {
