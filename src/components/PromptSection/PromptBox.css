@@ -623,6 +623,136 @@
   animation: spin 1s linear infinite;
 }
 
+
+/* ── Add these to bottom of PromptBox.css ───────────────────────────────── */
+
+/* Style pill (selected state) */
+.style-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 4px;
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+  max-width: 140px;
+}
+
+.style-pill:hover { background: rgba(168, 85, 247, 0.18); }
+
+.style-pill-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.style-pill-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #c084fc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Style required button */
+.style-required {
+  border-color: rgba(168, 85, 247, 0.4) !important;
+  color: #a855f7 !important;
+}
+
+/* Style picker overlay */
+.style-picker-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  z-index: 10002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.style-picker {
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 460px;
+  padding: 1rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.style-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.style-picker-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.style-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.style-picker-item {
+  background: transparent;
+  border: 1.5px solid #222;
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.style-picker-item:hover { border-color: rgba(168,85,247,0.4); }
+.style-picker-item.selected { border-color: #a855f7; }
+
+.style-picker-swatch {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/3;
+}
+
+.style-picker-check {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #a855f7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.style-picker-name {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #aaa;
+  padding: 5px 4px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
