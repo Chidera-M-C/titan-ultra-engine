@@ -18,6 +18,7 @@ const MOODS = [
   { id: 'splatter_art_portrait', title: 'Splatter Art', gradient: 'linear-gradient(160deg, #1a0a0a, #3d1010, #7b2020)' },
 ];
 
+// ── Style picker mini modal ───────────────────────────────────────────────
 function StylePicker({ selectedStyle, onSelect, onClose }) {
   return (
     <div className="style-picker-overlay" onClick={onClose}>
@@ -33,7 +34,12 @@ function StylePicker({ selectedStyle, onSelect, onClose }) {
               className={`style-picker-item ${selectedStyle?.id === mood.id ? 'selected' : ''}`}
               onClick={() => { onSelect(mood); onClose(); }}
             >
-              <div className="style-picker-swatch" style={{ background: mood.gradient }}>
+              <div className="style-picker-swatch">
+                <img 
+                  src={mood.image} 
+                  alt={mood.title} 
+                  className="style-picker-image"
+                />
                 {selectedStyle?.id === mood.id && (
                   <div className="style-picker-check"><Check size={10} /></div>
                 )}
