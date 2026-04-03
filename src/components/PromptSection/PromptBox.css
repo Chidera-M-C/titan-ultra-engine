@@ -613,6 +613,27 @@
   color: #a855f7;
 }
 
+/* Style picker image support */
+.style-picker-swatch {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #1a1a1a;
+}
+
+.style-picker-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.style-picker-item.selected .style-picker-swatch {
+  border: 2px solid #a855f7;
+}
+
 /* ── Spinner ─────────────────────────────────────────────────────────────── */
 .spinner {
   width: 18px;
