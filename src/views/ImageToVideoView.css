@@ -15,6 +15,8 @@
   display: flex;
   align-items: flex-end;
   gap: 12px;
+  max-width: 300px;           /* ← This keeps the whole row compact */
+  margin: 0 auto;             /* Centers the boxes nicely */
 }
 
 .i2v-image-box-wrap {
@@ -22,6 +24,7 @@
   flex-direction: column;
   gap: 6px;
   flex: 1;
+  max-width: 130px;           /* ← This is what forces portrait on desktop */
 }
 
 .i2v-box-label {
@@ -33,14 +36,8 @@
 .i2v-required { color: #a855f7; }
 .i2v-optional { color: #444; font-weight: 400; }
 
-/* ── Image boxes ─────────────────────────────────────────────────────────── */
 .i2v-image-box {
-  aspect-ratio: 9/12;           /* Force portrait everywhere */
-  width: 100%;
-  max-width: 100%;
-  height: auto;
-  flex-shrink: 0;               /* ← This is the key fix */
-  
+  aspect-ratio: 9/12;         /* Portrait on ALL devices */
   border-radius: 14px;
   border: 1.5px dashed #2a2a2a;
   background: #1a1a1a;
@@ -51,8 +48,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  
-  max-height: 340px;            /* Mobile size */
+  width: 100%;
+  max-height: 340px;          /* Mobile size - untouched */
 }
 
 .i2v-image-box:hover {
@@ -68,7 +65,7 @@
 /* Desktop only - make smaller while keeping portrait */
 @media (min-width: 769px) {
   .i2v-image-box {
-    max-height: 210px;          /* Smaller on desktop */
+    max-height: 210px;        /* Smaller on desktop only */
   }
   
   .i2v-image-boxes {
