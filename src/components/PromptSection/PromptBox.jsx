@@ -1,8 +1,51 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Send, ArrowDownLeft, UserPlus, X, Check } from 'lucide-react';
+import { Send, ArrowDownLeft, UserPlus, X, Check, Sparkles } from 'lucide-react';
 import AspectRatioDropdown from './AspectRatioDropdown';
 import './PromptBox.css';
 import CreateCharacterModal from '../Shared/CreateCharacterModal';
+
+// ── Style picker mini modal ───────────────────────────────────────────────
+const MOODS = [
+  { id: 'fine_art_monochrome', title: 'Fine Art Monochrome', gradient: 'linear-gradient(160deg, #1a1a1a, #333333, #555555)' },
+  { id: 'golden_hour_lifestyle', title: 'Golden Hour Lifestyle', gradient: 'linear-gradient(160deg, #4d2a00, #8a4a00, #d4a017)' },
+  { id: 'dynamic_urban_street', title: 'Dynamic Urban Street', gradient: 'linear-gradient(160deg, #0a1a0a, #1a3d1a, #2d6e2d)' },
+  { id: 'editorial_texture_contrast', title: 'Editorial Texture', gradient: 'linear-gradient(160deg, #1a1400, #3d3000, #8a6d00)' },
+  { id: 'high_fashion_editorial', title: 'High Fashion', gradient: 'linear-gradient(160deg, #1a0a2a, #3d1a4a, #7b2d7b)' },
+  { id: 'cyberpunk_noir', title: 'Cyberpunk Noir', gradient: 'linear-gradient(160deg, #0a0a1a, #1a1a3d, #2d1b5e)' },
+  { id: 'minimalist_macro', title: 'Minimalist Macro', gradient: 'linear-gradient(160deg, #1a0a0a, #3d1010, #7b2020)' },
+  { id: 'commercial_group_shot', title: 'Commercial', gradient: 'linear-gradient(160deg, #1a0a1a, #3d1a3d, #7b2d7b)' },
+  { id: 'vibrant_pop_art', title: 'Vibrant Pop Art', gradient: 'linear-gradient(160deg, #1a0a2a, #3d1a4a, #7b2d7b)' },
+  { id: 'splatter_art_portrait', title: 'Splatter Art', gradient: 'linear-gradient(160deg, #1a0a0a, #3d1010, #7b2020)' },
+];
+
+function StylePicker({ selectedStyle, onSelect, onClose }) {
+  return (
+    <div className="style-picker-overlay" onClick={onClose}>
+      <div className="style-picker" onClick={e => e.stopPropagation()}>
+        <div className="style-picker-header">
+          <p className="style-picker-title">Select Style</p>
+          <button className="char-picker-close" onClick={onClose}><X size={14} /></button>
+        </div>
+        <div className="style-picker-grid">
+          {MOODS.map(mood => (
+            <button
+              key={mood.id}
+              className={`style-picker-item ${selectedStyle?.id === mood.id ? 'selected' : ''}`}
+              onClick={() => { onSelect(mood); onClose(); }}
+            >
+              <div className="style-picker-swatch" style={{ background: mood.gradient }}>
+                {selectedStyle?.id === mood.id && (
+                  <div className="style-picker-check"><Check size={10} /></div>
+                )}
+              </div>
+              <span className="style-picker-name">{mood.title}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── Mini character picker modal ───────────────────────────────────────────
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
@@ -76,10 +119,15 @@ export default function PromptBox({
   selectedCharacter,
   onSelectCharacter,
   characters = [],
-  onCharacterCreated,  // ← add this
+  onCharacterCreated,
+  selectedStyle,
+  onSelectStyle,
 }) {
   const textareaRef = useRef(null);
   const [showCharPicker, setShowCharPicker] = useState(false);
+  const [showStylePicker, setShowStylePicker] = useState(false);
+
+  const canGenerate = prompt.trim() && selectedStyle && !loading;
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -117,7 +165,7 @@ export default function PromptBox({
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  onGenerate();
+                  if (canGenerate) onGenerate();
                 }
               }}
             />
@@ -156,12 +204,40 @@ export default function PromptBox({
                     <span>Character</span>
                   </button>
                 )}
+
+                {/* ── Style selector ───────────────────────────────────── */}
+                {selectedStyle ? (
+                  <div
+                    className="style-pill"
+                    onClick={() => setShowStylePicker(true)}
+                    title="Change style"
+                  >
+                    <div className="style-pill-swatch" style={{ background: selectedStyle.gradient }} />
+                    <span className="style-pill-name">{selectedStyle.title}</span>
+                    <button
+                      className="char-pill-remove"
+                      onClick={e => { e.stopPropagation(); onSelectStyle(null); }}
+                      title="Remove style"
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="char-add-btn style-required"
+                    onClick={() => setShowStylePicker(true)}
+                    title="Select style (required)"
+                  >
+                    <Sparkles size={14} />
+                    <span>Style *</span>
+                  </button>
+                )}
               </div>
 
               <button
                 className="generate-fab"
                 onClick={onGenerate}
-                disabled={!prompt.trim() || loading}
+                disabled={!canGenerate}
               >
                 {loading ? <div className="spinner"></div> : <Send size={20} />}
               </button>
@@ -195,9 +271,17 @@ export default function PromptBox({
           onClose={() => setShowCharPicker(false)}
           onCharacterCreated={(newChar) => {
             if (onSelectCharacter) onSelectCharacter(newChar);
-            // Also bubble up to App.jsx to update userCharacters
             if (onCharacterCreated) onCharacterCreated(newChar);
           }}
+        />
+      )}
+
+      {/* ── Style picker modal ────────────────────────────────────────── */}
+      {showStylePicker && (
+        <StylePicker
+          selectedStyle={selectedStyle}
+          onSelect={onSelectStyle}
+          onClose={() => setShowStylePicker(false)}
         />
       )}
     </div>
