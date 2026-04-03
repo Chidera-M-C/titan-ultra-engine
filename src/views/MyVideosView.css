@@ -3,30 +3,30 @@
   padding: 1.5rem 0;
 }
 
+/* ── Category cards grid — matches MyImagesView ──────────────────────────── */
 .myvideos-cards {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-/* Category cards */
 .myvideos-cat-card {
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid #1e1e1e;
-  cursor: pointer;
-  transition: transform 0.2s, border-color 0.2s;
   background: #111;
+  border: 1.5px solid #1e1e1e;
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .myvideos-cat-card:hover {
+  border-color: rgba(168, 85, 247, 0.3);
   transform: translateY(-2px);
-  border-color: rgba(var(--cat-accent-rgb, 168,85,247), 0.3);
 }
 
 .myvideos-cat-cover {
   position: relative;
-  height: 100px;
+  aspect-ratio: 3 / 4;
   background: #1a1a1a;
   overflow: hidden;
 }
@@ -56,14 +56,14 @@
 .myvideos-cat-info {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 10px;
+  padding: 10px 10px 12px;
 }
 
 .myvideos-cat-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -71,18 +71,25 @@
 }
 
 .myvideos-cat-text h3 {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: #fff;
+  margin-bottom: 2px;
+}
+
+.myvideos-cat-text p {
+  font-size: 0.72rem;
+  color: #555;
 }
 
 .myvideos-cat-count {
   margin-left: auto;
   font-size: 0.85rem;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
-/* Drilldown */
+/* ── Drilldown header ────────────────────────────────────────────────────── */
 .myvideos-drilldown { padding: 1.5rem 0; }
 
 .myvideos-drilldown-header {
@@ -129,7 +136,7 @@
   border-radius: 12px;
 }
 
-/* Video grid */
+/* ── Video grid inside category ──────────────────────────────────────────── */
 .myvideos-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -230,8 +237,35 @@
   padding: 3rem 0;
 }
 
+/* ── Desktop ─────────────────────────────────────────────────────────────── */
 @media (min-width: 769px) {
-  .myvideos-grid { grid-template-columns: repeat(4, 1fr); }
-  .myvideos-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-  .myvideos-cat-cover { height: 120px; }
+  /* Category cards: horizontal row like MyImagesView */
+  .myvideos-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    flex-direction: unset;
+  }
+
+  .myvideos-cat-cover {
+    aspect-ratio: 3 / 4;
+  }
+
+  .myvideos-grid {
+    columns: 5;
+    column-gap: 10px;
+    display: block;
+  }
+
+  .myvideos-card {
+    break-inside: avoid;
+    margin-bottom: 10px;
+    display: inline-block;
+    width: 100%;
+    aspect-ratio: 9/16;
+  }
+}
+
+@media (max-width: 992px) and (min-width: 769px) {
+  .myvideos-grid { columns: 4; }
 }
