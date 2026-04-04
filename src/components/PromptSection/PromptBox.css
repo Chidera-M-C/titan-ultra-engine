@@ -653,7 +653,7 @@
 
 /* ── Add these to bottom of PromptBox.css ───────────────────────────────── */
 
-/* Style pill (selected state) */
+/* Style pill - matches character pill exactly */
 .style-pill {
   display: flex;
   align-items: center;
@@ -663,21 +663,31 @@
   border: 1px solid rgba(168, 85, 247, 0.3);
   border-radius: 20px;
   cursor: pointer;
-  transition: background 0.2s;
-  max-width: 140px;
+  transition: all 0.2s ease;
+  max-width: 160px;
 }
 
-.style-pill:hover { background: rgba(168, 85, 247, 0.18); }
+.style-pill:hover {
+  background: rgba(168, 85, 247, 0.18);
+}
+
+.style-pill-img {
+  width: 22px;
+  height: 22px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
 
 .style-pill-swatch {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
   flex-shrink: 0;
 }
 
 .style-pill-name {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: #c084fc;
   white-space: nowrap;
