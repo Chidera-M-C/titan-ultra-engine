@@ -321,15 +321,20 @@
 
   .style-gen-image-wrap {
     max-width: 100%;
+    margin: 0 auto; /* Ensures the wrapper itself is centered */
   }
-}
 
-@media (max-width: 768px) {
   .vsg-image-boxes {
+    display: flex;          /* CRITICAL: justify-content needs this */
+    flex-wrap: wrap;        /* Allows boxes to drop to next line if needed */
+    justify-content: center; /* Centers the boxes horizontally */
+    gap: 12px;              /* Adds spacing between centered boxes */
+    width: 100%;
     max-width: 100%;
-    justify-content: center;
   }
+
   .vsg-image-box-wrap {
+    flex: 0 0 44%;         /* Better than max-width for flex children */
     max-width: 44%;
   }
 }
