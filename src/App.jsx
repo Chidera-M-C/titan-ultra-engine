@@ -134,6 +134,7 @@ export default function App() {
   const [activeVideoStyle, setActiveVideoStyle] = useState(null);
   const [userVideos, setUserVideos]           = useState([]);
   const [likedVideos, setLikedVideos]         = useState([]);
+  const [selectedExploreStyle, setSelectedExploreStyle] = useState(null);
 
   const { pullY, pulling, releasing } = usePullToRefresh();
   const showPullIndicator = pulling || releasing;
@@ -441,7 +442,9 @@ export default function App() {
         setLoadingFn: setLoading,
         setErrorFn:   setError,
         setImageFn:   setImage,
-        styleId: selectedCharacter?.face_embedding ? 'character' : null,
+        styleId: selectedCharacter?.face_embedding
+          ? 'character'
+          : (selectedExploreStyle?.id || null),
         ...characterPayload,
       });
     } catch (err) {
@@ -793,6 +796,8 @@ export default function App() {
     onSelectCharacter:  setSelectedCharacter,
     characters:         userCharacters,
     onCharacterCreated: handleCharacterCreated,
+    selectedStyle:      selectedExploreStyle,
+    onSelectStyle:      setSelectedExploreStyle,
   };
 
   // pull progress 0→1
