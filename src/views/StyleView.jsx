@@ -27,12 +27,10 @@ export default function StyleView({ onSelectStyle }) {
           >
             <div
               className="style-card"
-              style={{
-                backgroundImage: mood.image ? `url(${mood.image})` : undefined,
-                background: mood.image ? undefined : mood.gradient,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
+              style={mood.image
+                ? { backgroundImage: `url(${mood.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                : { background: mood.gradient }
+              }
             >
               <div className="style-card-content">
                 <span className="style-card-title">{mood.title}</span>
