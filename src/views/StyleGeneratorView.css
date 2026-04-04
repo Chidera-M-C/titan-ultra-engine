@@ -323,3 +323,13 @@
     max-width: 100%;
   }
 }
+
+@media (max-width: 768px) {
+  .vsg-image-boxes {
+    max-width: 100%;
+    justify-content: center;
+  }
+  .vsg-image-box-wrap {
+    max-width: 44%;
+  }
+}
