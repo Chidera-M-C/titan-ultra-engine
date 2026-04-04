@@ -174,18 +174,44 @@ export default function PromptBox({
 
                 {/* Style */}
                 {selectedStyle ? (
-                  <div className="style-pill" onClick={() => setShowStylePicker(true)} title="Change style">
+                  <div 
+                    className="style-pill" 
+                    onClick={() => setShowStylePicker(true)}
+                    title="Change style"
+                  >
+                    {/* Show real image - exactly like character photo */}
                     {selectedStyle.image ? (
-                      <img src={selectedStyle.image} alt={selectedStyle.title} className="style-pill-img" />
+                      <img 
+                        src={selectedStyle.image} 
+                        alt={selectedStyle.title} 
+                        className="style-pill-img" 
+                      />
                     ) : (
-                      <div className="style-pill-swatch" style={{ background: selectedStyle.gradient }} />
+                      <div 
+                        className="style-pill-swatch" 
+                        style={{ background: selectedStyle.gradient }} 
+                      />
                     )}
+                    
                     <span className="style-pill-name">{selectedStyle.title}</span>
-                    <button className="char-pill-remove" onClick={e => { e.stopPropagation(); onSelectStyle(null); }}><X size={10} /></button>
+                    
+                    <button 
+                      className="char-pill-remove"
+                      onClick={e => { 
+                        e.stopPropagation(); 
+                        onSelectStyle(null); 
+                      }}
+                    >
+                      <X size={10} />
+                    </button>
                   </div>
                 ) : (
-                  <button className="char-add-btn style-required" onClick={() => setShowStylePicker(true)}>
-                    <Sparkles size={14} /><span>Style *</span>
+                  <button 
+                    className="char-add-btn style-required" 
+                    onClick={() => setShowStylePicker(true)}
+                  >
+                    <Sparkles size={14} />
+                    <span>Style *</span>
                   </button>
                 )}
               </div>
