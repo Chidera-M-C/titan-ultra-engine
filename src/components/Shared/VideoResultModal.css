@@ -1,0 +1,300 @@
+/* src/components/Shared/VideoResultModal.css */
+
+.vresult-modal {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2000;
+  width: 340px;
+  background: rgba(14, 14, 14, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.7);
+  animation: vresultSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.vresult-modal.minimized {
+  height: 52px;
+}
+
+@keyframes vresultSlideIn {
+  from { transform: translateY(100px); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.vresult-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.vresult-header:hover { background: rgba(255,255,255,0.02); }
+
+.minimized .vresult-header { border-bottom: none; }
+
+.vresult-status-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.vresult-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ade80;
+  animation: vresultPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  flex-shrink: 0;
+}
+
+.vresult-status-dot.generating { background: #fbbf24; }
+
+@keyframes vresultPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+.vresult-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vresult-minimize-btn,
+.vresult-close-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.6);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  padding: 0;
+  margin: 0;
+}
+
+.vresult-minimize-btn:hover,
+.vresult-close-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+/* ── Stage ───────────────────────────────────────────────────────────────── */
+.vresult-stage {
+  width: 100%;
+  background: #000;
+}
+
+/* ── Loading ─────────────────────────────────────────────────────────────── */
+.vresult-loading-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+}
+
+.vresult-loading-label {
+  color: rgba(255,255,255,0.85);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.vresult-loading-sub {
+  color: rgba(255,255,255,0.35);
+  font-size: 11px;
+  margin-top: -6px;
+}
+
+/* ── Error ───────────────────────────────────────────────────────────────── */
+.vresult-error-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 36px 20px;
+  text-align: center;
+}
+
+.vresult-error-title {
+  color: #ff4444;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.vresult-error-msg {
+  color: rgba(255,255,255,0.5);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.vresult-retry-btn {
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 4px;
+}
+
+.vresult-retry-btn:hover { background: rgba(255,255,255,0.18); }
+
+/* ── Video container ─────────────────────────────────────────────────────── */
+.vresult-video-container {
+  position: relative;
+  width: 100%;
+}
+
+.vresult-video {
+  width: 100%;
+  display: block;
+  max-height: calc(85vh - 120px);
+  object-fit: contain;
+  background: #000;
+  cursor: pointer;
+}
+
+/* ── Controls overlay ────────────────────────────────────────────────────── */
+.vresult-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
+  padding: 20px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Timeline ────────────────────────────────────────────────────────────── */
+.vresult-timeline {
+  width: 100%;
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+.vresult-timeline-track {
+  position: relative;
+  height: 3px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+}
+
+.vresult-timeline-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: #a855f7;
+  border-radius: 2px;
+  transition: width 0.1s linear;
+}
+
+.vresult-timeline-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 4px rgba(0,0,0,0.4);
+  transition: left 0.1s linear;
+}
+
+.vresult-timeline:hover .vresult-timeline-track { height: 5px; }
+.vresult-timeline:hover .vresult-timeline-thumb { width: 14px; height: 14px; }
+
+/* ── Bottom controls row ─────────────────────────────────────────────────── */
+.vresult-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vresult-play-btn {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: #fff;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.vresult-play-btn:hover { background: rgba(255,255,255,0.28); }
+
+.vresult-time {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.7);
+  font-variant-numeric: tabular-nums;
+  flex: 1;
+}
+
+.vresult-download-btn {
+  background: rgba(168,85,247,0.2);
+  border: 1px solid rgba(168,85,247,0.4);
+  color: #c084fc;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.vresult-download-btn:hover { background: #a855f7; color: #fff; border-color: #a855f7; }
+
+/* ── Mobile ──────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .vresult-modal {
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: 100%;
+    border-radius: 16px 16px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+  }
+
+  .vresult-modal.minimized {
+    height: 52px;
+  }
+
+  .vresult-video {
+    max-height: 70vh;
+  }
+}
