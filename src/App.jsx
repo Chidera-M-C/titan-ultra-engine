@@ -577,7 +577,7 @@ export default function App() {
           // Save in background
           (async () => {
             try {
-              await deductCreditsLive(4); // videos cost more
+              await deductCreditsLive(25); // videos cost more
               await saveVideo(user.id, base64Video, {
                 prompt:         params.prompt,
                 negativePrompt: params.negativePrompt,
@@ -982,7 +982,7 @@ export default function App() {
           />
         )}
 
-        {showVideoResult && videoResult && (
+        {showVideoResult && (
           <VideoResultModal
             videoUrl={videoResult}
             loading={videoLoading}
@@ -992,7 +992,10 @@ export default function App() {
               setVideoResult(null);
               setVideoError(null);
             }}
-            onRetry={() => setVideoError(null)}
+            onRetry={() => {
+              // videoResult modal has no retry params stored, just close
+              setVideoError(null);
+            }}
           />
         )}
 
