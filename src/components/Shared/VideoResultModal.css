@@ -5,7 +5,8 @@
   bottom: 24px;
   right: 24px;
   z-index: 2000;
-  width: 300px;
+  width: min(360px, calc((85vh - 120px) * 9 / 16));
+  min-width: 260px;
   background: rgba(14, 14, 14, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -23,7 +24,7 @@
 
 @keyframes vresultSlideIn {
   from { transform: translateY(100px); opacity: 0; }
-  to   { transform: translateY(0);     opacity: 1; }
+  to   { transform: translateY(0); opacity: 1; }
 }
 
 /* ── Header ──────────────────────────────────────────────────────────────── */
@@ -64,7 +65,7 @@
 
 @keyframes vresultPulse {
   0%, 100% { opacity: 1; }
-  50%       { opacity: 0.5; }
+  50% { opacity: 0.5; }
 }
 
 .vresult-header-actions {
@@ -171,6 +172,7 @@
   width: 100%;
   display: block;
   aspect-ratio: 9 / 16;
+  height: auto;
   max-height: calc(85vh - 120px);
   object-fit: cover;
   background: #000;
@@ -276,7 +278,11 @@
   flex-shrink: 0;
 }
 
-.vresult-download-btn:hover { background: #a855f7; color: #fff; border-color: #a855f7; }
+.vresult-download-btn:hover {
+  background: #a855f7;
+  color: #fff;
+  border-color: #a855f7;
+}
 
 /* ── Mobile ──────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
@@ -284,7 +290,9 @@
     bottom: 0;
     right: 0;
     left: 0;
-    width: 100%;
+    width: min(100vw, calc((78vh) * 9 / 16 + 24px));
+    min-width: 0;
+    margin: 0 auto;
     border-radius: 16px 16px 0 0;
     border-left: none;
     border-right: none;
@@ -293,12 +301,14 @@
 
   .vresult-modal.minimized {
     height: 52px;
+    width: 100%;
   }
 
   .vresult-video {
     aspect-ratio: 9 / 16;
-    max-height: 78vh;
     width: 100%;
+    height: auto;
+    max-height: 78vh;
     object-fit: cover;
   }
 }
