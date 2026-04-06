@@ -982,7 +982,7 @@ export default function App() {
           />
         )}
 
-        {showVideoResult && (
+        {showVideoResult && videoResult && (
           <VideoResultModal
             videoUrl={videoResult}
             loading={videoLoading}
@@ -992,10 +992,7 @@ export default function App() {
               setVideoResult(null);
               setVideoError(null);
             }}
-            onRetry={() => {
-              // videoResult modal has no retry params stored, just close
-              setVideoError(null);
-            }}
+            onRetry={() => setVideoError(null)}
           />
         )}
 
