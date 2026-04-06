@@ -209,18 +209,6 @@ export default function App() {
       console.error('Supabase Sync error:', err);
     }
   }, [user]);
-
-  useEffect(() => {
-    if (authLoading) return;
-    if (user) {
-      loadGallery();
-    } else {
-      setUserGallery([]);
-      setLikedGallery([]);
-      const timer = setTimeout(() => setLoginModalOpen(true), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [user, authLoading]);
   
   // 3. ADD loadVideos function (after loadGallery):
   const loadVideos = useCallback(async () => {
