@@ -27,6 +27,7 @@ import VideoStyleView from './views/VideoStyleView';
 import VideoStyleGeneratorView from './views/VideoStyleGeneratorView';
 import MyVideosView from './views/MyVideosView';
 import { saveVideo } from './lib/videoService.js';
+import VideoResultModal from './components/Shared/VideoResultModal';
 
 const MemoExploreView = React.memo(ExploreView);
 
@@ -134,6 +135,7 @@ export default function App() {
   const [activeVideoStyle, setActiveVideoStyle] = useState(null);
   const [userVideos, setUserVideos]           = useState([]);
   const [likedVideos, setLikedVideos]         = useState([]);
+  const [showVideoResult, setShowVideoResult] = useState(false);
   const [selectedExploreStyle, setSelectedExploreStyle] = useState(null);
 
   const { pullY, pulling, releasing } = usePullToRefresh();
@@ -537,6 +539,7 @@ export default function App() {
   const handleVideoGenerate = async (params) => {
     if (!user) { setLoginModalOpen(true); return; }
     setVideoLoading(true);
+    setShowVideoResult(true);
     setVideoError(null);
     setVideoResult(null);
    
@@ -976,6 +979,23 @@ export default function App() {
             imagePrompt={viewingImagePrompt}
             imageNegativePrompt={viewingImageNegativePrompt}
             onClose={() => setViewImageModalOpen(false)}
+          />
+        )}
+
+        {showVideoResult && (
+          <VideoResultModal
+            videoUrl={videoResult}
+            loading={videoLoading}
+            error={videoError}
+            onClose={() => {
+              setShowVideoResult(false);
+              setVideoResult(null);
+              setVideoError(null);
+            }}
+            onRetry={() => {
+              // videoResult modal has no retry params stored, just close
+              setVideoError(null);
+            }}
           />
         )}
 
