@@ -321,25 +321,22 @@
 
   .style-gen-image-wrap {
     max-width: 100%;
-    margin: 0 auto; /* Ensures the wrapper itself is centered */
+    margin: 0 auto;
   }
 
-  /* ── Mobile Fix ──────────────────────────────────────────────────────────── */
-@media (max-width: 768px) {
   .vsg-image-boxes {
-    display: flex;            /* 1. Enable flexbox */
-    flex-wrap: wrap;          /* 2. Let boxes wrap to new lines */
-    justify-content: center;  /* 3. Center items horizontally */
-    align-items: center;      /* 4. Center items vertically */
-    width: 100%;             /* 5. Force container to be full width */
-    gap: 12px;                /* 6. Spacing between the boxes */
-    margin: 0 auto;           /* 7. Center the container itself in the parent */
-    padding: 0;               /* 8. Remove any default padding pushing it left */
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+    margin: 0 auto;
+    padding: 0;
   }
 
   .vsg-image-box-wrap {
-    /* Instead of just max-width, use flex-basis for consistent sizing */
-    flex: 0 0 44%;           
+    flex: 0 0 44%;
     max-width: 44%;
     display: flex;
     justify-content: center;
