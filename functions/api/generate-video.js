@@ -3,42 +3,28 @@ export async function onRequestPost(context) {
   const { request, env } = context;
 
   try {
-    // === DIAGNOSTIC: See exactly what the frontend is sending ===
+    // === DIAGNOSTIC LOGS (visible in Cloudflare Pages → Functions → Logs) ===
     const contentType = request.headers.get('content-type') || 'none';
-    const contentLength = request.headers.get('content-length') || '0';
+    console.log('📥 VIDEO HEADERS → Content-Type:', contentType);
+    console.log('📥 VIDEO HEADERS → Content-Length:', request.headers.get('content-length'));
 
-    console.log('📥 VIDEO REQUEST HEADERS → Content-Type:', contentType);
-    console.log('📥 VIDEO REQUEST HEADERS → Content-Length:', contentLength);
-
-    let body;
-
-    if (contentType.includes('application/json')) {
-      body = await request.json().catch(() => null);
-      console.log('📥 VIDEO RAW JSON BODY:', JSON.stringify(body, null, 2));
-    } 
-    else if (contentType.includes('form-data') || contentType.includes('multipart')) {
-      const form = await request.formData();
-      const obj = {};
-      for (const [key, value] of form.entries()) {
-        obj[key] = value instanceof File ? '[FILE]' : value;
-      }
-      console.log('📥 VIDEO FORM DATA:', JSON.stringify(obj, null, 2));
-      body = obj;
-    } 
-    else {
-      const rawText = await request.text();
-      console.log('📥 VIDEO RAW TEXT BODY:', rawText || '[EMPTY BODY]');
-      body = rawText ? JSON.parse(rawText).catch(() => null) : null;
-    }
+    const body = await request.json().catch(() => null);
+    console.log('📥 VIDEO RAW BODY RECEIVED:', JSON.stringify(body, null, 2));
 
     if (!body) {
       return new Response(
-        JSON.stringify({ error: 'Empty or invalid request body received from frontend' }), 
+        JSON.stringify({ error: 'Empty or invalid JSON body', received: null }),
         { status: 400 }
       );
     }
 
-    // === Your original destructuring and validation ===
+    // === NORMALIZE camelCase → snake_case (fixes common frontend mismatch) ===
+    const normalized = {
+      ...body,
+      start_image: body.start_image || body.startImage,
+      end_image:   body.end_image   || body.endImage,
+    };
+
     const {
       type,
       prompt,
@@ -51,16 +37,38 @@ export async function onRequestPost(context) {
       end_image,
       character,
       face_embedding,
-    } = body;
+    } = normalized;
 
+    // === VALIDATION (this is what was returning 400) ===
     if (!style || !type) {
-      return new Response(JSON.stringify({ error: 'Missing required fields: style, type' }), { status: 400 });
+      return new Response(
+        JSON.stringify({
+          error: 'Missing required fields: style, type',
+          received: body,           // ← shows you exactly what frontend sent
+          missing: 'style or type'
+        }),
+        { status: 400 }
+      );
     }
     if (type === 'text_to_video' && !prompt) {
-      return new Response(JSON.stringify({ error: 'prompt is required for text_to_video' }), { status: 400 });
+      return new Response(
+        JSON.stringify({
+          error: 'prompt is required for text_to_video',
+          received: body,
+          missing: 'prompt'
+        }),
+        { status: 400 }
+      );
     }
     if (type === 'image_to_video' && !start_image) {
-      return new Response(JSON.stringify({ error: 'start_image is required for image_to_video' }), { status: 400 });
+      return new Response(
+        JSON.stringify({
+          error: 'start_image is required for image_to_video',
+          received: body,
+          missing: 'start_image (or startImage)'
+        }),
+        { status: 400 }
+      );
     }
 
     const endpointId = env.RUNPOD_VIDEO_ENDPOINT_ID;
@@ -89,7 +97,6 @@ export async function onRequestPost(context) {
     const controller = new AbortController();
     const timeout    = setTimeout(() => controller.abort(), 25000);
 
-    // RunPod fetch (exactly as you had it)
     const runpodRes = await fetch(`https://api.runpod.io/v2/${endpointId}/run`, {
       method: 'POST',
       headers: {
