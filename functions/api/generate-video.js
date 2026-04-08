@@ -12,14 +12,13 @@ export async function onRequestPost(context) {
   const contentType = request.headers.get('content-type') || 'none';
   const contentLength = request.headers.get('content-length') || '0';
 
-  // This will ALWAYS return JSON, no matter what
   return new Response(
     JSON.stringify({
-      debug: "THIS IS THE FRONTEND PAYLOAD",
+      debug: "FRONTEND PAYLOAD (this should appear in Response tab)",
       contentType,
       contentLength,
       rawBody: rawBody || "[EMPTY BODY]",
-      parsed: rawBody ? JSON.parse(rawBody).catch(() => null) : null
+      note: "If rawBody is empty or {}, the problem is in your view component (TextToVideoView / ImageToVideoView / VideoStyleGeneratorView)"
     }),
     {
       status: 400,
