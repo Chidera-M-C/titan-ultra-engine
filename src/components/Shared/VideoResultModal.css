@@ -5,7 +5,7 @@
   bottom: 24px;
   right: 24px;
   z-index: 2000;
-  width: 340px;
+  width: 280px;
   background: rgba(14, 14, 14, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -15,6 +15,7 @@
   animation: vresultSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding-bottom: 0;
 }
 
 .vresult-modal.minimized {
@@ -26,20 +27,17 @@
   to   { transform: translateY(0);     opacity: 1; }
 }
 
-/* ── Header ──────────────────────────────────────────────────────────────── */
 .vresult-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding: 2px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   cursor: pointer;
   transition: background 0.2s;
-  flex-shrink: 0;
 }
 
-.vresult-header:hover { background: rgba(255,255,255,0.02); }
-
+.vresult-header:hover { background: rgba(255, 255, 255, 0.02); }
 .minimized .vresult-header { border-bottom: none; }
 
 .vresult-status-text {
@@ -47,8 +45,9 @@
   align-items: center;
   gap: 8px;
   color: #fff;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 .vresult-status-dot {
@@ -70,14 +69,15 @@
 .vresult-header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  height: 100%;
 }
 
 .vresult-minimize-btn,
 .vresult-close-btn {
   background: transparent;
   border: none;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255, 255, 255, 0.6);
   width: 28px;
   height: 28px;
   border-radius: 6px;
@@ -86,6 +86,7 @@
   justify-content: center;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 300;
   transition: all 0.2s;
   padding: 0;
   margin: 0;
@@ -93,87 +94,95 @@
 
 .vresult-minimize-btn:hover,
 .vresult-close-btn:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
 
-/* ── Stage ───────────────────────────────────────────────────────────────── */
+/* ── Stage — same portrait 3/4 as image result modal ─────────────────────── */
 .vresult-stage {
   width: 100%;
-  background: #000;
+  aspect-ratio: 3 / 4;
+  background: transparent;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── Loading ─────────────────────────────────────────────────────────────── */
+.minimized .vresult-stage {
+  height: 0;
+  min-height: 0;
+  aspect-ratio: auto;
+  opacity: 0;
+  overflow: hidden;
+}
+
 .vresult-loading-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 48px 24px;
+  gap: 14px;
+  padding: 40px 20px;
 }
 
 .vresult-loading-label {
-  color: rgba(255,255,255,0.85);
+  color: rgba(255, 255, 255, 0.8);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
 .vresult-loading-sub {
-  color: rgba(255,255,255,0.35);
+  color: rgba(255, 255, 255, 0.35);
   font-size: 11px;
   margin-top: -6px;
+  text-align: center;
 }
 
-/* ── Error ───────────────────────────────────────────────────────────────── */
 .vresult-error-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding: 36px 20px;
+  padding: 32px 20px;
   text-align: center;
 }
 
-.vresult-error-title {
-  color: #ff4444;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.vresult-error-msg {
-  color: rgba(255,255,255,0.5);
-  font-size: 12px;
-  line-height: 1.5;
-}
+.vresult-error-title { color: #ff4444; font-size: 14px; font-weight: 600; }
+.vresult-error-msg   { color: rgba(255,255,255,0.5); font-size: 12px; line-height: 1.5; }
 
 .vresult-retry-btn {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: #fff;
   padding: 8px 20px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
   margin-top: 4px;
+  transition: all 0.2s;
 }
 
-.vresult-retry-btn:hover { background: rgba(255,255,255,0.18); }
+.vresult-retry-btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-1px); }
 
-/* ── Video container ─────────────────────────────────────────────────────── */
+/* ── Video fills the portrait stage exactly ──────────────────────────────── */
 .vresult-video-container {
-  position: relative;
+  position: absolute;
+  inset: 0;
   width: 100%;
+  height: 100%;
 }
 
 .vresult-video {
   width: 100%;
+  height: 100%;
+  object-fit: cover;
   display: block;
-  max-height: calc(85vh - 120px);
-  object-fit: contain;
-  background: #000;
   cursor: pointer;
+  border-radius: 0 0 16px 16px;
 }
 
 /* ── Controls overlay ────────────────────────────────────────────────────── */
@@ -182,31 +191,33 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
+  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 60%);
   padding: 20px 12px 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
-/* ── Timeline ────────────────────────────────────────────────────────────── */
-.vresult-timeline {
-  width: 100%;
-  cursor: pointer;
-  padding: 6px 0;
+.vresult-video-container:hover .vresult-controls {
+  opacity: 1;
+  pointer-events: auto;
 }
+
+.vresult-timeline { width: 100%; cursor: pointer; padding: 6px 0; }
 
 .vresult-timeline-track {
   position: relative;
   height: 3px;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 2px;
 }
 
 .vresult-timeline-progress {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: 0; left: 0;
   height: 100%;
   background: #a855f7;
   border-radius: 2px;
@@ -217,8 +228,7 @@
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 12px;
-  height: 12px;
+  width: 12px; height: 12px;
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 0 4px rgba(0,0,0,0.4);
@@ -228,7 +238,6 @@
 .vresult-timeline:hover .vresult-timeline-track { height: 5px; }
 .vresult-timeline:hover .vresult-timeline-thumb { width: 14px; height: 14px; }
 
-/* ── Bottom controls row ─────────────────────────────────────────────────── */
 .vresult-controls-row {
   display: flex;
   align-items: center;
@@ -239,12 +248,9 @@
   background: rgba(255,255,255,0.15);
   border: none;
   color: #fff;
-  width: 30px;
-  height: 30px;
+  width: 30px; height: 30px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   cursor: pointer;
   transition: background 0.2s;
   flex-shrink: 0;
@@ -264,12 +270,9 @@
   background: rgba(168,85,247,0.2);
   border: 1px solid rgba(168,85,247,0.4);
   color: #c084fc;
-  width: 30px;
-  height: 30px;
+  width: 30px; height: 30px;
   border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex; align-items: center; justify-content: center;
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
@@ -290,11 +293,16 @@
     border-bottom: none;
   }
 
-  .vresult-modal.minimized {
-    height: 52px;
+  .vresult-modal.minimized { height: 52px; }
+
+  .vresult-stage {
+    aspect-ratio: 3 / 4;
+    max-height: 75vh;
   }
 
-  .vresult-video {
-    max-height: 70vh;
+  /* Always show controls on mobile since no hover */
+  .vresult-controls {
+    opacity: 1;
+    pointer-events: auto;
   }
 }
