@@ -4,6 +4,7 @@ export async function onRequestPost(context) {
 
   try {
     const body = await request.json();
+    console.log('Received video generate body:', JSON.stringify(body, null, 2));
     const {
       type,
       prompt,
