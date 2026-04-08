@@ -262,5 +262,6 @@ def handler(job):
         return {"error": str(e), "traceback": traceback.format_exc()}
 
 # Models and all LoRAs load once at startup
+# Models and all LoRAs load once at startup
 load_models()
 runpod.serverless.start({"handler": handler})
