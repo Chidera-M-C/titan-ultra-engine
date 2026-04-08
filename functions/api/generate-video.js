@@ -3,8 +3,42 @@ export async function onRequestPost(context) {
   const { request, env } = context;
 
   try {
-    const body = await request.json();
-    console.log('Received video generate body:', JSON.stringify(body, null, 2));
+    // === DIAGNOSTIC: See exactly what the frontend is sending ===
+    const contentType = request.headers.get('content-type') || 'none';
+    const contentLength = request.headers.get('content-length') || '0';
+
+    console.log('📥 VIDEO REQUEST HEADERS → Content-Type:', contentType);
+    console.log('📥 VIDEO REQUEST HEADERS → Content-Length:', contentLength);
+
+    let body;
+
+    if (contentType.includes('application/json')) {
+      body = await request.json().catch(() => null);
+      console.log('📥 VIDEO RAW JSON BODY:', JSON.stringify(body, null, 2));
+    } 
+    else if (contentType.includes('form-data') || contentType.includes('multipart')) {
+      const form = await request.formData();
+      const obj = {};
+      for (const [key, value] of form.entries()) {
+        obj[key] = value instanceof File ? '[FILE]' : value;
+      }
+      console.log('📥 VIDEO FORM DATA:', JSON.stringify(obj, null, 2));
+      body = obj;
+    } 
+    else {
+      const rawText = await request.text();
+      console.log('📥 VIDEO RAW TEXT BODY:', rawText || '[EMPTY BODY]');
+      body = rawText ? JSON.parse(rawText).catch(() => null) : null;
+    }
+
+    if (!body) {
+      return new Response(
+        JSON.stringify({ error: 'Empty or invalid request body received from frontend' }), 
+        { status: 400 }
+      );
+    }
+
+    // === Your original destructuring and validation ===
     const {
       type,
       prompt,
@@ -19,7 +53,6 @@ export async function onRequestPost(context) {
       face_embedding,
     } = body;
 
-    // prompt is optional for image_to_video, required for text_to_video
     if (!style || !type) {
       return new Response(JSON.stringify({ error: 'Missing required fields: style, type' }), { status: 400 });
     }
@@ -56,7 +89,7 @@ export async function onRequestPost(context) {
     const controller = new AbortController();
     const timeout    = setTimeout(() => controller.abort(), 25000);
 
-    // ← Fixed: runpod.ai not runpod.io (matches image generate.js)
+    // RunPod fetch (exactly as you had it)
     const runpodRes = await fetch(`https://api.runpod.io/v2/${endpointId}/run`, {
       method: 'POST',
       headers: {
