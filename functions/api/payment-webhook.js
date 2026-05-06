@@ -29,8 +29,8 @@ export async function onRequestPost(context) {
           price_currency: 'usd',
           order_id: body.userId,
           order_description: `${body.credits}`,
-          success_url: env.APP_URL || 'https://nudely.pages.dev/',
-          cancel_url: env.APP_URL || 'https://nudely.pages.dev/',
+          success_url: env.APP_URL || 'https://nudely.org/',
+          cancel_url: env.APP_URL || 'https://nudely.org/',
         })
       });
 
