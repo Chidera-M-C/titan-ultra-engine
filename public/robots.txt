@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://nudely.org/sitemap.xml
