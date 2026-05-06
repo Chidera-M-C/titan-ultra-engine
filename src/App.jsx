@@ -146,19 +146,6 @@ export default function App() {
   const promptRef = useRef(prompt);
   useEffect(() => { promptRef.current = prompt; }, [prompt]);
 
-  useEffect(() => {
-    // Check if there is a hash (like # or #access_token...)
-    if (window.location.hash) {
-      // This tells the browser: "Keep the URL path, but delete the hash"
-      // It happens instantly without a page reload.
-      window.history.replaceState(
-        null, 
-        document.title, 
-        window.location.pathname + window.location.search
-      );
-    }
-  }, [user]); // Run it whenever the user state changes (e.g., right after login)
-
   // ── Load user characters ──────────────────────────────────────────────
   useEffect(() => {
     if (!user) { setUserCharacters([]); return; }
