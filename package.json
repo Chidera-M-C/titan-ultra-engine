@@ -9,6 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "better-auth": "^1.2.0",        // check latest version on npm
+    "@better-auth/adapters": "^1.2.0",
+    "pg": "^8.13.0",                 // for Supabase Postgres
+    "hono": "^4.6.0",              // recommended for Cloudflare Workers
     "@pushforge/builder": "^2.0.2",
     "@aws-sdk/client-s3": "^3.454.0",
     "formidable": "^3.5.1",
