@@ -3,13 +3,14 @@ import { Pool } from "pg";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  max: 10,                    // limit concurrent connections
-  idleTimeoutMillis: 30000,   // close idle connections
+  max: 10,
+  idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
 });
 
 export const auth = betterAuth({
   baseURL: process.env.VITE_APP_URL || "https://nudely.org",
+  basePath: "/api/auth",                    // ← Added this
 
   database: {
     db: pool,
@@ -35,7 +36,6 @@ export const auth = betterAuth({
     "http://localhost:5173"
   ],
 
-  // Recommended for serverless (Cloudflare)
   session: {
     expiresIn: 60 * 60 * 24 * 30, // 30 days
   },
