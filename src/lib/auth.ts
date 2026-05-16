@@ -3,6 +3,9 @@ import { Pool } from "pg";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  max: 10,                    // limit concurrent connections
+  idleTimeoutMillis: 30000,   // close idle connections
+  connectionTimeoutMillis: 10000,
 });
 
 export const auth = betterAuth({
@@ -26,6 +29,14 @@ export const auth = betterAuth({
     },
   },
 
-  // Recommended for Cloudflare
-  trustedOrigins: ["https://nudely.org", "https://nudely.ai"],
+  trustedOrigins: [
+    "https://nudely.org",
+    "https://nudely.ai",
+    "http://localhost:5173"
+  ],
+
+  // Recommended for serverless (Cloudflare)
+  session: {
+    expiresIn: 60 * 60 * 24 * 30, // 30 days
+  },
 });
