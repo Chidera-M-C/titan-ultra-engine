@@ -1,18 +1,20 @@
 import { betterAuth } from "better-auth";
-import { createClient } from '@supabase/supabase-js';
+import { Pool } from "pg";
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Connect directly to Supabase's underlying Postgres DB
+// Format: postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL, // See setup guide below
+  ssl: { rejectUnauthorized: false },
+});
 
 export const auth = betterAuth({
   baseURL: process.env.VITE_APP_URL || "https://nudely.org",
   basePath: "/api/auth",
 
   database: {
-    db: supabase,
-    type: "supabase",           // Important - use Supabase adapter
+    db: pool,
+    type: "postgresql",
   },
 
   appName: "Nudely",
@@ -31,6 +33,6 @@ export const auth = betterAuth({
   trustedOrigins: [
     "https://nudely.org",
     "https://nudely.ai",
-    "http://localhost:5173"
+    "http://localhost:5173",
   ],
 });
