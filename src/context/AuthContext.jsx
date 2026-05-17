@@ -12,10 +12,14 @@ export function AuthProvider({ children }) {
 
   // Better Auth Client
   const authClient = createAuthClient({
-    baseURL: "https://nudely.org",   // Change to your domain
+    baseURL: "https://nudely.org",
     basePath: "/api/auth",
+    // Add this for better debugging
+    fetchOptions: {
+      credentials: "include",
+    },
   });
-
+  
   const hideSplash = () => {
     setLoading(false);
     const splash = document.getElementById('splash');
