@@ -7,11 +7,10 @@ import * as schema from "./auth-schema";
 
 neonConfig.webSocketConstructor = ws;
 
-let _auth: ReturnType<typeof betterAuth> | null = null;
-
+// Create a fresh auth instance per request.
+// We CANNOT cache this across requests in Cloudflare Workers because
+// the neon Pool uses WebSockets that are bound to a single request context.
 export function getAuth() {
-  if (_auth) return _auth;
-
   if (!process.env.DATABASE_URL) {
     throw new Error("[auth] DATABASE_URL is not set.");
   }
@@ -22,13 +21,10 @@ export function getAuth() {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   const db = drizzle(pool, { schema });
 
-  _auth = betterAuth({
+  return betterAuth({
     baseURL: process.env.VITE_APP_URL || "https://nudely.org",
     basePath: "/api/auth",
-    database: drizzleAdapter(db, {
-      provider: "pg",
-      schema,                  // ← this is what was missing
-    }),
+    database: drizzleAdapter(db, { provider: "pg", schema }),
     appName: "Nudely",
     secret: process.env.BETTER_AUTH_SECRET,
     emailAndPassword: { enabled: true },
@@ -44,6 +40,4 @@ export function getAuth() {
       "http://localhost:5173",
     ],
   });
-
-  return _auth;
 }
