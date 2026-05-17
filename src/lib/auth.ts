@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { Pool, neonConfig } from "@neondatabase/serverless";
+import { dash } from "@better-auth/infra";
 import ws from "ws";
 
 // Required for Neon serverless to work in Cloudflare Workers/Pages Functions
@@ -24,6 +25,10 @@ export const auth = betterAuth({
   appName: "Nudely",
 
   secret: process.env.BETTER_AUTH_SECRET,
+
+  plugins: [
+    dash(),
+  ],
 
   emailAndPassword: {
     enabled: true,
