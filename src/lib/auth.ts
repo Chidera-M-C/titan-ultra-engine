@@ -2,43 +2,56 @@ import { betterAuth } from "better-auth";
 import { Pool, neonConfig } from "@neondatabase/serverless";
 import ws from "ws";
 
-// Required for Neon serverless to work in Cloudflare Workers/Pages Functions
 neonConfig.webSocketConstructor = ws;
 
-// This pool connects to Supabase's Postgres via an edge-compatible WebSocket driver.
-// Use the Supabase "Transaction mode" connection string (port 6543).
-// Format: postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+let _auth: ReturnType<typeof betterAuth> | null = null;
 
-export const auth = betterAuth({
-  baseURL: process.env.VITE_APP_URL || "https://nudely.org",
-  basePath: "/api/auth",
+// Lazy initializer — called inside the request handler AFTER env vars are injected.
+// Do NOT call betterAuth() at the top level; process.env is empty at module load time
+// in Cloudflare Pages Functions.
+export function getAuth() {
+  if (_auth) return _auth;
 
-  database: {
-    db: pool,
-    type: "postgresql",
-  },
+  if (!process.env.DATABASE_URL) {
+    throw new Error("[auth] DATABASE_URL is not set. Add it to Cloudflare Pages → Settings → Environment Variables.");
+  }
+  if (!process.env.BETTER_AUTH_SECRET) {
+    throw new Error("[auth] BETTER_AUTH_SECRET is not set. Add it to Cloudflare Pages → Settings → Environment Variables.");
+  }
 
-  appName: "Nudely",
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+  });
 
-  secret: process.env.BETTER_AUTH_SECRET,
+  _auth = betterAuth({
+    baseURL: process.env.VITE_APP_URL || "https://nudely.org",
+    basePath: "/api/auth",
 
-  emailAndPassword: {
-    enabled: true,
-  },
-
-  socialProviders: {
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    database: {
+      db: pool,
+      type: "postgresql",
     },
-  },
 
-  trustedOrigins: [
-    "https://nudely.org",
-    "https://nudely.ai",
-    "http://localhost:5173",
-  ],
-});
+    appName: "Nudely",
+    secret: process.env.BETTER_AUTH_SECRET,
+
+    emailAndPassword: {
+      enabled: true,
+    },
+
+    socialProviders: {
+      google: {
+        clientId: process.env.GOOGLE_CLIENT_ID!,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      },
+    },
+
+    trustedOrigins: [
+      "https://nudely.org",
+      "https://nudely.ai",
+      "http://localhost:5173",
+    ],
+  });
+
+  return _auth;
+}
