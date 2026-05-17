@@ -1,8 +1,23 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
-import { createAuthClient } from 'better-auth/client';
+import { createAuthClient } from 'better-auth/react';
+import { createClient } from '@supabase/supabase-js';
 
 const AuthContext = createContext();
 
+// Better Auth Client — handles sessions, sign-in, sign-up
+const authClient = createAuthClient({
+  baseURL: "https://nudely.org",
+  basePath: "/api/auth",
+  fetchOptions: {
+    credentials: "include",
+  },
+});
+
+// Supabase client — ONLY for reading/writing your custom `users` table
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -11,16 +26,6 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const initializedUserRef = useRef(null);
 
-  // Better Auth Client
-  const authClient = createAuthClient({
-    baseURL: "https://nudely.org",
-    basePath: "/api/auth",
-    // Add this for better debugging
-    fetchOptions: {
-      credentials: "include",
-    },
-  });
-  
   const hideSplash = () => {
     setLoading(false);
     const splash = document.getElementById('splash');
@@ -31,7 +36,6 @@ export function AuthProvider({ children }) {
   };
 
   const fetchOrCreateUser = async (authUser) => {
-    // Keep using Supabase for your custom users table
     try {
       const { data, error } = await supabase
         .from('users')
@@ -50,7 +54,7 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      // New user
+      // New user — insert with starter credits
       const { data: newUser, error: createError } = await supabase
         .from('users')
         .insert({
@@ -75,45 +79,40 @@ export function AuthProvider({ children }) {
   };
 
   useEffect(() => {
-    const unsubscribe = authClient.onSessionChange(async (session) => {
-      const currentUser = session?.user ?? null;
+    // Better Auth: poll the session on mount
+    authClient.getSession().then(({ data, error }) => {
+      if (error) {
+        console.error('Session fetch error:', error);
+        hideSplash();
+        return;
+      }
 
-      if (currentUser?.id === initializedUserRef.current) return;
+      const currentUser = data?.session?.user ?? null;
 
-      setUser(currentUser);
-
-      if (currentUser) {
+      if (currentUser && currentUser.id !== initializedUserRef.current) {
         initializedUserRef.current = currentUser.id;
+        setUser(currentUser);
         fetchOrCreateUser(currentUser);
-      } else {
-        initializedUserRef.current = null;
+      } else if (!currentUser) {
+        setUser(null);
         setCredits(0);
         setProfile({ username: '', avatar_url: '' });
+        initializedUserRef.current = null;
       }
 
       hideSplash();
     });
-
-    // Initial session check
-    authClient.getSession().then(({ data }) => {
-      if (data.session) {
-        setUser(data.session.user);
-        fetchOrCreateUser(data.session.user);
-      }
-      hideSplash();
-    });
-
-    return () => unsubscribe();
   }, []);
 
   const loginWithGoogle = async () => {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard",   // Change to your desired redirect page
+        callbackURL: "/dashboard",
       });
     } catch (error) {
       console.error('Google login failed:', error);
+      throw error;
     }
   };
 
@@ -121,6 +120,12 @@ export function AuthProvider({ children }) {
     try {
       const { data, error } = await authClient.signUp.email({ email, password });
       if (error) throw error;
+      // After sign-up, fetch/create user record
+      if (data?.user) {
+        setUser(data.user);
+        initializedUserRef.current = data.user.id;
+        await fetchOrCreateUser(data.user);
+      }
       return data;
     } catch (error) {
       console.error('Signup error:', error);
@@ -132,6 +137,11 @@ export function AuthProvider({ children }) {
     try {
       const { data, error } = await authClient.signIn.email({ email, password });
       if (error) throw error;
+      if (data?.user) {
+        setUser(data.user);
+        initializedUserRef.current = data.user.id;
+        await fetchOrCreateUser(data.user);
+      }
       return data;
     } catch (error) {
       console.error('Login error:', error);
