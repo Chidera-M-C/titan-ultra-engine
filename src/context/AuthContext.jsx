@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { createAuthClient } from 'better-auth/client';
 
 const AuthContext = createContext();
 
@@ -9,6 +9,12 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState({ username: '', avatar_url: '' });
   const [loading, setLoading] = useState(true);
   const initializedUserRef = useRef(null);
+
+  // Better Auth Client
+  const authClient = createAuthClient({
+    baseURL: "https://nudely.org",   // Change to your domain
+    basePath: "/api/auth",
+  });
 
   const hideSplash = () => {
     setLoading(false);
@@ -20,6 +26,7 @@ export function AuthProvider({ children }) {
   };
 
   const fetchOrCreateUser = async (authUser) => {
+    // Keep using Supabase for your custom users table
     try {
       const { data, error } = await supabase
         .from('users')
@@ -38,7 +45,7 @@ export function AuthProvider({ children }) {
         return;
       }
 
-      // New user — insert
+      // New user
       const { data: newUser, error: createError } = await supabase
         .from('users')
         .insert({
@@ -63,136 +70,79 @@ export function AuthProvider({ children }) {
   };
 
   useEffect(() => {
-    let realtimeChannel = null;
+    const unsubscribe = authClient.onSessionChange(async (session) => {
+      const currentUser = session?.user ?? null;
 
-    // Safety timeout — never stay stuck on splash forever
-    const safetyTimeout = setTimeout(() => {
-      console.warn('Auth safety timeout fired — forcing splash hide');
-      hideSplash();
-    }, 5000);
+      if (currentUser?.id === initializedUserRef.current) return;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth event:', event, session?.user?.id);
-        const currentUser = session?.user ?? null;
+      setUser(currentUser);
 
-        // Ignore duplicate SIGNED_IN for the same user
-        if (event === 'SIGNED_IN' && currentUser?.id === initializedUserRef.current) {
-          console.log('Auth event: duplicate SIGNED_IN ignored');
-          return;
-        }
-
-        setUser(currentUser);
-
-        if (realtimeChannel) {
-          supabase.removeChannel(realtimeChannel);
-          realtimeChannel = null;
-        }
-
-        if (currentUser) {
-          initializedUserRef.current = currentUser.id;
-
-          // Fire and forget — never block loading on DB call
-          fetchOrCreateUser(currentUser);
-
-          realtimeChannel = supabase
-            .channel(`credits-${currentUser.id}`)
-            .on(
-              'postgres_changes',
-              {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'users',
-                filter: `id=eq.${currentUser.id}`,
-              },
-              (payload) => {
-                console.log('💳 Credits updated via realtime:', payload.new.credits);
-                setCredits(payload.new.credits ?? 0);
-                setProfile((prev) => ({
-                  ...prev,
-                  username: payload.new.username || prev.username,
-                  avatar_url: payload.new.avatar_url || prev.avatar_url,
-                }));
-              }
-            )
-            .subscribe();
-        } else {
-          initializedUserRef.current = null;
-          setCredits(0);
-          setProfile({ username: '', avatar_url: '' });
-        }
-
-        if (
-          event === 'INITIAL_SESSION' ||
-          event === 'SIGNED_IN' ||
-          event === 'SIGNED_OUT'
-        ) {
-          clearTimeout(safetyTimeout);
-          hideSplash();
-        }
+      if (currentUser) {
+        initializedUserRef.current = currentUser.id;
+        fetchOrCreateUser(currentUser);
+      } else {
+        initializedUserRef.current = null;
+        setCredits(0);
+        setProfile({ username: '', avatar_url: '' });
       }
-    );
 
-    return () => {
-      clearTimeout(safetyTimeout);
-      subscription.unsubscribe();
-      if (realtimeChannel) supabase.removeChannel(realtimeChannel);
-    };
+      hideSplash();
+    });
+
+    // Initial session check
+    authClient.getSession().then(({ data }) => {
+      if (data.session) {
+        setUser(data.session.user);
+        fetchOrCreateUser(data.session.user);
+      }
+      hideSplash();
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const loginWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin,
-          queryParams: {
-            prompt: 'select_account',
-            access_type: 'offline',
-          },
-        },
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/dashboard",   // Change to your desired redirect page
       });
-      if (error) throw error;
     } catch (error) {
-      console.error('Login failed:', error.message);
+      console.error('Google login failed:', error);
     }
   };
 
   const signUpWithEmail = async (email, password) => {
     try {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await authClient.signUp.email({ email, password });
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Signup error:', error.message);
+      console.error('Signup error:', error);
       throw error;
     }
   };
 
   const signInWithEmail = async (email, password) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { data, error } = await authClient.signIn.email({ email, password });
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Login error:', error.message);
+      console.error('Login error:', error);
       throw error;
     }
   };
 
   const logout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await authClient.signOut();
       setUser(null);
       setCredits(0);
       setProfile({ username: '', avatar_url: '' });
       initializedUserRef.current = null;
     } catch (error) {
-      console.error('Logout failed:', error.message);
+      console.error('Logout failed:', error);
     }
   };
 
