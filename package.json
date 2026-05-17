@@ -22,7 +22,7 @@
   },
 
   "scripts": {
-    "build": "npx better-auth migrate && next build"
+    "build": "better-auth migrate && next build"
   },
   
   "devDependencies": {
