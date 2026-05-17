@@ -20,6 +20,10 @@
     "lucide-react": "^0.441.0",
     "groq-sdk": "latest"
   },
+
+  "scripts": {
+    "build": "npx better-auth migrate && next build"
+  }
   
   "devDependencies": {
     "@types/pg": "^8.11.10",
