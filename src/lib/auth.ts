@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { drizzle } from "drizzle-orm/neon-serverless";
-import { Pool, neonConfig } from "@neondatabase/serverless";
+import { neonConfig, Pool } from "@neondatabase/serverless";
 import ws from "ws";
 
 neonConfig.webSocketConstructor = ws;
@@ -24,21 +24,16 @@ export function getAuth() {
   _auth = betterAuth({
     baseURL: process.env.VITE_APP_URL || "https://nudely.org",
     basePath: "/api/auth",
-
     database: drizzleAdapter(db, { provider: "pg" }),
-
     appName: "Nudely",
     secret: process.env.BETTER_AUTH_SECRET,
-
     emailAndPassword: { enabled: true },
-
     socialProviders: {
       google: {
         clientId: process.env.GOOGLE_CLIENT_ID!,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       },
     },
-
     trustedOrigins: [
       "https://nudely.org",
       "https://nudely.ai",
