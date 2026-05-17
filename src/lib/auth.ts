@@ -2,17 +2,10 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { neonConfig, Pool } from "@neondatabase/serverless";
+import ws from "ws";
 import * as schema from "./auth-schema";
 
-// Fix for Cloudflare Edge: Use the platform's native WebSocket engine.
-// We only fall back to standard 'ws' if running in a bare local Node process (e.g. scripts/migrations).
-if (typeof globalThis.WebSocket === "undefined") {
-  try {
-    neonConfig.webSocketConstructor = require("ws");
-  } catch (e) {
-    console.warn("WebSocket constructor could not be polyfilled locally.");
-  }
-}
+neonConfig.webSocketConstructor = ws;
 
 export function getAuth() {
   if (!process.env.DATABASE_URL) {
