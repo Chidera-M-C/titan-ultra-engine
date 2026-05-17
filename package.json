@@ -22,7 +22,7 @@
   },
 
   "scripts": {
-    "build": "next build"
+    "build": "vite build"
   },
   
   "devDependencies": {
