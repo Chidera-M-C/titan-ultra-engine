@@ -7,9 +7,6 @@ import * as schema from "./auth-schema";
 
 neonConfig.webSocketConstructor = ws;
 
-// Create a fresh auth instance per request.
-// We CANNOT cache this across requests in Cloudflare Workers because
-// the neon Pool uses WebSockets that are bound to a single request context.
 export function getAuth() {
   if (!process.env.DATABASE_URL) {
     throw new Error("[auth] DATABASE_URL is not set.");
@@ -19,6 +16,27 @@ export function getAuth() {
   }
 
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+  // Intercept every query so we can log the REAL Postgres error
+  const originalQuery = pool.query.bind(pool);
+  (pool as any).query = async (...args: any[]) => {
+    try {
+      return await originalQuery(...args);
+    } catch (err: any) {
+      console.error("[pg REAL ERROR]", JSON.stringify({
+        message: err.message,
+        code: err.code,
+        detail: err.detail,
+        hint: err.hint,
+        table: err.table,
+        column: err.column,
+        constraint: err.constraint,
+        query: typeof args[0] === 'string' ? args[0] : args[0]?.text,
+      }));
+      throw err;
+    }
+  };
+
   const db = drizzle(pool, { schema });
 
   return betterAuth({
