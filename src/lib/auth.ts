@@ -1,11 +1,15 @@
 import { betterAuth } from "better-auth";
-import { Pool } from "pg";
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import ws from "ws";
 
-// Connect directly to Supabase's underlying Postgres DB
-// Format: postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
+// Required for Neon serverless to work in Cloudflare Workers/Pages Functions
+neonConfig.webSocketConstructor = ws;
+
+// This pool connects to Supabase's Postgres via an edge-compatible WebSocket driver.
+// Use the Supabase "Transaction mode" connection string (port 6543).
+// Format: postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL, // See setup guide below
-  ssl: { rejectUnauthorized: false },
+  connectionString: process.env.DATABASE_URL,
 });
 
 export const auth = betterAuth({
@@ -18,6 +22,8 @@ export const auth = betterAuth({
   },
 
   appName: "Nudely",
+
+  secret: process.env.BETTER_AUTH_SECRET,
 
   emailAndPassword: {
     enabled: true,
