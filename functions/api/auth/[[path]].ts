@@ -1,18 +1,24 @@
 import { getAuth } from "../../../src/lib/auth";
 
 export const onRequest = async (context: any) => {
-  // Inject Cloudflare env into process.env BEFORE getAuth() is called.
-  // This must happen before auth is initialized — getAuth() reads process.env.
   Object.assign(process.env, context.env);
 
   try {
     const auth = getAuth();
-    return auth.handler(context.request);
+    const response = await auth.handler(context.request);
+
+    // Log non-200 responses so we can see them in Cloudflare logs
+    if (!response.ok) {
+      let body = "";
+      try { body = await response.clone().text(); } catch {}
+      console.error(`[auth] ${context.request.method} ${new URL(context.request.url).pathname} → ${response.status}`, body);
+    }
+
+    return response;
   } catch (err: any) {
-    // Surface the real error instead of a generic 500
-    console.error("[auth handler]", err.message);
+    console.error("[auth] CRASH:", err.message, err.stack);
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: err.message, stack: err.stack }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
