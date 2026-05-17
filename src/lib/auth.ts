@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
+import { kyselyAdapter } from "better-auth/adapters/kysely";
+import { Kysely, PostgresAdapter, PostgresIntrospector, PostgresQueryCompiler } from "kysely";
 import { Pool, neonConfig } from "@neondatabase/serverless";
-import { Kysely } from "kysely";
-import { NeonDialect } from "kysely-neon";
 import ws from "ws";
 
 neonConfig.webSocketConstructor = ws;
@@ -18,29 +18,39 @@ export function getAuth() {
     throw new Error("[auth] BETTER_AUTH_SECRET is not set.");
   }
 
-  // Better Auth needs a Kysely instance, not a raw Pool.
-  // kysely-neon provides a Kysely dialect built on @neondatabase/serverless.
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+  // Wire Kysely to use the neon Pool as its underlying driver
   const db = new Kysely({
-    dialect: new NeonDialect({
-      connectionString: process.env.DATABASE_URL,
-    }),
+    dialect: {
+      createAdapter: () => new PostgresAdapter(),
+      createDriver: () => ({
+        acquireConnection: async () => ({ executeQuery: async (q: any) => {
+          const { rows } = await pool.query(q.sql, q.parameters as any[]);
+          return { rows };
+        }, streamQuery: async function*() {} }),
+        beginTransaction: async () => {},
+        commitTransaction: async () => {},
+        rollbackTransaction: async () => {},
+        releaseConnection: async () => {},
+        destroy: async () => {},
+        init: async () => {},
+      }),
+      createIntrospector: (db: Kysely<any>) => new PostgresIntrospector(db),
+      createQueryCompiler: () => new PostgresQueryCompiler(),
+    },
   });
 
   _auth = betterAuth({
     baseURL: process.env.VITE_APP_URL || "https://nudely.org",
     basePath: "/api/auth",
 
-    database: {
-      db,
-      type: "postgresql",
-    },
+    database: kyselyAdapter(db, { type: "postgresql" }),
 
     appName: "Nudely",
     secret: process.env.BETTER_AUTH_SECRET,
 
-    emailAndPassword: {
-      enabled: true,
-    },
+    emailAndPassword: { enabled: true },
 
     socialProviders: {
       google: {
