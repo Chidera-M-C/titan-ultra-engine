@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "better-auth": "^1.2.0",
-    "pg": "^8.13.0",
+    "@neondatabase/serverless": "^0.9.5",
+    "ws": "^8.18.0",
     "@supabase/supabase-js": "^2.49.0",
     "@pushforge/builder": "^2.0.2",
     "@aws-sdk/client-s3": "^3.454.0",
