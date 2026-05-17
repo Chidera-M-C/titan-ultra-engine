@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
-import { kyselyAdapter } from "better-auth/adapters/kysely";
-import { Kysely, PostgresAdapter, PostgresIntrospector, PostgresQueryCompiler } from "kysely";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { drizzle } from "drizzle-orm/neon-serverless";
 import { Pool, neonConfig } from "@neondatabase/serverless";
 import ws from "ws";
 
@@ -19,33 +19,13 @@ export function getAuth() {
   }
 
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-
-  // Wire Kysely to use the neon Pool as its underlying driver
-  const db = new Kysely({
-    dialect: {
-      createAdapter: () => new PostgresAdapter(),
-      createDriver: () => ({
-        acquireConnection: async () => ({ executeQuery: async (q: any) => {
-          const { rows } = await pool.query(q.sql, q.parameters as any[]);
-          return { rows };
-        }, streamQuery: async function*() {} }),
-        beginTransaction: async () => {},
-        commitTransaction: async () => {},
-        rollbackTransaction: async () => {},
-        releaseConnection: async () => {},
-        destroy: async () => {},
-        init: async () => {},
-      }),
-      createIntrospector: (db: Kysely<any>) => new PostgresIntrospector(db),
-      createQueryCompiler: () => new PostgresQueryCompiler(),
-    },
-  });
+  const db = drizzle(pool);
 
   _auth = betterAuth({
     baseURL: process.env.VITE_APP_URL || "https://nudely.org",
     basePath: "/api/auth",
 
-    database: kyselyAdapter(db, { type: "postgresql" }),
+    database: drizzleAdapter(db, { provider: "pg" }),
 
     appName: "Nudely",
     secret: process.env.BETTER_AUTH_SECRET,
