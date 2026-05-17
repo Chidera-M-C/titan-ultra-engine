@@ -13,10 +13,21 @@ const authClient = createAuthClient({
   },
 });
 
-// Supabase client — ONLY for reading/writing your custom `users` table
+// Safely fall back to mock values during initialization to keep the app from crashing entirely
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.warn(
+    "⚠️ Supabase credentials are empty or missing during build initialization. " +
+    "Falling back to runtime evaluation."
+  );
+}
+
+// Initializing client with a fallback structure so it does not throw an uncaught block error
 const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
+  supabaseUrl || "https://placeholder-project-id.supabase.co",
+  supabaseAnonKey || "placeholder-anon-key"
 );
 
 export function AuthProvider({ children }) {
@@ -36,6 +47,12 @@ export function AuthProvider({ children }) {
   };
 
   const fetchOrCreateUser = async (authUser) => {
+    // If the client fell back to placeholders, do not execute database requests
+    if (!import.meta.env.VITE_SUPABASE_URL) {
+      console.error("Database operation canceled: VITE_SUPABASE_URL is missing.");
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('users')
@@ -101,6 +118,9 @@ export function AuthProvider({ children }) {
       }
 
       hideSplash();
+    }).catch((err) => {
+      console.error('Unhandled session check rejection:', err);
+      hideSplash(); // Safety trigger to guarantee the splash screen disappears if an error occurs
     });
   }, []);
 
