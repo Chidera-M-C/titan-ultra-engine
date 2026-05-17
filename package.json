@@ -22,7 +22,7 @@
   },
 
   "scripts": {
-    "build": "better-auth migrate && next build"
+    "build": "next build"
   },
   
   "devDependencies": {
