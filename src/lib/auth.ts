@@ -16,42 +16,39 @@ export function getAuth() {
   }
 
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-
-  // Intercept every query so we can log the REAL Postgres error
-  const originalQuery = pool.query.bind(pool);
-  (pool as any).query = async (...args: any[]) => {
-    try {
-      return await originalQuery(...args);
-    } catch (err: any) {
-      console.error("[pg REAL ERROR]", JSON.stringify({
-        message: err.message,
-        code: err.code,
-        detail: err.detail,
-        hint: err.hint,
-        table: err.table,
-        column: err.column,
-        constraint: err.constraint,
-        query: typeof args[0] === 'string' ? args[0] : args[0]?.text,
-      }));
-      throw err;
-    }
-  };
-
   const db = drizzle(pool, { schema });
 
   return betterAuth({
-    baseURL: process.env.VITE_APP_URL || "https://nudely.org",
+    baseURL: "https://nudely.org",
     basePath: "/api/auth",
     database: drizzleAdapter(db, { provider: "pg", schema }),
     appName: "Nudely",
     secret: process.env.BETTER_AUTH_SECRET,
+
+    // Fix cookie settings for cross-site OAuth callbacks
+    advanced: {
+      cookiePrefix: "nudely",
+      defaultCookieAttributes: {
+        secure: true,
+        httpOnly: true,
+        sameSite: "lax",        // Must be lax (not strict) for OAuth redirects
+        domain: "nudely.org",   // Explicit domain — no leading dot
+        path: "/",
+      },
+      crossSubDomainCookies: {
+        enabled: false,
+      },
+    },
+
     emailAndPassword: { enabled: true },
+
     socialProviders: {
       google: {
         clientId: process.env.GOOGLE_CLIENT_ID!,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       },
     },
+
     trustedOrigins: [
       "https://nudely.org",
       "https://nudely.ai",
