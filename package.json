@@ -11,7 +11,7 @@
   "dependencies": {
     "better-auth": "1.6.11",
     "drizzle-orm": "0.45.2",
-    "@neondatabase/serverless": "^0.9.5",
+    "@neondatabase/serverless": "1.1.0",
     "ws": "^8.18.0",
     "@supabase/supabase-js": "^2.49.0",
     "@pushforge/builder": "^2.0.2",
