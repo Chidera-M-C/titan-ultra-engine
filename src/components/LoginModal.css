@@ -133,6 +133,16 @@
   background: #141414;
 }
 
+.auth-success {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #86efac;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+}
+
 .auth-icon {
   color: #444;
   flex-shrink: 0;
