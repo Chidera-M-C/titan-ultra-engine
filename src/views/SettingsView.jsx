@@ -26,7 +26,7 @@ export default function SettingsView() {
 
       try {
         const { data, error: fetchError } = await supabase
-          .from('users')
+          .from('user')
           .select('username, avatar_url')
           .eq('id', user.id)
           .maybeSingle();
@@ -110,7 +110,7 @@ export default function SettingsView() {
       };
 
       const { data: existingUser, error: existingError } = await supabase
-        .from('users')
+        .from('user')
         .select('id')
         .eq('id', user.id)
         .maybeSingle();
@@ -119,7 +119,7 @@ export default function SettingsView() {
 
       if (existingUser) {
         const { error: updateError } = await supabase
-          .from('users')
+          .from('user')
           .update({
             username: payload.username,
             avatar_url: payload.avatar_url,
@@ -130,7 +130,7 @@ export default function SettingsView() {
         if (updateError) throw updateError;
       } else {
         const { error: insertError } = await supabase
-          .from('users')
+          .from('user')
           .insert(payload);
 
         if (insertError) throw insertError;
