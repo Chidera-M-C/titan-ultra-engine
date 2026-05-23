@@ -59,7 +59,7 @@ export async function onRequestPost(context) {
 
     // ── 3. Fetch current credits and add new ones ─────────────────────────
     const { data: userData, error: fetchError } = await supabase
-      .from('users')
+      .from('user')
       .select('credits')
       .eq('id', userId)
       .single();
@@ -75,7 +75,7 @@ export async function onRequestPost(context) {
     const newBalance = (userData.credits ?? 0) + credits;
 
     const { error: updateError } = await supabase
-      .from('users')
+      .from('user')
       .update({ credits: newBalance })
       .eq('id', userId);
 
