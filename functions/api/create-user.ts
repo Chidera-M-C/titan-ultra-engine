@@ -20,7 +20,7 @@ export const onRequestPost = async (context: any) => {
 
     // Check if user already exists (idempotent)
     const { data: existing } = await supabase
-      .from('users')
+      .from('user')
       .select('credits, username, avatar_url')
       .eq('id', id)
       .maybeSingle();
@@ -33,7 +33,7 @@ export const onRequestPost = async (context: any) => {
 
     // New user — insert with 6 starter credits
     const { data: newUser, error } = await supabase
-      .from('users')
+      .from('user')
       .insert({ id, credits: 6, username: '', avatar_url: '' })
       .select('credits, username, avatar_url')
       .single();
