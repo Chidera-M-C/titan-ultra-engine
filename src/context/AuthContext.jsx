@@ -4,7 +4,6 @@ import { createClient } from '@supabase/supabase-js';
 
 const AuthContext = createContext();
 
-// Better Auth client — handles login/session
 const authClient = createAuthClient({
   baseURL: "https://nudely.org",
   basePath: "/api/auth",
@@ -14,13 +13,6 @@ const authClient = createAuthClient({
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('[AuthContext] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY');
-}
-
-// Supabase client for DB reads and realtime subscriptions.
-// RLS writes (insert/update) that need auth.uid() must go through
-// your Cloudflare Functions which use the service role key.
 const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
@@ -60,11 +52,10 @@ export function AuthProvider({ children }) {
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'users',
+          table: 'user',           // now "user" not "users"
           filter: `id=eq.${userId}`,
         },
         (payload) => {
-          console.log('Credits updated via realtime:', payload.new.credits);
           setCredits(payload.new.credits ?? 0);
           setProfile((prev) => ({
             ...prev,
@@ -76,51 +67,40 @@ export function AuthProvider({ children }) {
       .subscribe();
   };
 
-  // Fetch user data from your users table (read — works without RLS auth token)
-  const fetchUserData = async (authUser) => {
-    if (!supabase) return;
+  const fetchOrInitUser = async (authUser) => {
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('credits, username, avatar_url')
-        .eq('id', authUser.id)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (data) {
-        setCredits(data.credits ?? 0);
-        setProfile({ username: data.username || '', avatar_url: data.avatar_url || '' });
-        return;
-      }
-
-      // New user — call your Cloudflare Function to insert (bypasses RLS)
+      // Call server function which reads/writes the "user" table with service role
       const res = await fetch('/api/create-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ id: authUser.id, email: authUser.email, name: authUser.name }),
+        body: JSON.stringify({
+          id: authUser.id,
+          email: authUser.email,
+          name: authUser.name,
+        }),
       });
 
       if (res.ok) {
-        const newUser = await res.json();
-        setCredits(newUser.credits ?? 6);
-        setProfile({ username: newUser.username || '', avatar_url: newUser.avatar_url || '' });
+        const data = await res.json();
+        setCredits(data.credits ?? 6);
+        setProfile({
+          username: data.username || '',
+          avatar_url: data.avatar_url || '',
+        });
       } else {
-        // Fallback — set defaults so app doesn't break
-        setCredits(6);
-        setProfile({ username: '', avatar_url: '' });
-        console.error('Failed to create user record:', await res.text());
+        console.error('create-user failed:', await res.text());
+        setCredits(0);
       }
     } catch (err) {
-      console.error('Error fetching/creating user:', err.message);
+      console.error('fetchOrInitUser error:', err.message);
     }
   };
 
   const initUser = async (authUser) => {
     initializedUserRef.current = authUser.id;
     setUser(authUser);
-    await fetchUserData(authUser);
+    await fetchOrInitUser(authUser);
     subscribeToCredits(authUser.id);
   };
 
@@ -135,11 +115,9 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Poll for session with retries — handles OAuth redirect race condition
   const checkSession = async (retries = 5, delayMs = 800) => {
-    // Safety timeout — never stay stuck on splash forever
     const safetyTimeout = setTimeout(() => {
-      console.warn('Auth safety timeout fired — forcing splash hide');
+      console.warn('Auth safety timeout — forcing splash hide');
       hideSplash();
     }, 8000);
 
