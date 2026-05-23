@@ -106,7 +106,7 @@ export default function SettingsView() {
         id: user.id,
         username: username.trim(),
         avatar_url: newAvatarUrl,
-        updated_at: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),  // ← correct
       };
 
       const { data: existingUser, error: existingError } = await supabase
