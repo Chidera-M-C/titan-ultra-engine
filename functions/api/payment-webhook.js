@@ -92,7 +92,7 @@ export async function onRequestPost(context) {
         const creditsToAdd = parseInt(body.order_description);
 
         const { data: userData, error: fetchError } = await supabase
-          .from('users')
+          .from('user')
           .select('credits')
           .eq('id', userId)
           .single();
@@ -102,7 +102,7 @@ export async function onRequestPost(context) {
         const newBalance = (userData.credits || 0) + creditsToAdd;
 
         const { error: updateError } = await supabase
-          .from('users')
+          .from('user')
           .update({ credits: newBalance })
           .eq('id', userId);
 
