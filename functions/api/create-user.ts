@@ -19,7 +19,7 @@ export const onRequestPost = async (context: any) => {
 
     const { data: existing, error: fetchErr } = await supabase
       .from('user')
-      .select('credits, username, avatar_url, traffic_source')
+      .select('credits, username, avatar_url, traffic_source, referrer')
       .eq('id', id)
       .maybeSingle();
 
@@ -32,17 +32,23 @@ export const onRequestPost = async (context: any) => {
       });
     }
 
-    // New user — traffic_source will be null, set it along with credits
-    if (existing.credits === null || existing.credits === undefined || existing.traffic_source === null) {
+    // Only update traffic_source if it's still the default "direct"
+    // meaning this is effectively first login and we have a better source
+    const shouldUpdateSource =
+      (existing.traffic_source === 'direct' || existing.traffic_source === null) &&
+      traffic_source &&
+      traffic_source !== 'direct';
+
+    if (shouldUpdateSource || existing.credits === null) {
       const { data: updated, error: updateErr } = await supabase
         .from('user')
         .update({
           credits: existing.credits ?? 6,
-          traffic_source: traffic_source || 'direct',
-          referrer: referrer || '',
+          traffic_source: shouldUpdateSource ? traffic_source : (existing.traffic_source ?? 'direct'),
+          referrer: shouldUpdateSource ? (referrer || '') : (existing.referrer ?? ''),
         })
         .eq('id', id)
-        .select('credits, username, avatar_url, traffic_source')
+        .select('credits, username, avatar_url, traffic_source, referrer')
         .single();
 
       if (updateErr) throw updateErr;
