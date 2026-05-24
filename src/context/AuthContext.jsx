@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { createAuthClient } from 'better-auth/react';
 import { createClient } from '@supabase/supabase-js';
+import { captureTrafficSource } from '../lib/traffic';
 
 const AuthContext = createContext();
 
@@ -52,7 +53,7 @@ export function AuthProvider({ children }) {
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'user',           // now "user" not "users"
+          table: 'user',
           filter: `id=eq.${userId}`,
         },
         (payload) => {
@@ -69,7 +70,8 @@ export function AuthProvider({ children }) {
 
   const fetchOrInitUser = async (authUser) => {
     try {
-      // Call server function which reads/writes the "user" table with service role
+      const { traffic_source, referrer } = captureTrafficSource();
+
       const res = await fetch('/api/create-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -78,6 +80,8 @@ export function AuthProvider({ children }) {
           id: authUser.id,
           email: authUser.email,
           name: authUser.name,
+          traffic_source,
+          referrer,
         }),
       });
 
@@ -88,6 +92,8 @@ export function AuthProvider({ children }) {
           username: data.username || '',
           avatar_url: data.avatar_url || '',
         });
+        // Clear stored traffic after it's been saved (only capture once per signup)
+        sessionStorage.removeItem('nudely_traffic');
       } else {
         console.error('create-user failed:', await res.text());
         setCredits(0);
@@ -151,6 +157,10 @@ export function AuthProvider({ children }) {
   };
 
   useEffect(() => {
+    // Capture traffic source immediately on app load
+    // before any OAuth redirect wipes the URL params
+    captureTrafficSource();
+
     checkSession();
     return () => {
       if (supabase && realtimeChannelRef.current) {
