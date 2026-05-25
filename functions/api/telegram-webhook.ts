@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 
-// ── Constants ────────────────────────────────────────────────────────────────
 const PACKAGES: Record<string, { name: string; credits: number; stars: number }> = {
   starter: { name: 'Starter',  credits: 100,  stars: 750  },
   creator: { name: 'Creator',  credits: 500,  stars: 3000 },
@@ -10,9 +9,8 @@ const PACKAGES: Record<string, { name: string; credits: number; stars: number }>
 const PENDING_EXPIRY_MINUTES = 20;
 const SOLD_EXPIRY_DAYS       = 7;
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
 function generateCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
   for (let i = 0; i < 8; i++) {
     code += chars[Math.floor(Math.random() * chars.length)];
@@ -46,13 +44,31 @@ function packageMenu() {
   };
 }
 
-// ── Main handler ─────────────────────────────────────────────────────────────
+// Generate a minimal SVG image containing the code — works in Cloudflare Workers
+function generateCodeImage(code: string, packageName: string, credits: number): Uint8Array {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="300">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0a"/>
+      <stop offset="100%" style="stop-color:#1a0a2e"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="300" fill="url(#bg)" rx="20"/>
+  <rect x="20" y="20" width="560" height="260" fill="none" stroke="#a855f7" stroke-width="2" rx="16" stroke-dasharray="8,4" opacity="0.5"/>
+  <text x="300" y="60" font-family="monospace" font-size="14" fill="#888" text-anchor="middle">NUDELY.ORG — OFFICIAL CREDIT CODE</text>
+  <text x="300" y="160" font-family="monospace" font-size="64" font-weight="bold" fill="#ffffff" text-anchor="middle" letter-spacing="8">${code}</text>
+  <text x="300" y="210" font-family="monospace" font-size="16" fill="#a855f7" text-anchor="middle">${packageName} Pack · ${credits} Credits</text>
+  <text x="300" y="255" font-family="monospace" font-size="12" fill="#555" text-anchor="middle">Single-use · Valid 7 days · nudely.org</text>
+</svg>`;
+
+  return new TextEncoder().encode(svg);
+}
+
 export const onRequestPost = async (context: any) => {
   const env = context.env;
   const BOT_TOKEN = env.TELEGRAM_BOT_TOKEN;
   const WEBHOOK_SECRET = env.TELEGRAM_WEBHOOK_SECRET;
 
-  // Verify secret header to prevent unauthorized calls
   const secretHeader = context.request.headers.get('X-Telegram-Bot-Api-Secret-Token');
   if (WEBHOOK_SECRET && secretHeader !== WEBHOOK_SECRET) {
     return new Response('Unauthorized', { status: 401 });
@@ -69,7 +85,7 @@ export const onRequestPost = async (context: any) => {
 
   // ── /start or /help ──────────────────────────────────────────────────────
   if (update.message?.text === '/start' || update.message?.text === '/help') {
-    const chatId = update.message.chat.id;
+    const chatId    = update.message.chat.id;
     const firstName = update.message.from?.first_name || 'there';
 
     await sendMessage(BOT_TOKEN, chatId,
@@ -77,10 +93,10 @@ export const onRequestPost = async (context: any) => {
       `Here you can buy credits using Telegram Stars ⭐ to use on <b>nudely.org</b>.\n\n` +
       `<b>How it works:</b>\n` +
       `1. Pick a package below\n` +
-      `2. Pay with Telegram Stars\n` +
-      `3. Your unique code is revealed\n` +
-      `4. Enter the code at nudely.org → Add Credits → Telegram\n\n` +
-      `⚠️ <b>Codes are single-use and valid for 7 days after purchase. Never share your code.</b>\n\n` +
+      `2. Pay with Telegram Stars ⭐\n` +
+      `3. Your unique code is revealed inside the locked message\n` +
+      `4. Enter it at nudely.org → Add Credits → Telegram\n\n` +
+      `⚠️ <b>Codes are single-use and valid for 7 days. Never share your code.</b>\n\n` +
       `Which package would you like?`,
       { reply_markup: packageMenu() }
     );
@@ -89,7 +105,7 @@ export const onRequestPost = async (context: any) => {
 
   // ── /checkpayment ────────────────────────────────────────────────────────
   if (update.message?.text === '/checkpayment') {
-    const chatId  = update.message.chat.id;
+    const chatId   = update.message.chat.id;
     const tgUserId = String(update.message.from.id);
 
     const { data: codes } = await supabase
@@ -102,7 +118,7 @@ export const onRequestPost = async (context: any) => {
 
     if (!codes || codes.length === 0) {
       await sendMessage(BOT_TOKEN, chatId,
-        `No pending codes found for your account.\n\nUse /start to buy a package.`
+        `No active codes found.\n\nUse /start to buy a package.`
       );
     } else {
       let msg = `<b>Your active codes:</b>\n\n`;
@@ -118,14 +134,14 @@ export const onRequestPost = async (context: any) => {
     return new Response('OK');
   }
 
-  // ── Package selection (inline keyboard callback) ─────────────────────────
+  // ── Package selection ────────────────────────────────────────────────────
   if (update.callback_query?.data?.startsWith('pkg_')) {
-    const query     = update.callback_query;
-    const chatId    = query.message.chat.id;
-    const tgUserId  = String(query.from.id);
+    const query      = update.callback_query;
+    const chatId     = query.message.chat.id;
+    const tgUserId   = String(query.from.id);
     const tgUsername = query.from.username || '';
-    const packageId = query.data.replace('pkg_', '');
-    const pkg       = PACKAGES[packageId];
+    const packageId  = query.data.replace('pkg_', '');
+    const pkg        = PACKAGES[packageId];
 
     if (!pkg) {
       await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
@@ -136,7 +152,6 @@ export const onRequestPost = async (context: any) => {
       return new Response('OK');
     }
 
-    // Answer callback to remove loading spinner
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -157,7 +172,7 @@ export const onRequestPost = async (context: any) => {
       attempts++;
     }
 
-    // Save to DB as pending (expires in 20 min)
+    // Save as pending
     const pendingExpiry = new Date(Date.now() + PENDING_EXPIRY_MINUTES * 60 * 1000);
     const { error: insertErr } = await supabase
       .from('telegram_codes')
@@ -174,104 +189,99 @@ export const onRequestPost = async (context: any) => {
       });
 
     if (insertErr) {
-      await sendMessage(BOT_TOKEN, chatId, '❌ Something went wrong generating your code. Please try again.');
+      await sendMessage(BOT_TOKEN, chatId, '❌ Something went wrong. Please try /start again.');
       return new Response('OK');
     }
 
-    // Send as paid media (stars)
-    const caption =
-      `🔑 <b>Your ${pkg.name} Code</b>\n\n` +
-      `<code>${code}</code>\n\n` +
-      `📦 Package: ${pkg.name}\n` +
-      `⚡ Credits: ${pkg.credits}\n` +
-      `⏳ Valid for <b>7 days</b> after payment\n\n` +
-      `⚠️ <b>Single-use. Never share this code.</b>\n\n` +
-      `Redeem at nudely.org → Add Credits → Telegram`;
+    // Generate SVG image with the code embedded
+    const svgBytes = generateCodeImage(code, pkg.name, pkg.credits);
 
-    // Send paid media message
+    // Upload SVG to Telegram first to get a file_id, then use in sendPaidMedia
+    // We use sendDocument to upload, get file_id, then use sendPaidMedia with photo
+    // Actually — use multipart form to send the image directly via sendPaidMedia
+    const boundary = '----FormBoundary' + Math.random().toString(36).slice(2);
+
+    // Build multipart body
+    const mediaJson = JSON.stringify([{ type: 'photo', media: 'attach://code_image' }]);
+
+    let body = '';
+    body += `--${boundary}\r\nContent-Disposition: form-data; name="chat_id"\r\n\r\n${chatId}\r\n`;
+    body += `--${boundary}\r\nContent-Disposition: form-data; name="star_count"\r\n\r\n${pkg.stars}\r\n`;
+    body += `--${boundary}\r\nContent-Disposition: form-data; name="media"\r\n\r\n${mediaJson}\r\n`;
+    body += `--${boundary}\r\nContent-Disposition: form-data; name="caption"\r\n\r\n🔒 Pay ${pkg.stars.toLocaleString()} ⭐ to reveal your ${pkg.name} code\n\n📦 ${pkg.name} · ⚡ ${pkg.credits} credits\n⏳ Valid 7 days after payment · Single-use\n\nRedeem at nudely.org → Add Credits → Telegram\r\n`;
+    body += `--${boundary}\r\nContent-Disposition: form-data; name="payload"\r\n\r\n${code}\r\n`;
+    body += `--${boundary}\r\nContent-Disposition: form-data; name="parse_mode"\r\n\r\nHTML\r\n`;
+
+    // Add the SVG image part
+    const preamble = new TextEncoder().encode(
+      `--${boundary}\r\nContent-Disposition: form-data; name="code_image"; filename="code.svg"\r\nContent-Type: image/svg+xml\r\n\r\n`
+    );
+    const suffix = new TextEncoder().encode(`\r\n--${boundary}--\r\n`);
+    const textBody = new TextEncoder().encode(body);
+
+    const combined = new Uint8Array(textBody.length + preamble.length + svgBytes.length + suffix.length);
+    combined.set(textBody, 0);
+    combined.set(preamble, textBody.length);
+    combined.set(svgBytes, textBody.length + preamble.length);
+    combined.set(suffix, textBody.length + preamble.length + svgBytes.length);
+
     const paidRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPaidMedia`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        star_count: pkg.stars,
-        media: [{ type: 'photo', media: 'https://nudely.org/nudely-logo.png' }],
-        caption,
-        parse_mode: 'HTML',
-        payload: code,
-      }),
+      headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
+      body: combined,
     });
 
     if (!paidRes.ok) {
       const errBody = await paidRes.text();
       console.error('[telegram-webhook] sendPaidMedia failed:', errBody);
-      await sendMessage(BOT_TOKEN, chatId,
-        `❌ Failed to send payment request. Please try /start again.`
-      );
+      await sendMessage(BOT_TOKEN, chatId, `❌ Failed to send payment request. Please try /start again.`);
     } else {
       await sendMessage(BOT_TOKEN, chatId,
-        `⏱ <b>You have 20 minutes to complete payment.</b>\n\n` +
-        `After paying, your code will be revealed in the message above.\n` +
-        `Use /checkpayment anytime to retrieve your active codes.`
+        `⏱ <b>Complete payment within 20 minutes.</b>\n\n` +
+        `After paying Stars ⭐, your code image will be revealed in the message above.\n\n` +
+        `Use /checkpayment anytime to retrieve active codes.`
       );
     }
 
     return new Response('OK');
   }
 
-  // ── Pre-checkout query (Telegram requires you to confirm) ────────────────
+  // ── Pre-checkout ─────────────────────────────────────────────────────────
   if (update.pre_checkout_query) {
-    const query = update.pre_checkout_query;
-    // Always approve — validation happens on successful_payment
-    await answerPreCheckout(BOT_TOKEN, query.id, true);
+    await answerPreCheckout(BOT_TOKEN, update.pre_checkout_query.id, true);
     return new Response('OK');
   }
 
   // ── Successful payment ───────────────────────────────────────────────────
   if (update.message?.successful_payment) {
-    const payment   = update.message.successful_payment;
-    const chatId    = update.message.chat.id;
-    const tgUserId  = String(update.message.from.id);
+    const payment  = update.message.successful_payment;
+    const chatId   = update.message.chat.id;
+    const tgUserId = String(update.message.from.id);
+    const code     = payment.invoice_payload;
 
-    const code = payment.invoice_payload;
-    // Look up package from DB using the code
     const { data: codeRow } = await supabase
       .from('telegram_codes')
-      .select('package_id, package_name')
+      .select('package_id, package_name, credits')
       .eq('code', code)
       .maybeSingle();
-    const packageId = codeRow?.package_id;
-    const pkg       = PACKAGES[packageId];
 
-    if (!code || !pkg) {
-      await sendMessage(BOT_TOKEN, chatId,
-        `⚠️ Payment received but something went wrong linking your code.\n` +
-        `Please use /checkpayment or contact support.`
-      );
-      return new Response('OK');
-    }
+    const pkg = codeRow ? PACKAGES[codeRow.package_id] : null;
 
-    // Mark code as sold, update expiry to 7 days from now
     const soldExpiry = new Date(Date.now() + SOLD_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
-    const { error: updateErr } = await supabase
+    await supabase
       .from('telegram_codes')
-      .update({
-        status: 'sold',
-        expires_at: soldExpiry.toISOString(),
-      })
+      .update({ status: 'sold', expires_at: soldExpiry.toISOString() })
       .eq('code', code)
       .eq('telegram_user_id', tgUserId);
 
-    if (updateErr) {
-      console.error('[telegram-webhook] Failed to mark code as sold:', updateErr.message);
-    }
-
     await sendMessage(BOT_TOKEN, chatId,
       `✅ <b>Payment confirmed!</b>\n\n` +
-      `Your ${pkg.name} code is now active.\n` +
-      `It's valid for <b>7 days</b>.\n\n` +
-      `To retrieve your code anytime: /checkpayment\n\n` +
-      `⚠️ <b>This code is single-use. Do not share it — anyone who uses it first gets the credits.</b>`
+      `Your ${pkg?.name || 'credit'} code is now active in the message above.\n` +
+      `Scroll up, tap the revealed image to see your code.\n\n` +
+      `⏳ Valid for <b>7 days</b>\n` +
+      `⚠️ <b>Single-use — do not share your code.</b>\n\n` +
+      `Use /checkpayment to retrieve your code anytime.\n` +
+      `Redeem at nudely.org → Add Credits → Telegram`
     );
 
     return new Response('OK');
