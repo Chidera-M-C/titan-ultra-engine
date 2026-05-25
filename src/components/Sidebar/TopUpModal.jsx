@@ -4,11 +4,12 @@ import { X, Zap, Loader2, Building2, Bitcoin } from 'lucide-react';
 import './TopUpModal.css';
 import AccountDetailModal from './AccountDetailModal';
 import PaypalModal from './PaypalModal';
+import TelegramModal from './TelegramModal';
 
 const CREDIT_PACKS = [
   { id: 'starter', name: 'Starter',  credits: 100,  price: 10,  description: 'Perfect for quick experiments.', popular: false },
   { id: 'creator', name: 'Creator',  credits: 500,  price: 40,  description: 'Most popular for creators.',     popular: true  },
-  { id: 'master',  name: 'Master',   credits: 1500, price: 100, description: 'Best value for heavy users.',   popular: false }
+  { id: 'master',  name: 'Master',   credits: 1500, price: 100, description: 'Best value for heavy users.',   popular: false },
 ];
 
 function PayPalIcon() {
@@ -19,10 +20,19 @@ function PayPalIcon() {
   );
 }
 
+function TelegramIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 13.928l-2.956-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.884.631z"/>
+    </svg>
+  );
+}
+
 export default function TopUpModal({ isOpen, onClose, onSelect, userId, onCreditsUpdated }) {
-  const [loadingPackId, setLoadingPackId] = useState(null);
-  const [bankPack, setBankPack]           = useState(null);
-  const [paypalPack, setPaypalPack]       = useState(null);
+  const [loadingPackId, setLoadingPackId]   = useState(null);
+  const [bankPack, setBankPack]             = useState(null);
+  const [paypalPack, setPaypalPack]         = useState(null);
+  const [telegramOpen, setTelegramOpen]     = useState(false);
   const userIdRef = useRef(userId);
 
   useEffect(() => {
@@ -36,6 +46,7 @@ export default function TopUpModal({ isOpen, onClose, onSelect, userId, onCredit
       document.body.style.overflow = '';
       setBankPack(null);
       setPaypalPack(null);
+      setTelegramOpen(false);
     }
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
@@ -49,113 +60,131 @@ export default function TopUpModal({ isOpen, onClose, onSelect, userId, onCredit
     setLoadingPackId(null);
   };
 
-  const isAnyModalOpen = !!bankPack || !!paypalPack;
+  const isAnyModalOpen = !!bankPack || !!paypalPack || telegramOpen;
 
   return createPortal(
-    <div className="modal-overlay" onClick={onClose}>
+    <>
+      <div className="modal-overlay" onClick={onClose}>
+        <div
+          className={`modal-content ${isAnyModalOpen ? 'modal-content--blurred' : ''}`}
+          onClick={e => e.stopPropagation()}
+        >
+          <button className="close-btn" onClick={onClose} aria-label="Close modal">
+            <X size={20} />
+          </button>
 
-      <div
-        className={`modal-content ${isAnyModalOpen ? 'modal-content--blurred' : ''}`}
-        onClick={e => e.stopPropagation()}
-      >
-        <button className="close-btn" onClick={onClose} aria-label="Close modal">
-          <X size={20} />
-        </button>
+          <div className="modal-header">
+            <h2 className="modal-title">Boost Your Creative Power</h2>
+            <p className="modal-subtitle">Select a credit pack to continue generating high-fidelity art.</p>
+          </div>
 
-        <div className="modal-header">
-          <h2 className="modal-title">Boost Your Creative Power</h2>
-          <p className="modal-subtitle">Select a credit pack to continue generating high-fidelity art.</p>
-        </div>
-
-        <div className="options-grid">
-          {CREDIT_PACKS.map((pack) => (
-            <div
-              key={pack.id}
-              className={`credit-pack-card ${pack.popular ? 'popular' : ''} ${loadingPackId === pack.id ? 'loading' : ''}`}
-              onClick={() => handlePackSelect(pack)}
-            >
-              {pack.popular && (
-                <div className="popular-ribbon">
-                  <Zap size={10} fill="currentColor" />
-                  <span>Popular</span>
-                </div>
-              )}
-
-              <div className="pack-info">
-                <span className="pack-name">{pack.name}</span>
-                <div className="pack-credits">
-                  <span className="credit-number">{pack.credits}</span>
-                  <span className="credit-unit">Credits</span>
-                </div>
-              </div>
-
-              <div className="pack-pricing">
-                <span className="currency">$</span>
-                <span className="price-amount">{pack.price}</span>
-              </div>
-
-              <p className="pack-desc">{pack.description}</p>
-
-              {/* PayPal — above crypto on desktop */}
-              <button
-                className="paypal-transfer-btn"
-                disabled={loadingPackId !== null}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPaypalPack({ ...pack, capturedUserId: userId });
-                }}
+          <div className="options-grid">
+            {CREDIT_PACKS.map((pack) => (
+              <div
+                key={pack.id}
+                className={`credit-pack-card ${pack.popular ? 'popular' : ''} ${loadingPackId === pack.id ? 'loading' : ''}`}
+                onClick={() => handlePackSelect(pack)}
               >
-                <PayPalIcon />
-                <span>Pay via PayPal</span>
-              </button>
-
-              {/* Crypto */}
-              <button
-                className="select-pack-btn"
-                disabled={loadingPackId !== null}
-              >
-                {loadingPackId === pack.id ? (
-                  <>
-                    <Loader2 size={14} className="spinner-icon" />
-                    <span>Processing...</span>
-                  </>
-                ) : (
-                  <><Bitcoin size={12} /><span>Pay via Crypto</span></>
+                {pack.popular && (
+                  <div className="popular-ribbon">
+                    <Zap size={10} fill="currentColor" />
+                    <span>Popular</span>
+                  </div>
                 )}
-              </button>
 
-              {/* Bank Transfer */}
-              <button
-                className="bank-transfer-btn"
-                disabled={loadingPackId !== null}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setBankPack({ ...pack, capturedUserId: userId });
-                }}
-              >
-                <Building2 size={12} />
-                <span>Pay via Bank Transfer</span>
-              </button>
-            </div>
-          ))}
+                <div className="pack-info">
+                  <span className="pack-name">{pack.name}</span>
+                  <div className="pack-credits">
+                    <span className="credit-number">{pack.credits}</span>
+                    <span className="credit-unit">Credits</span>
+                  </div>
+                </div>
+
+                <div className="pack-pricing">
+                  <span className="currency">$</span>
+                  <span className="price-amount">{pack.price}</span>
+                </div>
+
+                <p className="pack-desc">{pack.description}</p>
+
+                {/* PayPal */}
+                <button
+                  className="paypal-transfer-btn"
+                  disabled={loadingPackId !== null}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPaypalPack({ ...pack, capturedUserId: userId });
+                  }}
+                >
+                  <PayPalIcon />
+                  <span>Pay via PayPal</span>
+                </button>
+
+                {/* Crypto */}
+                <button
+                  className="select-pack-btn"
+                  disabled={loadingPackId !== null}
+                >
+                  {loadingPackId === pack.id ? (
+                    <><Loader2 size={14} className="spinner-icon" /><span>Processing...</span></>
+                  ) : (
+                    <><Bitcoin size={12} /><span>Pay via Crypto</span></>
+                  )}
+                </button>
+
+                {/* Telegram Stars */}
+                <button
+                  className="telegram-transfer-btn"
+                  disabled={loadingPackId !== null}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setTelegramOpen(true);
+                  }}
+                >
+                  <TelegramIcon />
+                  <span>Pay via Telegram</span>
+                </button>
+
+                {/* Bank Transfer */}
+                <button
+                  className="bank-transfer-btn"
+                  disabled={loadingPackId !== null}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setBankPack({ ...pack, capturedUserId: userId });
+                  }}
+                >
+                  <Building2 size={12} />
+                  <span>Pay via Bank Transfer</span>
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <p className="modal-footer">Secure payments powered by NOWPayments</p>
         </div>
 
-        <p className="modal-footer">Secure payments powered by NOWPayments</p>
+        <AccountDetailModal
+          pack={bankPack}
+          onClose={() => setBankPack(null)}
+          userId={bankPack?.capturedUserId}
+          onCreditsUpdated={onCreditsUpdated}
+        />
+
+        <PaypalModal
+          pack={paypalPack}
+          onClose={() => setPaypalPack(null)}
+        />
       </div>
 
-      <AccountDetailModal
-        pack={bankPack}
-        onClose={() => setBankPack(null)}
-        userId={bankPack?.capturedUserId}
+      {/* Telegram modal renders outside the blurred overlay */}
+      <TelegramModal
+        isOpen={telegramOpen}
+        onClose={() => setTelegramOpen(false)}
+        userId={userId}
         onCreditsUpdated={onCreditsUpdated}
       />
-
-      <PaypalModal
-        pack={paypalPack}
-        onClose={() => setPaypalPack(null)}
-      />
-
-    </div>,
+    </>,
     document.body
   );
 }
