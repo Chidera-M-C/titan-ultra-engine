@@ -499,3 +499,46 @@
     border-radius: 20px;
   }
 }
+
+
+/* ── Telegram button ───────────────────────────────────────────────────── */
+.telegram-transfer-btn {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(34, 158, 217, 0.15);
+  background: transparent;
+  color: #229ED9;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.25s ease;
+  letter-spacing: 0.2px;
+  margin-bottom: 8px;
+}
+
+.telegram-transfer-btn:hover:not(:disabled) {
+  background: rgba(34, 158, 217, 0.08);
+  border-color: rgba(34, 158, 217, 0.35);
+  color: #5bc8f5;
+}
+
+.telegram-transfer-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .telegram-transfer-btn {
+    grid-column: 1 / 4;
+    grid-row: 3;
+    margin-top: 6px;
+    padding: 8px;
+    font-size: 11px;
+    border-radius: 8px;
+  }
+}
