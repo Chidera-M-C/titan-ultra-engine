@@ -198,7 +198,7 @@ export const onRequestPost = async (context: any) => {
         media: [{ type: 'photo', media: 'https://nudely.org/nudely-logo.png' }],
         caption,
         parse_mode: 'HTML',
-        payload: JSON.stringify({ code, package_id: packageId, telegram_user_id: tgUserId }),
+        payload: code,
       }),
     });
 
@@ -233,11 +233,14 @@ export const onRequestPost = async (context: any) => {
     const chatId    = update.message.chat.id;
     const tgUserId  = String(update.message.from.id);
 
-    let payload: any = {};
-    try { payload = JSON.parse(payment.invoice_payload); } catch {}
-
-    const code      = payload.code;
-    const packageId = payload.package_id;
+    const code = payment.invoice_payload;
+    // Look up package from DB using the code
+    const { data: codeRow } = await supabase
+      .from('telegram_codes')
+      .select('package_id, package_name')
+      .eq('code', code)
+      .maybeSingle();
+    const packageId = codeRow?.package_id;
     const pkg       = PACKAGES[packageId];
 
     if (!code || !pkg) {
