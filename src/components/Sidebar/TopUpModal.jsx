@@ -4,7 +4,7 @@ import { X, Zap, Loader2, Building2, Bitcoin } from 'lucide-react';
 import './TopUpModal.css';
 import AccountDetailModal from './AccountDetailModal';
 import PaypalModal from './PaypalModal';
-import TelegramModal from './TelegramModal';
+const TelegramModal = React.lazy(() => import('./TelegramModal'));
 
 const CREDIT_PACKS = [
   { id: 'starter', name: 'Starter',  credits: 100,  price: 10,  description: 'Perfect for quick experiments.', popular: false },
@@ -178,11 +178,13 @@ export default function TopUpModal({ isOpen, onClose, onSelect, userId, onCredit
       </div>
 
       {/* Telegram modal renders outside the blurred overlay */}
-      <TelegramModal
-        isOpen={telegramOpen}
-        onClose={() => setTelegramOpen(false)}
-        onCreditsUpdated={onCreditsUpdated}
-      />
+      <React.Suspense fallback={null}>
+        <TelegramModal
+          isOpen={telegramOpen}
+          onClose={() => setTelegramOpen(false)}
+          onCreditsUpdated={onCreditsUpdated}
+        />
+      </React.Suspense>
     </>,
     document.body
   );
