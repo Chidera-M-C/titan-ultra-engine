@@ -16,13 +16,13 @@ function TelegramIcon() {
   );
 }
 
-export default function TelegramModal({ isOpen, onClose, onCreditsUpdated, userId }) {
+export default function TelegramModal({ isOpen, onClose, onCreditsUpdated, userId, setCredits }) {
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null); // { success, message }
   const [error, setError] = useState('');
-  const effectiveUserId = userId || user?.id;
+  const effectiveUserId = userId;
 
   const reset = () => {
     setSelectedPackage(null);
