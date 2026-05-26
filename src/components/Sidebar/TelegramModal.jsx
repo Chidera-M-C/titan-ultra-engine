@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
 import { X, Send, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import './TelegramModal.css';
 
@@ -24,7 +23,6 @@ export default function TelegramModal({ isOpen, onClose, onCreditsUpdated, userI
   const [result, setResult] = useState(null); // { success, message }
   const [error, setError] = useState('');
   const effectiveUserId = userId || user?.id;
-  const { user, setCredits } = useAuth();
 
   const reset = () => {
     setSelectedPackage(null);
