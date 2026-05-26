@@ -46,6 +46,8 @@ export default function TelegramModal({ isOpen, onClose, onCreditsUpdated, userI
     setLoading(true);
     setError('');
 
+    console.log('Redeem payload:', { code: code.trim().toUpperCase(), package_id: selectedPackage, user_id: userId });
+
     try {
       const res = await fetch('/api/redeem-code', {
         method: 'POST',
