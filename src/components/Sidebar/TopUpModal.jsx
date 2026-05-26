@@ -181,7 +181,6 @@ export default function TopUpModal({ isOpen, onClose, onSelect, userId, onCredit
       <TelegramModal
         isOpen={telegramOpen}
         onClose={() => setTelegramOpen(false)}
-        userId={userId}
         onCreditsUpdated={onCreditsUpdated}
       />
     </>,
