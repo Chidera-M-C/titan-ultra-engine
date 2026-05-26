@@ -23,7 +23,6 @@ export default function TelegramModal({ isOpen, onClose, onCreditsUpdated, userI
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null); // { success, message }
   const [error, setError] = useState('');
-  const { user } = useAuth();
   const effectiveUserId = userId || user?.id;
   const { user, setCredits } = useAuth();
 
