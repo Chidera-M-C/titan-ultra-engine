@@ -191,9 +191,6 @@ export const onRequestPost = async (context: any) => {
         prices: [
           { label: `${pkg.name} — ${pkg.credits} Credits`, amount: pkg.stars }
         ],
-        photo_url: 'https://nudely.org/assets/nudely-logo-0f2d1796.png',
-        photo_width: 400,
-        photo_height: 400,
         is_flexible: false,
       }),
     });
