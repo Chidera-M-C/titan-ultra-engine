@@ -25,6 +25,7 @@ export default function TelegramModal({ isOpen, onClose, onCreditsUpdated, userI
   const [error, setError] = useState('');
   const { user } = useAuth();
   const effectiveUserId = userId || user?.id;
+  const { user, setCredits } = useAuth();
 
   const reset = () => {
     setSelectedPackage(null);
@@ -68,6 +69,7 @@ export default function TelegramModal({ isOpen, onClose, onCreditsUpdated, userI
       if (!res.ok || data.error) {
         setError(data.error || 'Something went wrong.');
       } else {
+        setCredits(data.new_total);
         setResult({
           success: true,
           message: `✅ ${data.credits_added} credits added! New balance: ${data.new_total} credits.`,
