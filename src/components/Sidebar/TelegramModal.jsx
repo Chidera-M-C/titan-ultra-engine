@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { X, Send, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import './TelegramModal.css';
 
@@ -22,6 +23,8 @@ export default function TelegramModal({ isOpen, onClose, onCreditsUpdated, userI
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null); // { success, message }
   const [error, setError] = useState('');
+  const { user } = useAuth();
+  const effectiveUserId = userId || user?.id;
 
   const reset = () => {
     setSelectedPackage(null);
@@ -46,7 +49,7 @@ export default function TelegramModal({ isOpen, onClose, onCreditsUpdated, userI
     setLoading(true);
     setError('');
 
-    console.log('Redeem payload:', { code: code.trim().toUpperCase(), package_id: selectedPackage, user_id: userId });
+    console.log('Redeem payload:', { code: code.trim().toUpperCase(), package_id: selectedPackage, user_id: effectiveUserId });
 
     try {
       const res = await fetch('/api/redeem-code', {
@@ -56,7 +59,7 @@ export default function TelegramModal({ isOpen, onClose, onCreditsUpdated, userI
         body: JSON.stringify({
           code: code.trim().toUpperCase(),
           package_id: selectedPackage,
-          user_id: userId,
+          user_id: effectiveUserId,
         }),
       });
 
