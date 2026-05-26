@@ -173,68 +173,59 @@ export const onRequestPost = async (context: any) => {
       return new Response('OK');
     }
 
-    // Send paid media using hosted image URL
-    // The image is blurred until payment — code is NOT in caption
-    // Code is only revealed in successful_payment handler
-    const paidRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPaidMedia`, {
+    // Send invoice using sendInvoice with XTR currency (Telegram Stars)
+    // provider_token is empty string for digital goods — this is correct per Telegram docs
+    const invoiceRes = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendInvoice`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
-        star_count: pkg.stars,
-        media: [
-          {
-            type: 'photo',
-            media: 'https://nudely.org/assets/nudely-logo-0f2d1796.png',
-          }
+        title: `Nudely ${pkg.name} Pack`,
+        description:
+          `${pkg.credits} credits for nudely.org\n` +
+          `✅ Code delivered instantly after payment\n` +
+          `⏳ Code valid for 7 days · Single-use`,
+        payload: code,           // our code — returned in successful_payment
+        provider_token: '',      // empty string = Telegram Stars (XTR)
+        currency: 'XTR',
+        prices: [
+          { label: `${pkg.name} — ${pkg.credits} Credits`, amount: pkg.stars }
         ],
-        caption:
-          `🔒 <b>Pay ${pkg.stars.toLocaleString()} ⭐ to receive your ${pkg.name} code</b>\n\n` +
-          `📦 ${pkg.name} Pack · ⚡ ${pkg.credits} credits\n` +
-          `⏳ Code valid for 7 days after payment\n` +
-          `⚠️ Single-use — never share your code\n\n` +
-          `After paying, your code will be sent to you in a separate message.`,
-        parse_mode: 'HTML',
-        payload: code,
+        photo_url: 'https://nudely.org/assets/nudely-logo-0f2d1796.png',
+        photo_width: 400,
+        photo_height: 400,
+        is_flexible: false,
       }),
     });
 
-    if (!paidRes.ok) {
-      const errBody = await paidRes.text();
-      console.error('[telegram-webhook] sendPaidMedia failed:', errBody);
-      await sendMessage(BOT_TOKEN, chatId, `❌ Failed to send payment request. Please try /start again.`);
-    } else {
-      await sendMessage(BOT_TOKEN, chatId,
-        `⏱ <b>You have 20 minutes to complete payment.</b>\n\n` +
-        `Tap the message above and pay ${pkg.stars.toLocaleString()} ⭐ to unlock your code.\n\n` +
-        `Use /checkpayment anytime to retrieve active codes.`
-      );
+    if (!invoiceRes.ok) {
+      const errBody = await invoiceRes.text();
+      console.error('[telegram-webhook] sendInvoice failed:', errBody);
+      await sendMessage(BOT_TOKEN, chatId, `❌ Failed to create invoice. Please try /start again.`);
     }
 
     return new Response('OK');
   }
 
-  // ── Pre-checkout ─────────────────────────────────────────────────────────
+  // ── Pre-checkout — must respond within 10 seconds ────────────────────────
   if (update.pre_checkout_query) {
     await answerPreCheckout(BOT_TOKEN, update.pre_checkout_query.id, true);
     return new Response('OK');
   }
 
-  // ── Successful payment — send code NOW ───────────────────────────────────
+  // ── Successful payment — send code now ───────────────────────────────────
   if (update.message?.successful_payment) {
     const payment  = update.message.successful_payment;
     const chatId   = update.message.chat.id;
     const tgUserId = String(update.message.from.id);
     const code     = payment.invoice_payload;
 
-    // Look up package details
+    // Look up the code row
     const { data: codeRow } = await supabase
       .from('telegram_codes')
       .select('package_id, package_name, credits')
       .eq('code', code)
       .maybeSingle();
-
-    const pkg = codeRow ? PACKAGES[codeRow.package_id] : null;
 
     // Mark as sold with 7-day expiry
     const soldExpiry = new Date(Date.now() + SOLD_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
@@ -244,15 +235,15 @@ export const onRequestPost = async (context: any) => {
       .eq('code', code)
       .eq('telegram_user_id', tgUserId);
 
-    // Send the code — this message is only triggered after confirmed payment
+    // Send the code — only triggered after confirmed Stars payment
     await sendMessage(BOT_TOKEN, chatId,
       `✅ <b>Payment confirmed! Here is your code:</b>\n\n` +
       `<code>${code}</code>\n\n` +
       `📦 Package: <b>${codeRow?.package_name || 'Credit Pack'}</b>\n` +
       `⚡ Credits: <b>${codeRow?.credits || ''}</b>\n` +
       `⏳ Valid for <b>7 days</b>\n\n` +
-      `⚠️ <b>This code is single-use. Anyone who enters it first gets the credits. Do not share it.</b>\n\n` +
-      `Redeem at nudely.org → Add Credits → Telegram\n\n` +
+      `⚠️ <b>Single-use — do not share this code. Anyone who enters it first gets the credits.</b>\n\n` +
+      `Redeem at: nudely.org → Add Credits → Telegram\n\n` +
       `Use /checkpayment to retrieve this code anytime.`
     );
 
