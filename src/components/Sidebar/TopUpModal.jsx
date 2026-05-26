@@ -4,7 +4,8 @@ import { X, Zap, Loader2, Building2, Bitcoin } from 'lucide-react';
 import './TopUpModal.css';
 import AccountDetailModal from './AccountDetailModal';
 import PaypalModal from './PaypalModal';
-const TelegramModal = React.lazy(() => import('./TelegramModal'));
+import TelegramModal from './TelegramModal';
+import { useAuth } from '../../context/AuthContext';
 
 const CREDIT_PACKS = [
   { id: 'starter', name: 'Starter',  credits: 100,  price: 10,  description: 'Perfect for quick experiments.', popular: false },
@@ -34,6 +35,7 @@ export default function TopUpModal({ isOpen, onClose, onSelect, userId, onCredit
   const [paypalPack, setPaypalPack]         = useState(null);
   const [telegramOpen, setTelegramOpen]     = useState(false);
   const userIdRef = useRef(userId);
+  const { user, setCredits } = useAuth();
 
   useEffect(() => {
     if (userId) userIdRef.current = userId;
@@ -178,13 +180,13 @@ export default function TopUpModal({ isOpen, onClose, onSelect, userId, onCredit
       </div>
 
       {/* Telegram modal renders outside the blurred overlay */}
-      <React.Suspense fallback={null}>
-        <TelegramModal
-          isOpen={telegramOpen}
-          onClose={() => setTelegramOpen(false)}
-          onCreditsUpdated={onCreditsUpdated}
-        />
-      </React.Suspense>
+      <TelegramModal
+        isOpen={telegramOpen}
+        onClose={() => setTelegramOpen(false)}
+        onCreditsUpdated={onCreditsUpdated}
+        userId={user?.id}
+        setCredits={setCredits}
+      />
     </>,
     document.body
   );
