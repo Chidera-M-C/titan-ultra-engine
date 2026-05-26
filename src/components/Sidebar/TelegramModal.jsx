@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { X, Send, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import './TelegramModal.css';
 
