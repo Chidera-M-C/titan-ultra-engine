@@ -120,7 +120,8 @@ export default function TelegramModal({ isOpen, onClose, onCreditsUpdated, userI
             Open @NudelyTopupBot on Telegram
           </a>
           <p className="tg-hint">
-            Pick a package in the bot, pay with Stars, and your 8-character code will be revealed.
+            Pick a package in the bot, pay with Stars on your <strong>mobile Telegram app</strong>, 
+            and your 8-character code will be sent to you instantly.
             Code is valid for 7 days. Never share it — it's single-use.
           </p>
         </div>
