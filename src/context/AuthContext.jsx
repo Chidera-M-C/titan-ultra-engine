@@ -3,6 +3,7 @@ import { createAuthClient } from 'better-auth/react';
 import { createClient } from '@supabase/supabase-js';
 import { captureTrafficSource } from '../lib/traffic';
 
+
 const AuthContext = createContext();
 
 const authClient = createAuthClient({
