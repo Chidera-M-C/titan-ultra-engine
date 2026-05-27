@@ -53,7 +53,7 @@ export function getAuth() {
       "https://nudely.org",
       "https://nudely.ai",
       "http://localhost:5173",
-      "https://*.nudely.pages.dev",
+      "https://dev.nudely.pages.dev",
     ],
   });
 }
