@@ -36,7 +36,7 @@ export const RACES = [
 ];
 
 export default function CreateCharacterModal({ onClose, onCreated }) {
-  const { user } = useAuth();
+  const { user, setCredits } = useAuth();
   const [step, setStep]         = useState(1);
   const [name, setName]         = useState('');
   const [photo, setPhoto]       = useState(null);
@@ -56,6 +56,13 @@ export default function CreateCharacterModal({ onClose, onCreated }) {
   };
 
   const handleCreate = async () => {
+         const { data: userData } = await supabase
+           .from('users').select('credits').eq('id', user.id).single();
+         if ((userData?.credits ?? 0) < 2) {
+           setError('Insufficient credits. Character creation costs 2 credits.');
+           setSaving(false);
+           return;
+         }
     if (!name.trim() || !photo || !bodyType || !race) return;
     setSaving(true);
     setError('');
@@ -94,6 +101,16 @@ export default function CreateCharacterModal({ onClose, onCreated }) {
 
       // Notify parent immediately with null embedding
       onCreated(data);
+
+      try {
+         const { data: userData } = await supabase
+             .from('users').select('credits').eq('id', user.id).single();
+         const newBalance = Math.max(0, (userData.credits ?? 0) - 2);
+         await supabase.from('users').update({ credits: newBalance }).eq('id', user.id);
+         setCredits(newBalance);
+         } catch (err) {
+         console.error('Credit deduction failed:', err);
+         }
 
       // ── 3. Extract face embedding ────────────────────────────────────
       try {
