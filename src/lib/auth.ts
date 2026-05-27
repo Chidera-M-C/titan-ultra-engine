@@ -32,7 +32,6 @@ export function getAuth() {
         secure: true,
         httpOnly: true,
         sameSite: "lax",        // Must be lax (not strict) for OAuth redirects
-        domain: "nudely.org",   // Explicit domain — no leading dot
         path: "/",
       },
       crossSubDomainCookies: {
