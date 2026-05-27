@@ -517,6 +517,7 @@ export default function App() {
   // ── Face swap ─────────────────────────────────────────────────────────
   const handleFaceSwap = async ({ targetImage, sourceImage }) => {
     if (!user) { setLoginModalOpen(true); return; }
+    if (credits < 2) { setFaceswapError('Insufficient credits.'); return; }
     setFaceswapLoading(true);
     setFaceswapError(null);
     setFaceswapResult(null);
@@ -529,6 +530,8 @@ export default function App() {
       const data = await response.json();
       if (data.error) throw new Error(data.error);
       setFaceswapResult(data.image);
+      // Deduct only on success
+      await deductCreditsLive(2);
     } catch (err) {
       setFaceswapError(err.message);
     } finally {
@@ -539,6 +542,7 @@ export default function App() {
   // 5. ADD handleVideoGenerate function (after handleFaceSwap):
   const handleVideoGenerate = async (params) => {
     if (!user) { setLoginModalOpen(true); return; }
+    if (credits < 30) { setVideoError('Insufficient credits. Video generation costs 30 credits.'); return; }
     setVideoLoading(true);
     setShowVideoResult(true);
     setVideoError(null);
@@ -578,7 +582,7 @@ export default function App() {
           // Save in background
           (async () => {
             try {
-              await deductCreditsLive(25); // videos cost more
+              await deductCreditsLive(30); // videos cost more
               await saveVideo(user.id, base64Video, {
                 prompt:         params.prompt,
                 negativePrompt: params.negativePrompt,
