@@ -19,7 +19,7 @@ export function getAuth() {
   const db = drizzle(pool, { schema });
 
   return betterAuth({
-    baseURL: "https://nudely.org",
+    baseURL: process.env.VITE_APP_URL || "https://nudely.org",
     basePath: "/api/auth",
     database: drizzleAdapter(db, { provider: "pg", schema }),
     appName: "Nudely",
