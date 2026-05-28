@@ -235,6 +235,14 @@
   margin: 0 auto;
 }
 
+@media (max-width: 768px) {
+  .btn-label { display: none; }
+  .i2v-generate-btn { padding: 8px 12px; gap: 4px; }
+  .char-add-btn { padding: 6px; min-width: unset; }
+  .char-pill { padding: 4px 6px; }
+  .vstyle-pill { padding: 4px 6px; }
+}
+
 .i2v-video { width: 100%; height: auto; display: block; background: #000; }
 
 /* ── Mobile — boxes fill more width ─────────────────────────────────────── */
