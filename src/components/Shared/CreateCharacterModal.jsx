@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, ChevronRight, ChevronLeft, Check, User } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Check, User, Zap } from 'lucide-react';
 import { supabase } from '../../lib/supabase.js';
 import { useAuth } from '../../context/AuthContext';
 import '../../views/CharacterView.css';
@@ -249,7 +249,7 @@ export default function CreateCharacterModal({ onClose, onCreated }) {
               onClick={handleCreate}
               disabled={!race || saving}
             >
-              {saving ? 'Creating...' : 'Create Character'}
+              {saving ? 'Creating...' : <><span>Create Character</span> <Zap size={14} fill="currentColor" style={{marginLeft:4}} />2</>}
             </button>
           )}
         </div>
