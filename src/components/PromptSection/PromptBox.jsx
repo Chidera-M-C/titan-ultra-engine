@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Send, ArrowDownLeft, UserPlus, X, Check, Sparkles } from 'lucide-react';
+import { Send, ArrowDownLeft, UserPlus, X, Check, Sparkles, Zap } from 'lucide-react';
 import AspectRatioDropdown from './AspectRatioDropdown';
 import './PromptBox.css';
 import CreateCharacterModal from '../Shared/CreateCharacterModal';
@@ -162,13 +162,13 @@ export default function PromptBox({
                 {selectedCharacter ? (
                   <div className="char-pill">
                     <img src={selectedCharacter.photo_url} alt={selectedCharacter.name} className="char-pill-photo" />
-                    <span className="char-pill-name">{selectedCharacter.name}</span>
+                    <span className="char-pill-name btn-label">{selectedCharacter.name}</span>
                     {!selectedCharacter.face_embedding && <span className="char-pill-dot" title="Processing face..." />}
                     <button className="char-pill-remove" onClick={() => onSelectCharacter(null)}><X size={10} /></button>
                   </div>
                 ) : (
                   <button className="char-add-btn" onClick={() => setShowCharPicker(true)}>
-                    <UserPlus size={14} /><span>Character</span>
+                    <UserPlus size={14} /><span className="btn-label">Character</span>
                   </button>
                 )}
 
@@ -193,7 +193,7 @@ export default function PromptBox({
                       />
                     )}
                     
-                    <span className="style-pill-name">{selectedStyle.title}</span>
+                    <span className="style-pill-name btn-label">{selectedStyle.title}</span>
                     
                     <button 
                       className="char-pill-remove"
@@ -211,13 +211,18 @@ export default function PromptBox({
                     onClick={() => setShowStylePicker(true)}
                   >
                     <Sparkles size={14} />
-                    <span>Style *</span>
+                    <span className="btn-label">Style *</span>
                   </button>
                 )}
               </div>
 
               <button className="generate-fab" onClick={onGenerate} disabled={!canGenerate}>
-                {loading ? <div className="spinner"></div> : <Send size={20} />}
+                {loading ? <div className="spinner"></div> : (
+                  <>
+                    <Send size={16} />
+                    <span className="generate-cost">2<Zap size={10} fill="currentColor" /></span>
+                  </>
+                )}
               </button>
             </div>
           </div>
