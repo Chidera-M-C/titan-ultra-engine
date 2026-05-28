@@ -157,6 +157,27 @@
   white-space: nowrap;
 }
 
+
+@media (max-width: 768px) {
+  .btn-label {
+    display: none;
+  }
+
+  .vsg-generate-btn {
+    padding: 8px 12px;
+    gap: 4px;
+  }
+
+  .char-add-btn {
+    padding: 6px;
+    min-width: unset;
+  }
+
+  .char-pill {
+    padding: 4px 6px;
+  }
+}
+
 .vsg-generate-btn:hover:not(:disabled) { opacity: 0.85; transform: translateY(-1px); }
 .vsg-generate-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
