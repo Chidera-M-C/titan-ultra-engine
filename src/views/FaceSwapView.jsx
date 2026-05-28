@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ImagePlus, X, Shuffle, Download } from 'lucide-react';
+import { ImagePlus, X, Shuffle, Download, Zap } from 'lucide-react';
 import { PulseLoader } from '../components/Shared/Loader';
 import { AlertCircle } from 'lucide-react';
 import './FaceSwapView.css';
@@ -135,7 +135,7 @@ export default function FaceSwapView({ onSwap, loading, result, error }) {
             {loading ? (
               <><div className="faceswap-spinner" /> Swapping...</>
             ) : (
-              <><Shuffle size={16} /> Swap Face</>
+              <><Shuffle size={16} /> Swap Face <Zap size={14} fill="currentColor" style={{marginLeft:4}} />2</>
             )}
           </button>
         </div>
