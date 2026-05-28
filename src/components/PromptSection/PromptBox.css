@@ -383,6 +383,7 @@
 
 /* ── Generate button ─────────────────────────────────────────────────────── */
 .generate-fab {
+  min-width: 80px; /* add this line */
   position: absolute;
   bottom: 8px;
   right: 12px;
