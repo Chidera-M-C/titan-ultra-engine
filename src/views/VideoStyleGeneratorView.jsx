@@ -1,6 +1,6 @@
 // src/views/VideoStyleGeneratorView.jsx
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Video, UserPlus, X, Check, ImagePlus } from 'lucide-react';
+import { ArrowLeft, Video, UserPlus, X, Check, ImagePlus, Zap } from 'lucide-react';
 import AspectRatioDropdown from '../components/PromptSection/AspectRatioDropdown';
 import VideoControls from '../components/Video/VideoControls';
 import MiniImagesModal from '../components/Shared/MiniImagesModal';
@@ -195,12 +195,12 @@ export default function VideoStyleGeneratorView({
                 {selectedCharacter ? (
                   <div className="char-pill">
                     <img src={selectedCharacter.photo_url} alt={selectedCharacter.name} className="char-pill-photo" />
-                    <span className="char-pill-name">{selectedCharacter.name}</span>
+                    <span className="char-pill-name btn-label">{selectedCharacter.name}</span>
                     <button className="char-pill-remove" onClick={() => onSelectCharacter(null)}><X size={10} /></button>
                   </div>
                 ) : (
                   <button className="char-add-btn" onClick={() => setShowCharPicker(true)}>
-                    <UserPlus size={14} /><span>Character</span>
+                    <UserPlus size={14} /><span className="btn-label">Character</span>
                   </button>
                 )}
               </div>
@@ -210,7 +210,7 @@ export default function VideoStyleGeneratorView({
                 disabled={!canGenerate}
                 style={{ background: style.gradient }}
               >
-                {loading ? <div className="spinner" /> : <><Video size={16} /> Generate</>}
+                {loading ? <div className="spinner" /> : <><Video size={16} /><span className="btn-label"> Generate</span><Zap size={12} fill="currentColor" />30</>}
               </button>
             </div>
           </div>
