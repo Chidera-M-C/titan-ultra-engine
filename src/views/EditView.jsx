@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ImagePlus, X, Send, Sliders } from 'lucide-react';
+import { ImagePlus, X, Send, Sliders, Zap } from 'lucide-react';
 import { PulseLoader } from '../components/Shared/Loader';
 import { AlertCircle } from 'lucide-react';
 import './EditView.css';
@@ -176,7 +176,7 @@ export default function EditView({ onGenerate, loading, image, error, onViewImag
               {loading ? (
                 <><div className="edit-spinner" /> Editing...</>
               ) : (
-                <><Send size={16} /> Generate Edit</>
+                <><Send size={16} /> Generate Edit <Zap size={14} fill="currentColor" style={{marginLeft:4}} />2</>
               )}
             </button>
             {credits < 2 && (
