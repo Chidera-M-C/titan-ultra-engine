@@ -219,7 +219,7 @@ export default function PromptBox({
               <button className="generate-fab" onClick={onGenerate} disabled={!canGenerate}>
                 {loading ? <div className="spinner"></div> : (
                   <>
-                    <Send size={16} />
+                    <Send size={20} />
                     <span className="generate-cost">2<Zap size={10} fill="currentColor" /></span>
                   </>
                 )}
