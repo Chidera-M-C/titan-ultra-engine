@@ -1,6 +1,6 @@
 // src/views/TextToVideoView.jsx
 import React, { useState } from 'react';
-import { Send, Video, UserPlus, X, Check, Clapperboard } from 'lucide-react';
+import { Send, Video, UserPlus, X, Check, Clapperboard, Zap } from 'lucide-react';
 import AspectRatioDropdown from '../components/PromptSection/AspectRatioDropdown';
 import VideoStylePicker from '../components/Video/VideoStylePicker';
 import VideoControls from '../components/Video/VideoControls';
@@ -111,12 +111,12 @@ export default function TextToVideoView({
                 {selectedCharacter ? (
                   <div className="char-pill">
                     <img src={selectedCharacter.photo_url} alt={selectedCharacter.name} className="char-pill-photo" />
-                    <span className="char-pill-name">{selectedCharacter.name}</span>
+                    <span className="char-pill-name btn-label">{selectedCharacter.name}</span>
                     <button className="char-pill-remove" onClick={() => onSelectCharacter(null)}><X size={10} /></button>
                   </div>
                 ) : (
                   <button className="char-add-btn" onClick={() => setShowCharPicker(true)}>
-                    <UserPlus size={14} /><span>Character</span>
+                    <UserPlus size={14} /><span className="btn-label">Character</span>
                   </button>
                 )}
 
@@ -124,12 +124,12 @@ export default function TextToVideoView({
                 {selectedStyle ? (
                   <div className="vstyle-pill" onClick={() => setShowStylePicker(true)}>
                     <span>{selectedStyle.emoji}</span>
-                    <span className="vstyle-pill-name">{selectedStyle.title}</span>
+                    <span className="vstyle-pill-name btn-label">{selectedStyle.title}</span>
                     <button className="char-pill-remove" onClick={e => { e.stopPropagation(); setSelectedStyle(null); }}><X size={10} /></button>
                   </div>
                 ) : (
                   <button className={`char-add-btn ${!selectedStyle ? 'vstyle-required' : ''}`} onClick={() => setShowStylePicker(true)}>
-                    <Clapperboard size={14} /><span>Style *</span>
+                    <Clapperboard size={14} /><span className="btn-label">Style *</span>
                   </button>
                 )}
               </div>
@@ -139,7 +139,7 @@ export default function TextToVideoView({
                 onClick={handleGenerate}
                 disabled={!canGenerate}
               >
-                {loading ? <div className="spinner" /> : <><Video size={16} /> Generate</>}
+                {loading ? <div className="spinner" /> : <><Video size={16} /><span className="btn-label"> Generate</span><Zap size={12} fill="currentColor" />30</>}
               </button>
             </div>
           </div>
