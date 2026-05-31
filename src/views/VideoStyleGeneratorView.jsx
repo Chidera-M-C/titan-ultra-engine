@@ -11,6 +11,15 @@ import '../components/PromptSection/PromptBox.css';
 
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
   const [showCreate, setShowCreate] = useState(false);
+    // Lock/unlock the scrollable area when modals open
+    const lockScroll = () => {
+      const el = document.querySelector('.scrollable-area');
+      if (el) el.style.overflow = 'hidden';
+    };
+    const unlockScroll = () => {
+      const el = document.querySelector('.scrollable-area');
+      if (el) el.style.overflow = '';
+    };
   return (
     <>
       {!showCreate && (
