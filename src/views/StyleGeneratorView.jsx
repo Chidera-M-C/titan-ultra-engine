@@ -10,6 +10,15 @@ import './StyleGeneratorView.css';
 // ── Mini character picker (same as in PromptBox) ──────────────────────────
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
   const [showCreate, setShowCreate] = useState(false);
+  // Lock/unlock the scrollable area when modals open
+  const lockScroll = () => {
+    const el = document.querySelector('.scrollable-area');
+    if (el) el.style.overflow = 'hidden';
+  };
+  const unlockScroll = () => {
+    const el = document.querySelector('.scrollable-area');
+    if (el) el.style.overflow = '';
+  };
 
   return (
     <>
@@ -191,7 +200,7 @@ export default function StyleGeneratorView({
                     </button>
                   </div>
                 ) : (
-                  <button className="char-add-btn" onClick={() => setShowCharPicker(true)} title="Add character">
+                  <button className="char-add-btn" onClick={() => { setShowCharPicker(true); lockScroll(); }} title="Add character">
                     <UserPlus size={14} />
                     <span className="btn-label">Character</span>
                   </button>
@@ -254,11 +263,12 @@ export default function StyleGeneratorView({
           characters={characters}
           selectedCharacter={selectedCharacter}
           onSelect={onSelectCharacter}
-          onClose={() => setShowCharPicker(false)}
+          onClose={() => { setShowCharPicker(false); unlockScroll(); }}
           onCharacterCreated={(newChar) => {
             if (onCharacterCreated) onCharacterCreated(newChar);
             if (onSelectCharacter) onSelectCharacter(newChar);
             setShowCharPicker(false);
+            unlockScroll(); // add this
           }}
         />
       )}
