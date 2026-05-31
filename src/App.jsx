@@ -46,6 +46,12 @@ function usePullToRefresh() {
     if (!scrollable) return;
 
     const onTouchStart = (e) => {
+      // Don't trigger pull-to-refresh if any modal/overlay is open
+      const hasOpenModal = document.querySelector(
+        '.modal-overlay, .char-modal-overlay, .auth-overlay, .tg-overlay, .account-detail-overlay, .char-picker-overlay, .style-picker-overlay'
+      );
+      if (hasOpenModal) return;
+    
       if (scrollable.scrollTop === 0) {
         startYRef.current = e.touches[0].clientY;
         setPulling(false);
@@ -55,6 +61,18 @@ function usePullToRefresh() {
 
     const onTouchMove = (e) => {
       if (startYRef.current === null) return;
+    
+      // Double-check no modal opened between touchstart and touchmove
+      const hasOpenModal = document.querySelector(
+        '.modal-overlay, .char-modal-overlay, .auth-overlay, .tg-overlay, .account-detail-overlay, .char-picker-overlay, .style-picker-overlay'
+      );
+      if (hasOpenModal) {
+        startYRef.current = null;
+        setPulling(false);
+        setPullY(0);
+        return;
+      }
+    
       const delta = e.touches[0].clientY - startYRef.current;
       if (delta > 0 && scrollable.scrollTop === 0) {
         e.preventDefault();
