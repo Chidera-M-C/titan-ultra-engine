@@ -11,6 +11,15 @@ import '../components/PromptSection/PromptBox.css';
 
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
   const [showCreate, setShowCreate] = useState(false);
+  // Lock/unlock the scrollable area when modals open
+  const lockScroll = () => {
+    const el = document.querySelector('.scrollable-area');
+    if (el) el.style.overflow = 'hidden';
+  };
+  const unlockScroll = () => {
+    const el = document.querySelector('.scrollable-area');
+    if (el) el.style.overflow = '';
+  };
   return (
     <>
       {!showCreate && (
@@ -102,7 +111,7 @@ export default function ImageToVideoView({
           <p className="i2v-box-label">Start <span className="i2v-required">*</span></p>
           <div
             className={`i2v-image-box ${startImage ? 'has-image' : ''}`}
-            onClick={() => setImagePickerTarget('start')}
+            onClick={() => { setImagePickerTarget('start'); lockScroll(); }}
           >
             {startImage ? (
               <>
@@ -126,7 +135,7 @@ export default function ImageToVideoView({
           <p className="i2v-box-label">End <span className="i2v-optional">(optional)</span></p>
           <div
             className={`i2v-image-box ${endImage ? 'has-image' : ''}`}
-            onClick={() => setImagePickerTarget('end')}
+            onClick={() => { setImagePickerTarget('end'); lockScroll(); }}
           >
             {endImage ? (
               <>
@@ -170,19 +179,19 @@ export default function ImageToVideoView({
                     <button className="char-pill-remove" onClick={() => onSelectCharacter(null)}><X size={10} /></button>
                   </div>
                 ) : (
-                  <button className="char-add-btn" onClick={() => setShowCharPicker(true)}>
+                  <button className="char-add-btn" onClick={() => { setShowCharPicker(true); lockScroll(); }}>
                     <UserPlus size={14} /><span className="btn-label">Character</span>
                   </button>
                 )}
 
                 {selectedStyle ? (
-                  <div className="vstyle-pill" onClick={() => setShowStylePicker(true)}>
+                  <div className="vstyle-pill" onClick={() => { setShowStylePicker(true); lockScroll(); }}>
                     <span>{selectedStyle.emoji}</span>
                     <span className="vstyle-pill-name btn-label">{selectedStyle.title}</span>
                     <button className="char-pill-remove" onClick={e => { e.stopPropagation(); setSelectedStyle(null); }}><X size={10} /></button>
                   </div>
                 ) : (
-                  <button className="char-add-btn vstyle-required" onClick={() => setShowStylePicker(true)}>
+                  <button className="char-add-btn vstyle-required" onClick={() => { setShowStylePicker(true); lockScroll(); }}>
                     <Clapperboard size={14} /><span className="btn-label">Style *</span>
                   </button>
                 )}
@@ -246,11 +255,11 @@ export default function ImageToVideoView({
 
       {/* Modals */}
       {showStylePicker && (
-        <VideoStylePicker selectedStyle={selectedStyle} onSelect={setSelectedStyle} onClose={() => setShowStylePicker(false)} />
+        <VideoStylePicker selectedStyle={selectedStyle} onSelect={setSelectedStyle} onClose={() => { setShowStylePicker(false); unlockScroll(); }} />
       )}
       {showCharPicker && (
         <CharacterPicker characters={characters} selectedCharacter={selectedCharacter}
-          onSelect={onSelectCharacter} onClose={() => setShowCharPicker(false)} onCharacterCreated={onCharacterCreated} />
+          onSelect={onSelectCharacter} onClose={() => { setShowCharPicker(false); unlockScroll(); }} onCharacterCreated={onCharacterCreated} />
       )}
       {imagePickerTarget && (
         <MiniImagesModal
@@ -261,8 +270,9 @@ export default function ImageToVideoView({
             if (imagePickerTarget === 'start') setStartImage(img);
             else setEndImage(img);
             setImagePickerTarget(null);
+            unlockScroll(); // add this
           }}
-          onClose={() => setImagePickerTarget(null)}
+          onClose={() => { setImagePickerTarget(null); unlockScroll(); }}
         />
       )}
     </div>
