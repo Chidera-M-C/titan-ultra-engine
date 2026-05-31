@@ -10,16 +10,6 @@ import './StyleGeneratorView.css';
 // ── Mini character picker (same as in PromptBox) ──────────────────────────
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
   const [showCreate, setShowCreate] = useState(false);
-    // Lock/unlock the scrollable area when modals open
-    const lockScroll = () => {
-      const el = document.querySelector('.scrollable-area');
-      if (el) el.style.overflow = 'hidden';
-    };
-    const unlockScroll = () => {
-      const el = document.querySelector('.scrollable-area');
-      if (el) el.style.overflow = '';
-    };
-
   return (
     <>
       {!showCreate && (
@@ -86,6 +76,15 @@ export default function StyleGeneratorView({
   const [hasMore, setHasMore]               = useState(true);
   const [negativePrompt, setNegativePrompt] = useState('');
   const [showCharPicker, setShowCharPicker] = useState(false);
+  
+  const lockScroll = () => {
+    const el = document.querySelector('.scrollable-area');
+    if (el) el.style.overflow = 'hidden';
+  };
+  const unlockScroll = () => {
+    const el = document.querySelector('.scrollable-area');
+    if (el) el.style.overflow = '';
+  };
 
   const finalPrompt = customPrompt.trim()
     ? `${customPrompt}, ${mood.prompt}`
