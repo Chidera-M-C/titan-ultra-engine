@@ -10,6 +10,15 @@ import '../components/PromptSection/PromptBox.css';
 
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
   const [showCreate, setShowCreate] = useState(false);
+  // Lock/unlock the scrollable area when modals open
+  const lockScroll = () => {
+    const el = document.querySelector('.scrollable-area');
+    if (el) el.style.overflow = 'hidden';
+  };
+  const unlockScroll = () => {
+    const el = document.querySelector('.scrollable-area');
+    if (el) el.style.overflow = '';
+  };
   return (
     <>
       {!showCreate && (
@@ -115,20 +124,20 @@ export default function TextToVideoView({
                     <button className="char-pill-remove" onClick={() => onSelectCharacter(null)}><X size={10} /></button>
                   </div>
                 ) : (
-                  <button className="char-add-btn" onClick={() => setShowCharPicker(true)}>
+                  <button className="char-add-btn" onClick={() => { setShowCharPicker(true); lockScroll(); }}>
                     <UserPlus size={14} /><span className="btn-label">Character</span>
                   </button>
                 )}
 
                 {/* Style */}
                 {selectedStyle ? (
-                  <div className="vstyle-pill" onClick={() => setShowStylePicker(true)}>
+                  <div className="vstyle-pill" onClick={() => { setShowStylePicker(true); lockScroll(); }}>
                     <span>{selectedStyle.emoji}</span>
                     <span className="vstyle-pill-name btn-label">{selectedStyle.title}</span>
                     <button className="char-pill-remove" onClick={e => { e.stopPropagation(); setSelectedStyle(null); }}><X size={10} /></button>
                   </div>
                 ) : (
-                  <button className={`char-add-btn ${!selectedStyle ? 'vstyle-required' : ''}`} onClick={() => setShowStylePicker(true)}>
+                  <button className={`char-add-btn ${!selectedStyle ? 'vstyle-required' : ''}`} onClick={() => { setShowStylePicker(true); lockScroll(); }}>
                     <Clapperboard size={14} /><span className="btn-label">Style *</span>
                   </button>
                 )}
@@ -196,7 +205,7 @@ export default function TextToVideoView({
         <VideoStylePicker
           selectedStyle={selectedStyle}
           onSelect={setSelectedStyle}
-          onClose={() => setShowStylePicker(false)}
+          onClose={() => { setShowStylePicker(false); unlockScroll(); }}
         />
       )}
       {showCharPicker && (
@@ -204,7 +213,7 @@ export default function TextToVideoView({
           characters={characters}
           selectedCharacter={selectedCharacter}
           onSelect={onSelectCharacter}
-          onClose={() => setShowCharPicker(false)}
+          onClose={() => { setShowCharPicker(false); unlockScroll(); }}
           onCharacterCreated={onCharacterCreated}
         />
       )}
