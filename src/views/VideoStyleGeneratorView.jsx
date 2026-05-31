@@ -11,15 +11,6 @@ import '../components/PromptSection/PromptBox.css';
 
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
   const [showCreate, setShowCreate] = useState(false);
-    // Lock/unlock the scrollable area when modals open
-    const lockScroll = () => {
-      const el = document.querySelector('.scrollable-area');
-      if (el) el.style.overflow = 'hidden';
-    };
-    const unlockScroll = () => {
-      const el = document.querySelector('.scrollable-area');
-      if (el) el.style.overflow = '';
-    };
   return (
     <>
       {!showCreate && (
@@ -74,6 +65,15 @@ export default function VideoStyleGeneratorView({
   const [galleryLoading, setGalleryLoading] = useState(false);
   const [imagePickerTarget, setImagePickerTarget] = useState(null);
   const [showCharPicker, setShowCharPicker] = useState(false);
+
+  const lockScroll = () => {
+    const el = document.querySelector('.scrollable-area');
+    if (el) el.style.overflow = 'hidden';
+  };
+  const unlockScroll = () => {
+    const el = document.querySelector('.scrollable-area');
+    if (el) el.style.overflow = '';
+  };
 
   const canGenerate = startImage && !loading;
 
