@@ -132,7 +132,7 @@ export default function VideoStyleGeneratorView({
           <p className="vsg-box-label">Start <span className="vsg-required">*</span></p>
           <div
             className={`vsg-image-box ${startImage ? 'has-image' : ''}`}
-            onClick={() => setImagePickerTarget('start')}
+            onClick={() => { setImagePickerTarget('start'); lockScroll(); }}
           >
             {startImage ? (
               <>
@@ -156,7 +156,7 @@ export default function VideoStyleGeneratorView({
           <p className="vsg-box-label">End <span className="vsg-optional">(optional)</span></p>
           <div
             className={`vsg-image-box ${endImage ? 'has-image' : ''}`}
-            onClick={() => setImagePickerTarget('end')}
+            onClick={() => { setImagePickerTarget('end'); lockScroll(); }}
           >
             {endImage ? (
               <>
@@ -199,7 +199,7 @@ export default function VideoStyleGeneratorView({
                     <button className="char-pill-remove" onClick={() => onSelectCharacter(null)}><X size={10} /></button>
                   </div>
                 ) : (
-                  <button className="char-add-btn" onClick={() => setShowCharPicker(true)}>
+                  <button className="char-add-btn" onClick={() => { setShowCharPicker(true); lockScroll(); }}>
                     <UserPlus size={14} /><span className="btn-label">Character</span>
                   </button>
                 )}
@@ -292,13 +292,14 @@ export default function VideoStyleGeneratorView({
             if (imagePickerTarget === 'start') setStartImage(img);
             else setEndImage(img);
             setImagePickerTarget(null);
+            unlockScroll();
           }}
-          onClose={() => setImagePickerTarget(null)}
+          onClose={() => { setImagePickerTarget(null); unlockScroll(); }}
         />
       )}
       {showCharPicker && (
         <CharacterPicker characters={characters} selectedCharacter={selectedCharacter}
-          onSelect={onSelectCharacter} onClose={() => setShowCharPicker(false)} onCharacterCreated={onCharacterCreated} />
+          onSelect={onSelectCharacter} onClose={() => { setShowCharPicker(false); unlockScroll(); }} onCharacterCreated={onCharacterCreated} />
       )}
     </div>
   );
