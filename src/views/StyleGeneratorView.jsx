@@ -19,7 +19,6 @@ function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onC
 
   if (!mounted) return null;
   
-  const [showCreate, setShowCreate] = useState(false);
   return createPortal(
     <>
       {!showCreate && (
