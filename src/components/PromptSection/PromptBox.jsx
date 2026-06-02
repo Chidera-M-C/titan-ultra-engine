@@ -4,10 +4,11 @@ import AspectRatioDropdown from './AspectRatioDropdown';
 import './PromptBox.css';
 import CreateCharacterModal from '../Shared/CreateCharacterModal';
 import { IMAGE_STYLES } from '../../data/imageStyles';
+import { createPortal } from 'react-dom';
 
 // ── Style picker mini modal ───────────────────────────────────────────────
 function StylePicker({ selectedStyle, onSelect, onClose }) {
-  return (
+  return createPortal(
     <div className="style-picker-overlay" onClick={onClose}>
       <div className="style-picker" onClick={e => e.stopPropagation()}>
         <div className="style-picker-header">
@@ -44,7 +45,7 @@ function StylePicker({ selectedStyle, onSelect, onClose }) {
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
   const [showCreate, setShowCreate] = useState(false);
 
-  return (
+  return createPortal(
     <>
       {!showCreate && (
         <div className="char-picker-overlay" onClick={onClose}>
