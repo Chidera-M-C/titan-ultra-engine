@@ -6,11 +6,12 @@ import AspectRatioDropdown from '../components/PromptSection/AspectRatioDropdown
 import MasonryGrid from '../components/Gallery/MasonryGrid';
 import CreateCharacterModal from '../components/Shared/CreateCharacterModal';
 import './StyleGeneratorView.css';
+import { createPortal } from 'react-dom';
 
 // ── Mini character picker (same as in PromptBox) ──────────────────────────
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
   const [showCreate, setShowCreate] = useState(false);
-  return (
+  return createPortal(
     <>
       {!showCreate && (
         <div className="char-picker-overlay" onClick={onClose}>
