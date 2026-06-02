@@ -8,6 +8,7 @@ import CreateCharacterModal from '../components/Shared/CreateCharacterModal';
 import { supabase } from '../lib/supabase.js';
 import './VideoStyleGeneratorView.css';
 import '../components/PromptSection/PromptBox.css';
+import { createPortal } from 'react-dom';
 
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
   const [showCreate, setShowCreate] = useState(false);
