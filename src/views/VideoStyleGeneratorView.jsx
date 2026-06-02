@@ -1,5 +1,5 @@
 // src/views/VideoStyleGeneratorView.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { ArrowLeft, Video, UserPlus, X, Check, ImagePlus, Zap } from 'lucide-react';
 import AspectRatioDropdown from '../components/PromptSection/AspectRatioDropdown';
 import VideoControls from '../components/Video/VideoControls';
