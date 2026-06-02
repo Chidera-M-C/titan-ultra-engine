@@ -264,14 +264,15 @@ export default function ImageToVideoView({
       )}
 
       {/* Modals */}
-      {showStylePicker && (
-        <VideoStylePicker selectedStyle={selectedStyle} onSelect={setSelectedStyle} onClose={() => { setShowStylePicker(false); unlockScroll(); }} />
+      {showStylePicker && createPortal(
+        <VideoStylePicker selectedStyle={selectedStyle} onSelect={setSelectedStyle} onClose={() => { setShowStylePicker(false); unlockScroll(); }} />,
+        document.body
       )}
       {showCharPicker && (
         <CharacterPicker characters={characters} selectedCharacter={selectedCharacter}
           onSelect={onSelectCharacter} onClose={() => { setShowCharPicker(false); unlockScroll(); }} onCharacterCreated={onCharacterCreated} />
       )}
-      {imagePickerTarget && (
+      {imagePickerTarget && createPortal(
         <MiniImagesModal
           images={userImages}
           likedImages={likedImages}
@@ -280,10 +281,11 @@ export default function ImageToVideoView({
             if (imagePickerTarget === 'start') setStartImage(img);
             else setEndImage(img);
             setImagePickerTarget(null);
-            unlockScroll(); // add this
+            unlockScroll();
           }}
           onClose={() => { setImagePickerTarget(null); unlockScroll(); }}
-        />
+        />,
+        document.body
       )}
     </div>
   );
