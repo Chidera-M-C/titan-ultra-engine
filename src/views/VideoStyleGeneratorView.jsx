@@ -302,7 +302,7 @@ export default function VideoStyleGeneratorView({
       </div>
 
       {/* Modals */}
-      {imagePickerTarget && (
+      {imagePickerTarget && createPortal(
         <MiniImagesModal
           images={userImages}
           likedImages={likedImages}
@@ -314,7 +314,8 @@ export default function VideoStyleGeneratorView({
             unlockScroll();
           }}
           onClose={() => { setImagePickerTarget(null); unlockScroll(); }}
-        />
+        />,
+        document.body
       )}
       {showCharPicker && (
         <CharacterPicker characters={characters} selectedCharacter={selectedCharacter}
