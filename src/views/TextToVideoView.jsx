@@ -7,10 +7,11 @@ import VideoControls from '../components/Video/VideoControls';
 import CreateCharacterModal from '../components/Shared/CreateCharacterModal';
 import './TextToVideoView.css';
 import '../components/PromptSection/PromptBox.css';
+import { createPortal } from 'react-dom';
 
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
   const [showCreate, setShowCreate] = useState(false);
-  return (
+  return createPortal(
     <>
       {!showCreate && (
         <div className="char-picker-overlay" onClick={onClose}>
