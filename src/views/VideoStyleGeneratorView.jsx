@@ -12,6 +12,15 @@ import { createPortal } from 'react-dom';
 
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
   const [showCreate, setShowCreate] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+  
+  const [showCreate, setShowCreate] = useState(false);
   return createPortal(
     <>
       {!showCreate && (
