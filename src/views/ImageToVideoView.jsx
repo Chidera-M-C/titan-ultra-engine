@@ -1,5 +1,5 @@
 // src/views/ImageToVideoView.jsx
-import React, { useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Video, UserPlus, X, Check, Clapperboard, ImagePlus, Zap } from 'lucide-react';
 import AspectRatioDropdown from '../components/PromptSection/AspectRatioDropdown';
 import VideoStylePicker from '../components/Video/VideoStylePicker';
