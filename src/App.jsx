@@ -48,7 +48,7 @@ function usePullToRefresh() {
     const onTouchStart = (e) => {
       // Don't trigger pull-to-refresh if any modal/overlay is open
       const hasOpenModal = document.querySelector(
-        '.modal-overlay, .char-modal-overlay, .auth-overlay, .tg-overlay, .account-detail-overlay, .char-picker-overlay, .style-picker-overlay'
+        '.modal-overlay, .char-modal-overlay, .auth-overlay, .tg-overlay, .account-detail-overlay, .char-picker-overlay, .style-picker-overlay, .vstyle-picker-overlay'
       );
       if (hasOpenModal) return;
     
