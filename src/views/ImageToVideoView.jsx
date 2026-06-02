@@ -11,8 +11,8 @@ import '../components/PromptSection/PromptBox.css';
 import { createPortal } from 'react-dom';
 
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
-  const createPortal[showCreate, setShowCreate] = useState(false);
-  return (
+  const [showCreate, setShowCreate] = useState(false);
+  return createPortal(
     <>
       {!showCreate && (
         <div className="char-picker-overlay" onClick={onClose}>
