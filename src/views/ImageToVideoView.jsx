@@ -8,9 +8,10 @@ import MiniImagesModal from '../components/Shared/MiniImagesModal';
 import CreateCharacterModal from '../components/Shared/CreateCharacterModal';
 import './ImageToVideoView.css';
 import '../components/PromptSection/PromptBox.css';
+import { createPortal } from 'react-dom';
 
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
-  const [showCreate, setShowCreate] = useState(false);
+  const createPortal[showCreate, setShowCreate] = useState(false);
   return (
     <>
       {!showCreate && (
