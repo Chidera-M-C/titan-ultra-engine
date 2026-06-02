@@ -54,6 +54,7 @@ function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onC
           onCreated={(c) => { if (onCharacterCreated) onCharacterCreated(c); setShowCreate(false); onClose(); }} />
       )}
     </>
+    document.body
   );
 }
 
