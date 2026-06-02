@@ -8,15 +8,16 @@ import { createPortal } from 'react-dom';
 
 // ── Style picker mini modal ───────────────────────────────────────────────
 function StylePicker({ selectedStyle, onSelect, onClose }) {
-  const [showCreate, setShowCreate] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    return () => setMounted(false);
   }, []);
 
   if (!mounted) return null;
-  
+
+  // ✅ FIXED: pass document.body as second argument
   return createPortal(
     <div className="style-picker-overlay" onClick={onClose}>
       <div className="style-picker" onClick={e => e.stopPropagation()}>
@@ -46,7 +47,8 @@ function StylePicker({ selectedStyle, onSelect, onClose }) {
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body  // ✅ THIS was missing
   );
 }
 
@@ -57,10 +59,12 @@ function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onC
 
   useEffect(() => {
     setMounted(true);
+    return () => setMounted(false);
   }, []);
 
   if (!mounted) return null;
 
+  // ✅ FIXED: pass document.body as second argument
   return createPortal(
     <>
       {!showCreate && (
@@ -110,7 +114,8 @@ function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onC
           }}
         />
       )}
-    </>
+    </>,
+    document.body  // ✅ THIS was missing
   );
 }
 
@@ -191,40 +196,37 @@ export default function PromptBox({
 
                 {/* Style */}
                 {selectedStyle ? (
-                  <div 
-                    className="style-pill" 
+                  <div
+                    className="style-pill"
                     onClick={() => setShowStylePicker(true)}
                     title="Change style"
                   >
-                    {/* Show real image - exactly like character photo */}
                     {selectedStyle.image ? (
-                      <img 
-                        src={selectedStyle.image} 
-                        alt={selectedStyle.title} 
-                        className="style-pill-img" 
+                      <img
+                        src={selectedStyle.image}
+                        alt={selectedStyle.title}
+                        className="style-pill-img"
                       />
                     ) : (
-                      <div 
-                        className="style-pill-swatch" 
-                        style={{ background: selectedStyle.gradient }} 
+                      <div
+                        className="style-pill-swatch"
+                        style={{ background: selectedStyle.gradient }}
                       />
                     )}
-                    
                     <span className="style-pill-name btn-label">{selectedStyle.title}</span>
-                    
-                    <button 
+                    <button
                       className="char-pill-remove"
-                      onClick={e => { 
-                        e.stopPropagation(); 
-                        onSelectStyle(null); 
+                      onClick={e => {
+                        e.stopPropagation();
+                        onSelectStyle(null);
                       }}
                     >
                       <X size={10} />
                     </button>
                   </div>
                 ) : (
-                  <button 
-                    className="char-add-btn style-required" 
+                  <button
+                    className="char-add-btn style-required"
                     onClick={() => setShowStylePicker(true)}
                   >
                     <Sparkles size={14} />
@@ -265,12 +267,19 @@ export default function PromptBox({
         <CharacterPicker
           characters={characters} selectedCharacter={selectedCharacter}
           onSelect={onSelectCharacter} onClose={() => setShowCharPicker(false)}
-          onCharacterCreated={(newChar) => { if (onSelectCharacter) onSelectCharacter(newChar); if (onCharacterCreated) onCharacterCreated(newChar); }}
+          onCharacterCreated={(newChar) => {
+            if (onSelectCharacter) onSelectCharacter(newChar);
+            if (onCharacterCreated) onCharacterCreated(newChar);
+          }}
         />
       )}
 
       {showStylePicker && (
-        <StylePicker selectedStyle={selectedStyle} onSelect={onSelectStyle} onClose={() => setShowStylePicker(false)} />
+        <StylePicker
+          selectedStyle={selectedStyle}
+          onSelect={onSelectStyle}
+          onClose={() => setShowStylePicker(false)}
+        />
       )}
     </div>
   );
