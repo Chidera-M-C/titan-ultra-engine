@@ -68,7 +68,8 @@ function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onC
           }}
         />
       )}
-    </>
+    </>,
+    document.body
   );
 }
 
