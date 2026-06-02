@@ -8,6 +8,15 @@ import { createPortal } from 'react-dom';
 
 // ── Style picker mini modal ───────────────────────────────────────────────
 function StylePicker({ selectedStyle, onSelect, onClose }) {
+  const [showCreate, setShowCreate] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+  
   return createPortal(
     <div className="style-picker-overlay" onClick={onClose}>
       <div className="style-picker" onClick={e => e.stopPropagation()}>
@@ -44,6 +53,13 @@ function StylePicker({ selectedStyle, onSelect, onClose }) {
 // ── Mini character picker modal ───────────────────────────────────────────
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
   const [showCreate, setShowCreate] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   return createPortal(
     <>
