@@ -334,6 +334,7 @@ export default function MyImagesView({ images, likedImages, onSelectPrompt, onVi
             <h2 style={{ color: cat.accent }}>{cat.label}</h2>
             <span className="myimages-count">{catImages.length}</span>
           </div>
+        </div>
 
         {activeCategory === 'added' ? (
           <AddedImagesGrid
