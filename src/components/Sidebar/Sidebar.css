@@ -24,7 +24,17 @@
   overflow-x: hidden;
 }
 
-.sidebar-top::-webkit-scrollbar { display: none; }
+@media (min-width: 769px) {
+  .sidebar-top::-webkit-scrollbar { width: 4px; }
+  .sidebar-top::-webkit-scrollbar-track { background: transparent; }
+  .sidebar-top::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
+  .sidebar-top { scrollbar-width: thin; scrollbar-color: #2a2a2a transparent; }
+}
+
+@media (max-width: 768px) {
+  .sidebar-top::-webkit-scrollbar { display: none; }
+  .sidebar-top { scrollbar-width: none; }
+}
 
 .brand {
   display: flex;
