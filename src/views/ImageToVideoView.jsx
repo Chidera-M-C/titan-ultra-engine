@@ -1,6 +1,6 @@
 // src/views/ImageToVideoView.jsx
-import React, { useState } from 'react';
-import { Video, UserPlus, X, Check, Clapperboard, ImagePlus } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { Video, UserPlus, X, Check, Clapperboard, ImagePlus, Zap } from 'lucide-react';
 import AspectRatioDropdown from '../components/PromptSection/AspectRatioDropdown';
 import VideoStylePicker from '../components/Video/VideoStylePicker';
 import VideoControls from '../components/Video/VideoControls';
@@ -8,10 +8,19 @@ import MiniImagesModal from '../components/Shared/MiniImagesModal';
 import CreateCharacterModal from '../components/Shared/CreateCharacterModal';
 import './ImageToVideoView.css';
 import '../components/PromptSection/PromptBox.css';
+import { createPortal } from 'react-dom';
 
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
   const [showCreate, setShowCreate] = useState(false);
-  return (
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+  
+  return createPortal(
     <>
       {!showCreate && (
         <div className="char-picker-overlay" onClick={onClose}>
@@ -45,7 +54,8 @@ function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onC
         <CreateCharacterModal onClose={() => setShowCreate(false)}
           onCreated={(c) => { if (onCharacterCreated) onCharacterCreated(c); setShowCreate(false); onClose(); }} />
       )}
-    </>
+    </>,
+    document.body
   );
 }
 
@@ -65,6 +75,15 @@ export default function ImageToVideoView({
   const [showStylePicker, setShowStylePicker]   = useState(false);
   const [showCharPicker, setShowCharPicker]     = useState(false);
   const [imagePickerTarget, setImagePickerTarget] = useState(null); // 'start' | 'end'
+
+  const lockScroll = () => {
+    const el = document.querySelector('.scrollable-area');
+    if (el) el.style.overflow = 'hidden';
+  };
+  const unlockScroll = () => {
+    const el = document.querySelector('.scrollable-area');
+    if (el) el.style.overflow = '';
+  };
 
   const canGenerate = startImage && selectedStyle && !loading;
 
@@ -102,7 +121,7 @@ export default function ImageToVideoView({
           <p className="i2v-box-label">Start <span className="i2v-required">*</span></p>
           <div
             className={`i2v-image-box ${startImage ? 'has-image' : ''}`}
-            onClick={() => setImagePickerTarget('start')}
+            onClick={() => { setImagePickerTarget('start'); lockScroll(); }}
           >
             {startImage ? (
               <>
@@ -126,7 +145,7 @@ export default function ImageToVideoView({
           <p className="i2v-box-label">End <span className="i2v-optional">(optional)</span></p>
           <div
             className={`i2v-image-box ${endImage ? 'has-image' : ''}`}
-            onClick={() => setImagePickerTarget('end')}
+            onClick={() => { setImagePickerTarget('end'); lockScroll(); }}
           >
             {endImage ? (
               <>
@@ -166,24 +185,24 @@ export default function ImageToVideoView({
                 {selectedCharacter ? (
                   <div className="char-pill">
                     <img src={selectedCharacter.photo_url} alt={selectedCharacter.name} className="char-pill-photo" />
-                    <span className="char-pill-name">{selectedCharacter.name}</span>
+                    <span className="char-pill-name btn-label">{selectedCharacter.name}</span>
                     <button className="char-pill-remove" onClick={() => onSelectCharacter(null)}><X size={10} /></button>
                   </div>
                 ) : (
-                  <button className="char-add-btn" onClick={() => setShowCharPicker(true)}>
-                    <UserPlus size={14} /><span>Character</span>
+                  <button className="char-add-btn" onClick={() => { setShowCharPicker(true); lockScroll(); }}>
+                    <UserPlus size={14} /><span className="btn-label">Character</span>
                   </button>
                 )}
 
                 {selectedStyle ? (
-                  <div className="vstyle-pill" onClick={() => setShowStylePicker(true)}>
+                  <div className="vstyle-pill" onClick={() => { setShowStylePicker(true); lockScroll(); }}>
                     <span>{selectedStyle.emoji}</span>
-                    <span className="vstyle-pill-name">{selectedStyle.title}</span>
+                    <span className="vstyle-pill-name btn-label">{selectedStyle.title}</span>
                     <button className="char-pill-remove" onClick={e => { e.stopPropagation(); setSelectedStyle(null); }}><X size={10} /></button>
                   </div>
                 ) : (
-                  <button className="char-add-btn vstyle-required" onClick={() => setShowStylePicker(true)}>
-                    <Clapperboard size={14} /><span>Style *</span>
+                  <button className="char-add-btn vstyle-required" onClick={() => { setShowStylePicker(true); lockScroll(); }}>
+                    <Clapperboard size={14} /><span className="btn-label">Style *</span>
                   </button>
                 )}
               </div>
@@ -193,7 +212,7 @@ export default function ImageToVideoView({
                 onClick={handleGenerate}
                 disabled={!canGenerate}
               >
-                {loading ? <div className="spinner" /> : <><Video size={16} /> Generate</>}
+                {loading ? <div className="spinner" /> : <><Video size={16} /><span className="btn-label"> Generate</span><Zap size={12} fill="currentColor" />30</>}
               </button>
             </div>
           </div>
@@ -245,14 +264,15 @@ export default function ImageToVideoView({
       )}
 
       {/* Modals */}
-      {showStylePicker && (
-        <VideoStylePicker selectedStyle={selectedStyle} onSelect={setSelectedStyle} onClose={() => setShowStylePicker(false)} />
+      {showStylePicker && createPortal(
+        <VideoStylePicker selectedStyle={selectedStyle} onSelect={setSelectedStyle} onClose={() => { setShowStylePicker(false); unlockScroll(); }} />,
+        document.body
       )}
       {showCharPicker && (
         <CharacterPicker characters={characters} selectedCharacter={selectedCharacter}
-          onSelect={onSelectCharacter} onClose={() => setShowCharPicker(false)} onCharacterCreated={onCharacterCreated} />
+          onSelect={onSelectCharacter} onClose={() => { setShowCharPicker(false); unlockScroll(); }} onCharacterCreated={onCharacterCreated} />
       )}
-      {imagePickerTarget && (
+      {imagePickerTarget && createPortal(
         <MiniImagesModal
           images={userImages}
           likedImages={likedImages}
@@ -261,9 +281,11 @@ export default function ImageToVideoView({
             if (imagePickerTarget === 'start') setStartImage(img);
             else setEndImage(img);
             setImagePickerTarget(null);
+            unlockScroll();
           }}
-          onClose={() => setImagePickerTarget(null)}
-        />
+          onClose={() => { setImagePickerTarget(null); unlockScroll(); }}
+        />,
+        document.body
       )}
     </div>
   );

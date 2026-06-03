@@ -1,16 +1,25 @@
 // src/views/TextToVideoView.jsx
-import React, { useState } from 'react';
-import { Send, Video, UserPlus, X, Check, Clapperboard } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { Send, Video, UserPlus, X, Check, Clapperboard, Zap } from 'lucide-react';
 import AspectRatioDropdown from '../components/PromptSection/AspectRatioDropdown';
 import VideoStylePicker from '../components/Video/VideoStylePicker';
 import VideoControls from '../components/Video/VideoControls';
 import CreateCharacterModal from '../components/Shared/CreateCharacterModal';
 import './TextToVideoView.css';
 import '../components/PromptSection/PromptBox.css';
+import { createPortal } from 'react-dom';
 
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
   const [showCreate, setShowCreate] = useState(false);
-  return (
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+  
+  return createPortal(
     <>
       {!showCreate && (
         <div className="char-picker-overlay" onClick={onClose}>
@@ -44,7 +53,8 @@ function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onC
         <CreateCharacterModal onClose={() => setShowCreate(false)}
           onCreated={(c) => { if (onCharacterCreated) onCharacterCreated(c); setShowCreate(false); onClose(); }} />
       )}
-    </>
+    </>,
+    document.body
   );
 }
 
@@ -60,6 +70,15 @@ export default function TextToVideoView({
   const [motionStrength, setMotionStrength] = useState(0.7);
   const [showStylePicker, setShowStylePicker] = useState(false);
   const [showCharPicker, setShowCharPicker]   = useState(false);
+
+  const lockScroll = () => {
+    const el = document.querySelector('.scrollable-area');
+    if (el) el.style.overflow = 'hidden';
+  };
+  const unlockScroll = () => {
+    const el = document.querySelector('.scrollable-area');
+    if (el) el.style.overflow = '';
+  };
 
   const canGenerate = prompt.trim() && selectedStyle && !loading;
 
@@ -111,25 +130,25 @@ export default function TextToVideoView({
                 {selectedCharacter ? (
                   <div className="char-pill">
                     <img src={selectedCharacter.photo_url} alt={selectedCharacter.name} className="char-pill-photo" />
-                    <span className="char-pill-name">{selectedCharacter.name}</span>
+                    <span className="char-pill-name btn-label">{selectedCharacter.name}</span>
                     <button className="char-pill-remove" onClick={() => onSelectCharacter(null)}><X size={10} /></button>
                   </div>
                 ) : (
-                  <button className="char-add-btn" onClick={() => setShowCharPicker(true)}>
-                    <UserPlus size={14} /><span>Character</span>
+                  <button className="char-add-btn" onClick={() => { setShowCharPicker(true); lockScroll(); }}>
+                    <UserPlus size={14} /><span className="btn-label">Character</span>
                   </button>
                 )}
 
                 {/* Style */}
                 {selectedStyle ? (
-                  <div className="vstyle-pill" onClick={() => setShowStylePicker(true)}>
+                  <div className="vstyle-pill" onClick={() => { setShowStylePicker(true); lockScroll(); }}>
                     <span>{selectedStyle.emoji}</span>
-                    <span className="vstyle-pill-name">{selectedStyle.title}</span>
+                    <span className="vstyle-pill-name btn-label">{selectedStyle.title}</span>
                     <button className="char-pill-remove" onClick={e => { e.stopPropagation(); setSelectedStyle(null); }}><X size={10} /></button>
                   </div>
                 ) : (
-                  <button className={`char-add-btn ${!selectedStyle ? 'vstyle-required' : ''}`} onClick={() => setShowStylePicker(true)}>
-                    <Clapperboard size={14} /><span>Style *</span>
+                  <button className={`char-add-btn ${!selectedStyle ? 'vstyle-required' : ''}`} onClick={() => { setShowStylePicker(true); lockScroll(); }}>
+                    <Clapperboard size={14} /><span className="btn-label">Style *</span>
                   </button>
                 )}
               </div>
@@ -139,7 +158,7 @@ export default function TextToVideoView({
                 onClick={handleGenerate}
                 disabled={!canGenerate}
               >
-                {loading ? <div className="spinner" /> : <><Video size={16} /> Generate</>}
+                {loading ? <div className="spinner" /> : <><Video size={16} /><span className="btn-label"> Generate</span><Zap size={12} fill="currentColor" />30</>}
               </button>
             </div>
           </div>
@@ -196,7 +215,7 @@ export default function TextToVideoView({
         <VideoStylePicker
           selectedStyle={selectedStyle}
           onSelect={setSelectedStyle}
-          onClose={() => setShowStylePicker(false)}
+          onClose={() => { setShowStylePicker(false); unlockScroll(); }}
         />
       )}
       {showCharPicker && (
@@ -204,7 +223,7 @@ export default function TextToVideoView({
           characters={characters}
           selectedCharacter={selectedCharacter}
           onSelect={onSelectCharacter}
-          onClose={() => setShowCharPicker(false)}
+          onClose={() => { setShowCharPicker(false); unlockScroll(); }}
           onCharacterCreated={onCharacterCreated}
         />
       )}

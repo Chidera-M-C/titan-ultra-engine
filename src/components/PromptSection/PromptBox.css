@@ -235,14 +235,13 @@
 /* ── Character picker modal ──────────────────────────────────────────────── */
 .char-picker-overlay {
   position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
+  inset: 0;              /* top: 0; right: 0; bottom: 0; left: 0 */
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(4px);
-  z-index: 10002;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
 }
 
 .char-picker {
@@ -383,6 +382,7 @@
 
 /* ── Generate button ─────────────────────────────────────────────────────── */
 .generate-fab {
+  min-width: 80px; /* add this line */
   position: absolute;
   bottom: 8px;
   right: 12px;
@@ -690,13 +690,12 @@
 .style-picker-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(4px);
-  z-index: 10002;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
 }
 
 .style-picker {
@@ -808,6 +807,46 @@
   outline-offset: 1px;
 }
 
+
+
+/* Credit cost badge on generate button */
+.generate-cost {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.85;
+  margin-left: 4px;
+}
+
+/* Hide button labels on mobile */
+@media (max-width: 768px) {
+  .btn-label {
+    display: none;
+  }
+
+  .char-add-btn {
+    padding: 6px;
+    min-width: unset;
+    width: auto;
+  }
+
+  .char-pill {
+    padding: 4px 6px;
+  }
+
+  .style-pill {
+    padding: 4px 6px;
+  }
+
+  .left-tools {
+    gap: 6px;
+  }
+}
+
+
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -844,5 +883,28 @@
 
   .attach-image-btn {
     padding: 6px 8px;
+  }
+}
+
+/* Ensure fixed overlays cover full viewport on mobile */
+@media (max-width: 768px) {
+  .char-picker-overlay,
+  .style-picker-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 100dvh;   /* dvh = dynamic viewport height, handles mobile browser chrome */
+    z-index: 99999;
+  }
+
+  .char-picker,
+  .style-picker {
+    max-height: 75dvh;
+    overflow-y: auto;
+    margin: 0 16px;
   }
 }

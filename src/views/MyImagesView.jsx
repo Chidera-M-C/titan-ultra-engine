@@ -334,28 +334,6 @@ export default function MyImagesView({ images, likedImages, onSelectPrompt, onVi
             <h2 style={{ color: cat.accent }}>{cat.label}</h2>
             <span className="myimages-count">{catImages.length}</span>
           </div>
-
-          {/* Upload button in header for Added Images */}
-          {activeCategory === 'added' && (
-            <>
-              <button
-                className="added-upload-btn-header"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-              >
-                {uploading ? <div className="added-spinner" /> : <Upload size={14} />}
-                <span>Upload</span>
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                style={{ display: 'none' }}
-                onChange={e => handleUpload(Array.from(e.target.files))}
-              />
-            </>
-          )}
         </div>
 
         {activeCategory === 'added' ? (

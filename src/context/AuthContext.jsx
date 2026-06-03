@@ -6,7 +6,7 @@ import { captureTrafficSource } from '../lib/traffic';
 const AuthContext = createContext();
 
 const authClient = createAuthClient({
-  baseURL: "https://nudely.org",
+  baseURL: window.location.origin,  // uses whatever domain the app is running on
   basePath: "/api/auth",
   fetchOptions: { credentials: "include" },
 });

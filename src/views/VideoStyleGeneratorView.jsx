@@ -1,6 +1,6 @@
 // src/views/VideoStyleGeneratorView.jsx
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Video, UserPlus, X, Check, ImagePlus } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { ArrowLeft, Video, UserPlus, X, Check, ImagePlus, Zap } from 'lucide-react';
 import AspectRatioDropdown from '../components/PromptSection/AspectRatioDropdown';
 import VideoControls from '../components/Video/VideoControls';
 import MiniImagesModal from '../components/Shared/MiniImagesModal';
@@ -8,10 +8,19 @@ import CreateCharacterModal from '../components/Shared/CreateCharacterModal';
 import { supabase } from '../lib/supabase.js';
 import './VideoStyleGeneratorView.css';
 import '../components/PromptSection/PromptBox.css';
+import { createPortal } from 'react-dom';
 
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
   const [showCreate, setShowCreate] = useState(false);
-  return (
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+  
+  return createPortal(
     <>
       {!showCreate && (
         <div className="char-picker-overlay" onClick={onClose}>
@@ -45,7 +54,8 @@ function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onC
         <CreateCharacterModal onClose={() => setShowCreate(false)}
           onCreated={(c) => { if (onCharacterCreated) onCharacterCreated(c); setShowCreate(false); onClose(); }} />
       )}
-    </>
+    </>,
+    document.body
   );
 }
 
@@ -65,6 +75,15 @@ export default function VideoStyleGeneratorView({
   const [galleryLoading, setGalleryLoading] = useState(false);
   const [imagePickerTarget, setImagePickerTarget] = useState(null);
   const [showCharPicker, setShowCharPicker] = useState(false);
+
+  const lockScroll = () => {
+    const el = document.querySelector('.scrollable-area');
+    if (el) el.style.overflow = 'hidden';
+  };
+  const unlockScroll = () => {
+    const el = document.querySelector('.scrollable-area');
+    if (el) el.style.overflow = '';
+  };
 
   const canGenerate = startImage && !loading;
 
@@ -132,7 +151,7 @@ export default function VideoStyleGeneratorView({
           <p className="vsg-box-label">Start <span className="vsg-required">*</span></p>
           <div
             className={`vsg-image-box ${startImage ? 'has-image' : ''}`}
-            onClick={() => setImagePickerTarget('start')}
+            onClick={() => { setImagePickerTarget('start'); lockScroll(); }}
           >
             {startImage ? (
               <>
@@ -156,7 +175,7 @@ export default function VideoStyleGeneratorView({
           <p className="vsg-box-label">End <span className="vsg-optional">(optional)</span></p>
           <div
             className={`vsg-image-box ${endImage ? 'has-image' : ''}`}
-            onClick={() => setImagePickerTarget('end')}
+            onClick={() => { setImagePickerTarget('end'); lockScroll(); }}
           >
             {endImage ? (
               <>
@@ -195,12 +214,12 @@ export default function VideoStyleGeneratorView({
                 {selectedCharacter ? (
                   <div className="char-pill">
                     <img src={selectedCharacter.photo_url} alt={selectedCharacter.name} className="char-pill-photo" />
-                    <span className="char-pill-name">{selectedCharacter.name}</span>
+                    <span className="char-pill-name btn-label">{selectedCharacter.name}</span>
                     <button className="char-pill-remove" onClick={() => onSelectCharacter(null)}><X size={10} /></button>
                   </div>
                 ) : (
-                  <button className="char-add-btn" onClick={() => setShowCharPicker(true)}>
-                    <UserPlus size={14} /><span>Character</span>
+                  <button className="char-add-btn" onClick={() => { setShowCharPicker(true); lockScroll(); }}>
+                    <UserPlus size={14} /><span className="btn-label">Character</span>
                   </button>
                 )}
               </div>
@@ -210,7 +229,7 @@ export default function VideoStyleGeneratorView({
                 disabled={!canGenerate}
                 style={{ background: style.gradient }}
               >
-                {loading ? <div className="spinner" /> : <><Video size={16} /> Generate</>}
+                {loading ? <div className="spinner" /> : <><Video size={16} /><span className="btn-label"> Generate</span><Zap size={12} fill="currentColor" />30</>}
               </button>
             </div>
           </div>
@@ -283,7 +302,7 @@ export default function VideoStyleGeneratorView({
       </div>
 
       {/* Modals */}
-      {imagePickerTarget && (
+      {imagePickerTarget && createPortal(
         <MiniImagesModal
           images={userImages}
           likedImages={likedImages}
@@ -292,13 +311,15 @@ export default function VideoStyleGeneratorView({
             if (imagePickerTarget === 'start') setStartImage(img);
             else setEndImage(img);
             setImagePickerTarget(null);
+            unlockScroll();
           }}
-          onClose={() => setImagePickerTarget(null)}
-        />
+          onClose={() => { setImagePickerTarget(null); unlockScroll(); }}
+        />,
+        document.body
       )}
       {showCharPicker && (
         <CharacterPicker characters={characters} selectedCharacter={selectedCharacter}
-          onSelect={onSelectCharacter} onClose={() => setShowCharPicker(false)} onCharacterCreated={onCharacterCreated} />
+          onSelect={onSelectCharacter} onClose={() => { setShowCharPicker(false); unlockScroll(); }} onCharacterCreated={onCharacterCreated} />
       )}
     </div>
   );

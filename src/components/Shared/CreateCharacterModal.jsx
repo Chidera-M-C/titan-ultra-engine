@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, ChevronRight, ChevronLeft, Check, User } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Check, User, Zap } from 'lucide-react';
 import { supabase } from '../../lib/supabase.js';
 import { useAuth } from '../../context/AuthContext';
 import '../../views/CharacterView.css';
@@ -36,7 +36,7 @@ export const RACES = [
 ];
 
 export default function CreateCharacterModal({ onClose, onCreated }) {
-  const { user } = useAuth();
+  const { user, setCredits } = useAuth();
   const [step, setStep]         = useState(1);
   const [name, setName]         = useState('');
   const [photo, setPhoto]       = useState(null);
@@ -56,10 +56,17 @@ export default function CreateCharacterModal({ onClose, onCreated }) {
   };
 
   const handleCreate = async () => {
-    if (!name.trim() || !photo || !bodyType || !race) return;
-    setSaving(true);
-    setError('');
-    try {
+	  if (!name.trim() || !photo || !bodyType || !race) return;
+	  setSaving(true);
+	  setError('');
+	  try {
+	    // Credits check first
+	    const { data: userData } = await supabase
+	      .from('users').select('credits').eq('id', user.id).single();
+	    if ((userData?.credits ?? 0) < 2) {
+	      setError('Insufficient credits. Character creation costs 2 credits.');
+	      return;
+	    }
       // ── 1. Upload photo ─────────────────────────────────────────────
       const base64Data    = photo.replace(/^data:image\/\w+;base64,/, '');
       const byteCharacters = atob(base64Data);
@@ -94,6 +101,16 @@ export default function CreateCharacterModal({ onClose, onCreated }) {
 
       // Notify parent immediately with null embedding
       onCreated(data);
+
+      try {
+			  const { data: userData } = await supabase
+			    .from('users').select('credits').eq('id', user.id).single();
+			  const newBalance = Math.max(0, (userData.credits ?? 0) - 2);
+			  await supabase.from('users').update({ credits: newBalance }).eq('id', user.id);
+			  setCredits(newBalance);
+			} catch (err) {
+			  console.error('Credit deduction failed:', err);
+			}
 
       // ── 3. Extract face embedding ────────────────────────────────────
       try {
@@ -232,7 +249,7 @@ export default function CreateCharacterModal({ onClose, onCreated }) {
               onClick={handleCreate}
               disabled={!race || saving}
             >
-              {saving ? 'Creating...' : 'Create Character'}
+              {saving ? 'Creating...' : <><span>Create Character</span> <Zap size={14} fill="currentColor" style={{marginLeft:4}} />2</>}
             </button>
           )}
         </div>

@@ -1,17 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Send, UserPlus, X, Check } from 'lucide-react';
+import { ArrowLeft, Send, UserPlus, X, Check, Zap } from 'lucide-react';
 import '../components/PromptSection/PromptBox.css';
 import { supabase } from '../lib/supabase.js';
 import AspectRatioDropdown from '../components/PromptSection/AspectRatioDropdown';
 import MasonryGrid from '../components/Gallery/MasonryGrid';
 import CreateCharacterModal from '../components/Shared/CreateCharacterModal';
 import './StyleGeneratorView.css';
+import { createPortal } from 'react-dom';
 
 // ── Mini character picker (same as in PromptBox) ──────────────────────────
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
   const [showCreate, setShowCreate] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  return (
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+  
+  return createPortal(
     <>
       {!showCreate && (
         <div className="char-picker-overlay" onClick={onClose}>
@@ -60,7 +68,8 @@ function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onC
           }}
         />
       )}
-    </>
+    </>,
+    document.body
   );
 }
 
@@ -77,6 +86,15 @@ export default function StyleGeneratorView({
   const [hasMore, setHasMore]               = useState(true);
   const [negativePrompt, setNegativePrompt] = useState('');
   const [showCharPicker, setShowCharPicker] = useState(false);
+  
+  const lockScroll = () => {
+    const el = document.querySelector('.scrollable-area');
+    if (el) el.style.overflow = 'hidden';
+  };
+  const unlockScroll = () => {
+    const el = document.querySelector('.scrollable-area');
+    if (el) el.style.overflow = '';
+  };
 
   const finalPrompt = customPrompt.trim()
     ? `${customPrompt}, ${mood.prompt}`
@@ -178,7 +196,7 @@ export default function StyleGeneratorView({
                 {selectedCharacter ? (
                   <div className="char-pill">
                     <img src={selectedCharacter.photo_url} alt={selectedCharacter.name} className="char-pill-photo" />
-                    <span className="char-pill-name">{selectedCharacter.name}</span>
+                    <span className="char-pill-name btn-label">{selectedCharacter.name}</span>
                     {!selectedCharacter.face_embedding && (
                       <span className="char-pill-dot" title="Processing face..." />
                     )}
@@ -191,13 +209,9 @@ export default function StyleGeneratorView({
                     </button>
                   </div>
                 ) : (
-                  <button
-                    className="char-add-btn"
-                    onClick={() => setShowCharPicker(true)}
-                    title="Add character"
-                  >
+                  <button className="char-add-btn" onClick={() => { setShowCharPicker(true); lockScroll(); }} title="Add character">
                     <UserPlus size={14} />
-                    <span>Character</span>
+                    <span className="btn-label">Character</span>
                   </button>
                 )}
               </div>
@@ -208,7 +222,7 @@ export default function StyleGeneratorView({
                 disabled={loading}
                 style={{ background: mood.gradient }}
               >
-                {loading ? <div className="spinner" /> : <><Send size={16} /> Generate</>}
+                {loading ? <div className="spinner" /> : <><Send size={16} /><span className="btn-label"> Generate</span><Zap size={12} fill="currentColor" />2</>}
               </button>
             </div>
           </div>
@@ -258,11 +272,12 @@ export default function StyleGeneratorView({
           characters={characters}
           selectedCharacter={selectedCharacter}
           onSelect={onSelectCharacter}
-          onClose={() => setShowCharPicker(false)}
+          onClose={() => { setShowCharPicker(false); unlockScroll(); }}
           onCharacterCreated={(newChar) => {
             if (onCharacterCreated) onCharacterCreated(newChar);
             if (onSelectCharacter) onSelectCharacter(newChar);
             setShowCharPicker(false);
+            unlockScroll(); // add this
           }}
         />
       )}

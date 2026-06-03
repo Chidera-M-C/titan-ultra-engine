@@ -46,6 +46,12 @@ function usePullToRefresh() {
     if (!scrollable) return;
 
     const onTouchStart = (e) => {
+      // Don't trigger pull-to-refresh if any modal/overlay is open
+      const hasOpenModal = document.querySelector(
+        '.modal-overlay, .char-modal-overlay, .auth-overlay, .tg-overlay, .account-detail-overlay, .char-picker-overlay, .style-picker-overlay, .vstyle-picker-overlay'
+      );
+      if (hasOpenModal) return;
+    
       if (scrollable.scrollTop === 0) {
         startYRef.current = e.touches[0].clientY;
         setPulling(false);
@@ -55,6 +61,18 @@ function usePullToRefresh() {
 
     const onTouchMove = (e) => {
       if (startYRef.current === null) return;
+    
+      // Double-check no modal opened between touchstart and touchmove
+      const hasOpenModal = document.querySelector(
+        '.modal-overlay, .char-modal-overlay, .auth-overlay, .tg-overlay, .account-detail-overlay, .char-picker-overlay, .style-picker-overlay'
+      );
+      if (hasOpenModal) {
+        startYRef.current = null;
+        setPulling(false);
+        setPullY(0);
+        return;
+      }
+    
       const delta = e.touches[0].clientY - startYRef.current;
       if (delta > 0 && scrollable.scrollTop === 0) {
         e.preventDefault();
@@ -517,6 +535,7 @@ export default function App() {
   // ── Face swap ─────────────────────────────────────────────────────────
   const handleFaceSwap = async ({ targetImage, sourceImage }) => {
     if (!user) { setLoginModalOpen(true); return; }
+    if (credits < 2) { setFaceswapError('Insufficient credits.'); return; }
     setFaceswapLoading(true);
     setFaceswapError(null);
     setFaceswapResult(null);
@@ -529,6 +548,8 @@ export default function App() {
       const data = await response.json();
       if (data.error) throw new Error(data.error);
       setFaceswapResult(data.image);
+      // Deduct only on success
+      await deductCreditsLive(2);
     } catch (err) {
       setFaceswapError(err.message);
     } finally {
@@ -539,6 +560,7 @@ export default function App() {
   // 5. ADD handleVideoGenerate function (after handleFaceSwap):
   const handleVideoGenerate = async (params) => {
     if (!user) { setLoginModalOpen(true); return; }
+    if (credits < 30) { setVideoError('Insufficient credits. Video generation costs 30 credits.'); return; }
     setVideoLoading(true);
     setShowVideoResult(true);
     setVideoError(null);
@@ -578,7 +600,7 @@ export default function App() {
           // Save in background
           (async () => {
             try {
-              await deductCreditsLive(25); // videos cost more
+              await deductCreditsLive(30); // videos cost more
               await saveVideo(user.id, base64Video, {
                 prompt:         params.prompt,
                 negativePrompt: params.negativePrompt,

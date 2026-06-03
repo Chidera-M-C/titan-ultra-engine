@@ -1,13 +1,24 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Send, ArrowDownLeft, UserPlus, X, Check, Sparkles } from 'lucide-react';
+import { Send, ArrowDownLeft, UserPlus, X, Check, Sparkles, Zap } from 'lucide-react';
 import AspectRatioDropdown from './AspectRatioDropdown';
 import './PromptBox.css';
 import CreateCharacterModal from '../Shared/CreateCharacterModal';
 import { IMAGE_STYLES } from '../../data/imageStyles';
+import { createPortal } from 'react-dom';
 
 // ── Style picker mini modal ───────────────────────────────────────────────
 function StylePicker({ selectedStyle, onSelect, onClose }) {
-  return (
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!mounted) return null;
+
+  // ✅ FIXED: pass document.body as second argument
+  return createPortal(
     <div className="style-picker-overlay" onClick={onClose}>
       <div className="style-picker" onClick={e => e.stopPropagation()}>
         <div className="style-picker-header">
@@ -36,15 +47,25 @@ function StylePicker({ selectedStyle, onSelect, onClose }) {
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body  // ✅ THIS was missing
   );
 }
 
 // ── Mini character picker modal ───────────────────────────────────────────
 function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onCharacterCreated }) {
   const [showCreate, setShowCreate] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  return (
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!mounted) return null;
+
+  // ✅ FIXED: pass document.body as second argument
+  return createPortal(
     <>
       {!showCreate && (
         <div className="char-picker-overlay" onClick={onClose}>
@@ -93,7 +114,8 @@ function CharacterPicker({ characters, selectedCharacter, onSelect, onClose, onC
           }}
         />
       )}
-    </>
+    </>,
+    document.body  // ✅ THIS was missing
   );
 }
 
@@ -162,62 +184,64 @@ export default function PromptBox({
                 {selectedCharacter ? (
                   <div className="char-pill">
                     <img src={selectedCharacter.photo_url} alt={selectedCharacter.name} className="char-pill-photo" />
-                    <span className="char-pill-name">{selectedCharacter.name}</span>
+                    <span className="char-pill-name btn-label">{selectedCharacter.name}</span>
                     {!selectedCharacter.face_embedding && <span className="char-pill-dot" title="Processing face..." />}
                     <button className="char-pill-remove" onClick={() => onSelectCharacter(null)}><X size={10} /></button>
                   </div>
                 ) : (
                   <button className="char-add-btn" onClick={() => setShowCharPicker(true)}>
-                    <UserPlus size={14} /><span>Character</span>
+                    <UserPlus size={14} /><span className="btn-label">Character</span>
                   </button>
                 )}
 
                 {/* Style */}
                 {selectedStyle ? (
-                  <div 
-                    className="style-pill" 
+                  <div
+                    className="style-pill"
                     onClick={() => setShowStylePicker(true)}
                     title="Change style"
                   >
-                    {/* Show real image - exactly like character photo */}
                     {selectedStyle.image ? (
-                      <img 
-                        src={selectedStyle.image} 
-                        alt={selectedStyle.title} 
-                        className="style-pill-img" 
+                      <img
+                        src={selectedStyle.image}
+                        alt={selectedStyle.title}
+                        className="style-pill-img"
                       />
                     ) : (
-                      <div 
-                        className="style-pill-swatch" 
-                        style={{ background: selectedStyle.gradient }} 
+                      <div
+                        className="style-pill-swatch"
+                        style={{ background: selectedStyle.gradient }}
                       />
                     )}
-                    
-                    <span className="style-pill-name">{selectedStyle.title}</span>
-                    
-                    <button 
+                    <span className="style-pill-name btn-label">{selectedStyle.title}</span>
+                    <button
                       className="char-pill-remove"
-                      onClick={e => { 
-                        e.stopPropagation(); 
-                        onSelectStyle(null); 
+                      onClick={e => {
+                        e.stopPropagation();
+                        onSelectStyle(null);
                       }}
                     >
                       <X size={10} />
                     </button>
                   </div>
                 ) : (
-                  <button 
-                    className="char-add-btn style-required" 
+                  <button
+                    className="char-add-btn style-required"
                     onClick={() => setShowStylePicker(true)}
                   >
                     <Sparkles size={14} />
-                    <span>Style *</span>
+                    <span className="btn-label">Style *</span>
                   </button>
                 )}
               </div>
 
               <button className="generate-fab" onClick={onGenerate} disabled={!canGenerate}>
-                {loading ? <div className="spinner"></div> : <Send size={20} />}
+                {loading ? <div className="spinner"></div> : (
+                  <>
+                    <Send size={20} />
+                    <span className="generate-cost">2<Zap size={10} fill="currentColor" /></span>
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -243,12 +267,19 @@ export default function PromptBox({
         <CharacterPicker
           characters={characters} selectedCharacter={selectedCharacter}
           onSelect={onSelectCharacter} onClose={() => setShowCharPicker(false)}
-          onCharacterCreated={(newChar) => { if (onSelectCharacter) onSelectCharacter(newChar); if (onCharacterCreated) onCharacterCreated(newChar); }}
+          onCharacterCreated={(newChar) => {
+            if (onSelectCharacter) onSelectCharacter(newChar);
+            if (onCharacterCreated) onCharacterCreated(newChar);
+          }}
         />
       )}
 
       {showStylePicker && (
-        <StylePicker selectedStyle={selectedStyle} onSelect={onSelectStyle} onClose={() => setShowStylePicker(false)} />
+        <StylePicker
+          selectedStyle={selectedStyle}
+          onSelect={onSelectStyle}
+          onClose={() => setShowStylePicker(false)}
+        />
       )}
     </div>
   );

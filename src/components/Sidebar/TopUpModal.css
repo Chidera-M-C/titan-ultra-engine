@@ -25,6 +25,11 @@
   transition: filter 0.2s ease, opacity 0.2s ease;
 }
 
+.modal-content::-webkit-scrollbar { width: 4px; }
+.modal-content::-webkit-scrollbar-track { background: transparent; }
+.modal-content::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
+.modal-content { scrollbar-width: thin; scrollbar-color: #2a2a2a transparent; }
+
 .modal-content--blurred {
   filter: blur(4px);
   opacity: 100;

@@ -186,8 +186,17 @@
   background: #000;
 }
 
+
 @media (max-width: 768px) {
   .t2v-inputs-row { flex-direction: column; }
   .t2v-input-main, .t2v-input-negative { flex: unset; width: 100%; }
   .t2v-video-wrap { max-width: 100%; }
+}
+
+@media (max-width: 768px) {
+  .btn-label { display: none; }
+  .t2v-generate-btn { padding: 8px 12px; gap: 4px; }
+  .char-add-btn { padding: 6px; min-width: unset; }
+  .char-pill { padding: 4px 6px; }
+  .vstyle-pill { padding: 4px 6px; }
 }
