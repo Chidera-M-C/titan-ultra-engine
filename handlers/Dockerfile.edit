@@ -39,10 +39,7 @@ import torch
 print('torch OK')
 from diffusers import StableDiffusionXLControlNetPipeline, ControlNetModel, DPMSolverMultistepScheduler, AutoencoderKL
 print('diffusers OK')
-# Try this to see if CannyDetector is the problem
 from controlnet_aux import OpenposeDetector
-# from controlnet_aux import CannyDetector  # comment this out temporarily
-# from controlnet_aux import OpenposeDetector, CannyDetector
 print('controlnet_aux OK')
 import runpod
 print('runpod OK')
