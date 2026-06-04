@@ -1,6 +1,7 @@
 import requests, os
 
 CIVITAI_TOKEN = os.environ.get("CIVITAI_TOKEN", "")
+HF_TOKEN = os.environ.get("HF_TOKEN", "")  # ← ADD THIS
 
 def download(url, path, label):
     if os.path.exists(path):
@@ -10,6 +11,8 @@ def download(url, path, label):
     headers = {"User-Agent": "Mozilla/5.0"}
     if "civitai.com" in url and CIVITAI_TOKEN:
         headers["Authorization"] = f"Bearer {CIVITAI_TOKEN}"
+    if "huggingface.co" in url and HF_TOKEN:        # ← ADD THIS
+        headers["Authorization"] = f"Bearer {HF_TOKEN}"  # ← ADD THIS
     r = requests.get(url, headers=headers, stream=True)
     r.raise_for_status()
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -24,13 +27,16 @@ def download(url, path, label):
     print(f"  {label} done")
 
 def download_hf_model(repo_id, local_path, label):
-    """Download a HuggingFace model repo"""
     if os.path.exists(local_path):
         print(f"  {label} already exists, skipping")
         return
     print(f"Downloading {label} from HuggingFace...")
     from huggingface_hub import snapshot_download
-    snapshot_download(repo_id=repo_id, local_dir=local_path)
+    snapshot_download(
+        repo_id=repo_id,
+        local_dir=local_path,
+        token=HF_TOKEN or None  # ← ADD THIS
+    )
     print(f"  {label} done")
 
 # Civitai models
