@@ -24,9 +24,10 @@ RUN pip install --no-cache-dir \
     opencv-python-headless==4.9.0.80
 
 ARG CIVITAI_TOKEN
+ARG HF_TOKEN
 
 COPY download_models_edit.py .
-RUN CIVITAI_TOKEN=${CIVITAI_TOKEN} python download_models_edit.py
+RUN CIVITAI_TOKEN=${CIVITAI_TOKEN} HF_TOKEN=${HF_TOKEN} python download_models_edit.py
 
 COPY handler_edit.py .
 
