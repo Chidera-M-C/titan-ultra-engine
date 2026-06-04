@@ -21,8 +21,8 @@ RUN pip install --no-cache-dir \
     Pillow==10.2.0 \
     requests==2.31.0 \
     controlnet-aux==0.0.7 \
-    timm \          # ← add this, controlnet_aux needs it
-    mediapipe \     # ← add this too
+    timm \
+    mediapipe \
     huggingface_hub==0.20.3 \
     opencv-python-headless==4.9.0.80
 
