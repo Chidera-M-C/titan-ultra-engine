@@ -1,6 +1,7 @@
 import requests, os
 
 CIVITAI_TOKEN = os.environ.get("CIVITAI_TOKEN", "")
+HF_TOKEN = os.environ.get("HF_TOKEN", "")  # ← ADD THIS
 
 def download(url, path, label):
     if os.path.exists(path):
@@ -10,6 +11,8 @@ def download(url, path, label):
     headers = {"User-Agent": "Mozilla/5.0"}
     if "civitai.com" in url and CIVITAI_TOKEN:
         headers["Authorization"] = f"Bearer {CIVITAI_TOKEN}"
+    if "huggingface.co" in url and HF_TOKEN:        # ← ADD THIS
+        headers["Authorization"] = f"Bearer {HF_TOKEN}"  # ← ADD THIS
     r = requests.get(url, headers=headers, stream=True)
     r.raise_for_status()
     os.makedirs(os.path.dirname(path), exist_ok=True)
