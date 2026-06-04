@@ -34,20 +34,6 @@ RUN CIVITAI_TOKEN=${CIVITAI_TOKEN} HF_TOKEN=${HF_TOKEN} python download_models_e
 
 COPY handler_edit.py .
 
-RUN python -c "
-import torch
-print('torch OK')
-from diffusers import StableDiffusionXLControlNetPipeline, ControlNetModel, DPMSolverMultistepScheduler, AutoencoderKL
-print('diffusers OK')
-from controlnet_aux import OpenposeDetector
-print('controlnet_aux OK')
-import runpod
-print('runpod OK')
-from PIL import Image
-print('PIL OK')
-import cv2
-print('cv2 OK')
-print('ALL IMPORTS OK')
-"
+RUN python -c "import torch; print('torch OK'); from diffusers import StableDiffusionXLControlNetPipeline, ControlNetModel, DPMSolverMultistepScheduler, AutoencoderKL; print('diffusers OK'); from controlnet_aux import OpenposeDetector; print('controlnet_aux OK'); import runpod; print('runpod OK'); from PIL import Image; print('PIL OK'); import cv2; print('cv2 OK'); print('ALL IMPORTS OK')"
 
 CMD ["python", "handler_edit.py"]
