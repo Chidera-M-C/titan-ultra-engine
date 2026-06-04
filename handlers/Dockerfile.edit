@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx \
     && rm -rf /var/lib/apt/lists/*
 
+
 RUN pip install --no-cache-dir \
     diffusers==0.27.0 \
     transformers==4.38.0 \
@@ -20,6 +21,8 @@ RUN pip install --no-cache-dir \
     Pillow==10.2.0 \
     requests==2.31.0 \
     controlnet-aux==0.0.7 \
+    timm \          # ← add this, controlnet_aux needs it
+    mediapipe \     # ← add this too
     huggingface_hub==0.20.3 \
     opencv-python-headless==4.9.0.80
 
