@@ -1,3 +1,11 @@
+import sys
+sys.stdout = sys.__stdout__
+sys.stderr = sys.__stderr__
+
+# Force unbuffered output so RunPod captures all logs
+import os
+os.environ['PYTHONUNBUFFERED'] = '1'
+
 import torch
 import runpod
 from diffusers import (
@@ -217,3 +225,14 @@ if __name__ == "__main__":
         print(f"FATAL STARTUP ERROR: {e}")
         traceback.print_exc()
         raise
+
+if __name__ == "__main__":
+    try:
+        load_models()
+        print("✓ Startup complete", flush=True)
+        runpod.serverless.start({"handler": handler})
+    except Exception as e:
+        import traceback
+        print(f"FATAL: {e}", file=sys.stderr, flush=True)
+        traceback.print_exc(file=sys.stderr)
+        sys.exit(1)
