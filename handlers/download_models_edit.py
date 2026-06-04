@@ -27,13 +27,16 @@ def download(url, path, label):
     print(f"  {label} done")
 
 def download_hf_model(repo_id, local_path, label):
-    """Download a HuggingFace model repo"""
     if os.path.exists(local_path):
         print(f"  {label} already exists, skipping")
         return
     print(f"Downloading {label} from HuggingFace...")
     from huggingface_hub import snapshot_download
-    snapshot_download(repo_id=repo_id, local_dir=local_path)
+    snapshot_download(
+        repo_id=repo_id,
+        local_dir=local_path,
+        token=HF_TOKEN or None  # ← ADD THIS
+    )
     print(f"  {label} done")
 
 # Civitai models
