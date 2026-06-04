@@ -122,6 +122,7 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/nudely-edit:latest
           build-args: |
             CIVITAI_TOKEN=${{ secrets.CIVITAI_TOKEN }}
+            HF_TOKEN=${{ secrets.HF_TOKEN }}
 
   build-face-extract:
     runs-on: ubuntu-latest
