@@ -12,10 +12,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 
+RUN pip install --no-cache-dir "numpy==1.26.4"
+
 RUN pip install --no-cache-dir \
-    "numpy<2" \
     diffusers==0.27.0 \
-    transformers==4.38.0 \
+    transformers==0.38.0 \
     accelerate==0.27.0 \
     safetensors==0.4.2 \
     runpod==1.6.2 \
@@ -27,8 +28,8 @@ RUN pip install --no-cache-dir \
     huggingface_hub==0.20.3 \
     opencv-python-headless==4.9.0.80
 
-RUN sed -i 's/from .mediapipe_face import MediapipeFaceDetector/pass  # mediapipe disabled/' \
-    /opt/conda/lib/python3.10/site-packages/controlnet_aux/__init__.py
+# Force numpy back down after everything installed
+RUN pip install --no-cache-dir --force-reinstall "numpy==1.26.4"
 
 ARG CIVITAI_TOKEN
 ARG HF_TOKEN
