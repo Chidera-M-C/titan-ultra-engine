@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
 
 
 RUN pip install --no-cache-dir \
+    "numpy<2" \
     diffusers==0.27.0 \
     transformers==4.38.0 \
     accelerate==0.27.0 \
@@ -22,6 +23,7 @@ RUN pip install --no-cache-dir \
     requests==2.31.0 \
     controlnet-aux==0.0.7 \
     timm \
+    mediapipe \
     huggingface_hub==0.20.3 \
     opencv-python-headless==4.9.0.80
 
