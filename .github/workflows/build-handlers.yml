@@ -119,7 +119,9 @@ jobs:
           context: ./handlers
           file: ./handlers/Dockerfile.edit
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/nudely-edit:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-edit:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-edit:v${{ github.run_number }}
           build-args: |
             CIVITAI_TOKEN=${{ secrets.CIVITAI_TOKEN }}
             HF_TOKEN=${{ secrets.HF_TOKEN }}
