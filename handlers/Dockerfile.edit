@@ -22,9 +22,11 @@ RUN pip install --no-cache-dir \
     requests==2.31.0 \
     controlnet-aux==0.0.7 \
     timm \
-    mediapipe==0.9.3.0 \
     huggingface_hub==0.20.3 \
     opencv-python-headless==4.9.0.80
+
+RUN sed -i 's/from .mediapipe_face import MediapipeFaceDetector/pass  # mediapipe disabled/' \
+    /opt/conda/lib/python3.10/site-packages/controlnet_aux/__init__.py
 
 ARG CIVITAI_TOKEN
 ARG HF_TOKEN
