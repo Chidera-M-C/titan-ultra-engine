@@ -25,6 +25,7 @@ RUN pip install --no-cache-dir \
     requests==2.31.0
 
 # Install peft AFTER transformers and accelerate so the backend is recognized
+# Install peft AFTER transformers and accelerate so the backend is recognized
 RUN pip install --no-cache-dir "peft==0.10.0"
 
 # Install remaining packages
