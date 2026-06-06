@@ -33,7 +33,8 @@ RUN pip install --no-cache-dir \
     runpod==1.6.2 \
     timm==0.9.16 \
     controlnet-aux==0.0.7 \
-    opencv-python-headless==4.9.0.80
+    opencv-python-headless==4.9.0.80 \
+    matplotlib==3.7.5
 
 # Patch out mediapipe (not needed, causes import errors)
 RUN sed -i 's/from .mediapipe_face import MediapipeFaceDetector/pass  # mediapipe disabled/' \
