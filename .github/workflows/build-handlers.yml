@@ -30,7 +30,9 @@ jobs:
           context: ./handlers
           file: ./handlers/Dockerfile.biglust
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/nudely-biglust:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-biglust:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-biglust:v${{ github.run_number }}
           build-args: |
             CIVITAI_TOKEN=${{ secrets.CIVITAI_TOKEN }}
 
