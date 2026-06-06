@@ -3,7 +3,6 @@ FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
 WORKDIR /app
 
 # Install missing system libraries
-# Install missing system libraries
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libsm6 \
