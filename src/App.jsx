@@ -335,11 +335,11 @@ export default function App() {
   const deductCreditsLive = async (amount) => {
     if (!user) return;
     const { data, error: fetchError } = await supabase
-      .from('users').select('credits').eq('id', user.id).single();
+      .from('user').select('credits').eq('id', user.id).single();
     if (fetchError) throw fetchError;
     const safeBalance = Math.max(0, (data.credits ?? 0) - amount);
     const { error: updateError } = await supabase
-      .from('users').update({ credits: safeBalance }).eq('id', user.id);
+      .from('user').update({ credits: safeBalance }).eq('id', user.id);
     if (updateError) throw updateError;
     setCredits(safeBalance);
   };
