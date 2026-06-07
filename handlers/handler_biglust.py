@@ -100,6 +100,7 @@ def load_models():
         # Fuse Detail Tweaker as permanent base LoRA
         base_pipeline.load_lora_weights(DETAIL_LORA_PATH)
         base_pipeline.fuse_lora(lora_scale=0.8)
+        base_pipeline.unload_lora_weights()
 
         base_pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
             base_pipeline.scheduler.config,
