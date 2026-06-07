@@ -17,7 +17,7 @@ LORA_DVN_PATH     = "/tmp/lora_dressed_vs_naked.safetensors"
 
 CRYSTALCLEAR_LINK = "https://civitai.com/api/download/models/2514955?type=Model&format=SafeTensor&size=pruned&fp=fp16"
 VAE_LINK          = "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/sdxl_vae.safetensors"
-LORA_NUDE_LINK    = "https://civitai.com/api/download/models/1506035?type=Model&format=SafeTensor"
+LORA_NUDE_LINK    = "https://civitai.red/api/download/models/160240?fileId=120561"
 LORA_DVN_LINK     = "https://civitai.com/api/download/models/1138533?type=Model&format=SafeTensor"
 
 # Style configs
@@ -104,15 +104,12 @@ def load_models():
         print("CrystalClear models loaded successfully")
 
 def switch_lora(lora_path, lora_scale):
-    """Unfuse current LoRA and fuse the requested one"""
     global current_lora
     if current_lora == lora_path:
-        return  # already loaded, skip
+        return
     if current_lora is not None:
-        base_pipeline.unfuse_lora()
         base_pipeline.unload_lora_weights()
-    base_pipeline.load_lora_weights(lora_path)
-    base_pipeline.fuse_lora(lora_scale=lora_scale)
+    base_pipeline.load_lora_weights(lora_path, lora_scale=lora_scale)
     current_lora = lora_path
 
 def build_prompts(user_prompt, style_id):
