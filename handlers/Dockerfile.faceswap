@@ -29,3 +29,5 @@ RUN python download_faceswap_models.py
 COPY handler_faceswap.py .
 
 CMD ["python", "handler_faceswap.py"]
+
+# updated
