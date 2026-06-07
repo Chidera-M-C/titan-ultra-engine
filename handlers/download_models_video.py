@@ -3,28 +3,39 @@ import requests, os, sys
 CIVITAI_TOKEN = os.environ.get("CIVITAI_TOKEN", "")
 HF_TOKEN      = os.environ.get("HF_TOKEN", "")
 
-def download(url, path, label):
+def download(url, path, label, retries=5):
     if os.path.exists(path):
         print(f"  {label} already exists, skipping")
         return
-    print(f"Downloading {label}...")
-    headers = {"User-Agent": "Mozilla/5.0"}
-    if "civitai.com" in url and CIVITAI_TOKEN:
-        headers["Authorization"] = f"Bearer {CIVITAI_TOKEN}"
-    if "huggingface.co" in url and HF_TOKEN:
-        headers["Authorization"] = f"Bearer {HF_TOKEN}"
-    r = requests.get(url, headers=headers, stream=True)
-    r.raise_for_status()
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    total_size = int(r.headers.get("content-length", 0))
-    with open(path, "wb") as f:
-        downloaded = 0
-        for chunk in r.iter_content(chunk_size=1024 * 1024):
-            f.write(chunk)
-            downloaded += len(chunk)
-            if total_size:
-                print(f"  {(downloaded/total_size)*100:.1f}%", end="\r")
-    print(f"  {label} done")
+    for attempt in range(retries):
+        try:
+            print(f"Downloading {label} (attempt {attempt+1})...")
+            headers = {"User-Agent": "Mozilla/5.0"}
+            if "civitai.com" in url and CIVITAI_TOKEN:
+                headers["Authorization"] = f"Bearer {CIVITAI_TOKEN}"
+            if "huggingface.co" in url and HF_TOKEN:
+                headers["Authorization"] = f"Bearer {HF_TOKEN}"
+            r = requests.get(url, headers=headers, stream=True, timeout=300)
+            r.raise_for_status()
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            total_size = int(r.headers.get("content-length", 0))
+            with open(path, "wb") as f:
+                downloaded = 0
+                for chunk in r.iter_content(chunk_size=1024 * 1024):
+                    f.write(chunk)
+                    downloaded += len(chunk)
+                    if total_size:
+                        print(f"  {(downloaded/total_size)*100:.1f}%", end="\r")
+            print(f"  {label} done")
+            return
+        except Exception as e:
+            print(f"  Attempt {attempt+1} failed: {e}")
+            if os.path.exists(path):
+                os.remove(path)
+            if attempt < retries - 1:
+                import time
+                time.sleep(10)
+    raise RuntimeError(f"Failed to download {label} after {retries} attempts")
 
 # ── Checkpoint (shared across all styles) ────────────────────────────────
 download(
