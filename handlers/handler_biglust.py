@@ -14,31 +14,13 @@ BIGLUST_PATH     = "/tmp/biglust.safetensors"
 VAE_PATH         = "/tmp/sdxl_vae.safetensors"
 DETAIL_LORA_PATH = "/tmp/add-detail-xl.safetensors"
 
-LORA_PATHS = {
-    'missionary_style': "/tmp/lora_missionary.safetensors",
-    'doggy_style':      "/tmp/lora_doggy.safetensors",
-    'cowgirl_style':    "/tmp/lora_cowgirl.safetensors",
-    'anal_sex':         "/tmp/lora_anal.safetensors",
-    'oral_sex':         "/tmp/lora_oral.safetensors",
-    'threesome_sex':    "/tmp/lora_threesome.safetensors",
-    'cum_on_face':      "/tmp/lora_cum_on_face.safetensors",
-    'lesbian_sex':      "/tmp/lora_lesbian.safetensors",
-}
+LORA_PATH = "/tmp/lora_styles.safetensors"
 
 BIGLUST_LINK     = "https://civitai.com/api/download/models/1081768?type=Model&format=SafeTensor&size=full&fp=fp16"
 VAE_LINK         = "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/sdxl_vae.safetensors"
 DETAIL_LORA_LINK = "https://huggingface.co/LyliaEngine/add-detail-xl/resolve/main/add-detail-xl.safetensors"
 
-LORA_LINKS = {
-    'missionary_style': "https://civitai.com/api/download/models/2536215?type=Model&format=SafeTensor",
-    'doggy_style':      "https://civitai.com/api/download/models/2530338?type=Model&format=SafeTensor",
-    'cowgirl_style':    "https://civitai.com/api/download/models/2530288?type=Model&format=SafeTensor",
-    'anal_sex':         "https://civitai.com/api/download/models/2530355?type=Model&format=SafeTensor",
-    'oral_sex':         "https://civitai.com/api/download/models/2530259?type=Model&format=SafeTensor",
-    'threesome_sex':    "https://civitai.com/api/download/models/714650?type=Model&format=SafeTensor",
-    'cum_on_face':      "https://civitai.com/api/download/models/2530375?type=Model&format=SafeTensor",
-    'lesbian_sex':      "https://civitai.com/api/download/models/714650?type=Model&format=SafeTensor",
-}
+LORA_LINK = "https://civitai.red/api/download/models/160240?fileId=120561"
 
 # Per-style generation settings
 STYLE_CONFIGS = {
@@ -84,9 +66,7 @@ def load_models():
         download_file(VAE_LINK,         VAE_PATH,          "SDXL VAE")
         download_file(DETAIL_LORA_LINK, DETAIL_LORA_PATH,  "Detail Tweaker XL LoRA")
 
-        # Download all style LoRAs
-        for style_id, link in LORA_LINKS.items():
-            download_file(link, LORA_PATHS[style_id], f"LoRA: {style_id}")
+        download_file(LORA_LINK, LORA_PATH, "Style LoRA")
 
         vae = AutoencoderKL.from_single_file(
             VAE_PATH, torch_dtype=torch.float16
@@ -127,18 +107,13 @@ def load_models():
         print("BigLust models and all LoRAs loaded successfully")
 
 def switch_lora(style_id):
-    """Switch style LoRA on top of the already-fused Detail Tweaker"""
     global current_lora
-    lora_path = LORA_PATHS.get(style_id)
-    if not lora_path:
-        return
-    if current_lora == lora_path:
-        return  # already active
-    if current_lora is not None:
-        base_pipeline.unload_lora_weights()
-    base_pipeline.load_lora_weights(lora_path)
+    if current_lora == LORA_PATH:
+        return  # already loaded
+    base_pipeline.load_lora_weights(LORA_PATH)
     config = STYLE_CONFIGS.get(style_id, {})
     base_pipeline.set_adapters_scale(config.get('lora_scale', 0.85))
+    current_lora = LORA_PATH
 
 def build_prompts(user_prompt, style_id):
     style_triggers = {
