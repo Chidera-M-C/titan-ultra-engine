@@ -134,12 +134,10 @@ def switch_lora(style_id):
     if current_lora == lora_path:
         return  # already active
     if current_lora is not None:
-        base_pipeline.unfuse_lora()
         base_pipeline.unload_lora_weights()
     base_pipeline.load_lora_weights(lora_path)
     config = STYLE_CONFIGS.get(style_id, {})
-    base_pipeline.fuse_lora(lora_scale=config.get('lora_scale', 0.85))
-    current_lora = lora_path
+    base_pipeline.set_adapters_scale(config.get('lora_scale', 0.85))
 
 def build_prompts(user_prompt, style_id):
     style_triggers = {
