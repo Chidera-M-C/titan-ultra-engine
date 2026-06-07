@@ -60,7 +60,9 @@ jobs:
           context: ./handlers
           file: ./handlers/Dockerfile.crystalclear
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/nudely-crystalclear:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-crystalclear:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-crystalclear:v${{ github.run_number }}
           build-args: |
             CIVITAI_TOKEN=${{ secrets.CIVITAI_TOKEN }}
 
