@@ -110,9 +110,8 @@ def switch_lora(style_id):
     global current_lora
     if current_lora == LORA_PATH:
         return  # already loaded
-    base_pipeline.load_lora_weights(LORA_PATH)
     config = STYLE_CONFIGS.get(style_id, {})
-    base_pipeline.set_adapters_scale(config.get('lora_scale', 0.85))
+    base_pipeline.load_lora_weights(LORA_PATH, lora_scale=config.get('lora_scale', 0.85))
     current_lora = LORA_PATH
 
 def build_prompts(user_prompt, style_id):
