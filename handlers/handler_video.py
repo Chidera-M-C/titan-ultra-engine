@@ -126,8 +126,8 @@ def load_models():
         download_file(link, LORA_PATHS[key], f"LoRA: {key}")
 
     print("Loading LTX-Video text-to-video pipeline...")
-    txt2vid_pipeline = LTXPipeline.from_single_file(
-        CHECKPOINT_PATH,
+    txt2vid_pipeline = LTXPipeline.from_pretrained(
+        "Lightricks/LTX-Video",
         torch_dtype=torch.bfloat16,
     ).to("cuda")
     txt2vid_pipeline.enable_attention_slicing()
