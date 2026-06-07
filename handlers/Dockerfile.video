@@ -13,19 +13,19 @@ RUN apt-get update && apt-get install -y \
 
 # Python deps
 RUN pip install --no-cache-dir \
-    runpod \
-    diffusers>=0.33.0 \
-    transformers>=4.45.0 \
-    accelerate \
-    safetensors \
-    Pillow \
-    requests \
-    huggingface_hub \
-    imageio \
-    imageio-ffmpeg \
-    sentencepiece \
-    protobuf \
-    peft
+    runpod==1.6.2 \
+    diffusers==0.31.0 \
+    transformers==4.40.0 \
+    accelerate==0.28.0 \
+    safetensors==0.4.3 \
+    Pillow==10.3.0 \
+    requests==2.31.0 \
+    huggingface_hub==0.22.2 \
+    imageio==2.34.0 \
+    imageio-ffmpeg==0.5.1 \
+    sentencepiece==0.2.0 \
+    protobuf==4.25.3 \
+    peft==0.10.0
 
 # Copy handler and downloader
 COPY handler_video.py .
