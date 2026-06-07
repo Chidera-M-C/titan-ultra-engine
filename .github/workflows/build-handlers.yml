@@ -253,6 +253,8 @@ jobs:
           context: ./handlers
           file: ./handlers/Dockerfile.video
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/nudely-video:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-video:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-video:v${{ github.run_number }}
           build-args: |
             CIVITAI_TOKEN=${{ secrets.CIVITAI_TOKEN }}
