@@ -22,7 +22,6 @@ RUN pip install --no-cache-dir --force-reinstall "numpy==1.24.4"
 # Accept CivitAI token as build arg
 ARG CIVITAI_TOKEN
 
-# Download all models at build time
 COPY download_models_biglust.py .
 RUN CIVITAI_TOKEN=${CIVITAI_TOKEN} python download_models_biglust.py
 
