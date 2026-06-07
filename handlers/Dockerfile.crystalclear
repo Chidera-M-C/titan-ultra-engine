@@ -2,15 +2,21 @@ FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
 
 WORKDIR /app
 
-# Install dependencies
+RUN pip install --no-cache-dir "numpy==1.24.4"
+
 RUN pip install --no-cache-dir \
-    diffusers==0.27.0 \
-    transformers==4.38.0 \
-    accelerate==0.27.0 \
-    safetensors==0.4.2 \
-    runpod==1.6.2 \
-    Pillow==10.2.0 \
-    requests==2.31.0
+    accelerate==0.28.0 \
+    transformers==4.40.0 \
+    diffusers==0.27.2 \
+    safetensors==0.4.3 \
+    huggingface_hub==0.22.2 \
+    Pillow==10.3.0 \
+    requests==2.31.0 \
+    runpod==1.6.2
+
+RUN pip install --no-cache-dir "peft==0.10.0"
+
+RUN pip install --no-cache-dir --force-reinstall "numpy==1.24.4"
 
 # Accept CivitAI token as build arg
 ARG CIVITAI_TOKEN
@@ -18,3 +24,6 @@ ARG CIVITAI_TOKEN
 # Download all models at build time
 COPY download_models_crystalclear.py .
 RUN CIVITAI_TOKEN=${CIVITAI_TOKEN} python download_models_crystalclear.py
+
+COPY handler_crystalclear.py .
+CMD ["python", "handler_crystalclear.py"]
