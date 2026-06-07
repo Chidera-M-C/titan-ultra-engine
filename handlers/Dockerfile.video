@@ -53,6 +53,5 @@ ENV HF_TOKEN=${HF_TOKEN}
 RUN python download_models_video.py
 
 # Update
-# Update
 # Start handler
 CMD ["python", "-u", "handler_video.py"]
