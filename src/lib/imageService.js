@@ -3,16 +3,14 @@ import { supabase } from './supabase';
 export const saveAiImage = async (userId, base64String, prompt, style = null) => {
   console.log('📸 saveAiImage called. userId:', userId, 'prompt:', prompt?.slice(0, 30));
 
-  try {
-    // Step 1: Verify session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw new Error(`Session error: ${sessionError.message}`);
-    if (!session) throw new Error('No active session — user not authenticated');
-    console.log('✅ Step 1: Session valid.');
+  if (!userId) {
+    throw new Error('No userId provided — user not authenticated');
+  }
 
-    // Step 2: Upload to R2 via API route
+  try {
+    // Step 1: Upload to R2 via API route
     const fileName = `${Date.now()}.jpg`;
-    console.log('⏳ Step 2: Uploading to R2...', fileName);
+    console.log('⏳ Step 1: Uploading to R2...', fileName);
 
     const uploadRes = await fetch('/api/upload-image', {
       method: 'POST',
@@ -30,10 +28,10 @@ export const saveAiImage = async (userId, base64String, prompt, style = null) =>
     }
 
     const { publicUrl } = await uploadRes.json();
-    console.log('✅ Step 2: R2 upload successful. URL:', publicUrl);
+    console.log('✅ Step 1: R2 upload successful. URL:', publicUrl);
 
-    // Step 3: Insert into Supabase images table (unchanged)
-    console.log('⏳ Step 3: Inserting into images table...');
+    // Step 2: Insert into Supabase images table
+    console.log('⏳ Step 2: Inserting into images table...');
     const { error: dbError } = await supabase
       .from('images')
       .insert([{
@@ -45,7 +43,7 @@ export const saveAiImage = async (userId, base64String, prompt, style = null) =>
       }]);
 
     if (dbError) throw new Error(`DB insert failed: ${dbError.message}`);
-    console.log('✅ Step 3: DB insert successful.');
+    console.log('✅ Step 2: DB insert successful.');
 
     return publicUrl;
   } catch (error) {
