@@ -413,6 +413,7 @@ export default function App() {
         completed = true;
         (async () => {
           try {
+            console.log('Deducting credits for user:', user?.id);
             await deductCreditsLive(2);
             const publicUrl = await saveAiImage(user.id, base64Image, prompt, styleId);
             setUserGallery(prev => [{
