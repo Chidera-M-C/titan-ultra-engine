@@ -40,7 +40,7 @@ RUN pip install --no-cache-dir \
     transformers==4.45.0 \
     accelerate==0.33.0
 
-RUN pip install --no-cache-dir "huggingface_hub==0.26.5"
+RUN pip install --no-cache-dir "huggingface_hub==0.28.1"
 
 # Copy handler and downloader
 COPY handler_video.py .
