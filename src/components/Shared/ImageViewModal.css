@@ -405,6 +405,7 @@
     box-shadow: none;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    scroll-padding-bottom: 90px;  /* add this */
   }
 
   /* Image fills full width, no side gaps, no cropping */
@@ -435,6 +436,7 @@
     border-top: 1px solid #1e1e1e;
     max-height: none;
     overflow-y: visible;
+    padding-bottom: 90px;  /* add this */
   }
 
   .ivm-scrollable {
@@ -464,7 +466,7 @@
   }
   
   .ivm-comments-list {
-    padding-bottom: 70px;
+    padding-bottom: 90px;
   }
   
   .ivm-login-hint {
