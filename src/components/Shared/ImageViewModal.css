@@ -293,19 +293,21 @@
 
 /* ── Comment input — sticky at bottom on desktop ─────────────────────────── */
 .ivm-comment-input-row {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 30;
-  background: #111;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
   border-top: 1px solid #1e1e1e;
+  flex-shrink: 0;
+  background: #111;
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
 }
 
 .ivm-comment-input {
   flex: 1;
   background: #1a1a1a;
-  padding-bottom: 70px;
   border: 1px solid #2a2a2a;
   border-radius: 20px;
   padding: 8px 14px;
@@ -452,11 +454,25 @@
   }
 
   .ivm-comment-input-row {
-    position: sticky;
+    position: fixed;
     bottom: 0;
+    left: 0;
+    right: 0;
     z-index: 30;
     background: #111;
     border-top: 1px solid #1e1e1e;
+  }
+  
+  .ivm-comments-list {
+    padding-bottom: 70px;
+  }
+  
+  .ivm-login-hint {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
   }
 
   .image-view-close {
