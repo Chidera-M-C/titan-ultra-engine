@@ -192,10 +192,15 @@ def apply_loras(pipeline, lora_list, active_tracker_key):
     for i, (lora_key, scale) in enumerate(lora_list):
         path = LORA_PATHS.get(lora_key)
         if path and os.path.exists(path):
-            adapter_name = f"lora_{i}"
-            pipeline.load_lora_weights(path, adapter_name=adapter_name)
-            adapters.append(adapter_name)
-            scales.append(scale)
+            try:
+                adapter_name = f"lora_{i}"
+                pipeline.load_lora_weights(path, adapter_name=adapter_name)
+                adapters.append(adapter_name)
+                scales.append(scale)
+            except Exception as e:
+                print(f"  WARNING: Failed to load LoRA {lora_key}: {e}")
+        else:
+            print(f"  WARNING: LoRA {lora_key} not found at {path}, skipping")
 
     if adapters:
         pipeline.set_adapters(adapters, adapter_weights=scales)
