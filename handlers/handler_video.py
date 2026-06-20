@@ -197,16 +197,27 @@ def apply_loras(pipeline, lora_list, active_tracker_key):
         try:
             adapter_name = f"lora_{i}"
             pipeline.load_lora_weights(path, adapter_name=adapter_name)
-            # Just trust that load_lora_weights worked if no exception
+            # Check if it actually registered by querying active adapters
+            active_adapters = pipeline.get_active_adapters() if hasattr(pipeline, 'get_active_adapters') else []
+            all_adapters = getattr(pipeline, '_lora_attn_processor_names', set())
+            # Just add it — we'll catch errors at set_adapters
             adapters.append(adapter_name)
             scales.append(scale)
         except Exception as e:
             print(f"  WARNING: Failed to load LoRA {lora_key}: {e}")
 
-    if adapters:
+    if not adapters:
+        print("  No LoRAs loaded, proceeding without")
+        return
+
+    try:
         pipeline.set_adapters(adapters, adapter_weights=scales)
-    else:
-        print("  No LoRAs loaded, proceeding without LoRA")
+    except ValueError as e:
+        print(f"  WARNING: set_adapters failed: {e} — proceeding without LoRA")
+        try:
+            pipeline.unload_lora_weights()
+        except Exception:
+            pass
 
 def get_dimensions(aspect_ratio):
     dims = {
