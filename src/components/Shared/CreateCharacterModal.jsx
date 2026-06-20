@@ -62,7 +62,7 @@ export default function CreateCharacterModal({ onClose, onCreated }) {
 	  try {
 	    // Credits check first
 	    const { data: userData } = await supabase
-	      .from('users').select('credits').eq('id', user.id).single();
+	      .from('user').select('credits').eq('id', user.id).single();
 	    if ((userData?.credits ?? 0) < 2) {
 	      setError('Insufficient credits. Character creation costs 2 credits.');
 	      return;
@@ -104,9 +104,9 @@ export default function CreateCharacterModal({ onClose, onCreated }) {
 
       try {
 			  const { data: userData } = await supabase
-			    .from('users').select('credits').eq('id', user.id).single();
+			    .from('user').select('credits').eq('id', user.id).single();
 			  const newBalance = Math.max(0, (userData.credits ?? 0) - 2);
-			  await supabase.from('users').update({ credits: newBalance }).eq('id', user.id);
+			  await supabase.from('user').update({ credits: newBalance }).eq('id', user.id);
 			  setCredits(newBalance);
 			} catch (err) {
 			  console.error('Credit deduction failed:', err);
