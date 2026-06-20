@@ -234,7 +234,15 @@ def duration_to_frames(duration_sec):
     return max(16, (frames // 8) * 8 + 1)
 
 def decode_image(base64_str):
-    data = base64.b64decode(base64_str.split(",")[1] if "," in base64_str else base64_str)
+    # Strip data URI prefix if present
+    if "," in base64_str:
+        base64_str = base64_str.split(",")[1]
+    # Fix padding
+    base64_str = base64_str.strip()
+    padding = 4 - len(base64_str) % 4
+    if padding != 4:
+        base64_str += "=" * padding
+    data = base64.b64decode(base64_str)
     return Image.open(io.BytesIO(data)).convert("RGB")
 
 def build_prompt(user_prompt, style_id, character=None):
