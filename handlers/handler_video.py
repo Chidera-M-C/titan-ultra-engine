@@ -191,19 +191,26 @@ def apply_loras(pipeline, lora_list, active_tracker_key):
     adapters, scales = [], []
     for i, (lora_key, scale) in enumerate(lora_list):
         path = LORA_PATHS.get(lora_key)
-        if path and os.path.exists(path):
-            try:
-                adapter_name = f"lora_{i}"
-                pipeline.load_lora_weights(path, adapter_name=adapter_name)
+        if not path or not os.path.exists(path):
+            print(f"  WARNING: LoRA {lora_key} not found, skipping")
+            continue
+        try:
+            adapter_name = f"lora_{i}"
+            pipeline.load_lora_weights(path, adapter_name=adapter_name)
+            # Verify it actually loaded
+            loaded = getattr(pipeline, 'peft_config', {})
+            if adapter_name in loaded:
                 adapters.append(adapter_name)
                 scales.append(scale)
-            except Exception as e:
-                print(f"  WARNING: Failed to load LoRA {lora_key}: {e}")
-        else:
-            print(f"  WARNING: LoRA {lora_key} not found at {path}, skipping")
+            else:
+                print(f"  WARNING: LoRA {lora_key} loaded but adapter not registered, skipping")
+        except Exception as e:
+            print(f"  WARNING: Failed to load LoRA {lora_key}: {e}")
 
     if adapters:
         pipeline.set_adapters(adapters, adapter_weights=scales)
+    else:
+        print("  No LoRAs loaded, proceeding without LoRA")
 
 def get_dimensions(aspect_ratio):
     dims = {
