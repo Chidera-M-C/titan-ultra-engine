@@ -1,7 +1,28 @@
-import requests, os
+"""
+Run this ONCE on a temporary RunPod pod with the network volume attached.
+It downloads all models and LoRAs into /runpod-volume so cold starts are instant.
+
+Usage:
+    python download_models_video.py
+"""
+
+import os
+os.environ["HF_HOME"] = "/workspace/huggingface"
+
+import requests
+from huggingface_hub import snapshot_download
 
 CIVITAI_TOKEN = os.environ.get("CIVITAI_TOKEN", "")
-HF_TOKEN      = os.environ.get("HF_TOKEN", "")
+
+# ── LoRAs ─────────────────────────────────────────────────────────────────
+LORAS = [
+    ("https://civitai.com/api/download/models/2747549?type=Model&format=SafeTensor", "/workspace/loras/lora_allinone_nsfw.safetensors",  "LoRA: All-In-One NSFW"),
+    ("https://civitai.red/api/download/models/2391828?type=Model&format=SafeTensor", "/workspace/loras/lora_posing_nude.safetensors",    "LoRA: Posing Nude"),
+    ("https://civitai.com/api/download/models/2674954?type=Model&format=SafeTensor", "/workspace/loras/lora_sex_thrust.safetensors",     "LoRA: Sex Thrust"),
+    ("https://civitai.red/api/download/models/2422587?type=Model&format=SafeTensor", "/workspace/loras/lora_blowjob.safetensors",        "LoRA: Blowjob"),
+    ("https://civitai.red/api/download/models/2460386?type=Model&format=SafeTensor", "/workspace/loras/lora_cum_facial.safetensors",     "LoRA: Cum Facial"),
+    ("https://civitai.red/api/download/models/2430424?type=Model&format=SafeTensor", "/workspace/loras/lora_cumshot_i2v.safetensors",    "LoRA: Cumshot I2V"),
+]
 
 def download(url, path, label, retries=3):
     if os.path.exists(path):
@@ -27,13 +48,18 @@ def download(url, path, label, retries=3):
                 os.remove(path)
             if attempt < retries - 1:
                 import time; time.sleep(10)
-    print(f"  WARNING: Could not download {label}, skipping")
+    print(f"  WARNING: Could not download {label}")
 
-download("https://civitai.com/api/download/models/2747549?type=Model&format=SafeTensor", "/tmp/lora_allinone_nsfw.safetensors", "LoRA: All-In-One NSFW")
-download("https://civitai.red/api/download/models/2391828?type=Model&format=SafeTensor", "/tmp/lora_posing_nude.safetensors", "LoRA: Posing Nude")
-download("https://civitai.com/api/download/models/2674954?type=Model&format=SafeTensor", "/tmp/lora_sex_thrust.safetensors", "LoRA: Sex Thrust")
-download("https://civitai.red/api/download/models/2195559?fileId=2088649", "/tmp/lora_blowjob.safetensors", "LoRA: Blowjob")
-download("https://civitai.red/api/download/models/2460386?type=Model&format=SafeTensor", "/tmp/lora_cum_facial.safetensors", "LoRA: Cum Facial")
-download("https://civitai.red/api/download/models/2430424?type=Model&format=SafeTensor", "/tmp/lora_cumshot_i2v.safetensors", "LoRA: Cumshot I2V")
+# ── Download LoRAs ─────────────────────────────────────────────────────────
+print("\n=== Downloading LoRAs ===")
+for url, path, label in LORAS:
+    download(url, path, label)
 
-print("All LoRAs downloaded successfully")
+# ── Download Wan models ────────────────────────────────────────────────────
+print("\n=== Downloading Wan2.1 T2V 14B (this will take a while) ===")
+snapshot_download("Wan-AI/Wan2.1-T2V-14B-Diffusers")
+
+print("\n=== Downloading Wan2.1 I2V 14B 480P (this will take a while) ===")
+snapshot_download("Wan-AI/Wan2.1-I2V-14B-480P-Diffusers")
+
+print("\n✅ All models and LoRAs saved to /runpod-volume — cold starts will now be fast!")
