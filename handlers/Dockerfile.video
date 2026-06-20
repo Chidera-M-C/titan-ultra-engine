@@ -3,7 +3,6 @@ FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
 WORKDIR /app
 
 # System deps
-# System deps
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     libsm6 \
@@ -42,19 +41,8 @@ RUN pip install --no-cache-dir \
 
 RUN pip install --no-cache-dir "huggingface_hub==0.28.1"
 
-# Copy handler and downloader
+# Copy handler only — models live on the network volume, not in the image
 COPY handler_video.py .
-COPY download_models_video.py .
 
-# Pre-download models at build time if CIVITAI_TOKEN is set
-# RunPod bakes these into the image so cold start is fast
-ARG CIVITAI_TOKEN=""
-ARG HF_TOKEN=""
-ENV CIVITAI_TOKEN=${CIVITAI_TOKEN}
-ENV HF_TOKEN=${HF_TOKEN}
-
-RUN python download_models_video.py
-
-# Update
 # Start handler
 CMD ["python", "-u", "handler_video.py"]
