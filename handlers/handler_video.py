@@ -1,6 +1,11 @@
+# ── IMPORTANT: Set HF_HOME before any other imports so all model loads
+#    come from the persistent network volume instead of ephemeral disk ──────
+import os
+os.environ["HF_HOME"] = "/workspace/huggingface"
+
 import torch
 import runpod
-import io, base64, os, requests
+import io, base64, requests
 from PIL import Image
 
 from diffusers import (
@@ -15,21 +20,21 @@ from diffusers.utils import export_to_video
 T2V_MODEL_ID = "Wan-AI/Wan2.1-T2V-14B-Diffusers"
 I2V_MODEL_ID = "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers"
 
-# ── LoRA paths ────────────────────────────────────────────────────────────
+# ── LoRA paths (persistent network volume — never re-downloaded) ───────────
 LORA_PATHS = {
-    'allinone_nsfw': "/tmp/lora_allinone_nsfw.safetensors",
-    'posing_nude':   "/tmp/lora_posing_nude.safetensors",
-    'sex_thrust':    "/tmp/lora_sex_thrust.safetensors",
-    'blowjob':       "/tmp/lora_blowjob.safetensors",
-    'cum_facial':    "/tmp/lora_cum_facial.safetensors",
-    'cumshot_i2v':   "/tmp/lora_cumshot_i2v.safetensors",
+    'allinone_nsfw': "/workspace/loras/lora_allinone_nsfw.safetensors",
+    'posing_nude':   "/workspace/loras/lora_posing_nude.safetensors",
+    'sex_thrust':    "/workspace/loras/lora_sex_thrust.safetensors",
+    'blowjob':       "/workspace/loras/lora_blowjob.safetensors",
+    'cum_facial':    "/workspace/loras/lora_cum_facial.safetensors",
+    'cumshot_i2v':   "/workspace/loras/lora_cumshot_i2v.safetensors",
 }
 
 LORA_LINKS = {
     'allinone_nsfw': "https://civitai.com/api/download/models/2747549?type=Model&format=SafeTensor",
     'posing_nude':   "https://civitai.red/api/download/models/2391828?type=Model&format=SafeTensor",
     'sex_thrust':    "https://civitai.com/api/download/models/2674954?type=Model&format=SafeTensor",
-    'blowjob':       "https://civitai.red/api/download/models/2422587?type=Model&format=SafeTensor",
+    'blowjob':       "https://civitai.red/api/download/models/2195559?fileId=2088649",
     'cum_facial':    "https://civitai.red/api/download/models/2460386?type=Model&format=SafeTensor",
     'cumshot_i2v':   "https://civitai.red/api/download/models/2430424?type=Model&format=SafeTensor",
 }
@@ -95,7 +100,9 @@ active_loras_t2v = []
 active_loras_i2v = []
 
 def download_file(url, path, label, retries=3):
+    """Download a LoRA only if it doesn't already exist on the volume."""
     if os.path.exists(path):
+        print(f"  {label} already on volume, skipping download")
         return
     civitai_token = os.environ.get('CIVITAI_TOKEN', '')
     hf_token = os.environ.get('HF_TOKEN', '')
@@ -129,11 +136,11 @@ def load_models():
     if txt2vid_pipeline is not None:
         return
 
-    # Download LoRAs
+    # Download any missing LoRAs to volume
     for key, link in LORA_LINKS.items():
         download_file(link, LORA_PATHS[key], f"LoRA: {key}")
 
-    print("Loading Wan2.1 text-to-video pipeline...")
+    print("Loading Wan2.1 text-to-video pipeline from volume cache...")
     vae = AutoencoderKLWan.from_pretrained(
         T2V_MODEL_ID, subfolder="vae", torch_dtype=torch.float32
     )
@@ -145,7 +152,7 @@ def load_models():
     )
     txt2vid_pipeline.enable_model_cpu_offload()
 
-    print("Loading Wan2.1 image-to-video pipeline...")
+    print("Loading Wan2.1 image-to-video pipeline from volume cache...")
     vae_i2v = AutoencoderKLWan.from_pretrained(
         I2V_MODEL_ID, subfolder="vae", torch_dtype=torch.float32
     )
