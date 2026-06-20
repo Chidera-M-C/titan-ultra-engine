@@ -1,7 +1,7 @@
 # ── IMPORTANT: Set HF_HOME before any other imports so all model loads
 #    come from the persistent network volume instead of ephemeral disk ──────
 import os
-os.environ["HF_HOME"] = "/workspace/huggingface"
+os.environ["HF_HOME"] = "/runpod-volume/huggingface"
 
 import torch
 import runpod
@@ -23,12 +23,12 @@ I2V_MODEL_ID = "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers"
 # ── LoRA paths (persistent network volume — never re-downloaded) ───────────
 # ── LoRA paths (persistent network volume — never re-downloaded) ───────────
 LORA_PATHS = {
-    'allinone_nsfw': "/workspace/loras/lora_allinone_nsfw.safetensors",
-    'posing_nude':   "/workspace/loras/lora_posing_nude.safetensors",
-    'sex_thrust':    "/workspace/loras/lora_sex_thrust.safetensors",
-    'blowjob':       "/workspace/loras/lora_blowjob.safetensors",
-    'cum_facial':    "/workspace/loras/lora_cum_facial.safetensors",
-    'cumshot_i2v':   "/workspace/loras/lora_cumshot_i2v.safetensors",
+    'allinone_nsfw': "/runpod-volume/loras/lora_allinone_nsfw.safetensors",
+    'posing_nude':   "/runpod-volume/loras/lora_posing_nude.safetensors",
+    'sex_thrust':    "/runpod-volume/loras/lora_sex_thrust.safetensors",
+    'blowjob':       "/runpod-volume/loras/lora_blowjob.safetensors",
+    'cum_facial':    "/runpod-volume/loras/lora_cum_facial.safetensors",
+    'cumshot_i2v':   "/runpod-volume/loras/lora_cumshot_i2v.safetensors",
 }
 
 LORA_LINKS = {
