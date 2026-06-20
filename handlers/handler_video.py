@@ -197,13 +197,9 @@ def apply_loras(pipeline, lora_list, active_tracker_key):
         try:
             adapter_name = f"lora_{i}"
             pipeline.load_lora_weights(path, adapter_name=adapter_name)
-            # Verify it actually loaded
-            loaded = getattr(pipeline, 'peft_config', {})
-            if adapter_name in loaded:
-                adapters.append(adapter_name)
-                scales.append(scale)
-            else:
-                print(f"  WARNING: LoRA {lora_key} loaded but adapter not registered, skipping")
+            # Just trust that load_lora_weights worked if no exception
+            adapters.append(adapter_name)
+            scales.append(scale)
         except Exception as e:
             print(f"  WARNING: Failed to load LoRA {lora_key}: {e}")
 
