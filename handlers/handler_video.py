@@ -21,6 +21,7 @@ T2V_MODEL_ID = "Wan-AI/Wan2.1-T2V-14B-Diffusers"
 I2V_MODEL_ID = "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers"
 
 # ── LoRA paths (persistent network volume — never re-downloaded) ───────────
+# ── LoRA paths (persistent network volume — never re-downloaded) ───────────
 LORA_PATHS = {
     'allinone_nsfw': "/workspace/loras/lora_allinone_nsfw.safetensors",
     'posing_nude':   "/workspace/loras/lora_posing_nude.safetensors",
