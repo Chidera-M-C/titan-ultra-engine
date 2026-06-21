@@ -190,7 +190,9 @@ jobs:
           context: ./handlers
           file: ./handlers/Dockerfile.character
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/nudely-character:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-character:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-character:v${{ github.run_number }}
           build-args: |
             CIVITAI_TOKEN=${{ secrets.CIVITAI_TOKEN }}
 
