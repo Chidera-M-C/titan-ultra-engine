@@ -30,7 +30,8 @@ RUN pip install --no-cache-dir \
     runpod==1.6.2 \
     insightface==0.7.3 \
     onnxruntime-gpu==1.16.3 \
-    opencv-python-headless==4.9.0.80
+    opencv-python-headless==4.9.0.80 \
+    einops==0.7.0
 
 RUN pip install --no-cache-dir "peft==0.10.0"
 
