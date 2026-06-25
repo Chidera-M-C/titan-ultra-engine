@@ -159,11 +159,11 @@ def load_models():
     )
     img2vid_pipeline = WanImageToVideoPipeline.from_pretrained(
         I2V_MODEL_ID, vae=vae_i2v, torch_dtype=torch.bfloat16
-    ).to("cuda")
+    )
     img2vid_pipeline.scheduler = UniPCMultistepScheduler.from_config(
         img2vid_pipeline.scheduler.config, flow_shift=3.0
     )
-    print("Wan2.1 video models loaded successfully")
+    img2vid_pipeline.enable_model_cpu_offload()  # only I2V offloads
 
 def apply_loras(pipeline, lora_list, active_tracker_key):
     global active_loras_t2v, active_loras_i2v
