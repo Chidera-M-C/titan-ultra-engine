@@ -151,7 +151,6 @@ def load_models():
     txt2vid_pipeline.scheduler = UniPCMultistepScheduler.from_config(
         txt2vid_pipeline.scheduler.config, flow_shift=5.0
     )
-    txt2vid_pipeline.enable_model_cpu_offload()
 
     print("Loading Wan2.1 image-to-video pipeline from volume cache...")
     vae_i2v = AutoencoderKLWan.from_pretrained(
@@ -163,8 +162,6 @@ def load_models():
     img2vid_pipeline.scheduler = UniPCMultistepScheduler.from_config(
         img2vid_pipeline.scheduler.config, flow_shift=3.0
     )
-    img2vid_pipeline.enable_model_cpu_offload()
-
     print("Wan2.1 video models loaded successfully")
 
 def apply_loras(pipeline, lora_list, active_tracker_key):
@@ -196,7 +193,7 @@ def apply_loras(pipeline, lora_list, active_tracker_key):
             continue
         try:
             adapter_name = f"lora_{i}"
-            pipeline.load_lora_weights(path, adapter_name=adapter_name)
+            pipeline.load_lora_weights(path, adapter_name=adapter_name, prefix=None)
             # Check if it actually registered by querying active adapters
             active_adapters = pipeline.get_active_adapters() if hasattr(pipeline, 'get_active_adapters') else []
             all_adapters = getattr(pipeline, '_lora_attn_processor_names', set())
@@ -224,10 +221,10 @@ def get_dimensions(aspect_ratio):
         '1:1':  (512, 512),
         '4:5':  (480, 624),
         '5:4':  (624, 480),
-        '9:16': (480, 832),
-        '16:9': (832, 480),
+        '9:16': (416, 736),
+        '16:9': (736, 416),
     }
-    return dims.get(aspect_ratio, (480, 832))
+    return dims.get(aspect_ratio, (416, 736))
 
 def duration_to_frames(duration_sec):
     frames = int(float(duration_sec) * 16)
@@ -295,7 +292,7 @@ def handler(job):
                 prompt=positive,
                 negative_prompt=negative,
                 num_frames=num_frames,
-                num_inference_steps=30,
+                num_inference_steps=20,
                 guidance_scale=style_cfg['guidance_scale'],
                 width=width,
                 height=height,
@@ -307,7 +304,7 @@ def handler(job):
                 prompt=positive,
                 negative_prompt=negative,
                 num_frames=num_frames,
-                num_inference_steps=30,
+                num_inference_steps=20,
                 guidance_scale=style_cfg['guidance_scale'],
                 width=width,
                 height=height,
