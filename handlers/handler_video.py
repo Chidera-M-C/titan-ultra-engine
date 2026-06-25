@@ -1,4 +1,5 @@
 # ── IMPORTANT: Set HF_HOME before any other imports so all model loads
+# ── IMPORTANT: Set HF_HOME before any other imports so all model loads
 #    come from the persistent network volume instead of ephemeral disk ──────
 import os
 os.environ["HF_HOME"] = "/runpod-volume/huggingface"
