@@ -405,6 +405,7 @@
     box-shadow: none;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    scroll-padding-bottom: 90px;  /* add this */
   }
 
   /* Image fills full width, no side gaps, no cropping */
@@ -435,6 +436,7 @@
     border-top: 1px solid #1e1e1e;
     max-height: none;
     overflow-y: visible;
+    padding-bottom: 90px;  /* add this */
   }
 
   .ivm-scrollable {
@@ -454,11 +456,25 @@
   }
 
   .ivm-comment-input-row {
-    position: sticky;
+    position: fixed;
     bottom: 0;
+    left: 0;
+    right: 0;
     z-index: 30;
     background: #111;
     border-top: 1px solid #1e1e1e;
+  }
+  
+  .ivm-comments-list {
+    padding-bottom: 90px;
+  }
+  
+  .ivm-login-hint {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
   }
 
   .image-view-close {

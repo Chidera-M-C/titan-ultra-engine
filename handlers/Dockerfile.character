@@ -17,26 +17,28 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && dpkg-reconfigure --frontend noninteractive tzdata \
     && rm -rf /var/lib/apt/lists/*
 
+RUN pip install --no-cache-dir "numpy==1.24.4"
+
 RUN pip install --no-cache-dir \
-    diffusers==0.27.0 \
-    transformers==4.38.0 \
-    accelerate==0.27.0 \
-    safetensors==0.4.2 \
-    runpod==1.6.2 \
-    Pillow==10.2.0 \
+    accelerate==0.28.0 \
+    transformers==4.40.0 \
+    diffusers==0.27.2 \
+    safetensors==0.4.3 \
+    huggingface_hub==0.22.2 \
+    Pillow==10.3.0 \
     requests==2.31.0 \
-    huggingface_hub==0.20.3 \
+    runpod==1.6.2 \
     insightface==0.7.3 \
     onnxruntime-gpu==1.16.3 \
-    opencv-python-headless==4.9.0.80
+    opencv-python-headless==4.9.0.80 \
+    einops==0.7.0
+
+RUN pip install --no-cache-dir "peft==0.10.0"
+
+RUN pip install --no-cache-dir --force-reinstall "numpy==1.24.4"
 
 RUN pip install --no-cache-dir git+https://github.com/tencent-ailab/IP-Adapter.git
 
-ARG CIVITAI_TOKEN
-
-COPY download_models_character.py .
-RUN CIVITAI_TOKEN=${CIVITAI_TOKEN} python download_models_character.py
-
 COPY handler_character.py .
 
-CMD ["python", "handler_character.py"]
+CMD ["python", "-u", "handler_character.py"]

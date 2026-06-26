@@ -11,34 +11,38 @@ RUN apt-get update && apt-get install -y \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Python deps
+RUN pip install --no-cache-dir --upgrade pip
+
 RUN pip install --no-cache-dir \
-    runpod \
-    diffusers>=0.33.0 \
-    transformers>=4.45.0 \
-    accelerate \
-    safetensors \
-    Pillow \
-    requests \
-    huggingface_hub \
-    imageio \
-    imageio-ffmpeg \
-    sentencepiece \
-    protobuf \
-    peft
+    imageio==2.34.0 \
+    imageio-ffmpeg==0.5.1 \
+    sentencepiece==0.2.0 \
+    protobuf==4.25.3
 
-# Copy handler and downloader
+RUN pip install --no-cache-dir \
+    runpod==1.6.2 \
+    huggingface_hub==0.24.0 \
+    safetensors==0.4.3 \
+    requests==2.31.0 \
+    Pillow==10.3.0 \
+    ftfy
+
+RUN pip install --no-cache-dir peft==0.10.0
+
+RUN pip install --no-cache-dir \
+    torch==2.4.0 \
+    torchvision \
+    --index-url https://download.pytorch.org/whl/cu124 || true
+
+RUN pip install --no-cache-dir \
+    diffusers==0.33.1 \
+    transformers==4.45.0 \
+    accelerate==0.33.0
+
+RUN pip install --no-cache-dir "huggingface_hub==0.28.1"
+
+# Copy handler only — models live on the network volume, not in the image
 COPY handler_video.py .
-COPY download_models_video.py .
-
-# Pre-download models at build time if CIVITAI_TOKEN is set
-# RunPod bakes these into the image so cold start is fast
-ARG CIVITAI_TOKEN=""
-ARG HF_TOKEN=""
-ENV CIVITAI_TOKEN=${CIVITAI_TOKEN}
-ENV HF_TOKEN=${HF_TOKEN}
-
-RUN python download_models_video.py
 
 # Start handler
 CMD ["python", "-u", "handler_video.py"]

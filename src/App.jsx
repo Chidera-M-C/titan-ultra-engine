@@ -335,11 +335,11 @@ export default function App() {
   const deductCreditsLive = async (amount) => {
     if (!user) return;
     const { data, error: fetchError } = await supabase
-      .from('users').select('credits').eq('id', user.id).single();
+      .from('user').select('credits').eq('id', user.id).single();
     if (fetchError) throw fetchError;
     const safeBalance = Math.max(0, (data.credits ?? 0) - amount);
     const { error: updateError } = await supabase
-      .from('users').update({ credits: safeBalance }).eq('id', user.id);
+      .from('user').update({ credits: safeBalance }).eq('id', user.id);
     if (updateError) throw updateError;
     setCredits(safeBalance);
   };
@@ -374,14 +374,16 @@ export default function App() {
     prompt, aspect_ratio, image: attachedImg,
     setLoadingFn, setErrorFn, setImageFn,
     styleId = null, negative_prompt = null,
-    face_embedding = null, character = null
-  }) => {
+    face_embedding = null, character = null,
+    face_image = null   // ← add this
+}) => {
     const payload = { prompt, aspect_ratio };
     if (attachedImg)     payload.image           = attachedImg;
     if (negative_prompt) payload.negative_prompt = negative_prompt;
     if (styleId)         payload.style           = styleId;
     if (face_embedding)  payload.face_embedding  = face_embedding;
     if (character)       payload.character       = character;
+    if (face_image)      payload.face_image      = face_image;  // ← add this
 
     const response = await fetch('/api/generate', {
       method: 'POST',
@@ -413,6 +415,7 @@ export default function App() {
         completed = true;
         (async () => {
           try {
+            console.log('Deducting credits for user:', user?.id);
             await deductCreditsLive(2);
             const publicUrl = await saveAiImage(user.id, base64Image, prompt, styleId);
             setUserGallery(prev => [{
@@ -449,12 +452,13 @@ export default function App() {
         ? `${selectedCharacter.name}, ${selectedCharacter.race} woman, ${selectedCharacter.body_type?.replace(/_/g, ' ')}, same face same person, `
         : '';
       const characterPayload = selectedCharacter?.face_embedding ? {
-        face_embedding: selectedCharacter.face_embedding,
-        character: {
-          name:      selectedCharacter.name,
-          race:      selectedCharacter.race,
-          body_type: selectedCharacter.body_type,
-        }
+          face_embedding: selectedCharacter.face_embedding,
+          character: {
+              name:      selectedCharacter.name,
+              race:      selectedCharacter.race,
+              body_type: selectedCharacter.body_type,
+          },
+          face_image: selectedCharacter.photo_url,  // ← add this line
       } : {};
       await runGeneration({
         prompt: characterContext + prompt,
@@ -484,12 +488,13 @@ export default function App() {
     setStyleImage(null);
     try {
       const characterPayload = selectedCharacter?.face_embedding ? {
-        face_embedding: selectedCharacter.face_embedding,
-        character: {
-          name:      selectedCharacter.name,
-          race:      selectedCharacter.race,
-          body_type: selectedCharacter.body_type,
-        }
+          face_embedding: selectedCharacter.face_embedding,
+          character: {
+              name:      selectedCharacter.name,
+              race:      selectedCharacter.race,
+              body_type: selectedCharacter.body_type,
+          },
+          face_image: selectedCharacter.photo_url,  // ← add this line
       } : {};
       await runGeneration({
         prompt:          finalPrompt,

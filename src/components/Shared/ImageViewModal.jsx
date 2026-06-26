@@ -83,7 +83,7 @@ function Comment({ comment, imageOwnerId, depth = 0 }) {
       console.error('Reply insert error:', error);
     } else if (newReply) {
       const { data: profileData } = await supabase
-        .from('users')
+        .from('user')
         .select('username, avatar_url')
         .eq('id', user.id)
         .single();
@@ -231,7 +231,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, imageP
           );
 
           const { data: allProfiles } = await supabase
-            .from('users')
+            .from('user')
             .select('id, username, avatar_url')
             .in('id', Array.from(allUserIds));
 
@@ -304,7 +304,7 @@ export default function ImageViewModal({ imageUrl, imageId, imageOwnerId, imageP
       console.error('Comment insert error:', error);
     } else if (newComment) {
       const { data: profileData } = await supabase
-        .from('users')
+        .from('user')
         .select('username, avatar_url')
         .eq('id', user.id)
         .single();

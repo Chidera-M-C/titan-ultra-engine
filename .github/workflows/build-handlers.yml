@@ -30,7 +30,9 @@ jobs:
           context: ./handlers
           file: ./handlers/Dockerfile.biglust
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/nudely-biglust:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-biglust:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-biglust:v${{ github.run_number }}
           build-args: |
             CIVITAI_TOKEN=${{ secrets.CIVITAI_TOKEN }}
 
@@ -58,7 +60,9 @@ jobs:
           context: ./handlers
           file: ./handlers/Dockerfile.crystalclear
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/nudely-crystalclear:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-crystalclear:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-crystalclear:v${{ github.run_number }}
           build-args: |
             CIVITAI_TOKEN=${{ secrets.CIVITAI_TOKEN }}
 
@@ -119,7 +123,9 @@ jobs:
           context: ./handlers
           file: ./handlers/Dockerfile.edit
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/nudely-edit:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-edit:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-edit:v${{ github.run_number }}
           build-args: |
             CIVITAI_TOKEN=${{ secrets.CIVITAI_TOKEN }}
             HF_TOKEN=${{ secrets.HF_TOKEN }}
@@ -184,7 +190,9 @@ jobs:
           context: ./handlers
           file: ./handlers/Dockerfile.character
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/nudely-character:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-character:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-character:v${{ github.run_number }}
           build-args: |
             CIVITAI_TOKEN=${{ secrets.CIVITAI_TOKEN }}
 
@@ -214,7 +222,9 @@ jobs:
           context: ./handlers
           file: ./handlers/Dockerfile.faceswap
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/nudely-faceswap:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-faceswap:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-faceswap:v${{ github.run_number }}
 
   build-video:
     runs-on: ubuntu-latest
@@ -245,6 +255,8 @@ jobs:
           context: ./handlers
           file: ./handlers/Dockerfile.video
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/nudely-video:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-video:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nudely-video:v${{ github.run_number }}
           build-args: |
             CIVITAI_TOKEN=${{ secrets.CIVITAI_TOKEN }}

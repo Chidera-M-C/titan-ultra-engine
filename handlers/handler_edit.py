@@ -1,3 +1,11 @@
+import sys
+sys.stdout = sys.__stdout__
+sys.stderr = sys.__stderr__
+
+# Force unbuffered output so RunPod captures all logs
+import os
+os.environ['PYTHONUNBUFFERED'] = '1'
+
 import torch
 import runpod
 from diffusers import (
@@ -14,11 +22,11 @@ from PIL import Image, ImageFilter, ImageEnhance
 # --- CONFIG ---
 CIVITAI_TOKEN    = os.environ.get("CIVITAI_API_TOKEN", "")  # ← reads from RunPod env vars
 
-JUGGERNAUT_PATH  = "/tmp/juggernaut_xl.safetensors"
-VAE_PATH         = "/tmp/sdxl_vae.safetensors"
-DETAIL_LORA_PATH = "/tmp/add-detail-xl.safetensors"
-OPENPOSE_PATH    = "/tmp/controlnet_openpose_xl"
-CANNY_PATH       = "/tmp/controlnet_canny_xl"
+JUGGERNAUT_PATH  = "/workspace/juggernaut_xl.safetensors"
+VAE_PATH         = "/workspace/sdxl_vae.safetensors"
+DETAIL_LORA_PATH = "/workspace/add-detail-xl.safetensors"
+OPENPOSE_PATH    = "/workspace/controlnet_openpose_xl"
+CANNY_PATH       = "/workspace/controlnet_canny_xl"
 
 JUGGERNAUT_LINK  = "https://civitai.com/api/download/models/1759168?type=Model&format=SafeTensor&size=full&fp=fp16"
 VAE_LINK         = "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/sdxl_vae.safetensors"
@@ -217,3 +225,14 @@ if __name__ == "__main__":
         print(f"FATAL STARTUP ERROR: {e}")
         traceback.print_exc()
         raise
+
+if __name__ == "__main__":
+    try:
+        load_models()
+        print("✓ Startup complete", flush=True)
+        runpod.serverless.start({"handler": handler})
+    except Exception as e:
+        import traceback
+        print(f"FATAL: {e}", file=sys.stderr, flush=True)
+        traceback.print_exc(file=sys.stderr)
+        sys.exit(1)

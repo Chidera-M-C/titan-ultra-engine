@@ -89,6 +89,7 @@ export default function ImageToVideoView({
 
   const handleGenerate = () => {
     if (!canGenerate) return;
+  
     onGenerate({
       type: 'image_to_video',
       prompt,
@@ -97,7 +98,7 @@ export default function ImageToVideoView({
       style: selectedStyle.id,
       duration,
       motionStrength,
-      startImage: startImage?.url,
+      startImage: startImage?.url,  // just send URL directly
       endImage: endImage?.url || null,
       character: selectedCharacter ? {
         name: selectedCharacter.name,

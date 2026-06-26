@@ -1,17 +1,17 @@
 import torch
 import runpod
 from diffusers import StableDiffusionXLPipeline, DPMSolverMultistepScheduler, AutoencoderKL
-from ip_adapter import IPAdapterFaceIDPlusXL
+from ip_adapter.ip_adapter_faceid import IPAdapterFaceIDPlusXL
 import io, base64, os, requests
 import numpy as np
 from PIL import Image, ImageFilter, ImageEnhance
 
 # --- CONFIG ---
-JUGGERNAUT_PATH  = "/tmp/juggernaut_xl.safetensors"
-VAE_PATH         = "/tmp/sdxl_vae.safetensors"
-DETAIL_LORA_PATH = "/tmp/add-detail-xl.safetensors"
-IPADAPTER_PATH   = "/tmp/ip_adapter_faceid_plus_sdxl.bin"
-IMAGE_ENCODER_PATH = "/tmp/image_encoder"
+JUGGERNAUT_PATH  = "/workspace/juggernaut_xl.safetensors"
+VAE_PATH         = "/workspace/sdxl_vae.safetensors"
+DETAIL_LORA_PATH = "/workspace/add-detail-xl.safetensors"
+IPADAPTER_PATH   = "/workspace/ip_adapter_faceid_plus_sdxl.bin"
+IMAGE_ENCODER_PATH = "/workspace/image_encoder"
 
 JUGGERNAUT_LINK  = "https://civitai.com/api/download/models/1759168?type=Model&format=SafeTensor&size=full&fp=fp16"
 VAE_LINK         = "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/sdxl_vae.safetensors"
@@ -139,14 +139,28 @@ def handler(job):
         face_embedding = input_data.get('face_embedding')
         character_meta = input_data.get('character', {})
         face_scale     = float(input_data.get('face_scale', 0.8))
+        face_image_url = input_data.get('face_image', None)
 
         if not face_embedding:
             return {"error": "No face embedding provided"}
 
+        # Fetch face image from URL
+        face_image = None
+        if face_image_url:
+            try:
+                r = requests.get(face_image_url, timeout=30)
+                r.raise_for_status()
+                face_image = Image.open(io.BytesIO(r.content)).convert("RGB")
+                print(f"  Face image loaded: {face_image.size}")
+            except Exception as e:
+                print(f"  WARNING: Could not fetch face image: {e}")
+
+        if face_image is None:
+            return {"error": "Could not load face image — face_image URL missing or failed to fetch"}
+
         positive, negative = build_prompts(user_prompt, character_meta, user_negative)
         width, height      = get_dimensions(aspect_ratio)
 
-        # Convert embedding list back to numpy
         faceid_embeds = torch.tensor([face_embedding], dtype=torch.float16).to("cuda")
 
         runpod.serverless.progress_update(job, "GENERATING_WITH_CHARACTER")
@@ -155,6 +169,7 @@ def handler(job):
             prompt=positive,
             negative_prompt=negative,
             faceid_embeds=faceid_embeds,
+            face_image=face_image,      # ← add this
             num_inference_steps=35,
             guidance_scale=7.0,
             width=width,
