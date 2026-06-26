@@ -450,12 +450,13 @@ export default function App() {
         ? `${selectedCharacter.name}, ${selectedCharacter.race} woman, ${selectedCharacter.body_type?.replace(/_/g, ' ')}, same face same person, `
         : '';
       const characterPayload = selectedCharacter?.face_embedding ? {
-        face_embedding: selectedCharacter.face_embedding,
-        character: {
-          name:      selectedCharacter.name,
-          race:      selectedCharacter.race,
-          body_type: selectedCharacter.body_type,
-        }
+          face_embedding: selectedCharacter.face_embedding,
+          character: {
+              name:      selectedCharacter.name,
+              race:      selectedCharacter.race,
+              body_type: selectedCharacter.body_type,
+          },
+          face_image: selectedCharacter.photo_url,  // ← add this line
       } : {};
       await runGeneration({
         prompt: characterContext + prompt,
@@ -485,12 +486,13 @@ export default function App() {
     setStyleImage(null);
     try {
       const characterPayload = selectedCharacter?.face_embedding ? {
-        face_embedding: selectedCharacter.face_embedding,
-        character: {
-          name:      selectedCharacter.name,
-          race:      selectedCharacter.race,
-          body_type: selectedCharacter.body_type,
-        }
+          face_embedding: selectedCharacter.face_embedding,
+          character: {
+              name:      selectedCharacter.name,
+              race:      selectedCharacter.race,
+              body_type: selectedCharacter.body_type,
+          },
+          face_image: selectedCharacter.photo_url,  // ← add this line
       } : {};
       await runGeneration({
         prompt:          finalPrompt,
