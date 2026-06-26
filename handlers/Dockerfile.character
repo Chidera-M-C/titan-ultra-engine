@@ -39,11 +39,6 @@ RUN pip install --no-cache-dir --force-reinstall "numpy==1.24.4"
 
 RUN pip install --no-cache-dir git+https://github.com/tencent-ailab/IP-Adapter.git
 
-ARG CIVITAI_TOKEN
-
-COPY download_models_character.py .
-RUN CIVITAI_TOKEN=${CIVITAI_TOKEN} python download_models_character.py
-
 COPY handler_character.py .
 
 CMD ["python", "handler_character.py"]
