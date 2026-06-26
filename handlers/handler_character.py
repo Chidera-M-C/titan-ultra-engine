@@ -139,14 +139,23 @@ def handler(job):
         face_embedding = input_data.get('face_embedding')
         character_meta = input_data.get('character', {})
         face_scale     = float(input_data.get('face_scale', 0.8))
+        face_image_b64 = input_data.get('face_image', None)  # ← add this
 
         if not face_embedding:
             return {"error": "No face embedding provided"}
 
+        # Decode face image if provided
+        face_image = None
+        if face_image_b64:
+            try:
+                img_data = base64.b64decode(face_image_b64.split(",")[1] if "," in face_image_b64 else face_image_b64)
+                face_image = Image.open(io.BytesIO(img_data)).convert("RGB")
+            except Exception as e:
+                print(f"  WARNING: Could not decode face_image: {e}")
+
         positive, negative = build_prompts(user_prompt, character_meta, user_negative)
         width, height      = get_dimensions(aspect_ratio)
 
-        # Convert embedding list back to numpy
         faceid_embeds = torch.tensor([face_embedding], dtype=torch.float16).to("cuda")
 
         runpod.serverless.progress_update(job, "GENERATING_WITH_CHARACTER")
@@ -155,6 +164,7 @@ def handler(job):
             prompt=positive,
             negative_prompt=negative,
             faceid_embeds=faceid_embeds,
+            face_image=face_image,      # ← add this
             num_inference_steps=35,
             guidance_scale=7.0,
             width=width,
