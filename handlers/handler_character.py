@@ -1,7 +1,7 @@
 import torch
 import runpod
 from diffusers import StableDiffusionXLPipeline, DPMSolverMultistepScheduler, AutoencoderKL
-from ip_adapter import IPAdapterFaceIDPlusXL
+from ip_adapter.ip_adapter_faceid import IPAdapterFaceIDPlusXL
 import io, base64, os, requests
 import numpy as np
 from PIL import Image, ImageFilter, ImageEnhance
