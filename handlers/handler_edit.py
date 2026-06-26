@@ -22,11 +22,11 @@ from PIL import Image, ImageFilter, ImageEnhance
 # --- CONFIG ---
 CIVITAI_TOKEN    = os.environ.get("CIVITAI_API_TOKEN", "")  # ← reads from RunPod env vars
 
-JUGGERNAUT_PATH  = "/tmp/juggernaut_xl.safetensors"
-VAE_PATH         = "/tmp/sdxl_vae.safetensors"
-DETAIL_LORA_PATH = "/tmp/add-detail-xl.safetensors"
-OPENPOSE_PATH    = "/tmp/controlnet_openpose_xl"
-CANNY_PATH       = "/tmp/controlnet_canny_xl"
+JUGGERNAUT_PATH  = "/runpod-volume/juggernaut_xl.safetensors"
+VAE_PATH         = "/runpod-volume/sdxl_vae.safetensors"
+DETAIL_LORA_PATH = "/runpod-volume/add-detail-xl.safetensors"
+OPENPOSE_PATH    = "/runpod-volume/controlnet_openpose_xl"
+CANNY_PATH       = "/runpod-volume/controlnet_canny_xl"
 
 JUGGERNAUT_LINK  = "https://civitai.com/api/download/models/1759168?type=Model&format=SafeTensor&size=full&fp=fp16"
 VAE_LINK         = "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/sdxl_vae.safetensors"
