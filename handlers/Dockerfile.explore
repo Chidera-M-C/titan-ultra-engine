@@ -11,11 +11,6 @@ RUN pip install --no-cache-dir \
     Pillow==10.2.0 \
     requests==2.31.0
 
-ARG CIVITAI_TOKEN
-
-COPY download_models_explore.py .
-RUN CIVITAI_TOKEN=${CIVITAI_TOKEN} python download_models_explore.py
-
 COPY handler_explore.py .
 
 CMD ["python", "handler_explore.py"]
