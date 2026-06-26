@@ -87,23 +87,8 @@ export default function ImageToVideoView({
 
   const canGenerate = startImage && selectedStyle && !loading;
 
-  const handleGenerate = async () => {
+  const handleGenerate = () => {
     if (!canGenerate) return;
-  
-    // Fetch the image and convert to base64
-    let startImageB64 = null;
-    try {
-      const response = await fetch(startImage.url, { mode: 'cors' });
-      const blob = await response.blob();
-      startImageB64 = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(blob);
-      });
-    } catch (e) {
-      console.error('Failed to convert image to base64:', e);
-      return;
-    }
   
     onGenerate({
       type: 'image_to_video',
@@ -113,7 +98,7 @@ export default function ImageToVideoView({
       style: selectedStyle.id,
       duration,
       motionStrength,
-      startImage: startImageB64,
+      startImage: startImage?.url,  // just send URL directly
       endImage: endImage?.url || null,
       character: selectedCharacter ? {
         name: selectedCharacter.name,
