@@ -41,4 +41,4 @@ RUN pip install --no-cache-dir git+https://github.com/tencent-ailab/IP-Adapter.g
 
 COPY handler_character.py .
 
-CMD ["python", "handler_character.py"]
+CMD ["python", "-u", "handler_character.py"]
