@@ -10,11 +10,11 @@ import io, base64, os, requests
 from PIL import Image, ImageFilter, ImageEnhance
 
 # --- CONFIG ---
-BIGLUST_PATH     = "/tmp/biglust.safetensors"
-VAE_PATH         = "/tmp/sdxl_vae.safetensors"
-DETAIL_LORA_PATH = "/tmp/add-detail-xl.safetensors"
+BIGLUST_PATH     = "/runpod-volume/biglust.safetensors"
+VAE_PATH         = "/runpod-volume/sdxl_vae.safetensors"
+DETAIL_LORA_PATH = "/runpod-volume/add-detail-xl.safetensors"
 
-LORA_PATH = "/tmp/lora_styles.safetensors"
+LORA_PATH = "/runpod-volume/lora_styles.safetensors"
 
 BIGLUST_LINK     = "https://civitai.com/api/download/models/1081768?type=Model&format=SafeTensor&size=full&fp=fp16"
 VAE_LINK         = "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/sdxl_vae.safetensors"
