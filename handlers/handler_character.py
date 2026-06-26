@@ -139,19 +139,24 @@ def handler(job):
         face_embedding = input_data.get('face_embedding')
         character_meta = input_data.get('character', {})
         face_scale     = float(input_data.get('face_scale', 0.8))
-        face_image_b64 = input_data.get('face_image', None)  # ← add this
+        face_image_url = input_data.get('face_image', None)
 
         if not face_embedding:
             return {"error": "No face embedding provided"}
 
-        # Decode face image if provided
+        # Fetch face image from URL
         face_image = None
-        if face_image_b64:
+        if face_image_url:
             try:
-                img_data = base64.b64decode(face_image_b64.split(",")[1] if "," in face_image_b64 else face_image_b64)
-                face_image = Image.open(io.BytesIO(img_data)).convert("RGB")
+                r = requests.get(face_image_url, timeout=30)
+                r.raise_for_status()
+                face_image = Image.open(io.BytesIO(r.content)).convert("RGB")
+                print(f"  Face image loaded: {face_image.size}")
             except Exception as e:
-                print(f"  WARNING: Could not decode face_image: {e}")
+                print(f"  WARNING: Could not fetch face image: {e}")
+
+        if face_image is None:
+            return {"error": "Could not load face image — face_image URL missing or failed to fetch"}
 
         positive, negative = build_prompts(user_prompt, character_meta, user_negative)
         width, height      = get_dimensions(aspect_ratio)
