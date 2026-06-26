@@ -93,7 +93,7 @@ export default function ImageToVideoView({
     // Fetch the image and convert to base64
     let startImageB64 = null;
     try {
-      const response = await fetch(startImage.url);
+      const response = await fetch(startImage.url, { mode: 'cors' });
       const blob = await response.blob();
       startImageB64 = await new Promise((resolve) => {
         const reader = new FileReader();
