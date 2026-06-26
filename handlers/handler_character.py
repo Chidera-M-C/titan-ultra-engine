@@ -1,3 +1,5 @@
+import os
+os.environ["HF_HOME"] = "/workspace/huggingface"
 import torch
 import runpod
 from diffusers import StableDiffusionXLPipeline, DPMSolverMultistepScheduler, AutoencoderKL
