@@ -10,10 +10,10 @@ import io, base64, os, requests
 from PIL import Image, ImageFilter, ImageEnhance
 
 # --- CONFIG ---
-CRYSTALCLEAR_PATH = "/tmp/crystalclear.safetensors"
-VAE_PATH          = "/tmp/sdxl_vae.safetensors"
-LORA_NUDE_PATH    = "/tmp/lora_nude_portrait.safetensors"
-LORA_DVN_PATH     = "/tmp/lora_dressed_vs_naked.safetensors"
+CRYSTALCLEAR_PATH = "/runpod-volume/crystalclear.safetensors"
+VAE_PATH          = "/runpod-volume/sdxl_vae.safetensors"
+LORA_NUDE_PATH    = "/runpod-volume/lora_nude_portrait.safetensors"
+LORA_DVN_PATH     = "/runpod-volume/lora_dressed_vs_naked.safetensors"
 
 CRYSTALCLEAR_LINK = "https://civitai.com/api/download/models/2514955?type=Model&format=SafeTensor&size=pruned&fp=fp16"
 VAE_LINK          = "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/sdxl_vae.safetensors"
