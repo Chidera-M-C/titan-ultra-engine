@@ -7,11 +7,11 @@ import numpy as np
 from PIL import Image, ImageFilter, ImageEnhance
 
 # --- CONFIG ---
-JUGGERNAUT_PATH  = "/tmp/juggernaut_xl.safetensors"
-VAE_PATH         = "/tmp/sdxl_vae.safetensors"
-DETAIL_LORA_PATH = "/tmp/add-detail-xl.safetensors"
-IPADAPTER_PATH   = "/tmp/ip_adapter_faceid_plus_sdxl.bin"
-IMAGE_ENCODER_PATH = "/tmp/image_encoder"
+JUGGERNAUT_PATH  = "/runpod-volume/juggernaut_xl.safetensors"
+VAE_PATH         = "/runpod-volume/sdxl_vae.safetensors"
+DETAIL_LORA_PATH = "/runpod-volume/add-detail-xl.safetensors"
+IPADAPTER_PATH   = "/runpod-volume/ip_adapter_faceid_plus_sdxl.bin"
+IMAGE_ENCODER_PATH = "/runpod-volume/image_encoder"
 
 JUGGERNAUT_LINK  = "https://civitai.com/api/download/models/1759168?type=Model&format=SafeTensor&size=full&fp=fp16"
 VAE_LINK         = "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/sdxl_vae.safetensors"
