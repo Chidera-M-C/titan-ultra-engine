@@ -374,14 +374,16 @@ export default function App() {
     prompt, aspect_ratio, image: attachedImg,
     setLoadingFn, setErrorFn, setImageFn,
     styleId = null, negative_prompt = null,
-    face_embedding = null, character = null
-  }) => {
+    face_embedding = null, character = null,
+    face_image = null   // ← add this
+}) => {
     const payload = { prompt, aspect_ratio };
     if (attachedImg)     payload.image           = attachedImg;
     if (negative_prompt) payload.negative_prompt = negative_prompt;
     if (styleId)         payload.style           = styleId;
     if (face_embedding)  payload.face_embedding  = face_embedding;
     if (character)       payload.character       = character;
+    if (face_image)      payload.face_image      = face_image;  // ← add this
 
     const response = await fetch('/api/generate', {
       method: 'POST',
