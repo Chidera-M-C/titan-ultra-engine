@@ -18,12 +18,5 @@ RUN pip install --no-cache-dir "peft==0.10.0"
 
 RUN pip install --no-cache-dir --force-reinstall "numpy==1.24.4"
 
-# Accept CivitAI token as build arg
-ARG CIVITAI_TOKEN
-
-# Download all models at build time
-COPY download_models_crystalclear.py .
-RUN CIVITAI_TOKEN=${CIVITAI_TOKEN} python download_models_crystalclear.py
-
 COPY handler_crystalclear.py .
 CMD ["python", "handler_crystalclear.py"]
