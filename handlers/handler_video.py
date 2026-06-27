@@ -1,7 +1,6 @@
 """
-handler_video.py — ComfyUI-based Wan2.1 video generation for RunPod serverless.
-Models live on the network volume at /workspace/wan_checkpoints — never re-downloaded.
-ComfyUI is started as a subprocess and we POST workflows to its API.
+handler_video.py — ComfyUI + WanVideoWrapper video generation for RunPod serverless.
+Models live on the network volume at /runpod-volume — never downloaded at runtime.
 """
 
 import os
@@ -15,23 +14,23 @@ import requests
 import runpod
 from PIL import Image
 
-# ── Paths ─────────────────────────────────────────────────────────────────
-COMFYUI_DIR  = "/comfyui"
-COMFYUI_URL  = "http://127.0.0.1:8188"
+# ── ComfyUI paths ─────────────────────────────────────────────────────────
+COMFYUI_DIR = "/comfyui"
+COMFYUI_URL = "http://127.0.0.1:8188"
 
-COMFYUI_MODELS_DIR = f"{COMFYUI_DIR}/models"
-LORA_VOLUME_DIR    = "/runpod-volume/loras"
-CHECKPOINT_DIR     = "/workspace/wan_checkpoints"
+# ── Model file names (as ComfyUI sees them after symlinking) ──────────────
+T2V_MODEL    = "wan2.1_t2v_14B_fp8.safetensors"
+I2V_MODEL    = "wan2.1_i2v_480p_14B_fp8.safetensors"
+T5_ENCODER   = "umt5-xxl-enc-bf16.safetensors"
+VAE_MODEL    = "wan_2.1_vae.safetensors"
+CLIP_VISION  = "clip_vision_h.safetensors"
 
-# ── Actual filenames downloaded to /workspace/wan_checkpoints ─────────────
-# ── Actual filenames downloaded to /workspace/wan_checkpoints ─────────────
-T2V_MODEL_FILE    = "wan2.1_t2v_14B_fp8.safetensors"
-I2V_MODEL_FILE    = "wan2.1_i2v_480p_14B_fp8.safetensors"
-TEXT_ENCODER_FILE = "umt5-xxl-enc-bf16.safetensors"
-VAE_FILE          = "wan_2.1_vae.safetensors"
-CLIP_VISION_FILE  = "clip_vision_h.safetensors"
+# ── Volume paths ──────────────────────────────────────────────────────────
+VOL = "/runpod-volume"
+LORA_VOL_DIR = f"{VOL}/loras"
+CKPT_VOL_DIR = f"{VOL}/wan_checkpoints"
 
-# ── LoRA files ────────────────────────────────────────────────────────────
+# ── LoRA file names ───────────────────────────────────────────────────────
 LORA_FILES = {
     'allinone_nsfw': "lora_allinone_nsfw.safetensors",
     'posing_nude':   "lora_posing_nude.safetensors",
@@ -45,388 +44,426 @@ LORA_FILES = {
 STYLE_CONFIGS = {
     'female_nude_portrait': {
         'loras': [('posing_nude', 0.85)],
-        'guidance_scale': 5.0,
-        'trigger': 'nude woman, elegant pose, natural lighting, bare skin, slow graceful movement',
+        'guidance_scale': 7.5,
+        'trigger': 'nude woman, elegant pose, natural lighting, bare skin',
     },
     'dressed_vs_naked': {
         'loras': [('posing_nude', 0.80)],
-        'guidance_scale': 5.0,
-        'trigger': 'woman partially undressing, sensual reveal, slow motion',
+        'guidance_scale': 7.5,
+        'trigger': 'woman partially undressing, sensual reveal, contrast clothed and nude',
     },
     'missionary_style': {
         'loras': [('allinone_nsfw', 0.85), ('sex_thrust', 0.70)],
-        'guidance_scale': 5.0,
-        'trigger': 'missionary sex, man on top, face to face, rhythmic thrusting motion, explicit',
+        'guidance_scale': 7.5,
+        'trigger': 'missionary sex, man on top, face to face, thrusting motion, explicit',
     },
     'doggy_style': {
         'loras': [('allinone_nsfw', 0.85), ('sex_thrust', 0.70)],
-        'guidance_scale': 5.0,
-        'trigger': 'doggy style sex, from behind, rear entry, rhythmic thrusting motion, explicit',
+        'guidance_scale': 7.5,
+        'trigger': 'doggy style sex, from behind, rear entry, thrusting motion, explicit',
     },
     'cowgirl_style': {
         'loras': [('allinone_nsfw', 0.85)],
-        'guidance_scale': 5.0,
+        'guidance_scale': 7.5,
         'trigger': 'cowgirl position, woman on top, riding motion, explicit',
     },
     'anal_sex': {
         'loras': [('allinone_nsfw', 0.85), ('sex_thrust', 0.70)],
-        'guidance_scale': 5.0,
+        'guidance_scale': 7.5,
         'trigger': 'anal sex, anal penetration, from behind, thrusting, explicit',
     },
     'oral_sex': {
         'loras': [('blowjob', 0.85), ('cum_facial', 0.60)],
-        'guidance_scale': 5.0,
+        'guidance_scale': 7.5,
         'trigger': 'oral sex, blowjob, deepthroat motion, explicit',
     },
     'threesome_sex': {
         'loras': [('allinone_nsfw', 0.80)],
-        'guidance_scale': 5.5,
+        'guidance_scale': 8.0,
         'trigger': 'threesome, group sex, three people, explicit',
     },
     'cum_on_face': {
         'loras': [('cum_facial', 0.85), ('cumshot_i2v', 0.80)],
-        'guidance_scale': 4.5,
+        'guidance_scale': 7.0,
         'trigger': 'cum on face, facial, explicit',
     },
     'lesbian_sex': {
         'loras': [('allinone_nsfw', 0.80)],
-        'guidance_scale': 5.0,
+        'guidance_scale': 7.5,
         'trigger': 'lesbian sex, two women, girl on girl, explicit',
     },
 }
 
 comfyui_process = None
 
-# ── Symlink models into ComfyUI's expected directories ────────────────────
-def setup_model_symlinks():
-    dirs = [
-        f"{COMFYUI_MODELS_DIR}/checkpoints",
-        f"{COMFYUI_MODELS_DIR}/loras",
-        f"{COMFYUI_MODELS_DIR}/vae",
-        f"{COMFYUI_MODELS_DIR}/clip",
-        f"{COMFYUI_MODELS_DIR}/clip_vision",
-        f"{COMFYUI_MODELS_DIR}/diffusion_models",
-        f"{COMFYUI_MODELS_DIR}/text_encoders",
-    ]
-    for d in dirs:
-        os.makedirs(d, exist_ok=True)
-
-    def symlink(src, dst):
-        if os.path.exists(src) and not os.path.lexists(dst):
-            os.symlink(src, dst)
-            print(f"  Symlinked: {os.path.basename(src)}")
-        elif not os.path.exists(src):
-            print(f"  WARNING: Not found on volume: {src}")
+# ── Symlink models from volume into ComfyUI's model directories ───────────
+def setup_symlinks():
+    dirs = {
+        "diffusion_models": f"{COMFYUI_DIR}/models/diffusion_models",
+        "text_encoders":    f"{COMFYUI_DIR}/models/text_encoders",
+        "vae":              f"{COMFYUI_DIR}/models/vae",
+        "clip_vision":      f"{COMFYUI_DIR}/models/clip_vision",
+        "loras":            f"{COMFYUI_DIR}/models/loras",
+    }
+    for name, path in dirs.items():
+        os.makedirs(path, exist_ok=True)
 
     # Diffusion models
-    symlink(
-        f"{CHECKPOINT_DIR}/diffusion_models/{T2V_MODEL_FILE}",
-        f"{COMFYUI_MODELS_DIR}/diffusion_models/{T2V_MODEL_FILE}"
-    )
-    symlink(
-        f"{CHECKPOINT_DIR}/diffusion_models/{I2V_MODEL_FILE}",
-        f"{COMFYUI_MODELS_DIR}/diffusion_models/{I2V_MODEL_FILE}"
-    )
+    for filename in [T2V_MODEL, I2V_MODEL]:
+        src = f"{CKPT_VOL_DIR}/diffusion_models/{filename}"
+        dst = f"{dirs['diffusion_models']}/{filename}"
+        _symlink(src, dst)
+
     # Text encoder
-    symlink(
-        f"{CHECKPOINT_DIR}/text_encoders/{TEXT_ENCODER_FILE}",
-        f"{COMFYUI_MODELS_DIR}/text_encoders/{TEXT_ENCODER_FILE}"
-    )
+    src = f"{CKPT_VOL_DIR}/text_encoders/{T5_ENCODER}"
+    dst = f"{dirs['text_encoders']}/{T5_ENCODER}"
+    _symlink(src, dst)
+
     # VAE
-    symlink(
-        f"{CHECKPOINT_DIR}/vae/{VAE_FILE}",
-        f"{COMFYUI_MODELS_DIR}/vae/{VAE_FILE}"
-    )
-    # CLIP Vision
-    symlink(
-        f"{CHECKPOINT_DIR}/clip_vision/{CLIP_VISION_FILE}",
-        f"{COMFYUI_MODELS_DIR}/clip_vision/{CLIP_VISION_FILE}"
-    )
+    src = f"{CKPT_VOL_DIR}/vae/{VAE_MODEL}"
+    dst = f"{dirs['vae']}/{VAE_MODEL}"
+    _symlink(src, dst)
+
+    # CLIP vision
+    src = f"{CKPT_VOL_DIR}/clip_vision/{CLIP_VISION}"
+    dst = f"{dirs['clip_vision']}/{CLIP_VISION}"
+    _symlink(src, dst)
+
     # LoRAs
     for key, filename in LORA_FILES.items():
-        symlink(
-            f"{LORA_VOLUME_DIR}/{filename}",
-            f"{COMFYUI_MODELS_DIR}/loras/{filename}"
-        )
+        src = f"{LORA_VOL_DIR}/{filename}"
+        dst = f"{dirs['loras']}/{filename}"
+        _symlink(src, dst)
 
-    print("Model symlinks complete.")
+    print("Symlinks ready.")
 
+def _symlink(src, dst):
+    if os.path.exists(dst):
+        return
+    if os.path.exists(src):
+        os.symlink(src, dst)
+        print(f"  Linked: {os.path.basename(src)}")
+    else:
+        print(f"  WARNING: Not found on volume: {src}")
+
+# ── Start ComfyUI ─────────────────────────────────────────────────────────
 def start_comfyui():
     global comfyui_process
-    print("Starting ComfyUI server...")
+    print("Starting ComfyUI...")
     comfyui_process = subprocess.Popen(
         ["python", "main.py", "--listen", "127.0.0.1", "--port", "8188",
          "--disable-auto-launch", "--gpu-only"],
         cwd=COMFYUI_DIR,
-        stdout=None,
-        stderr=None,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
     )
-    # Wait for ComfyUI to be ready using a socket check instead of requests
-    import socket
     for i in range(60):
         try:
-            sock = socket.create_connection(("127.0.0.1", 8188), timeout=2)
-            sock.close()
-            print(f"ComfyUI port open after {(i+1)*2}s — waiting for full init...")
-            time.sleep(5)
-            # Print available WanVideo nodes for debugging
-            try:
-                obj_info = requests.get("http://127.0.0.1:8188/object_info", timeout=10)
-                wan_nodes = [k for k in obj_info.json().keys() if 'Wan' in k or 'wan' in k]
-                print(f"  Available Wan nodes: {wan_nodes}")
-            except Exception as e:
-                print(f"  Could not fetch node list: {e}")
-            return
-        except (socket.error, ConnectionRefusedError):
+            r = requests.get(f"{COMFYUI_URL}/system_stats", timeout=3)
+            if r.status_code == 200:
+                print(f"ComfyUI ready ({i*2}s)")
+                return
+        except Exception:
             pass
         time.sleep(2)
-    raise RuntimeError("ComfyUI failed to start within 120 seconds")
+    raise RuntimeError("ComfyUI failed to start within 120s")
 
 # ── Helpers ───────────────────────────────────────────────────────────────
 def get_dimensions(aspect_ratio):
-    dims = {
+    return {
         '1:1':  (512, 512),
         '4:5':  (480, 624),
         '5:4':  (624, 480),
         '9:16': (416, 736),
         '16:9': (736, 416),
-    }
-    return dims.get(aspect_ratio, (416, 736))
+    }.get(aspect_ratio, (416, 736))
 
 def duration_to_frames(duration_sec):
     frames = int(float(duration_sec) * 16)
     return max(16, (frames // 8) * 8 + 1)
 
 def build_prompt(user_prompt, style_id, character=None):
-    style_cfg = STYLE_CONFIGS.get(style_id, {})
-    trigger = style_cfg.get('trigger', '')
-    char_context = ''
+    cfg = STYLE_CONFIGS.get(style_id, {})
+    trigger = cfg.get('trigger', '')
+    char = ''
     if character:
-        name      = character.get('name', '')
-        race      = character.get('race', '')
-        body_type = character.get('body_type', '').replace('_', ' ')
-        char_context = f"{name}, {race} woman, {body_type}, "
-    return (
-        f"{char_context}{user_prompt}, {trigger}, "
-        f"photorealistic, masterpiece, best quality, cinematic, "
-        f"smooth motion, fluid movement, natural lighting"
-    )
+        char = f"{character.get('name','')}, {character.get('race','')} woman, {character.get('body_type','').replace('_',' ')}, "
+    return f"{char}{user_prompt}, {trigger}, photorealistic, masterpiece, best quality, cinematic, smooth motion, fluid movement, natural lighting"
 
 def build_negative():
-    return (
-        "static, frozen, no motion, watermark, text, logo, "
-        "blurry, low quality, bad anatomy, deformed, ugly, "
-        "jumpcut, flicker, distorted"
-    )
+    return "static, frozen, no motion, watermark, text, logo, blurry, low quality, bad anatomy, deformed, ugly, jumpcut, flicker, distorted"
 
-def upload_image_to_comfyui(base64_or_url):
-    """Fetch/decode image and upload to ComfyUI input folder."""
+def upload_image(base64_or_url):
+    """Upload image to ComfyUI input folder, return filename."""
     if base64_or_url.startswith("http"):
         r = requests.get(base64_or_url, timeout=30)
         r.raise_for_status()
-        img_data = r.content
+        img_bytes = r.content
     else:
-        b64 = base64_or_url.split(",")[1] if "," in base64_or_url else base64_or_url
-        b64 = b64.strip()
-        padding = 4 - len(b64) % 4
-        if padding != 4:
-            b64 += "=" * padding
-        img_data = base64.b64decode(b64)
+        data = base64_or_url.split(",")[1] if "," in base64_or_url else base64_or_url
+        data = data.strip()
+        pad = 4 - len(data) % 4
+        if pad != 4:
+            data += "=" * pad
+        img_bytes = base64.b64decode(data)
 
-    # Convert to PNG and resize if too large
-    img = Image.open(io.BytesIO(img_data)).convert("RGB")
-    # Ensure dimensions are multiples of 8
-    w, h = img.size
-    w = (w // 8) * 8
-    h = (h // 8) * 8
-    img = img.resize((w, h), Image.LANCZOS)
-
+    img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
     buf = io.BytesIO()
     img.save(buf, format="PNG")
-    buf.seek(0)
-
-    filename = f"input_{uuid.uuid4().hex[:8]}.png"
-
-    # Upload using multipart form — ComfyUI expects this exact format
+    filename = f"input_{uuid.uuid4().hex}.png"
     r = requests.post(
         f"{COMFYUI_URL}/upload/image",
-        files={"image": (filename, buf, "image/png")},
-        data={"type": "input", "overwrite": "true"},
-        timeout=30,
+        files={"image": (filename, buf.getvalue(), "image/png")},
+        data={"overwrite": "true"},
     )
-    if not r.ok:
-        print(f"  Upload failed {r.status_code}: {r.text[:500]}")
-        r.raise_for_status()
+    r.raise_for_status()
     return r.json()["name"]
 
 # ── Workflow builders ─────────────────────────────────────────────────────
-def inject_loras(workflow, lora_list):
-    """Chain LoRA nodes before the sampler. Returns the final model reference."""
-    prev_model = ["1", 0]
-    for i, (lora_key, scale) in enumerate(lora_list):
-        filename = LORA_FILES.get(lora_key)
-        if not filename:
-            continue
-        node_id = f"lora_{i}"
-        workflow["prompt"][node_id] = {
-            "class_type": "WanVideoLoraSelect",
+def build_t2v_workflow(prompt, negative, width, height, num_frames, guidance_scale, lora_list):
+    """
+    T2V workflow using WanVideoWrapper nodes:
+    LoadWanVideoT5TextEncoder → WanVideoTextEncode
+    WanVideoModelLoader (+ optional WanVideoLoraSelect)
+    WanVideoVAELoader
+    WanVideoSampler → WanVideoDecode → VHS_VideoCombine
+    """
+    p = {
+        # T5 text encoder
+        "t5": {
+            "class_type": "LoadWanVideoT5TextEncoder",
             "inputs": {
-                "lora": filename,
-                "strength": scale,
-                "prev_lora": prev_model if i > 0 else ["1", 0],
+                "model_name": T5_ENCODER,
+                "precision": "bf16",
             }
-        }
-        prev_model = [node_id, 0]
-    return prev_model
-
-def build_t2v_workflow(prompt, negative, width, height, num_frames,
-                       guidance_scale, lora_list):
-    workflow = {
-        "prompt": {
-            "1": {
-                "class_type": "WanVideoModelLoader",
-                "inputs": {
-                    "model": T2V_MODEL_FILE,
-                    "dtype": "fp8_e4m3fn",
-                    "text_encoder": TEXT_ENCODER_FILE,
-                    "vae": VAE_FILE,
-                }
-            },
-            "3": {
-                "class_type": "WanVideoVAEEncode",
-                "inputs": {
-                    "model": ["1", 0],
-                    "image": ["img", 0],
-                    "width": width,
-                    "height": height,
-                    "num_frames": num_frames,
-                    "force_offload": True,
-                }
-            },
-            },
-            "3": {
-                "class_type": "WanVideoEmptyLatent",
-                "inputs": {
-                    "width": width,
-                    "height": height,
-                    "num_frames": num_frames,
-                    "batch_size": 1,
-                }
-            },
-            "4": {
-                "class_type": "WanVideoSampler",
-                "inputs": {
-                    "model": ["1", 0],
-                    "conditioning": ["2", 0],
-                    "latent": ["3", 0],
-                    "steps": 20,
-                    "cfg": guidance_scale,
-                    "seed": -1,
-                    "scheduler": "unipc",
-                    "shift": 3.0,
-                }
-            },
-            "5": {
-                "class_type": "WanVideoDecode",
-                "inputs": {
-                    "model": ["1", 0],
-                    "samples": ["4", 0],
-                }
-            },
-            "6": {
-                "class_type": "VHS_VideoCombine",
-                "inputs": {
-                    "images": ["5", 0],
-                    "frame_rate": 16,
-                    "loop_count": 0,
-                    "filename_prefix": "nudely_video",
-                    "format": "video/h264-mp4",
-                    "save_output": True,
-                }
+        },
+        # Text encode
+        "text": {
+            "class_type": "WanVideoTextEncode",
+            "inputs": {
+                "t5": ["t5", 0],
+                "positive_prompt": prompt,
+                "negative_prompt": negative,
+                "force_offload": True,
             }
-        }
-    }
-    if lora_list:
-        final_model = inject_loras(workflow, lora_list)
-        workflow["prompt"]["4"]["inputs"]["model"] = final_model
-    return workflow
-
-def build_i2v_workflow(prompt, negative, width, height, num_frames,
-                       guidance_scale, lora_list, image_filename):
-    workflow = {
-        "prompt": {
-            "1": {
-                "class_type": "WanVideoModelLoader",
-                "inputs": {
-                    "model": I2V_MODEL_FILE,
-                    "dtype": "fp8_e4m3fn",
-                    "text_encoder": TEXT_ENCODER_FILE,
-                    "vae": VAE_FILE,
-                    "clip_vision": CLIP_VISION_FILE,
-                }
-            },
-            "img": {
-                "class_type": "LoadImage",
-                "inputs": {
-                    "image": image_filename,
-                }
-            },
-            "2": {
-                "class_type": "WanVideoTextEncode",
-                "inputs": {
-                    "model": ["1", 0],
-                    "positive_text": prompt,
-                    "negative_text": negative,
-                    "image": ["img", 0],
-                }
-            },
-            "3": {
-                "class_type": "WanVideoI2VLatent",
-                "inputs": {
-                    "model": ["1", 0],
-                    "image": ["img", 0],
-                    "width": width,
-                    "height": height,
-                    "num_frames": num_frames,
-                }
-            },
-            "4": {
-                "class_type": "WanVideoSampler",
-                "inputs": {
-                    "model": ["1", 0],
-                    "conditioning": ["2", 0],
-                    "latent": ["3", 0],
-                    "steps": 20,
-                    "cfg": guidance_scale,
-                    "seed": -1,
-                    "scheduler": "unipc",
-                    "shift": 5.0,
-                }
-            },
-            "5": {
-                "class_type": "WanVideoDecode",
-                "inputs": {
-                    "model": ["1", 0],
-                    "samples": ["4", 0],
-                }
-            },
-            "6": {
-                "class_type": "VHS_VideoCombine",
-                "inputs": {
-                    "images": ["5", 0],
-                    "frame_rate": 16,
-                    "loop_count": 0,
-                    "filename_prefix": "nudely_video",
-                    "format": "video/h264-mp4",
-                    "save_output": True,
-                }
+        },
+        # VAE loader
+        "vae": {
+            "class_type": "WanVideoVAELoader",
+            "inputs": {
+                "model_name": VAE_MODEL,
+                "precision": "bf16",
+            }
+        },
+        # Main model
+        "model": {
+            "class_type": "WanVideoModelLoader",
+            "inputs": {
+                "model": T2V_MODEL,
+                "base_precision": "fp8_e4m3fn",
+                "load_device": "main_device",
+            }
+        },
+        # Sampler
+        "sampler": {
+            "class_type": "WanVideoSampler",
+            "inputs": {
+                "model": ["model", 0],
+                "conditioning": ["text", 0],
+                "vae": ["vae", 0],
+                "width": width,
+                "height": height,
+                "num_frames": num_frames,
+                "steps": 20,
+                "cfg": guidance_scale,
+                "seed": -1,
+                "scheduler": "unipc",
+                "force_offload": True,
+            }
+        },
+        # Decode
+        "decode": {
+            "class_type": "WanVideoDecode",
+            "inputs": {
+                "vae": ["vae", 0],
+                "samples": ["sampler", 0],
+                "enable_vae_tiling": True,
+                "tile_sample_min_height": 272,
+                "tile_sample_min_width": 272,
+                "tile_overlap_factor_height": 0.2,
+                "tile_overlap_factor_width": 0.2,
+                "auto_tile_size": True,
+            }
+        },
+        # Export video
+        "export": {
+            "class_type": "VHS_VideoCombine",
+            "inputs": {
+                "images": ["decode", 0],
+                "frame_rate": 16,
+                "loop_count": 0,
+                "filename_prefix": "nudely",
+                "format": "video/h264-mp4",
+                "save_output": True,
             }
         }
     }
+
+    # Inject LoRAs — chain WanVideoLoraSelect nodes before model
     if lora_list:
-        final_model = inject_loras(workflow, lora_list)
-        workflow["prompt"]["4"]["inputs"]["model"] = final_model
-    return workflow
+        prev = ["model", 0]
+        for i, (lora_key, scale) in enumerate(lora_list):
+            filename = LORA_FILES.get(lora_key)
+            if not filename:
+                continue
+            nid = f"lora_{i}"
+            p[nid] = {
+                "class_type": "WanVideoLoraSelect",
+                "inputs": {
+                    "lora": filename,
+                    "strength": scale,
+                    "prev_lora": prev,
+                }
+            }
+            prev = [nid, 0]
+        p["sampler"]["inputs"]["model"] = prev
+
+    return {"prompt": p}
+
+
+def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_scale, lora_list, image_filename):
+    """
+    I2V workflow — same as T2V but adds:
+    LoadWanVideoClipTextEncoder → WanVideoClipVisionEncode (for CLIP features)
+    WanVideoImageToVideoEncode (for VAE image latent)
+    Both feed into WanVideoSampler via image_embeds
+    """
+    p = {
+        "t5": {
+            "class_type": "LoadWanVideoT5TextEncoder",
+            "inputs": {
+                "model_name": T5_ENCODER,
+                "precision": "bf16",
+            }
+        },
+        "text": {
+            "class_type": "WanVideoTextEncode",
+            "inputs": {
+                "t5": ["t5", 0],
+                "positive_prompt": prompt,
+                "negative_prompt": negative,
+                "force_offload": True,
+            }
+        },
+        "vae": {
+            "class_type": "WanVideoVAELoader",
+            "inputs": {
+                "model_name": VAE_MODEL,
+                "precision": "bf16",
+            }
+        },
+        "clip_loader": {
+            "class_type": "LoadWanVideoClipTextEncoder",
+            "inputs": {
+                "model_name": CLIP_VISION,
+            }
+        },
+        "load_image": {
+            "class_type": "LoadImage",
+            "inputs": {
+                "image": image_filename,
+            }
+        },
+        # CLIP vision encode for I2V
+        "clip_encode": {
+            "class_type": "WanVideoClipVisionEncode",
+            "inputs": {
+                "clip_vision": ["clip_loader", 0],
+                "image": ["load_image", 0],
+            }
+        },
+        # VAE image encode for I2V conditioning
+        "img_encode": {
+            "class_type": "WanVideoImageToVideoEncode",
+            "inputs": {
+                "vae": ["vae", 0],
+                "image": ["load_image", 0],
+                "width": width,
+                "height": height,
+                "num_frames": num_frames,
+            }
+        },
+        "model": {
+            "class_type": "WanVideoModelLoader",
+            "inputs": {
+                "model": I2V_MODEL,
+                "base_precision": "fp8_e4m3fn",
+                "load_device": "main_device",
+            }
+        },
+        "sampler": {
+            "class_type": "WanVideoSampler",
+            "inputs": {
+                "model": ["model", 0],
+                "conditioning": ["text", 0],
+                "image_embeds": ["img_encode", 0],
+                "clip_embeds": ["clip_encode", 0],
+                "vae": ["vae", 0],
+                "width": width,
+                "height": height,
+                "num_frames": num_frames,
+                "steps": 20,
+                "cfg": guidance_scale,
+                "seed": -1,
+                "scheduler": "unipc",
+                "force_offload": True,
+            }
+        },
+        "decode": {
+            "class_type": "WanVideoDecode",
+            "inputs": {
+                "vae": ["vae", 0],
+                "samples": ["sampler", 0],
+                "enable_vae_tiling": True,
+                "tile_sample_min_height": 272,
+                "tile_sample_min_width": 272,
+                "tile_overlap_factor_height": 0.2,
+                "tile_overlap_factor_width": 0.2,
+                "auto_tile_size": True,
+            }
+        },
+        "export": {
+            "class_type": "VHS_VideoCombine",
+            "inputs": {
+                "images": ["decode", 0],
+                "frame_rate": 16,
+                "loop_count": 0,
+                "filename_prefix": "nudely",
+                "format": "video/h264-mp4",
+                "save_output": True,
+            }
+        }
+    }
+
+    if lora_list:
+        prev = ["model", 0]
+        for i, (lora_key, scale) in enumerate(lora_list):
+            filename = LORA_FILES.get(lora_key)
+            if not filename:
+                continue
+            nid = f"lora_{i}"
+            p[nid] = {
+                "class_type": "WanVideoLoraSelect",
+                "inputs": {
+                    "lora": filename,
+                    "strength": scale,
+                    "prev_lora": prev,
+                }
+            }
+            prev = [nid, 0]
+        p["sampler"]["inputs"]["model"] = prev
+
+    return {"prompt": p}
 
 # ── ComfyUI API ───────────────────────────────────────────────────────────
 def queue_workflow(workflow):
@@ -446,17 +483,17 @@ def wait_for_result(prompt_id, timeout=600):
                     status = job.get("status", {})
                     if status.get("completed"):
                         outputs = job.get("outputs", {})
-                        for node_id, node_output in outputs.items():
-                            if "gifs" in node_output:
-                                for gif in node_output["gifs"]:
+                        for node_id, out in outputs.items():
+                            if "gifs" in out:
+                                for gif in out["gifs"]:
                                     return gif["filename"], gif.get("subfolder", "")
-                        raise RuntimeError("Job completed but no video output found")
+                        raise RuntimeError("Job completed but no video in outputs")
                     if status.get("status_str") == "error":
-                        raise RuntimeError(f"ComfyUI job failed: {status.get('messages', [])}")
+                        raise RuntimeError(f"ComfyUI job failed: {status.get('messages')}")
         except requests.RequestException:
             pass
         time.sleep(3)
-    raise RuntimeError(f"ComfyUI job timed out after {timeout}s")
+    raise RuntimeError(f"Timed out after {timeout}s")
 
 def fetch_video(filename, subfolder=""):
     params = {"filename": filename, "type": "output"}
@@ -469,7 +506,7 @@ def fetch_video(filename, subfolder=""):
 # ── RunPod handler ────────────────────────────────────────────────────────
 def handler(job):
     try:
-        inp             = job["input"]
+        inp = job["input"]
         generation_type = inp.get("type", "text_to_video")
         style_id        = inp.get("style", "female_nude_portrait")
         user_prompt     = inp.get("prompt", "")
@@ -490,15 +527,15 @@ def handler(job):
 
         if generation_type == "image_to_video" and start_image:
             runpod.serverless.progress_update(job, "UPLOADING_IMAGE")
-            image_filename = upload_image_to_comfyui(start_image)
+            image_filename = upload_image(start_image)
             workflow = build_i2v_workflow(
-                positive, negative, width, height, num_frames,
-                guidance_scale, lora_list, image_filename
+                positive, negative, width, height,
+                num_frames, guidance_scale, lora_list, image_filename
             )
         else:
             workflow = build_t2v_workflow(
-                positive, negative, width, height, num_frames,
-                guidance_scale, lora_list
+                positive, negative, width, height,
+                num_frames, guidance_scale, lora_list
             )
 
         runpod.serverless.progress_update(job, "GENERATING_VIDEO")
@@ -507,7 +544,7 @@ def handler(job):
 
         runpod.serverless.progress_update(job, "ENCODING_VIDEO")
         video_bytes = fetch_video(filename, subfolder)
-        video_b64   = base64.b64encode(video_bytes).decode()
+        video_b64 = base64.b64encode(video_bytes).decode()
 
         return {"video": f"data:video/mp4;base64,{video_b64}"}
 
@@ -516,11 +553,11 @@ def handler(job):
         return {"error": str(e), "traceback": traceback.format_exc()}
 
 # ── Startup ───────────────────────────────────────────────────────────────
-print("Setting up model symlinks...")
-setup_model_symlinks()
+print("Setting up symlinks...")
+setup_symlinks()
 
-print("Starting ComfyUI server...")
+print("Starting ComfyUI...")
 start_comfyui()
 
-print("Handler ready — waiting for jobs...")
+print("Ready for jobs.")
 runpod.serverless.start({"handler": handler})
