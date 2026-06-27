@@ -19,14 +19,14 @@ from PIL import Image
 # ── Paths — all point to the network volume ───────────────────────────────
 COMFYUI_DIR   = "/comfyui"
 COMFYUI_URL   = "http://127.0.0.1:8188"
-HF_CACHE_DIR  = "/workspace/huggingface/hub"
+HF_CACHE_DIR  = "/runpod-volume/huggingface/hub"
 
 # ComfyUI expects models in its own folder structure.
 # We symlink from the network volume so nothing gets re-downloaded.
 COMFYUI_MODELS_DIR = f"{COMFYUI_DIR}/models"
 
-LORA_VOLUME_DIR     = "/workspace/loras"
-CHECKPOINT_VOL_DIR  = "/workspace/models"
+LORA_VOLUME_DIR     = "/runpod-volume/loras"
+CHECKPOINT_VOL_DIR  = "/runpod-volume/wan_checkpoints"
 
 # Wan2.1 model names as ComfyUI sees them (after symlinking)
 T2V_MODEL_NAME = "Wan2.1-T2V-14B"
@@ -121,7 +121,7 @@ def setup_model_symlinks():
 
     # Symlink Wan2.1 HuggingFace cache for ComfyUI-WanVideoWrapper
     # The WanVideoWrapper node reads from HF cache directly using the repo ID
-    os.environ["HF_HOME"] = "/workspace/huggingface"
+    os.environ["HF_HOME"] = "/runpod-volume/huggingface"
     print("  HF_HOME set to /workspace/huggingface — Wan models will load from volume cache")
 
     print("Model symlinks complete.")
