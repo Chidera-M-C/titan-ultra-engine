@@ -212,7 +212,7 @@ def build_negative():
     )
 
 def upload_image_to_comfyui(base64_or_url):
-    """Fetch/decode image and upload to ComfyUI input folder."""
+    """Save image directly to ComfyUI's input folder — no HTTP upload needed."""
     if base64_or_url.startswith("http"):
         r = requests.get(base64_or_url, timeout=30)
         r.raise_for_status()
@@ -225,31 +225,15 @@ def upload_image_to_comfyui(base64_or_url):
             b64 += "=" * padding
         img_data = base64.b64decode(b64)
 
-    # Convert to PNG and resize if too large
     img = Image.open(io.BytesIO(img_data)).convert("RGB")
-    # Ensure dimensions are multiples of 8
-    w, h = img.size
-    w = (w // 8) * 8
-    h = (h // 8) * 8
-    img = img.resize((w, h), Image.LANCZOS)
-
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    buf.seek(0)
 
     filename = f"input_{uuid.uuid4().hex[:8]}.png"
-
-    # Upload using multipart form — ComfyUI expects this exact format
-    r = requests.post(
-        f"{COMFYUI_URL}/upload/image",
-        files={"image": (filename, buf, "image/png")},
-        data={"type": "input", "overwrite": "true"},
-        timeout=30,
-    )
-    if not r.ok:
-        print(f"  Upload failed {r.status_code}: {r.text[:500]}")
-        r.raise_for_status()
-    return r.json()["name"]
+    input_dir = f"{COMFYUI_DIR}/input"
+    os.makedirs(input_dir, exist_ok=True)
+    save_path = f"{input_dir}/{filename}"
+    img.save(save_path, format="PNG")
+    print(f"  Image saved directly to {save_path}")
+    return filename
 
 # ── Workflow builders ─────────────────────────────────────────────────────
 def inject_loras(workflow, lora_list):
