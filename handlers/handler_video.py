@@ -27,7 +27,7 @@ CLIP_VISION  = "clip_vision_h.safetensors"
 CLIP_TEXT_ENCODER = "open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors"
 
 # ── Volume paths ──────────────────────────────────────────────────────────
-VOL = "/runpod-volume"
+VOL = "/workspace"
 LORA_VOL_DIR = f"{VOL}/loras"
 CKPT_VOL_DIR = f"{VOL}/wan_checkpoints"
 
