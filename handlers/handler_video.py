@@ -258,8 +258,9 @@ def build_t2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
         "model": {
             "class_type": "WanVideoModelLoader",
             "inputs": {
-                "model": T2V_MODEL,
-                "base_precision": "fp8_e4m3fn",
+                "model": T2V_MODEL,           # or I2V_MODEL
+                "base_precision": "bf16",     # use a valid value from the accepted list
+                "quantization": "fp8_e4m3fn", # move fp8 here where it now belongs
                 "load_device": "main_device",
             }
         },
@@ -405,8 +406,9 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
         "model": {
             "class_type": "WanVideoModelLoader",
             "inputs": {
-                "model": I2V_MODEL,
-                "base_precision": "fp8_e4m3fn",
+                "model": I2V_MODEL,           # or I2V_MODEL
+                "base_precision": "bf16",     # use a valid value from the accepted list
+                "quantization": "fp8_e4m3fn", # move fp8 here where it now belongs
                 "load_device": "main_device",
             }
         },
