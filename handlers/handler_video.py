@@ -581,10 +581,11 @@ start_comfyui()
 
 # TEMPORARY DEBUG
 result = subprocess.run(
-    ['grep', '-n', 'def process', '/comfyui/custom_nodes/ComfyUI-WanVideoWrapper/nodes_model_loading.py'],
-    capture_output=True, text=True
+    ['python3', '-c', 
+     'import sys; sys.path.insert(0, "/comfyui"); '
+     'from custom_nodes.ComfyUI_WanVideoWrapper.nodes_model_loading import WanVideoImageToVideoEncode; '
+     'import inspect; print(inspect.signature(WanVideoImageToVideoEncode.process))'],
+    capture_output=True, text=True, cwd='/comfyui'
 )
-print("NODE METHODS:", result.stdout)
-
-print("Ready for jobs.")
-runpod.serverless.start({"handler": handler})
+print("I2V SIGNATURE:", result.stdout)
+print("I2V ERROR:", result.stderr)
