@@ -157,8 +157,8 @@ def start_comfyui():
     )
     for i in range(150):
         try:
-            r = requests.get(f"{COMFYUI_URL}/system_stats", timeout=3)
-            if r.status_code == 200:
+            r = requests.get(f"{COMFYUI_URL}/", timeout=3)
+            if r.status_code in (200, 404):  # either means server is up
                 print(f"ComfyUI ready ({i*2}s)")
                 return
         except Exception:
