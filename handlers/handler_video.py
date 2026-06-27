@@ -225,17 +225,29 @@ def upload_image_to_comfyui(base64_or_url):
             b64 += "=" * padding
         img_data = base64.b64decode(b64)
 
+    # Convert to PNG and resize if too large
     img = Image.open(io.BytesIO(img_data)).convert("RGB")
+    # Ensure dimensions are multiples of 8
+    w, h = img.size
+    w = (w // 8) * 8
+    h = (h // 8) * 8
+    img = img.resize((w, h), Image.LANCZOS)
+
     buf = io.BytesIO()
     img.save(buf, format="PNG")
-    img_bytes = buf.getvalue()
+    buf.seek(0)
 
-    filename = f"input_{uuid.uuid4().hex}.png"
+    filename = f"input_{uuid.uuid4().hex[:8]}.png"
+
+    # Upload using multipart form — ComfyUI expects this exact format
     r = requests.post(
         f"{COMFYUI_URL}/upload/image",
-        files={"image": (filename, img_bytes, "image/png")},
-        data={"overwrite": "true"},
+        files={"image": (filename, buf, "image/png")},
+        data={"type": "input", "overwrite": "true"},
+        timeout=30,
     )
+    if not r.ok:
+        print(f"  Upload failed {r.status_code}: {r.text}")
     r.raise_for_status()
     return r.json()["name"]
 
