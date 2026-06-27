@@ -397,7 +397,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
             "class_type": "WanVideoImageToVideoEncode",
             "inputs": {
                 "vae": ["vae", 0],
-                "image": ["load_image", 0],
+                "images": ["load_image", 0],
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
