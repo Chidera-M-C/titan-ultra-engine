@@ -314,26 +314,19 @@ def build_t2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
 
     # Inject LoRAs — chain WanVideoLoraSelect nodes before model
     if lora_list:
-        prev = ["model", 0]
+        prev = None  # ← start empty, not from model
         for i, (lora_key, scale) in enumerate(lora_list):
             filename = LORA_FILES.get(lora_key)
             if not filename:
                 continue
             nid = f"lora_{i}"
-            p[nid] = {
-                "class_type": "WanVideoLoraSelect",
-                "inputs": {
-                    "lora": filename,
-                    "strength": scale,
-                    "prev_lora": prev,
-                }
-            }
+            inputs = {"lora": filename, "strength": scale}
+            if prev is not None:
+                inputs["prev_lora"] = prev  # only chain after first one
+            p[nid] = {"class_type": "WanVideoLoraSelect", "inputs": inputs}
             prev = [nid, 0]
-        # CORRECT — model stays as the original model node
-        # LoRAs chain into each other, last one feeds into sampler as "lora" input
-        p["sampler"]["inputs"]["model"] = ["model", 0]  # keep original model
-        p["sampler"]["inputs"]["lora"] = prev            # last lora node goes here
-
+        p["sampler"]["inputs"]["model"] = ["model", 0]  # model stays clean
+        p["sampler"]["inputs"]["lora"] = prev            # last lora node here
     return {"prompt": p}
 
 
@@ -465,23 +458,19 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
     }
 
     if lora_list:
-        prev = ["model", 0]
+        prev = None  # ← start empty, not from model
         for i, (lora_key, scale) in enumerate(lora_list):
             filename = LORA_FILES.get(lora_key)
             if not filename:
                 continue
             nid = f"lora_{i}"
-            p[nid] = {
-                "class_type": "WanVideoLoraSelect",
-                "inputs": {
-                    "lora": filename,
-                    "strength": scale,
-                    "prev_lora": prev,
-                }
-            }
+            inputs = {"lora": filename, "strength": scale}
+            if prev is not None:
+                inputs["prev_lora"] = prev  # only chain after first one
+            p[nid] = {"class_type": "WanVideoLoraSelect", "inputs": inputs}
             prev = [nid, 0]
-        p["sampler"]["inputs"]["model"] = ["model", 0]  # keep raw WANVIDEOMODEL
-        p["sampler"]["inputs"]["lora"] = prev            # pass WANVIDLORA here
+        p["sampler"]["inputs"]["model"] = ["model", 0]  # model stays clean
+        p["sampler"]["inputs"]["lora"] = prev            # last lora node here
 
     return {"prompt": p}
 
