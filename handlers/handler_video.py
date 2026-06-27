@@ -274,7 +274,8 @@ def build_t2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
             "class_type": "WanVideoSampler",
             "inputs": {
                 "model": ["model", 0],
-                "conditioning": ["text", 0],
+                "positive": ["text", 0],   # ← correct
+                "negative": ["text", 1],   # ← correct (index 1 = negative output)
                 "vae": ["vae", 0],
                 "width": width,
                 "height": height,
@@ -420,7 +421,8 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
             "class_type": "WanVideoSampler",
             "inputs": {
                 "model": ["model", 0],
-                "conditioning": ["text", 0],
+                "positive": ["text", 0],   # ← correct
+                "negative": ["text", 1],   # ← correct (index 1 = negative output)
                 "image_embeds": ["img_encode", 0],
                 "clip_embeds": ["clip_encode", 0],
                 "vae": ["vae", 0],
