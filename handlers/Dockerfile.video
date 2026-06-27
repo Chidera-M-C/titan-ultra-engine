@@ -7,25 +7,16 @@ RUN apt-get update && apt-get install -y \
     ffmpeg libsm6 libxext6 git wget curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Fix yarl version FIRST before anything else
-RUN pip install --no-cache-dir "yarl==1.9.4" "aiohttp==3.9.5"
-
 # Install ComfyUI
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git /comfyui
 WORKDIR /comfyui
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Re-pin yarl after ComfyUI requirements (it may have overridden it)
-RUN pip install --no-cache-dir "yarl==1.9.4" "aiohttp==3.9.5"
 
 # Install ComfyUI custom nodes for Wan2.1 video
 RUN cd /comfyui/custom_nodes && \
     git clone https://github.com/kijai/ComfyUI-WanVideoWrapper.git && \
     cd ComfyUI-WanVideoWrapper && \
     pip install --no-cache-dir -r requirements.txt || true
-
-# Re-pin one more time after custom nodes
-RUN pip install --no-cache-dir "yarl==1.9.4" "aiohttp==3.9.5"
 
 # Install runpod + other handler deps
 RUN pip install --no-cache-dir \
@@ -35,6 +26,7 @@ RUN pip install --no-cache-dir \
 
 WORKDIR /app
 
+# Copy handler only — models live on the network volume
 COPY handler_video.py .
 
 CMD ["python", "-u", "handler_video.py"]
