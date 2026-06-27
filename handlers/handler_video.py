@@ -169,6 +169,13 @@ def start_comfyui():
             sock.close()
             print(f"ComfyUI port open after {(i+1)*2}s — waiting for full init...")
             time.sleep(5)
+            # Print available WanVideo nodes for debugging
+            try:
+                obj_info = requests.get("http://127.0.0.1:8188/object_info", timeout=10)
+                wan_nodes = [k for k in obj_info.json().keys() if 'Wan' in k or 'wan' in k]
+                print(f"  Available Wan nodes: {wan_nodes}")
+            except Exception as e:
+                print(f"  Could not fetch node list: {e}")
             return
         except (socket.error, ConnectionRefusedError):
             pass
@@ -285,13 +292,17 @@ def build_t2v_workflow(prompt, negative, width, height, num_frames,
                     "vae": VAE_FILE,
                 }
             },
-            "2": {
-                "class_type": "WanVideoTextEncode",
+            "3": {
+                "class_type": "WanVideoVAEEncode",
                 "inputs": {
                     "model": ["1", 0],
-                    "positive_text": prompt,
-                    "negative_text": negative,
+                    "image": ["img", 0],
+                    "width": width,
+                    "height": height,
+                    "num_frames": num_frames,
+                    "force_offload": True,
                 }
+            },
             },
             "3": {
                 "class_type": "WanVideoEmptyLatent",
