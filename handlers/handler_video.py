@@ -21,7 +21,7 @@ COMFYUI_URL = "http://127.0.0.1:8188"
 # ── Model file names (as ComfyUI sees them after symlinking) ──────────────
 T2V_MODEL    = "wan2.1_t2v_14B_fp8.safetensors"
 I2V_MODEL    = "wan2.1_i2v_480p_14B_fp8.safetensors"
-T5_ENCODER   = "umt5-xxl-enc-bf16.safetensors"
+T5_ENCODER = "umt5_xxl_fp8_e4m3fn_scaled.safetensors"
 VAE_MODEL    = "wan_2.1_vae.safetensors"
 CLIP_VISION  = "clip_vision_h.safetensors"
 CLIP_TEXT_ENCODER = "open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors"
