@@ -579,5 +579,12 @@ setup_symlinks()
 print("Starting ComfyUI...")
 start_comfyui()
 
+# TEMPORARY DEBUG
+result = subprocess.run(
+    ['grep', '-n', 'def process', '/comfyui/custom_nodes/ComfyUI-WanVideoWrapper/nodes_model_loading.py'],
+    capture_output=True, text=True
+)
+print("NODE METHODS:", result.stdout)
+
 print("Ready for jobs.")
 runpod.serverless.start({"handler": handler})
