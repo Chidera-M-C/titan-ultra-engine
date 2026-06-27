@@ -385,7 +385,11 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
             "inputs": {
                 "clip_vision": ["clip_loader", 0],
                 "image_1": ["load_image", 0],   # changed: image → image_1
-                "strength_1": 1.0, 
+                "strength_1": 1.0,
+                "strength_2": 1.0,        # add this
+                "force_offload": True,    # add this
+                "crop": "center",         # add this
+                "combine_embeds": "average",  # add this
             }
         },
         # VAE image encode for I2V conditioning
