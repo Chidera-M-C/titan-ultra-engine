@@ -24,7 +24,7 @@ I2V_MODEL    = "wan2.1_i2v_480p_14B_fp8.safetensors"
 T5_ENCODER   = "umt5-xxl-enc-bf16.safetensors"
 VAE_MODEL    = "wan_2.1_vae.safetensors"
 CLIP_VISION  = "clip_vision_h.safetensors"
-CLIP_TEXT_ENCODER = "open-clip-xlm-roberta-large-vit-huge-14.safetensors"
+CLIP_TEXT_ENCODER = "open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors"
 
 # ── Volume paths ──────────────────────────────────────────────────────────
 VOL = "/runpod-volume"
@@ -128,6 +128,10 @@ def setup_symlinks():
     # CLIP vision
     src = f"{CKPT_VOL_DIR}/clip_vision/{CLIP_VISION}"
     dst = f"{dirs['clip_vision']}/{CLIP_VISION}"
+    _symlink(src, dst)
+
+    src = f"{CKPT_VOL_DIR}/clip_vision/{CLIP_TEXT_ENCODER}"
+    dst = f"{dirs['clip_vision']}/{CLIP_TEXT_ENCODER}"
     _symlink(src, dst)
 
     # LoRAs
