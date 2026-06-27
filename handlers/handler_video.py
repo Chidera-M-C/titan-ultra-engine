@@ -1,7 +1,6 @@
 """
 handler_video.py — ComfyUI-based Wan2.1 video generation for RunPod serverless.
-
-Models live on the network volume at /workspace — never downloaded at runtime.
+Models live on the network volume at /workspace/wan_checkpoints — never re-downloaded.
 ComfyUI is started as a subprocess and we POST workflows to its API.
 """
 
@@ -16,23 +15,22 @@ import requests
 import runpod
 from PIL import Image
 
-# ── Paths — all point to the network volume ───────────────────────────────
-COMFYUI_DIR   = "/comfyui"
-COMFYUI_URL   = "http://127.0.0.1:8188"
-HF_CACHE_DIR  = "/runpod-volume/huggingface/hub"
+# ── Paths ─────────────────────────────────────────────────────────────────
+COMFYUI_DIR  = "/comfyui"
+COMFYUI_URL  = "http://127.0.0.1:8188"
 
-# ComfyUI expects models in its own folder structure.
-# We symlink from the network volume so nothing gets re-downloaded.
 COMFYUI_MODELS_DIR = f"{COMFYUI_DIR}/models"
+LORA_VOLUME_DIR    = "/runpod-volume/loras"
+CHECKPOINT_DIR     = "/workspace/wan_checkpoints"
 
-LORA_VOLUME_DIR     = "/runpod-volume/loras"
-CHECKPOINT_VOL_DIR  = "/runpod-volume/wan_checkpoints"
+# ── Actual filenames downloaded to /workspace/wan_checkpoints ─────────────
+T2V_MODEL_FILE    = "wan2.1_t2v_14B_fp8.safetensors"
+I2V_MODEL_FILE    = "wan2.1_i2v_480p_14B_fp8.safetensors"
+TEXT_ENCODER_FILE = "umt5-xxl-enc-bf16.safetensors"
+VAE_FILE          = "wan_2.1_vae.safetensors"
+CLIP_VISION_FILE  = "clip_vision_h.safetensors"
 
-# Wan2.1 model names as ComfyUI sees them (after symlinking)
-T2V_MODEL_NAME = "Wan2.1-T2V-14B"
-I2V_MODEL_NAME = "Wan2.1-I2V-14B-480P"
-
-# ── LoRA name mapping ─────────────────────────────────────────────────────
+# ── LoRA files ────────────────────────────────────────────────────────────
 LORA_FILES = {
     'allinone_nsfw': "lora_allinone_nsfw.safetensors",
     'posing_nude':   "lora_posing_nude.safetensors",
@@ -46,83 +44,109 @@ LORA_FILES = {
 STYLE_CONFIGS = {
     'female_nude_portrait': {
         'loras': [('posing_nude', 0.85)],
-        'guidance_scale': 7.5,
-        'trigger': 'nude woman, elegant pose, natural lighting, bare skin',
+        'guidance_scale': 5.0,
+        'trigger': 'nude woman, elegant pose, natural lighting, bare skin, slow graceful movement',
     },
     'dressed_vs_naked': {
         'loras': [('posing_nude', 0.80)],
-        'guidance_scale': 7.5,
-        'trigger': 'woman partially undressing, sensual reveal, contrast clothed and nude',
+        'guidance_scale': 5.0,
+        'trigger': 'woman partially undressing, sensual reveal, slow motion',
     },
     'missionary_style': {
         'loras': [('allinone_nsfw', 0.85), ('sex_thrust', 0.70)],
-        'guidance_scale': 7.5,
-        'trigger': 'missionary sex, man on top, face to face, thrusting motion, explicit',
+        'guidance_scale': 5.0,
+        'trigger': 'missionary sex, man on top, face to face, rhythmic thrusting motion, explicit',
     },
     'doggy_style': {
         'loras': [('allinone_nsfw', 0.85), ('sex_thrust', 0.70)],
-        'guidance_scale': 7.5,
-        'trigger': 'doggy style sex, from behind, rear entry, thrusting motion, explicit',
+        'guidance_scale': 5.0,
+        'trigger': 'doggy style sex, from behind, rear entry, rhythmic thrusting motion, explicit',
     },
     'cowgirl_style': {
         'loras': [('allinone_nsfw', 0.85)],
-        'guidance_scale': 7.5,
+        'guidance_scale': 5.0,
         'trigger': 'cowgirl position, woman on top, riding motion, explicit',
     },
     'anal_sex': {
         'loras': [('allinone_nsfw', 0.85), ('sex_thrust', 0.70)],
-        'guidance_scale': 7.5,
+        'guidance_scale': 5.0,
         'trigger': 'anal sex, anal penetration, from behind, thrusting, explicit',
     },
     'oral_sex': {
         'loras': [('blowjob', 0.85), ('cum_facial', 0.60)],
-        'guidance_scale': 7.5,
+        'guidance_scale': 5.0,
         'trigger': 'oral sex, blowjob, deepthroat motion, explicit',
     },
     'threesome_sex': {
         'loras': [('allinone_nsfw', 0.80)],
-        'guidance_scale': 8.0,
+        'guidance_scale': 5.5,
         'trigger': 'threesome, group sex, three people, explicit',
     },
     'cum_on_face': {
         'loras': [('cum_facial', 0.85), ('cumshot_i2v', 0.80)],
-        'guidance_scale': 7.0,
+        'guidance_scale': 4.5,
         'trigger': 'cum on face, facial, explicit',
     },
     'lesbian_sex': {
         'loras': [('allinone_nsfw', 0.80)],
-        'guidance_scale': 7.5,
+        'guidance_scale': 5.0,
         'trigger': 'lesbian sex, two women, girl on girl, explicit',
     },
 }
 
 comfyui_process = None
 
-# ── Symlink models from volume into ComfyUI's expected directories ─────────
+# ── Symlink models into ComfyUI's expected directories ────────────────────
 def setup_model_symlinks():
-    """
-    ComfyUI looks for models in /comfyui/models/.
-    We symlink from /workspace so nothing is copied or re-downloaded.
-    """
-    os.makedirs(f"{COMFYUI_MODELS_DIR}/checkpoints", exist_ok=True)
-    os.makedirs(f"{COMFYUI_MODELS_DIR}/loras", exist_ok=True)
-    os.makedirs(f"{COMFYUI_MODELS_DIR}/vae", exist_ok=True)
-    os.makedirs(f"{COMFYUI_MODELS_DIR}/clip", exist_ok=True)
+    dirs = [
+        f"{COMFYUI_MODELS_DIR}/checkpoints",
+        f"{COMFYUI_MODELS_DIR}/loras",
+        f"{COMFYUI_MODELS_DIR}/vae",
+        f"{COMFYUI_MODELS_DIR}/clip",
+        f"{COMFYUI_MODELS_DIR}/clip_vision",
+        f"{COMFYUI_MODELS_DIR}/diffusion_models",
+        f"{COMFYUI_MODELS_DIR}/text_encoders",
+    ]
+    for d in dirs:
+        os.makedirs(d, exist_ok=True)
 
-    # Symlink LoRAs
-    for key, filename in LORA_FILES.items():
-        src = f"{LORA_VOLUME_DIR}/{filename}"
-        dst = f"{COMFYUI_MODELS_DIR}/loras/{filename}"
-        if os.path.exists(src) and not os.path.exists(dst):
+    def symlink(src, dst):
+        if os.path.exists(src) and not os.path.lexists(dst):
             os.symlink(src, dst)
-            print(f"  Symlinked LoRA: {filename}")
+            print(f"  Symlinked: {os.path.basename(src)}")
         elif not os.path.exists(src):
-            print(f"  WARNING: LoRA not found on volume: {src}")
+            print(f"  WARNING: Not found on volume: {src}")
 
-    # Symlink Wan2.1 HuggingFace cache for ComfyUI-WanVideoWrapper
-    # The WanVideoWrapper node reads from HF cache directly using the repo ID
-    os.environ["HF_HOME"] = "/runpod-volume/huggingface"
-    print("  HF_HOME set to /workspace/huggingface — Wan models will load from volume cache")
+    # Diffusion models
+    symlink(
+        f"{CHECKPOINT_DIR}/diffusion_models/{T2V_MODEL_FILE}",
+        f"{COMFYUI_MODELS_DIR}/diffusion_models/{T2V_MODEL_FILE}"
+    )
+    symlink(
+        f"{CHECKPOINT_DIR}/diffusion_models/{I2V_MODEL_FILE}",
+        f"{COMFYUI_MODELS_DIR}/diffusion_models/{I2V_MODEL_FILE}"
+    )
+    # Text encoder
+    symlink(
+        f"{CHECKPOINT_DIR}/text_encoders/{TEXT_ENCODER_FILE}",
+        f"{COMFYUI_MODELS_DIR}/text_encoders/{TEXT_ENCODER_FILE}"
+    )
+    # VAE
+    symlink(
+        f"{CHECKPOINT_DIR}/vae/{VAE_FILE}",
+        f"{COMFYUI_MODELS_DIR}/vae/{VAE_FILE}"
+    )
+    # CLIP Vision
+    symlink(
+        f"{CHECKPOINT_DIR}/clip_vision/{CLIP_VISION_FILE}",
+        f"{COMFYUI_MODELS_DIR}/clip_vision/{CLIP_VISION_FILE}"
+    )
+    # LoRAs
+    for key, filename in LORA_FILES.items():
+        symlink(
+            f"{LORA_VOLUME_DIR}/{filename}",
+            f"{COMFYUI_MODELS_DIR}/loras/{filename}"
+        )
 
     print("Model symlinks complete.")
 
@@ -136,12 +160,11 @@ def start_comfyui():
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
-    # Wait for ComfyUI to be ready
     for i in range(60):
         try:
             r = requests.get(f"{COMFYUI_URL}/system_stats", timeout=3)
             if r.status_code == 200:
-                print(f"ComfyUI ready after {i+1}s")
+                print(f"ComfyUI ready after {(i+1)*2}s")
                 return
         except Exception:
             pass
@@ -168,8 +191,8 @@ def build_prompt(user_prompt, style_id, character=None):
     trigger = style_cfg.get('trigger', '')
     char_context = ''
     if character:
-        name = character.get('name', '')
-        race = character.get('race', '')
+        name      = character.get('name', '')
+        race      = character.get('race', '')
         body_type = character.get('body_type', '').replace('_', ' ')
         char_context = f"{name}, {race} woman, {body_type}, "
     return (
@@ -185,30 +208,25 @@ def build_negative():
         "jumpcut, flicker, distorted"
     )
 
-def decode_image_to_base64(base64_or_url):
-    """Decode image and return as base64 PNG string for ComfyUI upload."""
+def upload_image_to_comfyui(base64_or_url):
+    """Fetch/decode image and upload to ComfyUI input folder."""
     if base64_or_url.startswith("http"):
         r = requests.get(base64_or_url, timeout=30)
         r.raise_for_status()
         img_data = r.content
     else:
-        if "," in base64_or_url:
-            base64_or_url = base64_or_url.split(",")[1]
-        base64_or_url = base64_or_url.strip()
-        padding = 4 - len(base64_or_url) % 4
+        b64 = base64_or_url.split(",")[1] if "," in base64_or_url else base64_or_url
+        b64 = b64.strip()
+        padding = 4 - len(b64) % 4
         if padding != 4:
-            base64_or_url += "=" * padding
-        img_data = base64.b64decode(base64_or_url)
+            b64 += "=" * padding
+        img_data = base64.b64decode(b64)
 
     img = Image.open(io.BytesIO(img_data)).convert("RGB")
     buf = io.BytesIO()
     img.save(buf, format="PNG")
-    return base64.b64encode(buf.getvalue()).decode()
+    img_bytes = buf.getvalue()
 
-def upload_image_to_comfyui(base64_or_url):
-    """Upload an image to ComfyUI's input folder and return the filename."""
-    img_b64 = decode_image_to_base64(base64_or_url)
-    img_bytes = base64.b64decode(img_b64)
     filename = f"input_{uuid.uuid4().hex}.png"
     r = requests.post(
         f"{COMFYUI_URL}/upload/image",
@@ -219,23 +237,38 @@ def upload_image_to_comfyui(base64_or_url):
     return r.json()["name"]
 
 # ── Workflow builders ─────────────────────────────────────────────────────
+def inject_loras(workflow, lora_list):
+    """Chain LoRA nodes before the sampler. Returns the final model reference."""
+    prev_model = ["1", 0]
+    for i, (lora_key, scale) in enumerate(lora_list):
+        filename = LORA_FILES.get(lora_key)
+        if not filename:
+            continue
+        node_id = f"lora_{i}"
+        workflow["prompt"][node_id] = {
+            "class_type": "WanVideoLoraSelect",
+            "inputs": {
+                "lora": filename,
+                "strength": scale,
+                "prev_lora": prev_model if i > 0 else ["1", 0],
+            }
+        }
+        prev_model = [node_id, 0]
+    return prev_model
+
 def build_t2v_workflow(prompt, negative, width, height, num_frames,
                        guidance_scale, lora_list):
-    """
-    Text-to-video workflow using ComfyUI-WanVideoWrapper nodes.
-    Node IDs are stable strings so we can reference them easily.
-    """
     workflow = {
         "prompt": {
-            # Load Wan T2V model via WanVideoWrapper
             "1": {
                 "class_type": "WanVideoModelLoader",
                 "inputs": {
-                    "model": T2V_MODEL_NAME,
-                    "dtype": "bf16",
+                    "model": T2V_MODEL_FILE,
+                    "dtype": "fp8_e4m3fn",
+                    "text_encoder": TEXT_ENCODER_FILE,
+                    "vae": VAE_FILE,
                 }
             },
-            # CLIP text encode positive
             "2": {
                 "class_type": "WanVideoTextEncode",
                 "inputs": {
@@ -244,7 +277,6 @@ def build_t2v_workflow(prompt, negative, width, height, num_frames,
                     "negative_text": negative,
                 }
             },
-            # Empty latent for T2V
             "3": {
                 "class_type": "WanVideoEmptyLatent",
                 "inputs": {
@@ -254,7 +286,6 @@ def build_t2v_workflow(prompt, negative, width, height, num_frames,
                     "batch_size": 1,
                 }
             },
-            # Sampler
             "4": {
                 "class_type": "WanVideoSampler",
                 "inputs": {
@@ -265,9 +296,9 @@ def build_t2v_workflow(prompt, negative, width, height, num_frames,
                     "cfg": guidance_scale,
                     "seed": -1,
                     "scheduler": "unipc",
+                    "shift": 3.0,
                 }
             },
-            # Decode latent to frames
             "5": {
                 "class_type": "WanVideoDecode",
                 "inputs": {
@@ -275,7 +306,6 @@ def build_t2v_workflow(prompt, negative, width, height, num_frames,
                     "samples": ["4", 0],
                 }
             },
-            # Export to video file
             "6": {
                 "class_type": "VHS_VideoCombine",
                 "inputs": {
@@ -289,42 +319,25 @@ def build_t2v_workflow(prompt, negative, width, height, num_frames,
             }
         }
     }
-
-    # Inject LoRAs if present — chain them before the sampler
     if lora_list:
-        prev_model = ["1", 0]
-        for i, (lora_key, scale) in enumerate(lora_list):
-            filename = LORA_FILES.get(lora_key)
-            if not filename:
-                continue
-            node_id = f"lora_{i}"
-            workflow["prompt"][node_id] = {
-                "class_type": "WanVideoLoraSelect",
-                "inputs": {
-                    "lora": filename,
-                    "strength": scale,
-                    "prev_lora": prev_model if i > 0 else ["1", 0],
-                }
-            }
-            prev_model = [node_id, 0]
-        # Point sampler to last LoRA node
-        workflow["prompt"]["4"]["inputs"]["model"] = prev_model
-
+        final_model = inject_loras(workflow, lora_list)
+        workflow["prompt"]["4"]["inputs"]["model"] = final_model
     return workflow
 
 def build_i2v_workflow(prompt, negative, width, height, num_frames,
                        guidance_scale, lora_list, image_filename):
-    """Image-to-video workflow using ComfyUI-WanVideoWrapper nodes."""
     workflow = {
         "prompt": {
             "1": {
                 "class_type": "WanVideoModelLoader",
                 "inputs": {
-                    "model": I2V_MODEL_NAME,
-                    "dtype": "bf16",
+                    "model": I2V_MODEL_FILE,
+                    "dtype": "fp8_e4m3fn",
+                    "text_encoder": TEXT_ENCODER_FILE,
+                    "vae": VAE_FILE,
+                    "clip_vision": CLIP_VISION_FILE,
                 }
             },
-            # Load the uploaded start image
             "img": {
                 "class_type": "LoadImage",
                 "inputs": {
@@ -337,9 +350,9 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames,
                     "model": ["1", 0],
                     "positive_text": prompt,
                     "negative_text": negative,
+                    "image": ["img", 0],
                 }
             },
-            # I2V latent — conditioned on start image
             "3": {
                 "class_type": "WanVideoI2VLatent",
                 "inputs": {
@@ -360,6 +373,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames,
                     "cfg": guidance_scale,
                     "seed": -1,
                     "scheduler": "unipc",
+                    "shift": 5.0,
                 }
             },
             "5": {
@@ -382,40 +396,18 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames,
             }
         }
     }
-
     if lora_list:
-        prev_model = ["1", 0]
-        for i, (lora_key, scale) in enumerate(lora_list):
-            filename = LORA_FILES.get(lora_key)
-            if not filename:
-                continue
-            node_id = f"lora_{i}"
-            workflow["prompt"][node_id] = {
-                "class_type": "WanVideoLoraSelect",
-                "inputs": {
-                    "lora": filename,
-                    "strength": scale,
-                    "prev_lora": prev_model if i > 0 else ["1", 0],
-                }
-            }
-            prev_model = [node_id, 0]
-        workflow["prompt"]["4"]["inputs"]["model"] = prev_model
-
+        final_model = inject_loras(workflow, lora_list)
+        workflow["prompt"]["4"]["inputs"]["model"] = final_model
     return workflow
 
-# ── ComfyUI API calls ─────────────────────────────────────────────────────
+# ── ComfyUI API ───────────────────────────────────────────────────────────
 def queue_workflow(workflow):
-    """Submit workflow to ComfyUI and return prompt_id."""
-    r = requests.post(
-        f"{COMFYUI_URL}/prompt",
-        json=workflow,
-        timeout=30,
-    )
+    r = requests.post(f"{COMFYUI_URL}/prompt", json=workflow, timeout=30)
     r.raise_for_status()
     return r.json()["prompt_id"]
 
 def wait_for_result(prompt_id, timeout=600):
-    """Poll ComfyUI history until the job completes, return output video path."""
     start = time.time()
     while time.time() - start < timeout:
         try:
@@ -426,25 +418,20 @@ def wait_for_result(prompt_id, timeout=600):
                     job = history[prompt_id]
                     status = job.get("status", {})
                     if status.get("completed"):
-                        # Find the video output
                         outputs = job.get("outputs", {})
                         for node_id, node_output in outputs.items():
                             if "gifs" in node_output:
                                 for gif in node_output["gifs"]:
-                                    filename = gif["filename"]
-                                    subfolder = gif.get("subfolder", "")
-                                    return filename, subfolder
+                                    return gif["filename"], gif.get("subfolder", "")
                         raise RuntimeError("Job completed but no video output found")
                     if status.get("status_str") == "error":
-                        messages = status.get("messages", [])
-                        raise RuntimeError(f"ComfyUI job failed: {messages}")
+                        raise RuntimeError(f"ComfyUI job failed: {status.get('messages', [])}")
         except requests.RequestException:
             pass
         time.sleep(3)
     raise RuntimeError(f"ComfyUI job timed out after {timeout}s")
 
 def fetch_video(filename, subfolder=""):
-    """Fetch the generated video bytes from ComfyUI's output."""
     params = {"filename": filename, "type": "output"}
     if subfolder:
         params["subfolder"] = subfolder
@@ -455,16 +442,16 @@ def fetch_video(filename, subfolder=""):
 # ── RunPod handler ────────────────────────────────────────────────────────
 def handler(job):
     try:
-        inp = job["input"]
+        inp             = job["input"]
         generation_type = inp.get("type", "text_to_video")
         style_id        = inp.get("style", "female_nude_portrait")
         user_prompt     = inp.get("prompt", "")
         aspect_ratio    = inp.get("aspect_ratio", "9:16")
         duration_sec    = float(inp.get("duration", 4))
-        start_image_b64 = inp.get("start_image", None)
+        start_image     = inp.get("start_image", None)
         character       = inp.get("character", None)
 
-        style_cfg = STYLE_CONFIGS.get(style_id, STYLE_CONFIGS["female_nude_portrait"])
+        style_cfg      = STYLE_CONFIGS.get(style_id, STYLE_CONFIGS["female_nude_portrait"])
         width, height  = get_dimensions(aspect_ratio)
         num_frames     = duration_to_frames(duration_sec)
         positive       = build_prompt(user_prompt, style_id, character)
@@ -474,9 +461,9 @@ def handler(job):
 
         runpod.serverless.progress_update(job, "BUILDING_WORKFLOW")
 
-        if generation_type == "image_to_video" and start_image_b64:
+        if generation_type == "image_to_video" and start_image:
             runpod.serverless.progress_update(job, "UPLOADING_IMAGE")
-            image_filename = upload_image_to_comfyui(start_image_b64)
+            image_filename = upload_image_to_comfyui(start_image)
             workflow = build_i2v_workflow(
                 positive, negative, width, height, num_frames,
                 guidance_scale, lora_list, image_filename
@@ -493,7 +480,7 @@ def handler(job):
 
         runpod.serverless.progress_update(job, "ENCODING_VIDEO")
         video_bytes = fetch_video(filename, subfolder)
-        video_b64 = base64.b64encode(video_bytes).decode()
+        video_b64   = base64.b64encode(video_bytes).decode()
 
         return {"video": f"data:video/mp4;base64,{video_b64}"}
 
