@@ -1,8 +1,7 @@
 # ── IMPORTANT: Set HF_HOME before any other imports so all model loads
-# ── IMPORTANT: Set HF_HOME before any other imports so all model loads
 #    come from the persistent network volume instead of ephemeral disk ──────
 import os
-os.environ["HF_HOME"] = "/runpod-volume/huggingface"
+os.environ["HF_HOME"] = "/workspace/huggingface"
 
 import torch
 import runpod
@@ -22,14 +21,13 @@ T2V_MODEL_ID = "Wan-AI/Wan2.1-T2V-14B-Diffusers"
 I2V_MODEL_ID = "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers"
 
 # ── LoRA paths (persistent network volume — never re-downloaded) ───────────
-# ── LoRA paths (persistent network volume — never re-downloaded) ───────────
 LORA_PATHS = {
-    'allinone_nsfw': "/runpod-volume/loras/lora_allinone_nsfw.safetensors",
-    'posing_nude':   "/runpod-volume/loras/lora_posing_nude.safetensors",
-    'sex_thrust':    "/runpod-volume/loras/lora_sex_thrust.safetensors",
-    'blowjob':       "/runpod-volume/loras/lora_blowjob.safetensors",
-    'cum_facial':    "/runpod-volume/loras/lora_cum_facial.safetensors",
-    'cumshot_i2v':   "/runpod-volume/loras/lora_cumshot_i2v.safetensors",
+    'allinone_nsfw': "/workspace/loras/lora_allinone_nsfw.safetensors",
+    'posing_nude':   "/workspace/loras/lora_posing_nude.safetensors",
+    'sex_thrust':    "/workspace/loras/lora_sex_thrust.safetensors",
+    'blowjob':       "/workspace/loras/lora_blowjob.safetensors",
+    'cum_facial':    "/workspace/loras/lora_cum_facial.safetensors",
+    'cumshot_i2v':   "/workspace/loras/lora_cumshot_i2v.safetensors",
 }
 
 LORA_LINKS = {
@@ -102,9 +100,7 @@ active_loras_t2v = []
 active_loras_i2v = []
 
 def download_file(url, path, label, retries=3):
-    """Download a LoRA only if it doesn't already exist on the volume."""
     if os.path.exists(path):
-        print(f"  {label} already on volume, skipping download")
         return
     civitai_token = os.environ.get('CIVITAI_TOKEN', '')
     hf_token = os.environ.get('HF_TOKEN', '')
@@ -138,11 +134,10 @@ def load_models():
     if txt2vid_pipeline is not None:
         return
 
-    # Download any missing LoRAs to volume
     for key, link in LORA_LINKS.items():
         download_file(link, LORA_PATHS[key], f"LoRA: {key}")
 
-    print("Loading Wan2.1 text-to-video pipeline from volume cache...")
+    print("Loading Wan2.1 text-to-video pipeline...")
     vae = AutoencoderKLWan.from_pretrained(
         T2V_MODEL_ID, subfolder="vae", torch_dtype=torch.float32
     )
@@ -153,7 +148,7 @@ def load_models():
         txt2vid_pipeline.scheduler.config, flow_shift=5.0
     )
 
-    print("Loading Wan2.1 image-to-video pipeline from volume cache...")
+    print("Loading Wan2.1 image-to-video pipeline...")
     vae_i2v = AutoencoderKLWan.from_pretrained(
         I2V_MODEL_ID, subfolder="vae", torch_dtype=torch.float32
     )
@@ -163,7 +158,7 @@ def load_models():
     img2vid_pipeline.scheduler = UniPCMultistepScheduler.from_config(
         img2vid_pipeline.scheduler.config, flow_shift=3.0
     )
-    img2vid_pipeline.enable_model_cpu_offload()  # only I2V offloads
+    img2vid_pipeline.enable_model_cpu_offload()
 
 def apply_loras(pipeline, lora_list, active_tracker_key):
     global active_loras_t2v, active_loras_i2v
@@ -186,45 +181,31 @@ def apply_loras(pipeline, lora_list, active_tracker_key):
     if not lora_list:
         return
 
-    adapters, scales = [], []
-    for i, (lora_key, scale) in enumerate(lora_list):
+    # Use native diffusers multi-adapter orchestration via PEFT engine
+    for lora_key, scale in lora_list:
         path = LORA_PATHS.get(lora_key)
         if not path or not os.path.exists(path):
-            print(f"  WARNING: LoRA {lora_key} not found, skipping")
             continue
         try:
-            adapter_name = f"lora_{i}"
-            pipeline.load_lora_weights(path, adapter_name=adapter_name, prefix=None)
-            # Check if it actually registered by querying active adapters
-            active_adapters = pipeline.get_active_adapters() if hasattr(pipeline, 'get_active_adapters') else []
-            all_adapters = getattr(pipeline, '_lora_attn_processor_names', set())
-            # Just add it — we'll catch errors at set_adapters
-            adapters.append(adapter_name)
-            scales.append(scale)
+            # Let the internal parser extract standard metadata schemas automatically
+            pipeline.load_lora_weights(
+                path, 
+                weight_name=os.path.basename(path), 
+                adapter_name=lora_key
+            )
         except Exception as e:
-            print(f"  WARNING: Failed to load LoRA {lora_key}: {e}")
-
-    if not adapters:
-        print("  No LoRAs loaded, proceeding without")
-        return
+            print(f"  Failed loading structured adapter {lora_key}: {e}")
 
     try:
-        pipeline.set_adapters(adapters, adapter_weights=scales)
-    except ValueError as e:
-        print(f"  WARNING: set_adapters failed: {e} — proceeding without LoRA")
-        try:
-            pipeline.unload_lora_weights()
-        except Exception:
-            pass
+        adapters = [k for k, _ in lora_list if k in getattr(pipeline, "peft_config", {}) or True]
+        scales = [s for k, s in lora_list]
+        if adapters:
+            pipeline.set_adapters(adapters, adapter_weights=scales)
+    except Exception as e:
+        print(f"  Fallback safety triggered during configuration setup: {e}")
 
 def get_dimensions(aspect_ratio):
-    dims = {
-        '1:1':  (512, 512),
-        '4:5':  (480, 624),
-        '5:4':  (624, 480),
-        '9:16': (416, 736),
-        '16:9': (736, 416),
-    }
+    dims = {'1:1': (512, 512), '4:5': (480, 624), '5:4': (624, 480), '9:16': (416, 736), '16:9': (736, 416)}
     return dims.get(aspect_ratio, (416, 736))
 
 def duration_to_frames(duration_sec):
@@ -238,11 +219,7 @@ def decode_image(base64_or_url):
         return Image.open(io.BytesIO(r.content)).convert("RGB")
     if "," in base64_or_url:
         base64_or_url = base64_or_url.split(",")[1]
-    base64_or_url = base64_or_url.strip()
-    padding = 4 - len(base64_or_url) % 4
-    if padding != 4:
-        base64_or_url += "=" * padding
-    data = base64.b64decode(base64_or_url)
+    data = base64.b64decode(base64_or_url.strip())
     return Image.open(io.BytesIO(data)).convert("RGB")
 
 def build_prompt(user_prompt, style_id, character=None):
@@ -254,18 +231,7 @@ def build_prompt(user_prompt, style_id, character=None):
         race = character.get('race', '')
         body_type = character.get('body_type', '').replace('_', ' ')
         char_context = f"{name}, {race} woman, {body_type}, "
-    return (
-        f"{char_context}{user_prompt}, {trigger}, "
-        f"photorealistic, masterpiece, best quality, cinematic, "
-        f"smooth motion, fluid movement, natural lighting"
-    )
-
-def build_negative():
-    return (
-        "static, frozen, no motion, watermark, text, logo, "
-        "blurry, low quality, bad anatomy, deformed, ugly, "
-        "jumpcut, flicker, distorted"
-    )
+    return f"{char_context}{user_prompt}, {trigger}, photorealistic, masterpiece, smooth motion"
 
 def handler(job):
     try:
@@ -282,7 +248,6 @@ def handler(job):
         width, height = get_dimensions(aspect_ratio)
         num_frames = duration_to_frames(duration_sec)
         positive = build_prompt(user_prompt, style_id, character)
-        negative = build_negative()
 
         if generation_type == 'image_to_video' and start_image_b64:
             runpod.serverless.progress_update(job, "PREPARING_IMAGE")
@@ -291,26 +256,17 @@ def handler(job):
 
             runpod.serverless.progress_update(job, "GENERATING_VIDEO")
             result = img2vid_pipeline(
-                image=start_image,
-                prompt=positive,
-                negative_prompt=negative,
-                num_frames=num_frames,
-                num_inference_steps=20,
-                guidance_scale=style_cfg['guidance_scale'],
-                width=width,
-                height=height,
+                image=start_image, prompt=positive, num_frames=num_frames,
+                num_inference_steps=20, guidance_scale=style_cfg['guidance_scale'],
+                width=width, height=height,
             )
         else:
             runpod.serverless.progress_update(job, "GENERATING_VIDEO")
             apply_loras(txt2vid_pipeline, style_cfg['loras'], 't2v')
             result = txt2vid_pipeline(
-                prompt=positive,
-                negative_prompt=negative,
-                num_frames=num_frames,
-                num_inference_steps=20,
-                guidance_scale=style_cfg['guidance_scale'],
-                width=width,
-                height=height,
+                prompt=positive, num_frames=num_frames,
+                num_inference_steps=20, guidance_scale=style_cfg['guidance_scale'],
+                width=width, height=height,
             )
 
         runpod.serverless.progress_update(job, "ENCODING_VIDEO")
@@ -322,7 +278,6 @@ def handler(job):
         os.remove(video_path)
 
         return {"video": f"data:video/mp4;base64,{video_b64}"}
-
     except Exception as e:
         import traceback
         return {"error": str(e), "traceback": traceback.format_exc()}
