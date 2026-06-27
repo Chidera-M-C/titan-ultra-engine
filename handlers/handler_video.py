@@ -154,10 +154,8 @@ def start_comfyui():
         ["python", "main.py", "--listen", "127.0.0.1", "--port", "8188",
          "--disable-auto-launch", "--gpu-only"],
         cwd=COMFYUI_DIR,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
     )
-    for i in range(60):
+    for i in range(150):
         try:
             r = requests.get(f"{COMFYUI_URL}/system_stats", timeout=3)
             if r.status_code == 200:
