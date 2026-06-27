@@ -166,8 +166,8 @@ def start_comfyui():
         try:
             sock = socket.create_connection(("127.0.0.1", 8188), timeout=2)
             sock.close()
-            print(f"ComfyUI ready after {(i+1)*2}s")
-            time.sleep(2)  # give it a moment to finish initializing
+            print(f"ComfyUI port open after {(i+1)*2}s — waiting for full init...")
+            time.sleep(5)
             return
         except (socket.error, ConnectionRefusedError):
             pass
@@ -247,8 +247,8 @@ def upload_image_to_comfyui(base64_or_url):
         timeout=30,
     )
     if not r.ok:
-        print(f"  Upload failed {r.status_code}: {r.text}")
-    r.raise_for_status()
+        print(f"  Upload failed {r.status_code}: {r.text[:500]}")
+        r.raise_for_status()
     return r.json()["name"]
 
 # ── Workflow builders ─────────────────────────────────────────────────────
