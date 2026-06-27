@@ -185,22 +185,25 @@ def apply_loras(pipeline, lora_list, active_tracker_key):
     for lora_key, scale in lora_list:
         path = LORA_PATHS.get(lora_key)
         if not path or not os.path.exists(path):
+            print(f"  WARNING: LoRA path missing for {lora_key}")
             continue
         try:
-            # Let the internal parser extract standard metadata schemas automatically
+            # Let the internal parser match keys automatically via PEFT backend loaders
             pipeline.load_lora_weights(
                 path, 
                 weight_name=os.path.basename(path), 
                 adapter_name=lora_key
             )
+            print(f"  Successfully loaded structured adapter: {lora_key}")
         except Exception as e:
             print(f"  Failed loading structured adapter {lora_key}: {e}")
 
     try:
-        adapters = [k for k, _ in lora_list if k in getattr(pipeline, "peft_config", {}) or True]
+        adapters = [k for k, _ in lora_list]
         scales = [s for k, s in lora_list]
         if adapters:
             pipeline.set_adapters(adapters, adapter_weights=scales)
+            print(f"  Active adapters configured successfully: {adapters} with weights {scales}")
     except Exception as e:
         print(f"  Fallback safety triggered during configuration setup: {e}")
 
@@ -233,6 +236,13 @@ def build_prompt(user_prompt, style_id, character=None):
         char_context = f"{name}, {race} woman, {body_type}, "
     return f"{char_context}{user_prompt}, {trigger}, photorealistic, masterpiece, smooth motion"
 
+def build_negative():
+    return (
+        "static, frozen, no motion, watermark, text, logo, "
+        "blurry, low quality, bad anatomy, deformed, ugly, "
+        "jumpcut, flicker, distorted"
+    )
+
 def handler(job):
     try:
         inp = job['input']
@@ -248,6 +258,7 @@ def handler(job):
         width, height = get_dimensions(aspect_ratio)
         num_frames = duration_to_frames(duration_sec)
         positive = build_prompt(user_prompt, style_id, character)
+        negative = build_negative()
 
         if generation_type == 'image_to_video' and start_image_b64:
             runpod.serverless.progress_update(job, "PREPARING_IMAGE")
@@ -256,7 +267,7 @@ def handler(job):
 
             runpod.serverless.progress_update(job, "GENERATING_VIDEO")
             result = img2vid_pipeline(
-                image=start_image, prompt=positive, num_frames=num_frames,
+                image=start_image, prompt=positive, negative_prompt=negative, num_frames=num_frames,
                 num_inference_steps=20, guidance_scale=style_cfg['guidance_scale'],
                 width=width, height=height,
             )
@@ -264,7 +275,7 @@ def handler(job):
             runpod.serverless.progress_update(job, "GENERATING_VIDEO")
             apply_loras(txt2vid_pipeline, style_cfg['loras'], 't2v')
             result = txt2vid_pipeline(
-                prompt=positive, num_frames=num_frames,
+                prompt=positive, negative_prompt=negative, num_frames=num_frames,
                 num_inference_steps=20, guidance_scale=style_cfg['guidance_scale'],
                 width=width, height=height,
             )
