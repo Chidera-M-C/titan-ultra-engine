@@ -19,7 +19,7 @@ from pathlib import Path
 CIVITAI_TOKEN = os.environ.get("CIVITAI_TOKEN", "")
 HF_TOKEN      = os.environ.get("HF_TOKEN", "")
 
-WORKSPACE = "/workspace"
+WORKSPACE = "/runpod-volume"
 LORAS_DIR = f"{WORKSPACE}/loras"
 CKPT_DIR  = f"{WORKSPACE}/wan_checkpoints"  # ComfyUI-native format
 
