@@ -384,7 +384,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
             "class_type": "WanVideoClipVisionEncode",
             "inputs": {
                 "clip_vision": ["clip_loader", 0],
-                "image": ["load_images", 0],
+                "images": ["load_image", 0],
             }
         },
         # VAE image encode for I2V conditioning
