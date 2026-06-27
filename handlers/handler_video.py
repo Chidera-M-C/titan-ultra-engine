@@ -20,6 +20,7 @@ from diffusers import (
 )
 from diffusers.schedulers.scheduling_unipc_multistep import UniPCMultistepScheduler
 from diffusers.utils import export_to_video
+from safetensors.torch import load_file
 
 # ── Model IDs ─────────────────────────────────────────────────────────────
 T2V_MODEL_ID = "Wan-AI/Wan2.1-T2V-14B-Diffusers"
@@ -33,15 +34,6 @@ LORA_FILENAMES = {
     'blowjob':       "lora_blowjob.safetensors",
     'cum_facial':    "lora_cum_facial.safetensors",
     'cumshot_i2v':   "lora_cumshot_i2v.safetensors",
-}
-
-LORA_LINKS = {
-    'allinone_nsfw': "https://civitai.com/api/download/models/2747549?type=Model&format=SafeTensor",
-    'posing_nude':   "https://civitai.red/api/download/models/2391828?type=Model&format=SafeTensor",
-    'sex_thrust':    "https://civitai.com/api/download/models/2674954?type=Model&format=SafeTensor",
-    'blowjob':       "https://civitai.red/api/download/models/2195559?fileId=2088649",
-    'cum_facial':    "https://civitai.red/api/download/models/2460386?type=Model&format=SafeTensor",
-    'cumshot_i2v':   "https://civitai.red/api/download/models/2430424?type=Model&format=SafeTensor",
 }
 
 # Resolved paths dictionary used dynamically at runtime
@@ -114,14 +106,12 @@ def resolve_lora_paths():
     
     for key, filename in LORA_FILENAMES.items():
         found_path = None
-        # First check if it already exists somewhere
         for d in possible_dirs:
             p = os.path.join(d, filename)
             if os.path.exists(p):
                 found_path = p
                 break
         
-        # Fallback to default if not found anywhere yet
         if not found_path:
             if os.path.exists("/runpod-volume"):
                 found_path = os.path.join("/runpod-volume/loras", filename)
@@ -130,48 +120,13 @@ def resolve_lora_paths():
                 
         LORA_PATHS[key] = found_path
 
-def download_file(url, path, label, retries=3):
-    if os.path.exists(path):
-        print(f"  {label} verified locally at {path}, skipping download.")
-        return
-    civitai_token = os.environ.get('CIVITAI_TOKEN', '')
-    hf_token = os.environ.get('HF_TOKEN', '')
-    for attempt in range(retries):
-        try:
-            print(f"Downloading {label} (attempt {attempt+1}) to {path}...")
-            headers = {'User-Agent': 'Mozilla/5.0'}
-            if 'civitai' in url and civitai_token:
-                headers['Authorization'] = f'Bearer {civitai_token}'
-            if 'huggingface.co' in url and hf_token:
-                headers['Authorization'] = f'Bearer {hf_token}'
-            r = requests.get(url, headers=headers, stream=True, timeout=300)
-            r.raise_for_status()
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            with open(path, 'wb') as f:
-                for chunk in r.iter_content(chunk_size=1024*1024):
-                    f.write(chunk)
-            print(f"  {label} done")
-            return
-        except Exception as e:
-            print(f"  Attempt {attempt+1} failed: {e}")
-            if os.path.exists(path):
-                os.remove(path)
-            if attempt < retries - 1:
-                import time; time.sleep(10)
-    print(f"  WARNING: Could not download {label}, skipping")
-
 def load_models():
     global txt2vid_pipeline, img2vid_pipeline
 
     if txt2vid_pipeline is not None:
         return
 
-    # Map paths based on where files are stored on your volume
     resolve_lora_paths()
-
-    # Verify or fallback download
-    for key, link in LORA_LINKS.items():
-        download_file(link, LORA_PATHS[key], f"LoRA: {key}")
 
     print("Loading Wan2.1 text-to-video pipeline...")
     vae = AutoencoderKLWan.from_pretrained(
@@ -196,6 +151,27 @@ def load_models():
     )
     img2vid_pipeline.enable_model_cpu_offload()
 
+def translate_wan_keys(state_dict):
+    """
+    Manually translates native ComfyUI/Wan layer names to Diffusers internal names.
+    This intercepts the 'blocks.0.self_attn.q' failure.
+    """
+    new_dict = {}
+    for key, tensor in state_dict.items():
+        new_key = key
+        # Map the transformer blocks
+        if new_key.startswith("blocks."):
+            new_key = "transformer." + new_key
+            
+        # Map the attention layers to diffusers schema
+        new_key = new_key.replace(".self_attn.q.", ".attn1.to_q.")
+        new_key = new_key.replace(".self_attn.k.", ".attn1.to_k.")
+        new_key = new_key.replace(".self_attn.v.", ".attn1.to_v.")
+        new_key = new_key.replace(".self_attn.o.", ".attn1.to_out.0.")
+        
+        new_dict[new_key] = tensor
+    return new_dict
+
 def apply_loras(pipeline, lora_list, active_tracker_key):
     global active_loras_t2v, active_loras_i2v
     active = active_loras_t2v if active_tracker_key == 't2v' else active_loras_i2v
@@ -217,22 +193,26 @@ def apply_loras(pipeline, lora_list, active_tracker_key):
     if not lora_list:
         return
 
-    # Use native diffusers multi-adapter orchestration via PEFT engine
     for lora_key, scale in lora_list:
         path = LORA_PATHS.get(lora_key)
         if not path or not os.path.exists(path):
-            print(f"  WARNING: LoRA path missing or file not found on disk for {lora_key}")
+            print(f"  WARNING: LoRA file missing on disk for {lora_key}")
             continue
         try:
-            # Let the PEFT internal engine read and map keys automatically
+            # 1. Load the raw safetensors file directly into memory
+            raw_state_dict = load_file(path)
+            
+            # 2. Translate the keys so diffusers doesn't reject them
+            fixed_state_dict = translate_wan_keys(raw_state_dict)
+            
+            # 3. Inject the fixed dictionary directly
             pipeline.load_lora_weights(
-                path, 
-                weight_name=os.path.basename(path), 
+                fixed_state_dict, 
                 adapter_name=lora_key
             )
-            print(f"  Successfully loaded structured adapter: {lora_key} from {path}")
+            print(f"  Successfully mapped and loaded adapter: {lora_key}")
         except Exception as e:
-            print(f"  Failed loading structured adapter {lora_key}: {e}")
+            print(f"  Failed loading custom mapped adapter {lora_key}: {e}")
 
     try:
         adapters = [k for k, _ in lora_list]
