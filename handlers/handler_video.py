@@ -157,16 +157,19 @@ def start_comfyui():
         ["python", "main.py", "--listen", "127.0.0.1", "--port", "8188",
          "--disable-auto-launch", "--gpu-only"],
         cwd=COMFYUI_DIR,
-        stdout=None,   # ← let it print directly to RunPod logs
-        stderr=None,   # ← same
+        stdout=None,
+        stderr=None,
     )
+    # Wait for ComfyUI to be ready using a socket check instead of requests
+    import socket
     for i in range(60):
         try:
-            r = requests.get(f"{COMFYUI_URL}/system_stats", timeout=3)
-            if r.status_code == 200:
-                print(f"ComfyUI ready after {(i+1)*2}s")
-                return
-        except Exception:
+            sock = socket.create_connection(("127.0.0.1", 8188), timeout=2)
+            sock.close()
+            print(f"ComfyUI ready after {(i+1)*2}s")
+            time.sleep(2)  # give it a moment to finish initializing
+            return
+        except (socket.error, ConnectionRefusedError):
             pass
         time.sleep(2)
     raise RuntimeError("ComfyUI failed to start within 120 seconds")
