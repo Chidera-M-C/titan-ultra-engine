@@ -155,16 +155,17 @@ def start_comfyui():
          "--disable-auto-launch", "--gpu-only"],
         cwd=COMFYUI_DIR,
     )
+    import socket
     for i in range(150):
         try:
-            r = requests.get(f"{COMFYUI_URL}/", timeout=3)
-            if r.status_code in (200, 404):  # either means server is up
-                print(f"ComfyUI ready ({i*2}s)")
-                return
-        except Exception:
+            sock = socket.create_connection(("127.0.0.1", 8188), timeout=2)
+            sock.close()
+            print(f"ComfyUI ready ({i*2}s)")
+            return
+        except (socket.error, ConnectionRefusedError):
             pass
         time.sleep(2)
-    raise RuntimeError("ComfyUI failed to start within 120s")
+    raise RuntimeError("ComfyUI failed to start within 300s")
 
 # ── Helpers ───────────────────────────────────────────────────────────────
 def get_dimensions(aspect_ratio):
