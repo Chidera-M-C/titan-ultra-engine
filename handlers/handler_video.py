@@ -24,6 +24,7 @@ LORA_VOLUME_DIR    = "/runpod-volume/loras"
 CHECKPOINT_DIR     = "/workspace/wan_checkpoints"
 
 # ── Actual filenames downloaded to /workspace/wan_checkpoints ─────────────
+# ── Actual filenames downloaded to /workspace/wan_checkpoints ─────────────
 T2V_MODEL_FILE    = "wan2.1_t2v_14B_fp8.safetensors"
 I2V_MODEL_FILE    = "wan2.1_i2v_480p_14B_fp8.safetensors"
 TEXT_ENCODER_FILE = "umt5-xxl-enc-bf16.safetensors"
