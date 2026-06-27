@@ -275,7 +275,9 @@ def build_t2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "num_frames": num_frames,
                 "steps": 20,
                 "cfg": guidance_scale,
-                "seed": -1,
+                "seed": 42,
+                "shift": 5.0,         # ADD THIS
+                "riflex_freq_index": 0,  # ADD THIS
                 "scheduler": "unipc",
                 "force_offload": True,
             }
@@ -304,6 +306,7 @@ def build_t2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "filename_prefix": "nudely",
                 "format": "video/h264-mp4",
                 "save_output": True,
+                "pingpong": False,
             }
         }
     }
@@ -390,6 +393,10 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
+                "force_offload": True,
+                "start_latent_strength": 1.0,
+                "end_latent_strength": 1.0,
+                "noise_aug_strength": 0.0,
             }
         },
         "model": {
@@ -413,9 +420,12 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "num_frames": num_frames,
                 "steps": 20,
                 "cfg": guidance_scale,
-                "seed": -1,
+                "seed": 42,
+                "shift": 5.0,         # ADD THIS
+                "riflex_freq_index": 0,  # ADD THIS
                 "scheduler": "unipc",
                 "force_offload": True,
+                
             }
         },
         "decode": {
@@ -429,6 +439,10 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "tile_overlap_factor_height": 0.2,
                 "tile_overlap_factor_width": 0.2,
                 "auto_tile_size": True,
+                "tile_x": 80,
+                "tile_y": 80,
+                "tile_stride_x": 40,
+                "tile_stride_y": 40,
             }
         },
         "export": {
@@ -440,6 +454,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "filename_prefix": "nudely",
                 "format": "video/h264-mp4",
                 "save_output": True,
+                "pingpong": False,
             }
         }
     }
