@@ -24,6 +24,7 @@ I2V_MODEL    = "wan2.1_i2v_480p_14B_fp8.safetensors"
 T5_ENCODER   = "umt5-xxl-enc-bf16.safetensors"
 VAE_MODEL    = "wan_2.1_vae.safetensors"
 CLIP_VISION  = "clip_vision_h.safetensors"
+CLIP_TEXT_ENCODER = "open-clip-xlm-roberta-large-vit-huge-14.safetensors"
 
 # ── Volume paths ──────────────────────────────────────────────────────────
 VOL = "/runpod-volume"
@@ -364,7 +365,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
         "clip_loader": {
             "class_type": "LoadWanVideoClipTextEncoder",
             "inputs": {
-                "model_name": CLIP_VISION,
+                "model_name": CLIP_TEXT_ENCODER,
                 "precision": "bf16",
             }
         },
