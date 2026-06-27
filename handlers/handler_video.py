@@ -478,7 +478,8 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 }
             }
             prev = [nid, 0]
-        p["sampler"]["inputs"]["model"] = prev
+        p["sampler"]["inputs"]["model"] = ["model", 0]  # keep raw WANVIDEOMODEL
+        p["sampler"]["inputs"]["lora"] = prev            # pass WANVIDLORA here
 
     return {"prompt": p}
 
