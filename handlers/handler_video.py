@@ -1,7 +1,12 @@
 # ── IMPORTANT: Set HF_HOME before any other imports so all model loads
 #    come from the persistent network volume instead of ephemeral disk ──────
 import os
-os.environ["HF_HOME"] = "/workspace/huggingface"
+
+# Check where the huggingface cache actually lives
+if os.path.exists("/runpod-volume/huggingface"):
+    os.environ["HF_HOME"] = "/runpod-volume/huggingface"
+else:
+    os.environ["HF_HOME"] = "/workspace/huggingface"
 
 import torch
 import runpod
@@ -20,14 +25,14 @@ from diffusers.utils import export_to_video
 T2V_MODEL_ID = "Wan-AI/Wan2.1-T2V-14B-Diffusers"
 I2V_MODEL_ID = "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers"
 
-# ── LoRA paths (persistent network volume — never re-downloaded) ───────────
-LORA_PATHS = {
-    'allinone_nsfw': "/workspace/loras/lora_allinone_nsfw.safetensors",
-    'posing_nude':   "/workspace/loras/lora_posing_nude.safetensors",
-    'sex_thrust':    "/workspace/loras/lora_sex_thrust.safetensors",
-    'blowjob':       "/workspace/loras/lora_blowjob.safetensors",
-    'cum_facial':    "/workspace/loras/lora_cum_facial.safetensors",
-    'cumshot_i2v':   "/workspace/loras/lora_cumshot_i2v.safetensors",
+# ── Base file definitions ─────────────────────────────────────────────────
+LORA_FILENAMES = {
+    'allinone_nsfw': "lora_allinone_nsfw.safetensors",
+    'posing_nude':   "lora_posing_nude.safetensors",
+    'sex_thrust':    "lora_sex_thrust.safetensors",
+    'blowjob':       "lora_blowjob.safetensors",
+    'cum_facial':    "lora_cum_facial.safetensors",
+    'cumshot_i2v':   "lora_cumshot_i2v.safetensors",
 }
 
 LORA_LINKS = {
@@ -38,6 +43,9 @@ LORA_LINKS = {
     'cum_facial':    "https://civitai.red/api/download/models/2460386?type=Model&format=SafeTensor",
     'cumshot_i2v':   "https://civitai.red/api/download/models/2430424?type=Model&format=SafeTensor",
 }
+
+# Resolved paths dictionary used dynamically at runtime
+LORA_PATHS = {}
 
 # ── Style configs ─────────────────────────────────────────────────────────
 STYLE_CONFIGS = {
@@ -99,14 +107,38 @@ img2vid_pipeline = None
 active_loras_t2v = []
 active_loras_i2v = []
 
+def resolve_lora_paths():
+    """Locates where the LoRAs live on disk, checking both common mount spots."""
+    global LORA_PATHS
+    possible_dirs = ["/runpod-volume/loras", "/workspace/loras", "/models/loras"]
+    
+    for key, filename in LORA_FILENAMES.items():
+        found_path = None
+        # First check if it already exists somewhere
+        for d in possible_dirs:
+            p = os.path.join(d, filename)
+            if os.path.exists(p):
+                found_path = p
+                break
+        
+        # Fallback to default if not found anywhere yet
+        if not found_path:
+            if os.path.exists("/runpod-volume"):
+                found_path = os.path.join("/runpod-volume/loras", filename)
+            else:
+                found_path = os.path.join("/workspace/loras", filename)
+                
+        LORA_PATHS[key] = found_path
+
 def download_file(url, path, label, retries=3):
     if os.path.exists(path):
+        print(f"  {label} verified locally at {path}, skipping download.")
         return
     civitai_token = os.environ.get('CIVITAI_TOKEN', '')
     hf_token = os.environ.get('HF_TOKEN', '')
     for attempt in range(retries):
         try:
-            print(f"Downloading {label} (attempt {attempt+1})...")
+            print(f"Downloading {label} (attempt {attempt+1}) to {path}...")
             headers = {'User-Agent': 'Mozilla/5.0'}
             if 'civitai' in url and civitai_token:
                 headers['Authorization'] = f'Bearer {civitai_token}'
@@ -134,6 +166,10 @@ def load_models():
     if txt2vid_pipeline is not None:
         return
 
+    # Map paths based on where files are stored on your volume
+    resolve_lora_paths()
+
+    # Verify or fallback download
     for key, link in LORA_LINKS.items():
         download_file(link, LORA_PATHS[key], f"LoRA: {key}")
 
@@ -185,16 +221,16 @@ def apply_loras(pipeline, lora_list, active_tracker_key):
     for lora_key, scale in lora_list:
         path = LORA_PATHS.get(lora_key)
         if not path or not os.path.exists(path):
-            print(f"  WARNING: LoRA path missing for {lora_key}")
+            print(f"  WARNING: LoRA path missing or file not found on disk for {lora_key}")
             continue
         try:
-            # Let the internal parser match keys automatically via PEFT backend loaders
+            # Let the PEFT internal engine read and map keys automatically
             pipeline.load_lora_weights(
                 path, 
                 weight_name=os.path.basename(path), 
                 adapter_name=lora_key
             )
-            print(f"  Successfully loaded structured adapter: {lora_key}")
+            print(f"  Successfully loaded structured adapter: {lora_key} from {path}")
         except Exception as e:
             print(f"  Failed loading structured adapter {lora_key}: {e}")
 
