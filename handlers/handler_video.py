@@ -365,6 +365,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
             "class_type": "LoadWanVideoClipTextEncoder",
             "inputs": {
                 "model_name": CLIP_VISION,
+                "precision": "bf16",
             }
         },
         "load_image": {
