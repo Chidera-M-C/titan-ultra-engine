@@ -2,17 +2,34 @@ import sys
 sys.stdout = sys.__stdout__
 sys.stderr = sys.__stderr__
 
-# ── Install ip_adapter if missing ─────────────────────────────
 import subprocess
-try:
-    import ip_adapter
-    print("✓ ip_adapter is already installed")
-except ImportError:
-    print("🔧 Installing ip_adapter package (this may take 10-20 seconds)...")
-    subprocess.check_call([sys.executable, "-m", "pip", "install", 
-                         "git+https://github.com/tencent-ailab/IP-Adapter.git"])
-    print("✅ ip_adapter installed successfully")
 
+def setup_dependencies():
+    # Install git if missing
+    try:
+        subprocess.check_call(["git", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except:
+        print("Installing git...")
+        subprocess.check_call(["apt-get", "update", "-qq"], stdout=subprocess.DEVNULL)
+        subprocess.check_call(["apt-get", "install", "-y", "git"], stdout=subprocess.DEVNULL)
+        print("git installed")
+
+    # Install ip_adapter
+    try:
+        import ip_adapter
+        print("✓ ip_adapter already installed")
+    except ImportError:
+        print("Installing ip_adapter from GitHub...")
+        subprocess.check_call([
+            sys.executable, "-m", "pip", "install", 
+            "git+https://github.com/tencent-ailab/IP-Adapter.git"
+        ])
+        print("✅ ip_adapter installed successfully")
+
+# Run setup
+setup_dependencies()
+
+# ── Normal imports ─────────────────────────────────────
 import torch
 import runpod
 from diffusers import StableDiffusionXLControlNetPipeline, ControlNetModel, DPMSolverMultistepScheduler, AutoencoderKL
@@ -21,13 +38,6 @@ from controlnet_aux import OpenposeDetector, CannyDetector
 from transformers import BlipProcessor, BlipForConditionalGeneration
 import io, base64, os, requests
 from PIL import Image, ImageFilter, ImageEnhance
-
-# --- CONFIG ---
-JUGGERNAUT_PATH     = "/workspace/juggernaut_xl.safetensors"
-VAE_PATH            = "/workspace/sdxl_vae.safetensors"
-DETAIL_LORA_PATH    = "/workspace/add-detail-xl.safetensors"
-IPADAPTER_PATH      = "/workspace/ip_adapter_faceid_plus_sdxl.bin"
-IMAGE_ENCODER_PATH  = "/workspace/image_encoder"
 
 pipeline      = None
 ip_model      = None
