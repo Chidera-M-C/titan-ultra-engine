@@ -429,12 +429,12 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 25,              # Give DPM++ 30 steps to properly compute the physics loop
+                "steps": 45,              # Give DPM++ 30 steps to properly compute the physics loop
                 "cfg": guidance_scale,
                 "seed": 42,
                 "shift": 4.5,             # Balanced value for motion tracking 
                 "riflex_freq_index": 1,   # Activates RIFLEX context tracking to prevent frame melting
-                "scheduler": "euler",     # CHANGED from unipc/euler to the complex geometry solver
+                "scheduler": "unipc",     # CHANGED from unipc/euler to the complex geometry solver
                 "force_offload": True,     
              }
         },
