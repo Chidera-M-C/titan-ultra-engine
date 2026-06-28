@@ -26,10 +26,16 @@ def setup_dependencies():
         ])
         print("✅ ip_adapter installed successfully")
 
-# Run setup
 setup_dependencies()
 
-# ── Normal imports ─────────────────────────────────────
+# ── CONFIG ─────────────────────────────────────────────────────
+JUGGERNAUT_PATH     = "/workspace/juggernaut_xl.safetensors"
+VAE_PATH            = "/workspace/sdxl_vae.safetensors"
+DETAIL_LORA_PATH    = "/workspace/add-detail-xl.safetensors"
+IPADAPTER_PATH      = "/workspace/ip_adapter_faceid_plus_sdxl.bin"
+IMAGE_ENCODER_PATH  = "/workspace/image_encoder"
+
+# ── Imports ────────────────────────────────────────────────────
 import torch
 import runpod
 from diffusers import StableDiffusionXLControlNetPipeline, ControlNetModel, DPMSolverMultistepScheduler, AutoencoderKL
@@ -58,7 +64,7 @@ def download_file(url, path, label):
         print(f"  {label} downloaded")
 
 def load_models():
-    global pipeline, ip_model, openpose, canny_detector, blip_processor, blip_model
+    global pipeline, ip_model, openpose, canny_detector
 
     vae = AutoencoderKL.from_single_file(VAE_PATH, torch_dtype=torch.float16).to("cuda")
 
@@ -81,7 +87,6 @@ def load_models():
         pipeline.scheduler.config, use_karras_sigmas=True, algorithm_type="dpmsolver++"
     )
 
-    # Load IP-Adapter FaceID
     ip_model = IPAdapterFaceIDPlusXL(
         pipeline,
         image_encoder_path=IMAGE_ENCODER_PATH,
