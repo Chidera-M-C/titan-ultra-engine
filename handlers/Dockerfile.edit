@@ -25,6 +25,7 @@ RUN pip install --no-cache-dir \
     requests==2.31.0
 
 # Install peft AFTER transformers and accelerate so the backend is recognized
+# Install peft AFTER transformers and accelerate so the backend is recognized
 RUN pip install --no-cache-dir "peft==0.10.0"
 
 # Install remaining packages
@@ -42,8 +43,6 @@ RUN sed -i 's/from .mediapipe_face import MediapipeFaceDetector/pass  # mediapip
 # Force numpy to stay at 1.24.4 — some packages silently upgrade it
 RUN pip install --no-cache-dir --force-reinstall "numpy==1.24.4"
 
-# Cache-busting arg — change this value to force Docker to re-copy the handler
-ARG CACHEBUST=1
 COPY handler_edit.py .
 
 # Verify everything loads cleanly
