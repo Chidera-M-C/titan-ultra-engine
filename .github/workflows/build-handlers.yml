@@ -129,6 +129,7 @@ jobs:
           build-args: |
             CIVITAI_TOKEN=${{ secrets.CIVITAI_TOKEN }}
             HF_TOKEN=${{ secrets.HF_TOKEN }}
+            CACHEBUST=${{ github.run_number }}
 
   build-face-extract:
     runs-on: ubuntu-latest
