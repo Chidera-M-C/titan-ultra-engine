@@ -5,7 +5,6 @@ sys.stderr = sys.__stderr__
 import subprocess
 
 def setup_dependencies():
-    # Install git if missing
     try:
         subprocess.check_call(["git", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except:
@@ -14,26 +13,22 @@ def setup_dependencies():
         subprocess.check_call(["apt-get", "install", "-y", "git"], stdout=subprocess.DEVNULL)
         print("git installed")
 
-    # Install ip_adapter
     try:
         import ip_adapter
         print("✓ ip_adapter already installed")
     except ImportError:
-        print("Installing ip_adapter from GitHub...")
-        subprocess.check_call([
-            sys.executable, "-m", "pip", "install", 
-            "git+https://github.com/tencent-ailab/IP-Adapter.git"
-        ])
-        print("✅ ip_adapter installed successfully")
+        print("Installing ip_adapter...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "git+https://github.com/tencent-ailab/IP-Adapter.git"])
+        print("✅ ip_adapter installed")
 
 setup_dependencies()
 
 # ── CONFIG ─────────────────────────────────────────────────────
-JUGGERNAUT_PATH     = "/workspace/juggernaut_xl.safetensors"
-VAE_PATH            = "/workspace/sdxl_vae.safetensors"
-DETAIL_LORA_PATH    = "/workspace/add-detail-xl.safetensors"
-IPADAPTER_PATH      = "/workspace/ip_adapter_faceid_plus_sdxl.bin"
-IMAGE_ENCODER_PATH  = "/workspace/image_encoder"
+JUGGERNAUT_PATH    = "/workspace/models/juggernaut_xl.safetensors"
+VAE_PATH           = "/workspace/models/sdxl_vae.safetensors"
+DETAIL_LORA_PATH   = "/workspace/models/add-detail-xl.safetensors"
+IPADAPTER_PATH     = "/workspace/models/ip_adapter_faceid_plus_sdxl.bin"
+IMAGE_ENCODER_PATH = "/workspace/models/image_encoder"
 
 # ── Imports ────────────────────────────────────────────────────
 import torch
@@ -45,12 +40,15 @@ from transformers import BlipProcessor, BlipForConditionalGeneration
 import io, base64, os, requests
 from PIL import Image, ImageFilter, ImageEnhance
 
-pipeline      = None
-ip_model      = None
-openpose      = None
-canny_detector= None
-blip_processor= None
-blip_model    = None
+# Global variables
+pipeline = None
+ip_model = None
+openpose = None
+canny_detector = None
+blip_processor = None
+blip_model = None
+
+# Rest of your functions (download_file, load_models, load_blip, etc.) go here...
 
 def download_file(url, path, label):
     if not os.path.exists(path):
@@ -68,8 +66,13 @@ def load_models():
 
     vae = AutoencoderKL.from_single_file(VAE_PATH, torch_dtype=torch.float16).to("cuda")
 
-    controlnet_pose = ControlNetModel.from_pretrained("thibaud/controlnet-openpose-sdxl-1.0", torch_dtype=torch.float16).to("cuda")
-    controlnet_canny = ControlNetModel.from_pretrained("diffusers/controlnet-canny-sdxl-1.0", torch_dtype=torch.float16).to("cuda")
+    controlnet_pose = ControlNetModel.from_pretrained(
+        "/workspace/models/controlnet_openpose_xl", torch_dtype=torch.float16
+    ).to("cuda")
+    
+    controlnet_canny = ControlNetModel.from_pretrained(
+        "/workspace/models/controlnet_canny_xl", torch_dtype=torch.float16
+    ).to("cuda")
 
     pipeline = StableDiffusionXLControlNetPipeline.from_single_file(
         JUGGERNAUT_PATH,
