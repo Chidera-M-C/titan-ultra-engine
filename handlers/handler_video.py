@@ -581,16 +581,12 @@ setup_symlinks()
 print("Starting ComfyUI...")
 start_comfyui()
 
-# TEMPORARY DEBUG
+import subprocess
 result = subprocess.run(
-    ['python3', '-c',
-     'import sys; sys.path.insert(0, "/comfyui/custom_nodes/ComfyUI-WanVideoWrapper"); '
-     'from nodes_model_loading import WanVideoImageToVideoEncode; '
-     'import inspect; print(inspect.signature(WanVideoImageToVideoEncode.process))'],
-    capture_output=True, text=True, cwd='/comfyui'
+    ["find", "/", "-name", "nodes_wan*", "-type", "f"],
+    capture_output=True, text=True, timeout=30
 )
-print("I2V SIGNATURE:", result.stdout)
-print("I2V ERROR:", result.stderr[:500])
+print("WAN NODES:", result.stdout)
 
 print("Ready for jobs.")
 runpod.serverless.start({"handler": handler})
