@@ -59,8 +59,8 @@ STYLE_CONFIGS = {
         'trigger': 'missionary sex, man on top, face to face, thrusting motion, explicit',
     },
     'doggy_style': {
-        'loras': [('allinone_nsfw', 0.85), ('sex_thrust', 0.70)],
-        'guidance_scale': 10.0,
+        'loras': [('allinone_nsfw', 0.90), ('sex_thrust', 1.0)],
+        'guidance_scale': 7.0,
         'trigger': 'doggy style sex, from behind, rear entry, thrusting motion, explicit',
     },
     'cowgirl_style': {
