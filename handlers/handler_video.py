@@ -60,7 +60,7 @@ STYLE_CONFIGS = {
     },
     'doggy_style': {
         'loras': [('allinone_nsfw', 0.85), ('sex_thrust', 0.70)],
-        'guidance_scale': 7.5,
+        'guidance_scale': 10.0,
         'trigger': 'doggy style sex, from behind, rear entry, thrusting motion, explicit',
     },
     'cowgirl_style': {
@@ -282,7 +282,7 @@ def build_t2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "steps": 20,
                 "cfg": guidance_scale,
                 "seed": 42,
-                "shift": 5.0,         # ADD THIS
+                "shift": 3.0,         # ADD THIS
                 "riflex_freq_index": 0,  # ADD THIS
                 "scheduler": "unipc",
                 "force_offload": True,
@@ -427,7 +427,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "steps": 20,
                 "cfg": guidance_scale,
                 "seed": 42,
-                "shift": 5.0,         # ADD THIS
+                "shift": 3.0,         # ADD THIS
                 "riflex_freq_index": 0,  # ADD THIS
                 "scheduler": "unipc",
                 "force_offload": True,
