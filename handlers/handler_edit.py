@@ -2,6 +2,18 @@ import sys
 sys.stdout = sys.__stdout__
 sys.stderr = sys.__stderr__
 
+import subprocess
+def install_ip_adapter():
+    try:
+        import ip_adapter
+        print("✓ ip_adapter already installed")
+    except ImportError:
+        print("🔧 Installing ip_adapter...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "git+https://github.com/tencent-ailab/IP-Adapter.git"])
+        print("✅ ip_adapter installed")
+
+install_ip_adapter()
+
 import torch
 import runpod
 from diffusers import StableDiffusionXLControlNetPipeline, ControlNetModel, DPMSolverMultistepScheduler, AutoencoderKL
