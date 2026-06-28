@@ -58,12 +58,13 @@ STYLE_CONFIGS = {
         'guidance_scale': 7.5,
         'trigger': 'missionary sex, man on top, face to face, thrusting motion, explicit',
     },
+
     'doggy_style': {
         'loras': [
-            ('allinone_nsfw', 2),      # strong base
-            ('sex_thrust', 0.01)       # still useful on top
+            ('allinone_nsfw', 0.85),      # Lowered to prevent muddying/artifacting
+            ('sex_thrust', 0.2)          # Raised slightly to ensure action triggers
         ],
-        'guidance_scale': 4,            # lower = better motion
+        'guidance_scale': 5.5,           # Bumped to 5.5. 4 is too weak for high-weight prompts.
         'trigger': 'd0gg1e, doggy style sex, from behind, rear entry',
     },
     'cowgirl_style': {
@@ -418,6 +419,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "load_device": "main_device",
             }
         },
+       
         "sampler": {
             "class_type": "WanVideoSampler",
             "inputs": {
@@ -427,15 +429,14 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 20,
+                "steps": 25,              # Slightly bumped for better clarity
                 "cfg": guidance_scale,
                 "seed": 42,
-                "shift": 3.0,         # ADD THIS
-                "riflex_freq_index": 0,  # ADD THIS
-                "scheduler": "unipc",
-                "force_offload": True,
-                
-            }
+                "shift": 5.0,             # 5.0 (universal) or 7.0 (if doing 720p)
+                "riflex_freq_index": 0,  
+                "scheduler": "simple",    # Changed from unipc for better prompt adherence
+                "force_offload": True,       
+             }
         },
         "decode": {
             "class_type": "WanVideoDecode",
