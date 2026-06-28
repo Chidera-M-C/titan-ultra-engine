@@ -64,7 +64,7 @@ STYLE_CONFIGS = {
             ('allinone_nsfw', 0.8),      # Lowered to prevent muddying/artifacting
             ('sex_thrust', 0.75)          # Raised slightly to ensure action triggers
         ],
-        'guidance_scale': 6.0,           # Bumped to 5.5. 4 is too weak for high-weight prompts.
+        'guidance_scale': 5.5,           # Bumped to 5.5. 4 is too weak for high-weight prompts.
         'trigger': 'd0gg1e, doggy style sex, from behind, rear entry, deep thrusting motion, fast rhythmic thrusting, repeating penetration motion', # FIXED: Added 'trigger': key
     },
     'cowgirl_style': {
@@ -432,9 +432,9 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "steps": 30,              # Give DPM++ 30 steps to properly compute the physics loop
                 "cfg": guidance_scale,
                 "seed": 42,
-                "shift": 5.0,             # Balanced value for motion tracking 
+                "shift": 4.0,             # Balanced value for motion tracking 
                 "riflex_freq_index": 1,   # Activates RIFLEX context tracking to prevent frame melting
-                "scheduler": "dpm++",     # CHANGED from unipc/euler to the complex geometry solver
+                "scheduler": "euler/beta",     # CHANGED from unipc/euler to the complex geometry solver
                 "force_offload": True,     
              }
         },
@@ -459,7 +459,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
             "class_type": "VHS_VideoCombine",
             "inputs": {
                 "images": ["decode", 0],
-                "frame_rate": 16,
+                "frame_rate": 24,
                 "loop_count": 0,
                 "filename_prefix": "nudely",
                 "format": "video/h264-mp4",
