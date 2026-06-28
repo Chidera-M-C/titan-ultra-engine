@@ -61,11 +61,11 @@ STYLE_CONFIGS = {
 
     'doggy_style': {
         'loras': [
-            ('allinone_nsfw', 0.85),      # Lowered to prevent muddying/artifacting
-            ('sex_thrust', 0.2)          # Raised slightly to ensure action triggers
+            ('allinone_nsfw', 0.8),      # Lowered to prevent muddying/artifacting
+            ('sex_thrust', 0.75)          # Raised slightly to ensure action triggers
         ],
-        'guidance_scale': 5.5,           # Bumped to 5.5. 4 is too weak for high-weight prompts.
-        'trigger': 'd0gg1e, doggy style sex, from behind, rear entry',
+        'guidance_scale': 6.0,           # Bumped to 5.5. 4 is too weak for high-weight prompts.
+        'd0gg1e, doggy style sex, from behind, rear entry, deep thrusting motion, fast rhythmic thrusting, repeating penetration motion',
     },
     'cowgirl_style': {
         'loras': [('allinone_nsfw', 0.85)],
@@ -429,13 +429,13 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 25,              # Slightly bumped for better clarity
+                "steps": 30,              # Give DPM++ 30 steps to properly compute the physics loop
                 "cfg": guidance_scale,
                 "seed": 42,
-                "shift": 5.0,             # 5.0 (universal) or 7.0 (if doing 720p)
-                "riflex_freq_index": 0,  
-                "scheduler": "euler",    # Changed from unipc for better prompt adherence
-                "force_offload": True,       
+                "shift": 5.0,             # Balanced value for motion tracking 
+                "riflex_freq_index": 1,   # Activates RIFLEX context tracking to prevent frame melting
+                "scheduler": "dpm++",     # CHANGED from unipc/euler to the complex geometry solver
+                "force_offload": True,     
              }
         },
         "decode": {
