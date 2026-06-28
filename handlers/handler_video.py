@@ -422,7 +422,6 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "model": ["model", 0],
                 "text_embeds": ["text", 0],
                 "image_embeds": ["img_encode", 0],
-                "clip_embeds": ["clip_encode", 0],
                 "vae": ["vae", 0],
                 "width": width,
                 "height": height,
