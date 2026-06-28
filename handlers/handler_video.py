@@ -39,6 +39,7 @@ LORA_FILES = {
     'blowjob':       "lora_blowjob.safetensors",
     'cum_facial':    "lora_cum_facial.safetensors",
     'cumshot_i2v':   "lora_cumshot_i2v.safetensors",
+    'doggy_pov': "lora_doggy_pov.safetensors",
 }
 
 # ── Style configs ─────────────────────────────────────────────────────────
@@ -60,13 +61,11 @@ STYLE_CONFIGS = {
     },
 
     'doggy_style': {
-        'loras': [
-            ('allinone_nsfw', 0.8),      # Lowered to prevent muddying/artifacting
-            ('sex_thrust', 0.55)          # Raised slightly to ensure action triggers
-        ],
-        'guidance_scale': 5.5,           # Bumped to 5.5. 4 is too weak for high-weight prompts.
-        'trigger': 'd0gg1e, doggy style sex, from behind, rear entry, deep full penetration, slow heavy thrusting, female body arching in pleasure, hips shaking, passionate skin movement, body bouncing from impact', # FIXED: Added 'trigger': key
+        'loras': [('doggy_pov', 0.95), ('allinone_nsfw', 0.5), ('sex_thrust', 0.50)],
+        'guidance_scale': 5.5,
+        'trigger': 'doggy style sex, pov, from behind, rear entry, thrusting motion, explicit',
     },
+    
     'cowgirl_style': {
         'loras': [('allinone_nsfw', 0.85)],
         'guidance_scale': 7.5,
@@ -429,7 +428,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 45,              # Give DPM++ 30 steps to properly compute the physics loop
+                "steps": 30,              # Give DPM++ 30 steps to properly compute the physics loop
                 "cfg": guidance_scale,
                 "seed": 42,
                 "shift": 4.5,             # Balanced value for motion tracking 
