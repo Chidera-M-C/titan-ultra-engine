@@ -54,8 +54,8 @@ STYLE_CONFIGS = {
         'trigger': 'woman partially undressing, sensual reveal, contrast clothed and nude',
     },
     'missionary_style': {
-        'loras': [('allinone_nsfw', 0.85), ('sex_thrust', 0.70)],
-        'guidance_scale': 7.5,
+        'loras': [('allinone_nsfw', 0.2), ('sex_thrust', 0.10)],
+        'guidance_scale': 4,
         'trigger': 'missionary sex, man on top, face to face, thrusting motion, explicit',
     },
     'doggy_style': {
