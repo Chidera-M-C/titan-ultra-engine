@@ -2,17 +2,16 @@ import sys
 sys.stdout = sys.__stdout__
 sys.stderr = sys.__stderr__
 
+# ── Install ip_adapter if missing ─────────────────────────────
 import subprocess
-def install_ip_adapter():
-    try:
-        import ip_adapter
-        print("✓ ip_adapter already installed")
-    except ImportError:
-        print("🔧 Installing ip_adapter...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "git+https://github.com/tencent-ailab/IP-Adapter.git"])
-        print("✅ ip_adapter installed")
-
-install_ip_adapter()
+try:
+    import ip_adapter
+    print("✓ ip_adapter is already installed")
+except ImportError:
+    print("🔧 Installing ip_adapter package (this may take 10-20 seconds)...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", 
+                         "git+https://github.com/tencent-ailab/IP-Adapter.git"])
+    print("✅ ip_adapter installed successfully")
 
 import torch
 import runpod
