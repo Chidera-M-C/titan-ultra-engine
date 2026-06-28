@@ -330,8 +330,7 @@ def build_t2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 inputs["prev_lora"] = prev  # only chain after first one
             p[nid] = {"class_type": "WanVideoLoraSelect", "inputs": inputs}
             prev = [nid, 0]
-        p["sampler"]["inputs"]["model"] = ["model", 0]  # model stays clean
-        p["sampler"]["inputs"]["lora"] = prev            # last lora node here
+        p["model"]["inputs"]["lora"] = prev
     return {"prompt": p}
 
 
@@ -478,8 +477,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 inputs["prev_lora"] = prev  # only chain after first one
             p[nid] = {"class_type": "WanVideoLoraSelect", "inputs": inputs}
             prev = [nid, 0]
-        p["sampler"]["inputs"]["model"] = ["model", 0]  # model stays clean
-        p["sampler"]["inputs"]["lora"] = prev            # last lora node here
+        p["model"]["inputs"]["lora"] = prev
 
     return {"prompt": p}
 
