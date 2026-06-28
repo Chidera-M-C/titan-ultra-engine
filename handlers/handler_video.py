@@ -61,8 +61,8 @@ STYLE_CONFIGS = {
     },
 
     'doggy_style': {
-        'loras': [('doggy_pov', 0.95), ('allinone_nsfw', 0.5), ('sex_thrust', 0.50)],
-        'guidance_scale': 5.5,
+        'loras': [('doggy_pov', 0.75), ('allinone_nsfw', 0.80), ('sex_thrust', 0.50)],
+        'guidance_scale': 6.8,
         'trigger': 'doggy style sex, pov, from behind, rear entry, thrusting motion, explicit',
     },
     
@@ -428,12 +428,12 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 30,              # Give DPM++ 30 steps to properly compute the physics loop
+                "steps": 35,              # Give DPM++ 30 steps to properly compute the physics loop
                 "cfg": guidance_scale,
-                "seed": 42,
-                "shift": 4.5,             # Balanced value for motion tracking 
-                "riflex_freq_index": 1,   # Activates RIFLEX context tracking to prevent frame melting
-                "scheduler": "unipc",     # CHANGED from unipc/euler to the complex geometry solver
+                "seed": -1,
+                "shift": 5.0,             # Balanced value for motion tracking 
+                "riflex_freq_index": 0,   # Activates RIFLEX context tracking to prevent frame melting
+                "scheduler": "dpm++",     # CHANGED from unipc/euler to the complex geometry solver
                 "force_offload": True,     
              }
         },
