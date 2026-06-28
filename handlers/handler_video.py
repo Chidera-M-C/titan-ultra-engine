@@ -54,16 +54,16 @@ STYLE_CONFIGS = {
         'trigger': 'woman partially undressing, sensual reveal, contrast clothed and nude',
     },
     'missionary_style': {
-        'loras': [('allinone_nsfw', 0.2), ('sex_thrust', 0.10)],
-        'guidance_scale': 4,
+        'loras': [('allinone_nsfw', 0.09), ('sex_thrust', 0.70)],
+        'guidance_scale': 7.5,
         'trigger': 'missionary sex, man on top, face to face, thrusting motion, explicit',
     },
     'doggy_style': {
         'loras': [
-            ('allinone_nsfw', 0.95),      # strong base
-            ('sex_thrust', 0.85)          # still useful on top
+            ('allinone_nsfw', 2),      # strong base
+            ('sex_thrust', 0.01)       # still useful on top
         ],
-        'guidance_scale': 6.8,            # lower = better motion
+        'guidance_scale': 4,            # lower = better motion
         'trigger': 'd0gg1e, doggy style sex, from behind, rear entry',
     },
     'cowgirl_style': {
