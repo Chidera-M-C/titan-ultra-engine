@@ -66,7 +66,6 @@ STYLE_CONFIGS = {
         'guidance_scale': 6.8,            # lower = better motion
         'trigger': 'd0gg1e, doggy style sex, from behind, rear entry',
     },
-    },
     'cowgirl_style': {
         'loras': [('allinone_nsfw', 0.85)],
         'guidance_scale': 7.5,
