@@ -65,7 +65,7 @@ STYLE_CONFIGS = {
             ('sex_thrust', 0.75)          # Raised slightly to ensure action triggers
         ],
         'guidance_scale': 6.0,           # Bumped to 5.5. 4 is too weak for high-weight prompts.
-        'd0gg1e, doggy style sex, from behind, rear entry, deep thrusting motion, fast rhythmic thrusting, repeating penetration motion',
+        'trigger': 'd0gg1e, doggy style sex, from behind, rear entry, deep thrusting motion, fast rhythmic thrusting, repeating penetration motion', # FIXED: Added 'trigger': key
     },
     'cowgirl_style': {
         'loras': [('allinone_nsfw', 0.85)],
