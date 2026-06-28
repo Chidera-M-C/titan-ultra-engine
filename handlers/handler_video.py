@@ -434,7 +434,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "seed": 42,
                 "shift": 5.0,             # 5.0 (universal) or 7.0 (if doing 720p)
                 "riflex_freq_index": 0,  
-                "scheduler": "simple",    # Changed from unipc for better prompt adherence
+                "scheduler": "unipc",    # Changed from unipc for better prompt adherence
                 "force_offload": True,       
              }
         },
