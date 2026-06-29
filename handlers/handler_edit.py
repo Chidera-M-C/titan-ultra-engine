@@ -64,13 +64,16 @@ def download_file(url, path, label):
 def load_models():
     global pipeline, ip_model, openpose, canny_detector
 
+    # CORRECT — comma added
     controlnet_pose = ControlNetModel.from_pretrained(
-        "/workspace/models/controlnet_openpose_xl", torch_dtype=torch.float16
+        "/workspace/models/controlnet_openpose_xl",
+        torch_dtype=torch.float16,
         local_files_only=True,
     ).to("cuda")
     
     controlnet_canny = ControlNetModel.from_pretrained(
-        "/workspace/models/controlnet_canny_xl", torch_dtype=torch.float16
+        "/workspace/models/controlnet_canny_xl",
+        torch_dtype=torch.float16,
         local_files_only=True,
     ).to("cuda")
 
