@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir \
     transformers==4.40.0 \
     diffusers==0.27.2 \
     safetensors==0.4.3 \
-    huggingface_hub==0.22.2 \
+    huggingface_hub==0.23.4 \
     Pillow==10.3.0 \
     requests==2.31.0
 
