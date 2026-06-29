@@ -64,8 +64,6 @@ def download_file(url, path, label):
 def load_models():
     global pipeline, ip_model, openpose, canny_detector
 
-    vae = AutoencoderKL.from_single_file(VAE_PATH, torch_dtype=torch.float16).to("cuda")
-
     controlnet_pose = ControlNetModel.from_pretrained(
         "/workspace/models/controlnet_openpose_xl", torch_dtype=torch.float16
     ).to("cuda")
@@ -77,7 +75,6 @@ def load_models():
     pipeline = StableDiffusionXLControlNetPipeline.from_single_file(
         JUGGERNAUT_PATH,
         controlnet=[controlnet_pose, controlnet_canny],
-        vae=vae,
         torch_dtype=torch.float16,
         use_safetensors=True,
         variant="fp16"
