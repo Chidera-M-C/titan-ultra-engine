@@ -64,6 +64,11 @@ def download_file(url, path, label):
 def load_models():
     global pipeline, ip_model, openpose, canny_detector
 
+ 
+    import os
+    os.environ["TRANSFORMERS_OFFLINE"] = "1"
+    os.environ["HF_DATASETS_OFFLINE"] = "1"
+    os.environ["DIFFUSERS_OFFLINE"] = "1"    
     # CORRECT — comma added
     controlnet_pose = ControlNetModel.from_pretrained(
         "/workspace/models/controlnet_openpose_xl",
