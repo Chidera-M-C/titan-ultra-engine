@@ -38,7 +38,7 @@ RUN pip install --no-cache-dir \
 
 # Patch out mediapipe (not needed, causes import errors)
 RUN sed -i 's/from .mediapipe_face import MediapipeFaceDetector/pass  # mediapipe disabled/' \
-    /opt/conda/lib/python3.10/site-packages/controlnet_aux/__init__.py
+    /opt/conda/lib/python3.10/site-packages/controlnet_aux/__init__.py || true
 
 # Force numpy to stay at 1.24.4 — some packages silently upgrade it
 RUN pip install --no-cache-dir --force-reinstall "numpy==1.24.4"
