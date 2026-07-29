@@ -23,12 +23,6 @@ def start_comfyui():
         time.sleep(3)
     raise Exception("ComfyUI startup timeout")
 
-def find_node(nodes, node_id):
-    for node in nodes:
-        if node.get("id") == node_id:
-            return node
-    return None
-
 def upload_image(image_base64, filename="input.jpg"):
     if "," in image_base64:
         image_base64 = image_base64.split(",", 1)[1]
@@ -54,20 +48,11 @@ def handler(job):
         with open("/app/ComfyUI/workflows/lustify_krea_edit.json", "r") as f:
             workflow = json.load(f)
 
-        nodes = workflow["nodes"]
-
-        node_72 = find_node(nodes, 72)
-        if node_72:
-            node_72["widgets_values"][0] = main_image_name
-
+        # Direct API Node Injections
+        workflow["72"]["inputs"]["image"] = main_image_name      # main image
         if second_image_name:
-            node_300 = find_node(nodes, 300)
-            if node_300:
-                node_300["widgets_values"][0] = second_image_name
-
-        node_248 = find_node(nodes, 248)
-        if node_248:
-            node_248["widgets_values"][0] = user_prompt
+            workflow["300"]["inputs"]["image"] = second_image_name  # second/reference image
+        workflow["247"]["inputs"]["prompt"] = user_prompt         # edit prompt
 
         resp = requests.post(f"{COMFY_URL}/prompt", json={"prompt": workflow})
         prompt_id = resp.json().get("prompt_id")
