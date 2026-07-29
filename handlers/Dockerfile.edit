@@ -19,11 +19,12 @@ RUN apt-get update && apt-get install -y \
     && dpkg-reconfigure --frontend noninteractive tzdata \
     && rm -rf /var/lib/apt/lists/*
 
-# Python packages
-RUN pip install --no-cache-dir numpy==1.24.4
+RUN pip install --no-cache-dir --upgrade pip
+
+# Install numpy first (more recent but stable version)
+RUN pip install --no-cache-dir "numpy>=1.26.0,<2.0.0"
 
 RUN pip install --no-cache-dir \
-    torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 \
     runpod==1.6.2 \
     requests \
     Pillow
