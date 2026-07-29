@@ -45,7 +45,7 @@ def handler(job):
         if second_image_b64:
             second_image_name = upload_image(second_image_b64, "second_input.jpg")
 
-        with open("/app/ComfyUI/workflows/lustify_krea_edit.json", "r") as f:
+        with open("/app/ComfyUI/workflows/lustify_krea_edit_api.json", "r") as f:
             workflow = json.load(f)
 
         # Direct API Node Injections
