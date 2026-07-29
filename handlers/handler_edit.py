@@ -34,62 +34,59 @@ def upload_image(image_base64, filename="input.jpg"):
 def handler(job):
     try:
         data = job["input"]
-        main_image_b64 = data.get("image")
-        second_image_b64 = data.get("second_image")        # ← Optional
-        user_prompt = data.get("prompt", "improve the image, high quality")
-        user_negative = data.get("negative_prompt", "")
+        image_base64 = data.get("image")
+        second_image_b64 = data.get("second_image")
+        user_prompt = data.get("prompt", "improve quality, high detail")
 
-        if not main_image_b64:
+        if not image_base64:
             return {"error": "Main image is required"}
 
-        # Upload images
-        main_image_name = upload_image(main_image_b64, "main_input.jpg")
-        
+        main_image_name = upload_image(image_base64, "main_input.jpg")
         second_image_name = None
         if second_image_b64:
             second_image_name = upload_image(second_image_b64, "second_input.jpg")
 
-        # Load workflow
         with open("/app/ComfyUI/workflows/lustify_krea_edit.json", "r") as f:
             workflow = json.load(f)
 
-        # Update Main Image (Node 72)
-        workflow["nodes"]["72"]["widgets_values"][0] = main_image_name
+        # Update inputs
+        workflow["nodes"]["72"]["widgets_values"][0] = main_image_name   # Main image
 
-        # Update Second Reference Image (Node 300) if provided
-        if second_image_name:
+        if second_image_name and "300" in workflow["nodes"]:
             workflow["nodes"]["300"]["widgets_values"][0] = second_image_name
-            # Optionally enable the second reference group if needed
-        else:
-            # You can bypass the second reference if not provided (depending on workflow)
-            pass
 
-        # Update Edit Instruction (Node 248 in the subgraph)
-        workflow["nodes"]["248"]["widgets_values"][0] = user_prompt
+        workflow["nodes"]["248"]["widgets_values"][0] = user_prompt     # Edit prompt
 
-        # Queue the prompt
+        # Queue
         resp = requests.post(f"{COMFY_URL}/prompt", json={"prompt": workflow})
-        prompt_id = resp.json()["prompt_id"]
+        prompt_id = resp.json().get("prompt_id")
 
-        # Wait for completion
-        for _ in range(90):   # increased timeout for safety
-            history = requests.get(f"{COMFY_URL}/history/{prompt_id}").json()
-            if prompt_id in history and history[prompt_id].get("outputs"):
-                # Get output from PreviewImage node (ID 90)
-                try:
-                    output_info = history[prompt_id]["outputs"]["90"]["images"][0]
-                    image_path = f"/app/ComfyUI/output/{output_info['filename']}"
-                    with open(image_path, "rb") as f:
-                        result_b64 = base64.b64encode(f.read()).decode()
-                    return {"image": f"data:image/jpeg;base64,{result_b64}"}
-                except:
-                    pass
+        # Polling
+        for _ in range(90):
+            history_resp = requests.get(f"{COMFY_URL}/history/{prompt_id}")
+            history = history_resp.json()
+
+            if prompt_id in history:
+                outputs = history[prompt_id].get("outputs", {})
+                
+                # Safer way to find the output image
+                for node_id, node_output in outputs.items():
+                    if "images" in node_output:
+                        image_data = node_output["images"][0]
+                        image_path = f"/app/ComfyUI/output/{image_data['filename']}"
+                        
+                        if os.path.exists(image_path):
+                            with open(image_path, "rb") as f:
+                                result_b64 = base64.b64encode(f.read()).decode()
+                            return {"image": f"data:image/jpeg;base64,{result_b64}"}
+            
             time.sleep(2)
 
-        return {"error": "Generation timeout"}
+        return {"error": "Timeout waiting for image"}
 
     except Exception as e:
-        return {"error": str(e)}
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()}
 
 if __name__ == "__main__":
     start_comfyui()
