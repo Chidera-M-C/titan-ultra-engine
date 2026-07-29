@@ -13,7 +13,6 @@ def start_comfyui():
     def run():
         subprocess.Popen([sys.executable, "main.py", "--listen", "0.0.0.0", "--port", "8188"], cwd="/app/ComfyUI")
     threading.Thread(target=run, daemon=True).start()
-    
     for _ in range(45):
         try:
             if requests.get(f"{COMFY_URL}/history", timeout=5).status_code == 200:
@@ -23,6 +22,12 @@ def start_comfyui():
             pass
         time.sleep(3)
     raise Exception("ComfyUI startup timeout")
+
+def find_node(nodes, node_id):
+    for node in nodes:
+        if node.get("id") == node_id:
+            return node
+    return None
 
 def upload_image(image_base64, filename="input.jpg"):
     if "," in image_base64:
@@ -49,37 +54,37 @@ def handler(job):
         with open("/app/ComfyUI/workflows/lustify_krea_edit.json", "r") as f:
             workflow = json.load(f)
 
-        # Update inputs
-        workflow["nodes"]["72"]["widgets_values"][0] = main_image_name   # Main image
+        nodes = workflow["nodes"]
 
-        if second_image_name and "300" in workflow["nodes"]:
-            workflow["nodes"]["300"]["widgets_values"][0] = second_image_name
+        node_72 = find_node(nodes, 72)
+        if node_72:
+            node_72["widgets_values"][0] = main_image_name
 
-        workflow["nodes"]["248"]["widgets_values"][0] = user_prompt     # Edit prompt
+        if second_image_name:
+            node_300 = find_node(nodes, 300)
+            if node_300:
+                node_300["widgets_values"][0] = second_image_name
 
-        # Queue
+        node_248 = find_node(nodes, 248)
+        if node_248:
+            node_248["widgets_values"][0] = user_prompt
+
         resp = requests.post(f"{COMFY_URL}/prompt", json={"prompt": workflow})
         prompt_id = resp.json().get("prompt_id")
 
-        # Polling
         for _ in range(90):
             history_resp = requests.get(f"{COMFY_URL}/history/{prompt_id}")
             history = history_resp.json()
-
             if prompt_id in history:
                 outputs = history[prompt_id].get("outputs", {})
-                
-                # Safer way to find the output image
                 for node_id, node_output in outputs.items():
                     if "images" in node_output:
                         image_data = node_output["images"][0]
                         image_path = f"/app/ComfyUI/output/{image_data['filename']}"
-                        
                         if os.path.exists(image_path):
                             with open(image_path, "rb") as f:
                                 result_b64 = base64.b64encode(f.read()).decode()
                             return {"image": f"data:image/jpeg;base64,{result_b64}"}
-            
             time.sleep(2)
 
         return {"error": "Timeout waiting for image"}
