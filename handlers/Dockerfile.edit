@@ -2,7 +2,6 @@ FROM pytorch/pytorch:2.4.0-cuda12.1-cudnn9-runtime
 
 WORKDIR /app
 
-# System dependencies + non-interactive timezone
 ENV DEBIAN_FRONTEND=noninteractive \
     TZ=UTC
 
@@ -20,10 +19,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir --upgrade pip
-
-# Install numpy first (more recent but stable version)
 RUN pip install --no-cache-dir "numpy>=1.26.0,<2.0.0"
-
 RUN pip install --no-cache-dir \
     runpod==1.6.2 \
     requests \
@@ -32,11 +28,13 @@ RUN pip install --no-cache-dir \
 # Install ComfyUI
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git /app/ComfyUI
 WORKDIR /app/ComfyUI
-
 RUN pip install --no-cache-dir -r requirements.txt
 
+# ── krea2edit: CACHEBUST arg is referenced inside RUN so Docker
+#    cannot skip this layer when the arg value changes
 ARG CACHEBUST=1
-RUN git clone --depth 1 https://github.com/lbouaraba/comfyui-krea2edit.git custom_nodes/comfyui-krea2edit
+RUN echo "bust=$CACHEBUST" && \
+    git clone --depth 1 https://github.com/lbouaraba/comfyui-krea2edit.git custom_nodes/comfyui-krea2edit
 
 RUN git clone https://github.com/rgthree/rgthree-comfy.git custom_nodes/rgthree-comfy && \
     pip install --no-cache-dir -r custom_nodes/rgthree-comfy/requirements.txt || true
@@ -44,15 +42,11 @@ RUN git clone https://github.com/rgthree/rgthree-comfy.git custom_nodes/rgthree-
 RUN git clone https://github.com/alexopus/ComfyUI-Image-Saver.git custom_nodes/ComfyUI-Image-Saver && \
     pip install --no-cache-dir -r custom_nodes/ComfyUI-Image-Saver/requirements.txt || true
 
-# Create workflows directory
 RUN mkdir -p /app/ComfyUI/workflows
 
-# Copy files
 COPY download_models_edit.py /app/
 COPY handler_edit.py /app/
 COPY lustify_krea_edit_api.json /app/ComfyUI/workflows/
-
-
 
 WORKDIR /app
 
