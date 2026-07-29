@@ -38,13 +38,21 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Install Krea2Edit custom nodes
 RUN git clone https://github.com/lbouaraba/comfyui-krea2edit.git custom_nodes/comfyui-krea2edit
 
+RUN git clone https://github.com/rgthree/rgthree-comfy.git custom_nodes/rgthree-comfy && \
+    pip install --no-cache-dir -r custom_nodes/rgthree-comfy/requirements.txt || true
+
+RUN git clone https://github.com/alexopus/ComfyUI-Image-Saver.git custom_nodes/ComfyUI-Image-Saver && \
+    pip install --no-cache-dir -r custom_nodes/ComfyUI-Image-Saver/requirements.txt || true
+
 # Create workflows directory
 RUN mkdir -p /app/ComfyUI/workflows
 
 # Copy files
 COPY download_models_edit.py /app/
 COPY handler_edit.py /app/
-COPY lustify_krea_edit.json /app/ComfyUI/workflows/
+COPY lustify_krea_edit_api.json /app/ComfyUI/workflows/
+
+
 
 WORKDIR /app
 
