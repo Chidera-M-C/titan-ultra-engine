@@ -36,7 +36,9 @@ WORKDIR /app/ComfyUI
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install Krea2Edit custom nodes
-RUN git clone https://github.com/lbouaraba/comfyui-krea2edit.git custom_nodes/comfyui-krea2edit
+RUN git clone https://github.com/lbouaraba/comfyui-krea2edit.git custom_nodes/comfyui-krea2edit && \
+    cd custom_nodes/comfyui-krea2edit && \
+    git pull origin main
 
 RUN git clone https://github.com/rgthree/rgthree-comfy.git custom_nodes/rgthree-comfy && \
     pip install --no-cache-dir -r custom_nodes/rgthree-comfy/requirements.txt || true
