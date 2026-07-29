@@ -10,6 +10,7 @@ def download_hf(repo_id, local_dir, label):
     print(f"✅ {label} done")
 
 # Create model directories
+# Create model directories
 os.makedirs("/app/ComfyUI/models/checkpoints", exist_ok=True)
 os.makedirs("/app/ComfyUI/models/loras", exist_ok=True)
 os.makedirs("/app/ComfyUI/models/vae", exist_ok=True)
