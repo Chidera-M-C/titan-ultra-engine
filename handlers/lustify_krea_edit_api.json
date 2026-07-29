@@ -1,0 +1,243 @@
+{
+  "54": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "266",
+        2
+      ],
+      "vae": [
+        "116",
+        0
+      ]
+    }
+  },
+  "308": {
+    "class_type": "ImageScaleToTotalPixels",
+    "inputs": {
+      "image": [
+        "300",
+        0
+      ],
+      "megapixels": 1.4,
+      "upscale_method": "lanczos",
+      "crop": 64
+    }
+  },
+  "306": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": [
+        "308",
+        0
+      ],
+      "vae": [
+        "116",
+        0
+      ]
+    }
+  },
+  "300": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "279425998_1141582773352671_2339930963903914959_n.jpg",
+      "upload": "image"
+    }
+  },
+  "115": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_4b_fp8_scaled.safetensors",
+      "type": "krea2",
+      "device": "default"
+    }
+  },
+  "116": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "wan_2.1_vae.safetensors"
+    }
+  },
+  "266": {
+    "class_type": "f0c08e17-ae37-4f4b-be97-5035d833db71",
+    "inputs": {
+      "seed": [
+        "241",
+        0
+      ],
+      "model": [
+        "97",
+        0
+      ],
+      "positive": [
+        "247",
+        0
+      ],
+      "negative": [
+        "101",
+        0
+      ],
+      "latent_image": [
+        "309",
+        3
+      ],
+      "image": [
+        "72",
+        0
+      ]
+    }
+  },
+  "272": {
+    "class_type": "Image Saver Simple",
+    "inputs": {
+      "images": [
+        "90",
+        0
+      ],
+      "metadata": [
+        "246",
+        0
+      ],
+      "filename_prefix": "%time_%basemodelname_%seed",
+      "path": "",
+      "extension": "png"
+    }
+  },
+  "246": {
+    "class_type": "Image Saver Metadata",
+    "inputs": {
+      "positive": [
+        "247",
+        1
+      ],
+      "width": [
+        "266",
+        4
+      ],
+      "height": [
+        "266",
+        5
+      ],
+      "seed_value": [
+        "241",
+        0
+      ],
+      "steps": [
+        "266",
+        0
+      ],
+      "cfg": [
+        "266",
+        1
+      ],
+      "sampler_name": [
+        "266",
+        3
+      ],
+      "filename_prefix": "",
+      "path": "",
+      "extension": ""
+    }
+  },
+  "101": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+      "conditioning": [
+        "247",
+        0
+      ]
+    }
+  },
+  "97": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+      "model": [
+        "309",
+        1
+      ],
+      "shift": 4
+    }
+  },
+  "105": {
+    "class_type": "Power Lora Loader (rgthree)",
+    "inputs": {
+      "model": [
+        "117",
+        0
+      ],
+      "lora_1": "krea\\krea2_identity_edit_v1_2.safetensors",
+      "strength_1": 1
+    }
+  },
+  "117": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "lustify-v10-krea-turbo-int8_convrot.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "309": {
+    "class_type": "b898f649-8abc-44f2-a47c-2219759f01c2",
+    "inputs": {
+      "vae": [
+        "116",
+        0
+      ],
+      "image": [
+        "72",
+        0
+      ],
+      "model": [
+        "105",
+        0
+      ],
+      "source_latent_b": [
+        "306",
+        0
+      ],
+      "source_image_b": [
+        "308",
+        0
+      ]
+    }
+  },
+  "241": {
+    "class_type": "Seed (rgthree)",
+    "inputs": {
+      "seed": 367334738896668
+    }
+  },
+  "72": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "pasted/image (793).png",
+      "upload": "image"
+    }
+  },
+  "247": {
+    "class_type": "ccb2ef07-5f9a-4343-8df4-b8b3a5994046",
+    "inputs": {
+      "clip": [
+        "115",
+        0
+      ],
+      "image": [
+        "309",
+        0
+      ],
+      "image_b": [
+        "300",
+        0
+      ]
+    }
+  },
+  "90": {
+    "class_type": "PreviewImage",
+    "inputs": {
+      "images": [
+        "54",
+        0
+      ]
+    }
+  }
+}
