@@ -46,7 +46,8 @@ ARG CACHEBUST=1
 RUN echo "bust=$CACHEBUST" && \
     git clone https://github.com/lbouaraba/comfyui-krea2edit.git custom_nodes/comfyui-krea2edit && \
     cd custom_nodes/comfyui-krea2edit && \
-    git checkout 17af88332728c97ab5c7d26296b2cae59c935976
+    git checkout 17af88332728c97ab5c7d26296b2cae59c935976 && \
+    sed -i 's/def wrapper(self, x, timesteps, context, model_options={}, seed=None):/def wrapper(self, x, timesteps, context, model_options={}, seed=None, *args, **kwargs):/' node.py
 
 RUN git clone https://github.com/rgthree/rgthree-comfy.git custom_nodes/rgthree-comfy && \
     pip install --no-cache-dir -r custom_nodes/rgthree-comfy/requirements.txt || true
