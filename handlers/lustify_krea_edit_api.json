@@ -47,7 +47,7 @@
   "115": {
     "class_type": "CLIPLoader",
     "inputs": {
-      "clip_name": "qwen3vl_4b_fp8_scaled.safetensors",
+      "clip_name": "text_encoders/qwen3vl_4b_fp8_scaled.safetensors",
       "type": "krea2",
       "device": "default"
     }
