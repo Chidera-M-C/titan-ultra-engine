@@ -49,7 +49,6 @@ def handler(job):
             workflow = json.load(f)
 
         # Direct API Node Injections
-        # Direct API Node Injections
         workflow["72"]["inputs"]["image"] = main_image_name      # main image
         if second_image_name:
             workflow["300"]["inputs"]["image"] = second_image_name  # second/reference image
