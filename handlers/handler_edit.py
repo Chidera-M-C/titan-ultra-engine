@@ -51,7 +51,7 @@ def handler(job):
         # Direct API Node Injections
         workflow["72"]["inputs"]["image"] = main_image_name      # main image
         workflow["300"]["inputs"]["image"] = second_image_name if second_image_name else main_image_name  # second/reference image
-        workflow["247"]["inputs"]["text"] = user_prompt           # edit prompt (FIXED FIELD KEY)
+        workflow["247"]["inputs"]["prompt"] = user_prompt         # edit prompt
 
         resp = requests.post(f"{COMFY_URL}/prompt", json={"prompt": workflow})
         prompt_id = resp.json().get("prompt_id")
