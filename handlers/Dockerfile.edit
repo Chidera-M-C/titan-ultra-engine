@@ -26,7 +26,9 @@ RUN pip install --no-cache-dir \
     Pillow
 
 # Install ComfyUI
-RUN git clone https://github.com/comfyanonymous/ComfyUI.git /app/ComfyUI
+RUN git clone https://github.com/comfyanonymous/ComfyUI.git /app/ComfyUI && \
+    cd /app/ComfyUI && \
+    git checkout v0.3.40
 WORKDIR /app/ComfyUI
 RUN pip install --no-cache-dir -r requirements.txt
 
