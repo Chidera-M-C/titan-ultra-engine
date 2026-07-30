@@ -44,6 +44,14 @@
       "upload": "image"
     }
   },
+  "303": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    }
+  },
   "115": {
     "class_type": "CLIPLoader",
     "inputs": {
@@ -78,8 +86,8 @@
         0
       ],
       "latent_image": [
-        "309",
-        2
+        "303",
+        0
       ],
       "steps": 20,
       "cfg": 4.0,
@@ -211,8 +219,8 @@
         0
       ],
       "image": [
-        "309",
-        1
+        "72",
+        0
       ],
       "image_b": [
         "300",
