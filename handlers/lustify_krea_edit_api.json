@@ -55,7 +55,7 @@
   "116": {
     "class_type": "VAELoader",
     "inputs": {
-      "vae_name": "wan_2.1_vae.safetensors"
+      "vae_name": "krea2_raw_vae.safetensors"
     }
   },
   "266": {
@@ -81,10 +81,11 @@
         "309",
         3
       ],
-      "image": [
-        "72",
-        0
-      ]
+      "steps": 20,
+      "cfg": 4.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1.0
     }
   },
   "272": {
@@ -100,7 +101,13 @@
       ],
       "filename_prefix": "%time_%basemodelname_%seed",
       "path": "",
-      "extension": "png"
+      "extension": "png",
+      "quality_jpeg_or_webp": 95,
+      "lossless_webp": false,
+      "filename": "output",
+      "embed_workflow": false,
+      "optimize_png": false,
+      "save_workflow_as_json": false
     }
   },
   "246": {
@@ -172,7 +179,7 @@
   "117": {
     "class_type": "UNETLoader",
     "inputs": {
-      "unet_name": "lustify-v10-krea-turbo-int8_convrot.safetensors",
+      "unet_name": "raw.safetensors",
       "weight_dtype": "default"
     }
   },
