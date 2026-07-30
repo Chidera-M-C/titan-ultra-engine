@@ -60,6 +60,9 @@ COPY download_models_edit.py /app/
 COPY handler_edit.py /app/
 COPY lustify_krea_edit_api.json /app/ComfyUI/workflows/
 
+ARG HF_TOKEN
+RUN HF_TOKEN=${HF_TOKEN} python /app/download_models_edit.py
+
 WORKDIR /app
 
 # Upgrade RunPod SDK & install Brotli / aiohttp speedups to decode RunPod API responses
