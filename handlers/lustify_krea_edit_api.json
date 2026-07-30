@@ -21,6 +21,7 @@
       ],
       "megapixels": 1.4,
       "upscale_method": "lanczos",
+      "resolution_steps": 1,
       "crop": 64
     }
   },
@@ -188,7 +189,7 @@
         "105",
         0
       ],
-      "source_latent_b": [
+      "source_latent": [
         "306",
         0
       ],
