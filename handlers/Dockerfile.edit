@@ -40,14 +40,10 @@ RUN pip install --no-cache-dir \
     tokenizers \
     sentencepiece
 
-# ── krea2edit: CACHEBUST arg is referenced inside RUN so Docker
-#    cannot skip this layer when the arg value changes
+# ── krea2edit: pull latest main branch directly (contains wrapper signature fix)
 ARG CACHEBUST=2
 RUN echo "bust=$CACHEBUST" && \
-    git clone https://github.com/lbouaraba/comfyui-krea2edit.git custom_nodes/comfyui-krea2edit && \
-    cd custom_nodes/comfyui-krea2edit && \
-    git checkout 17af88332728c97ab5c7d26296b2cae59c935976 && \
-    python3 -c "path='nodes.py'; text=open(path).read(); open(path,'w').write(text.replace('def wrapper(self, x, timesteps, context, model_options={}, seed=None):', 'def wrapper(self, x, timesteps, context, model_options={}, seed=None, *args, **kwargs):'))"
+    git clone https://github.com/lbouaraba/comfyui-krea2edit.git custom_nodes/comfyui-krea2edit
 
 RUN git clone https://github.com/rgthree/rgthree-comfy.git custom_nodes/rgthree-comfy && \
     pip install --no-cache-dir -r custom_nodes/rgthree-comfy/requirements.txt || true
