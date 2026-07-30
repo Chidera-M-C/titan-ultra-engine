@@ -177,10 +177,6 @@
   "309": {
     "class_type": "Krea2EditModelPatch",
     "inputs": {
-      "vae": [
-        "116",
-        0
-      ],
       "image": [
         "72",
         0
