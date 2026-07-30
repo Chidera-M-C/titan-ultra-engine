@@ -79,7 +79,7 @@
       ],
       "latent_image": [
         "309",
-        3
+        2
       ],
       "steps": 20,
       "cfg": 4.0,
@@ -113,16 +113,10 @@
   "246": {
     "class_type": "Image Saver Metadata",
     "inputs": {
-      "positive": [
-        "247",
-        1
-      ],
+      "positive": ["247", 0],
       "width": 1024,
       "height": 1024,
-      "seed_value": [
-        "241",
-        0
-      ],
+      "seed_value": ["241", 0],
       "steps": 20,
       "cfg": 4.0,
       "sampler_name": "euler",
