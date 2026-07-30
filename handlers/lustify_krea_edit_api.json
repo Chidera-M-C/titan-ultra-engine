@@ -19,10 +19,10 @@
         "300",
         0
       ],
-      "megapixels": 1.0,
+      "megapixels": 1.4,
       "upscale_method": "lanczos",
       "resolution_steps": 1,
-      "crop": 0
+      "crop": 64
     }
   },
   "306": {
@@ -41,8 +41,16 @@
   "300": {
     "class_type": "LoadImage",
     "inputs": {
-      "image": "main_input.jpg",
+      "image": "279425998_1141582773352671_2339930963903914959_n.jpg",
       "upload": "image"
+    }
+  },
+  "303": {
+    "class_type": "EmptySD3LatentImage",
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
     }
   },
   "115": {
@@ -79,14 +87,14 @@
         0
       ],
       "latent_image": [
-        "306",
+        "303",
         0
       ],
-      "steps": 25,
-      "cfg": 1.0,
+      "steps": 20,
+      "cfg": 4.0,
       "sampler_name": "euler",
-      "scheduler": "sgm_uniform",
-      "denoise": 0.85
+      "scheduler": "simple",
+      "denoise": 1.0
     }
   },
   "272": {
@@ -121,8 +129,8 @@
         "241",
         0
       ],
-      "steps": 25,
-      "cfg": 1.0,
+      "steps": 20,
+      "cfg": 4.0,
       "sampler_name": "euler",
       "filename_prefix": "",
       "path": "",
@@ -176,14 +184,6 @@
       "source_latent": [
         "306",
         0
-      ],
-      "vae": [
-        "116",
-        0
-      ],
-      "source_image": [
-        "308",
-        0
       ]
     }
   },
@@ -196,7 +196,7 @@
   "72": {
     "class_type": "LoadImage",
     "inputs": {
-      "image": "main_input.jpg",
+      "image": "pasted/image (793).png",
       "upload": "image"
     }
   },
@@ -214,8 +214,7 @@
       "image_b": [
         "300",
         0
-      ],
-      "text": ""
+      ]
     }
   },
   "90": {
