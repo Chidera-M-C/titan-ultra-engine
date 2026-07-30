@@ -29,6 +29,7 @@ os.makedirs("/app/ComfyUI/models/vae", exist_ok=True)
 os.makedirs("/app/ComfyUI/models/text_encoders", exist_ok=True)
 os.makedirs("/app/ComfyUI/models/unet", exist_ok=True)
 os.makedirs("/app/ComfyUI/models/loras/krea", exist_ok=True)
+os.makedirs("/app/ComfyUI/models/diffusion_models", exist_ok=True)
 
 # 1. VAE from Comfy-Org
 download_hf(
@@ -50,7 +51,7 @@ download_hf(
 download_hf(
     "krea/Krea-2-Raw",
     "raw.safetensors",
-    "/app/ComfyUI/models/unet/raw.safetensors",
+    "/app/ComfyUI/models/diffusion_models/raw.safetensors",
     "Krea2 Raw UNet"
 )
 
