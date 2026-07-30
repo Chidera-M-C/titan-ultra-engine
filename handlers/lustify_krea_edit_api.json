@@ -4,7 +4,7 @@
     "inputs": {
       "samples": [
         "266",
-        2
+        0
       ],
       "vae": [
         "116",
@@ -117,33 +117,18 @@
         "247",
         1
       ],
-      "width": [
-        "266",
-        4
-      ],
-      "height": [
-        "266",
-        5
-      ],
+      "width": 1024,
+      "height": 1024,
       "seed_value": [
         "241",
         0
       ],
-      "steps": [
-        "266",
-        0
-      ],
-      "cfg": [
-        "266",
-        1
-      ],
-      "sampler_name": [
-        "266",
-        3
-      ],
+      "steps": 20,
+      "cfg": 4.0,
+      "sampler_name": "euler",
       "filename_prefix": "",
       "path": "",
-      "extension": ""
+      "extension": "png"
     }
   },
   "101": {
