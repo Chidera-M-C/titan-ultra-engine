@@ -21,7 +21,6 @@ RUN apt-get update && apt-get install -y \
 RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir "numpy>=1.26.0,<2.0.0"
 RUN pip install --no-cache-dir \
-    runpod==1.6.2 \
     requests \
     Pillow
 
@@ -62,5 +61,8 @@ COPY handler_edit.py /app/
 COPY lustify_krea_edit_api.json /app/ComfyUI/workflows/
 
 WORKDIR /app
+
+# Upgrade RunPod SDK & install Brotli / aiohttp speedups to decode RunPod API responses
+RUN pip install --no-cache-dir "runpod>=1.7.0" brotli "aiohttp[speedups]>=3.10.0"
 
 CMD ["python", "handler_edit.py"]
