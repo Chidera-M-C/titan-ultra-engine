@@ -49,66 +49,64 @@ def handler(job):
         with open("/app/ComfyUI/workflows/lustify_krea_edit_api.json", "r") as f:
             workflow = json.load(f)
 
-        # Always set main image + prompt
+        # Primary inputs
         workflow["72"]["inputs"]["image"] = main_image_name
         workflow["247"]["inputs"]["prompt"] = user_prompt
 
-        # Dual image vs Single image handling
+        # Single vs Dual Image Routing
         if second_image_b64:
             second_image_name = upload_image(second_image_b64, "second_input.jpg")
-            
             if "300" in workflow:
                 workflow["300"]["inputs"]["image"] = second_image_name
 
-            # Connect second image slots dynamically
             if "247" in workflow and "inputs" in workflow["247"]:
                 workflow["247"]["inputs"]["image_b"] = ["300", 0]
             if "309" in workflow and "inputs" in workflow["309"]:
                 workflow["309"]["inputs"]["source_image_b"] = ["300", 0]
         else:
-            # Single-image mode: point Node 300 to main_image so missing file error is eliminated
             if "300" in workflow:
                 workflow["300"]["inputs"]["image"] = main_image_name
 
-            # Safely disconnect image_b reference links without breaking node schemas
             if "247" in workflow and "inputs" in workflow["247"]:
                 workflow["247"]["inputs"].pop("image_b", None)
             if "309" in workflow and "inputs" in workflow["309"]:
                 workflow["309"]["inputs"].pop("source_image_b", None)
 
-        # Inject Empty SD3/Flux Latent Node (Node 300-series override)
-        if "303" not in workflow:
-            workflow["303"] = {
-                "class_type": "EmptySD3LatentImage",
-                "inputs": {
-                    "width": int(data.get("width", 1024)),
-                    "height": int(data.get("height", 1024)),
-                    "batch_size": 1
-                }
+        # Ensure standard EmptyLatentImage node exists
+        width = int(data.get("width", 1024))
+        height = int(data.get("height", 1024))
+        
+        workflow["303"] = {
+            "class_type": "EmptyLatentImage",
+            "inputs": {
+                "width": width,
+                "height": height,
+                "batch_size": 1
             }
+        }
 
-        # Point KSampler to Empty Latent instead of VAE-encoded image (Node 306)
+        # KSampler Latent & Guidance parameters
         workflow["266"]["inputs"]["latent_image"] = ["303", 0]
-
-        # Parameters for Flow / Krea2 generation
-        workflow["266"]["inputs"]["cfg"] = float(data.get("cfg", 3.5))
-        workflow["266"]["inputs"]["denoise"] = 1.0  # ALWAYS 1.0 when starting from empty latent
+        workflow["266"]["inputs"]["cfg"] = float(data.get("cfg", 1.0))  # Flow models require low CFG (1.0)
+        workflow["266"]["inputs"]["denoise"] = 1.0
         workflow["266"]["inputs"]["steps"] = int(data.get("steps", 22))
 
-        # Queue workflow
+        # Bind target_latent to Krea2EditModelPatch to pre-encode correctly
+        if "309" in workflow and "inputs" in workflow["309"]:
+            workflow["309"]["inputs"]["target_latent"] = ["303", 0]
+
+        # Dispatch prompt
         resp = requests.post(f"{COMFY_URL}/prompt", json={"prompt": workflow})
         prompt_id = resp.json().get("prompt_id")
 
-        # Wait for result
+        # Poll results
         for _ in range(100):
             history_resp = requests.get(f"{COMFY_URL}/history/{prompt_id}").json()
             if prompt_id in history_resp:
-                # 1. Check standard API history outputs first
                 outputs = history_resp[prompt_id].get("outputs", {})
                 for node_id, node_output in outputs.items():
                     if "images" in node_output and len(node_output["images"]) > 0:
                         for img in node_output["images"]:
-                            # Skip temp previews if standard output node exists
                             subfolder = img.get("subfolder", "")
                             folder_type = img.get("type", "output")
                             filename = img["filename"]
@@ -119,7 +117,7 @@ def handler(job):
                                     result_b64 = base64.b64encode(f.read()).decode()
                                 return {"image": f"data:image/jpeg;base64,{result_b64}"}
 
-                # 2. Fallback: Scan /output and /temp, excluding intermediate temp previews
+                # Fallback scanner
                 candidate_files = []
                 for search_dir in ["/app/ComfyUI/output", "/app/ComfyUI/temp"]:
                     if os.path.exists(search_dir):
@@ -136,7 +134,7 @@ def handler(job):
 
             time.sleep(2)
 
-        return {"error": "Timeout waiting for image"}
+        return {"error": "Timeout waiting for image execution"}
 
     except Exception as e:
         import traceback
