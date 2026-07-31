@@ -39,17 +39,17 @@ def handler(job):
         data = job["input"]
         image_base64 = data.get("image")
         second_image_b64 = data.get("second_image")
-        user_prompt = data.get("prompt", "improve quality, keep identity")
+        user_prompt = data.get("prompt", "raise her both hands up, and make her smile")
 
         if not image_base64:
             return {"error": "Main image is required"}
 
         main_image_name = upload_image(image_base64, "main_input.jpg")
 
-        with open("/app/ComfyUI/workflows/lustify_krea_edit_api.json", "r") as f:
+        # Pointing to the correct JSON structure for the Krea2 edit
+        with open("/app/ComfyUI/workflows/krea2_identity_edit.json", "r") as f:
             workflow = json.load(f)
 
-        # Ensure correct text encoder file path string
         if "115" in workflow and "inputs" in workflow["115"]:
             workflow["115"]["inputs"]["clip_name"] = "qwen3vl_4b_fp8_scaled.safetensors"
 
@@ -76,7 +76,6 @@ def handler(job):
             if "309" in workflow and "inputs" in workflow["309"]:
                 workflow["309"]["inputs"].pop("source_image_b", None)
 
-        # Standard EmptyLatentImage node setup
         width = int(data.get("width", 1024))
         height = int(data.get("height", 1024))
         
