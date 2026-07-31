@@ -49,6 +49,10 @@ def handler(job):
         with open("/app/ComfyUI/workflows/lustify_krea_edit_api.json", "r") as f:
             workflow = json.load(f)
 
+        # Ensure correct text encoder file path string
+        if "115" in workflow and "inputs" in workflow["115"]:
+            workflow["115"]["inputs"]["clip_name"] = "qwen3vl_4b_fp8_scaled.safetensors"
+
         # Primary inputs
         workflow["72"]["inputs"]["image"] = main_image_name
         workflow["247"]["inputs"]["prompt"] = user_prompt
@@ -72,7 +76,7 @@ def handler(job):
             if "309" in workflow and "inputs" in workflow["309"]:
                 workflow["309"]["inputs"].pop("source_image_b", None)
 
-        # Ensure standard EmptyLatentImage node exists
+        # Standard EmptyLatentImage node setup
         width = int(data.get("width", 1024))
         height = int(data.get("height", 1024))
         
@@ -87,13 +91,13 @@ def handler(job):
 
         # KSampler Latent & Guidance parameters
         workflow["266"]["inputs"]["latent_image"] = ["303", 0]
-        workflow["266"]["inputs"]["cfg"] = float(data.get("cfg", 1.0))  # Flow models require low CFG (1.0)
+        workflow["266"]["inputs"]["cfg"] = float(data.get("cfg", 1.0))
         workflow["266"]["inputs"]["denoise"] = 1.0
         workflow["266"]["inputs"]["steps"] = int(data.get("steps", 22))
 
-        # Bind target_latent to Krea2EditModelPatch to pre-encode correctly
+        # Fix key name: node 309 expects 'source_latent'
         if "309" in workflow and "inputs" in workflow["309"]:
-            workflow["309"]["inputs"]["target_latent"] = ["303", 0]
+            workflow["309"]["inputs"]["source_latent"] = ["303", 0]
 
         # Dispatch prompt
         resp = requests.post(f"{COMFY_URL}/prompt", json={"prompt": workflow})
