@@ -41,17 +41,28 @@ def handler(job):
             return {"error": "Main image is required"}
 
         main_image_name = upload_image(image_base64, "main_input.jpg")
-        second_image_name = None
-        if second_image_b64:
-            second_image_name = upload_image(second_image_b64, "second_input.jpg")
 
         with open("/app/ComfyUI/workflows/lustify_krea_edit_api.json", "r") as f:
             workflow = json.load(f)
 
-        # Direct API Node Injections
-        workflow["72"]["inputs"]["image"] = main_image_name      # main image
-        workflow["300"]["inputs"]["image"] = second_image_name if second_image_name else main_image_name  # second/reference image
-        workflow["247"]["inputs"]["prompt"] = user_prompt         # edit prompt (FIXED FIELD KEY)
+        # Set main input image & prompt
+        workflow["72"]["inputs"]["image"] = main_image_name
+        workflow["247"]["inputs"]["prompt"] = user_prompt
+
+        # Single vs. Dual Image Mode Logic
+        if second_image_b64:
+            second_image_name = upload_image(second_image_b64, "second_input.jpg")
+            workflow["300"]["inputs"]["image"] = second_image_name
+            workflow["247"]["inputs"]["image_b"] = ["300", 0]
+        else:
+            # Safely remove image_b link if no second image is passed
+            if "image_b" in workflow["247"]["inputs"]:
+                del workflow["247"]["inputs"]["image_b"]
+
+        # Optimize Sampler Parameters for Edits
+        if "266" in workflow:
+            workflow["266"]["inputs"]["cfg"] = data.get("cfg", 3.0)
+            workflow["266"]["inputs"]["denoise"] = data.get("denoise", 0.65)
 
         resp = requests.post(f"{COMFY_URL}/prompt", json={"prompt": workflow})
         prompt_id = resp.json().get("prompt_id")
