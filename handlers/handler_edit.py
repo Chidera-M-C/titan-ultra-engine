@@ -89,30 +89,35 @@ def handler(job):
         for _ in range(100):
             history_resp = requests.get(f"{COMFY_URL}/history/{prompt_id}").json()
             if prompt_id in history_resp:
-                # 1. Check standard output history
+                # 1. Check standard API history outputs first
                 outputs = history_resp[prompt_id].get("outputs", {})
                 for node_id, node_output in outputs.items():
                     if "images" in node_output and len(node_output["images"]) > 0:
                         image_data = node_output["images"][0]
-                        image_path = f"/app/ComfyUI/output/{image_data['filename']}"
+                        subfolder = image_data.get("subfolder", "")
+                        folder_type = image_data.get("type", "output")  # 'output' or 'temp'
+                        filename = image_data["filename"]
+
+                        image_path = os.path.join("/app/ComfyUI", folder_type, subfolder, filename)
                         if os.path.exists(image_path):
                             with open(image_path, "rb") as f:
                                 result_b64 = base64.b64encode(f.read()).decode()
                             return {"image": f"data:image/jpeg;base64,{result_b64}"}
 
-                # 2. Fallback: If job finished but outputs dict is empty due to custom saver nodes
-                output_dir = "/app/ComfyUI/output"
-                if os.path.exists(output_dir):
-                    files = [
-                        os.path.join(output_dir, f) 
-                        for f in os.listdir(output_dir) 
-                        if f.lower().endswith(('.jpg', '.png', '.jpeg', '.webp'))
-                    ]
-                    if files:
-                        latest_file = max(files, key=os.path.getmtime)
-                        with open(latest_file, "rb") as f:
-                            result_b64 = base64.b64encode(f.read()).decode()
-                        return {"image": f"data:image/jpeg;base64,{result_b64}"}
+                # 2. Fallback: Scan BOTH /output and /temp directories recursively
+                candidate_files = []
+                for search_dir in ["/app/ComfyUI/output", "/app/ComfyUI/temp"]:
+                    if os.path.exists(search_dir):
+                        for root, _, files in os.walk(search_dir):
+                            for f in files:
+                                if f.lower().endswith(('.jpg', '.png', '.jpeg', '.webp')):
+                                    candidate_files.append(os.path.join(root, f))
+                
+                if candidate_files:
+                    latest_file = max(candidate_files, key=os.path.getmtime)
+                    with open(latest_file, "rb") as f:
+                        result_b64 = base64.b64encode(f.read()).decode()
+                    return {"image": f"data:image/jpeg;base64,{result_b64}"}
 
             time.sleep(2)
 
