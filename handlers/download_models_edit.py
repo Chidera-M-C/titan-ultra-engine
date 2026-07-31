@@ -1,11 +1,11 @@
 import os
+import requests
 from huggingface_hub import hf_hub_download
 
 HF_TOKEN = os.getenv("HF_TOKEN", "")
 
 def download_hf(repo_id, filename, dest_path, label):
     if os.path.exists(dest_path):
-        # Force re-download if file size is suspicious (WanVAE fallback is ~240MB, Qwen VAE is ~300-400MB)
         size_mb = os.path.getsize(dest_path) / (1024 * 1024)
         if label.startswith("Krea2 VAE") and size_mb < 300:
             print(f"⚠️ Existing {label} is under 300MB ({size_mb:.1f}MB). Removing bad cache...")
@@ -25,12 +25,29 @@ def download_hf(repo_id, filename, dest_path, label):
         token=HF_TOKEN or None
     )
     
-    # Ensure exact file name mapping
     if downloaded_path != dest_path and os.path.exists(downloaded_path):
         if os.path.exists(dest_path):
             os.remove(dest_path)
         os.rename(downloaded_path, dest_path)
         
+    print(f"✅ {label} done")
+
+def download_url(url, dest_path, label):
+    if os.path.exists(dest_path):
+        size_mb = os.path.getsize(dest_path) / (1024 * 1024)
+        print(f"✓ {label} already exists ({size_mb:.1f}MB)")
+        return
+        
+    print(f"Downloading {label} from URL...")
+    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+    
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
+    
+    with open(dest_path, "wb") as f:
+        for chunk in response.iter_content(chunk_size=8192):
+            f.write(chunk)
+            
     print(f"✅ {label} done")
 
 # Create directories
@@ -56,12 +73,11 @@ download_hf(
     "Krea2 CLIP encoder"
 )
 
-# 3. Main UNet / DiT
-download_hf(
-    "krea/Krea-2-Raw",
-    "raw.safetensors",
-    "/app/ComfyUI/models/diffusion_models/raw.safetensors",
-    "Krea2 Raw UNet"
+# 3. Dark Beast 3.0 Aggressive UNet (Civitai)
+download_url(
+    "https://civitai.red/api/download/models/3173268?fileId=3054219",
+    "/app/ComfyUI/models/diffusion_models/dark_beast_3_krea2.safetensors",
+    "Dark Beast 3.0 Krea2 UNet"
 )
 
 # 4. Identity Edit LoRA
