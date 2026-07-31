@@ -53,27 +53,35 @@ def handler(job):
         workflow["72"]["inputs"]["image"] = main_image_name
         workflow["247"]["inputs"]["prompt"] = user_prompt
 
-        # Dual image support
+        # Dual image vs Single image handling
         if second_image_b64:
             second_image_name = upload_image(second_image_b64, "second_input.jpg")
-            workflow["300"]["inputs"]["image"] = second_image_name
+            
+            if "300" in workflow:
+                workflow["300"]["inputs"]["image"] = second_image_name
 
-            # Connect second image
-            workflow["247"]["inputs"]["image_b"] = ["300", 0]
-            workflow["309"]["inputs"]["source_image_b"] = ["300", 0]
+            # Connect second image slots dynamically
+            if "247" in workflow and "inputs" in workflow["247"]:
+                workflow["247"]["inputs"]["image_b"] = ["300", 0]
+            if "309" in workflow and "inputs" in workflow["309"]:
+                workflow["309"]["inputs"]["source_image_b"] = ["300", 0]
         else:
-            # Clean single-image mode
-            if "image_b" in workflow["247"]["inputs"]:
-                del workflow["247"]["inputs"]["image_b"]
-            if "source_image_b" in workflow["309"]["inputs"]:
-                del workflow["309"]["inputs"]["source_image_b"]
+            # Single-image mode: point Node 300 to main_image so missing file error is eliminated
+            if "300" in workflow:
+                workflow["300"]["inputs"]["image"] = main_image_name
 
-        # Stronger edit settings
+            # Safely disconnect image_b reference links without breaking node schemas
+            if "247" in workflow and "inputs" in workflow["247"]:
+                workflow["247"]["inputs"].pop("image_b", None)
+            if "309" in workflow and "inputs" in workflow["309"]:
+                workflow["309"]["inputs"].pop("source_image_b", None)
+
+        # Retained original settings as requested
         workflow["266"]["inputs"]["cfg"] = float(data.get("cfg", 3.5))
         workflow["266"]["inputs"]["denoise"] = float(data.get("denoise", 0.85))
         workflow["266"]["inputs"]["steps"] = int(data.get("steps", 22))
 
-        # Queue
+        # Queue workflow
         resp = requests.post(f"{COMFY_URL}/prompt", json={"prompt": workflow})
         prompt_id = resp.json().get("prompt_id")
 
