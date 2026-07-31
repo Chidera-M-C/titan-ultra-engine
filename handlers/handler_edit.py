@@ -76,9 +76,23 @@ def handler(job):
             if "309" in workflow and "inputs" in workflow["309"]:
                 workflow["309"]["inputs"].pop("source_image_b", None)
 
-        # Retained original settings as requested
+        # Inject Empty SD3/Flux Latent Node (Node 300-series override)
+        if "303" not in workflow:
+            workflow["303"] = {
+                "class_type": "EmptySD3LatentImage",
+                "inputs": {
+                    "width": int(data.get("width", 1024)),
+                    "height": int(data.get("height", 1024)),
+                    "batch_size": 1
+                }
+            }
+
+        # Point KSampler to Empty Latent instead of VAE-encoded image (Node 306)
+        workflow["266"]["inputs"]["latent_image"] = ["303", 0]
+
+        # Parameters for Flow / Krea2 generation
         workflow["266"]["inputs"]["cfg"] = float(data.get("cfg", 3.5))
-        workflow["266"]["inputs"]["denoise"] = float(data.get("denoise", 0.85))
+        workflow["266"]["inputs"]["denoise"] = 1.0  # ALWAYS 1.0 when starting from empty latent
         workflow["266"]["inputs"]["steps"] = int(data.get("steps", 22))
 
         # Queue workflow
@@ -93,24 +107,25 @@ def handler(job):
                 outputs = history_resp[prompt_id].get("outputs", {})
                 for node_id, node_output in outputs.items():
                     if "images" in node_output and len(node_output["images"]) > 0:
-                        image_data = node_output["images"][0]
-                        subfolder = image_data.get("subfolder", "")
-                        folder_type = image_data.get("type", "output")  # 'output' or 'temp'
-                        filename = image_data["filename"]
+                        for img in node_output["images"]:
+                            # Skip temp previews if standard output node exists
+                            subfolder = img.get("subfolder", "")
+                            folder_type = img.get("type", "output")
+                            filename = img["filename"]
 
-                        image_path = os.path.join("/app/ComfyUI", folder_type, subfolder, filename)
-                        if os.path.exists(image_path):
-                            with open(image_path, "rb") as f:
-                                result_b64 = base64.b64encode(f.read()).decode()
-                            return {"image": f"data:image/jpeg;base64,{result_b64}"}
+                            image_path = os.path.join("/app/ComfyUI", folder_type, subfolder, filename)
+                            if os.path.exists(image_path):
+                                with open(image_path, "rb") as f:
+                                    result_b64 = base64.b64encode(f.read()).decode()
+                                return {"image": f"data:image/jpeg;base64,{result_b64}"}
 
-                # 2. Fallback: Scan BOTH /output and /temp directories recursively
+                # 2. Fallback: Scan /output and /temp, excluding intermediate temp previews
                 candidate_files = []
                 for search_dir in ["/app/ComfyUI/output", "/app/ComfyUI/temp"]:
                     if os.path.exists(search_dir):
                         for root, _, files in os.walk(search_dir):
                             for f in files:
-                                if f.lower().endswith(('.jpg', '.png', '.jpeg', '.webp')):
+                                if f.lower().endswith(('.jpg', '.png', '.jpeg', '.webp')) and not f.startswith(('temp_', 'preview_')):
                                     candidate_files.append(os.path.join(root, f))
                 
                 if candidate_files:
