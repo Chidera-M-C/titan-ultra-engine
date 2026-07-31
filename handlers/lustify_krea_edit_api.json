@@ -30,7 +30,7 @@
   "117": {
     "class_type": "UNETLoader",
     "inputs": {
-      "unet_name": "raw.safetensors",
+      "unet_name": "dark_beast_3_krea2.safetensors",
       "weight_dtype": "default"
     }
   },
@@ -47,7 +47,7 @@
     "inputs": {
       "clip": ["115", 0],
       "image": ["72", 0],
-      "prompt": "improve quality, keep identity"
+      "prompt": "raise her both hands up, and make her smile"
     }
   },
   "101": {
