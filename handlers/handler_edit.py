@@ -46,7 +46,7 @@ def handler(job):
 
         main_image_name = upload_image(image_base64, "main_input.jpg")
 
-        # Pointing to the correct JSON structure for the Krea2 edit
+        # Pointing to the correct JSON structure for the Krea2 edit workflow
         with open("/app/ComfyUI/workflows/krea2_identity_edit.json", "r") as f:
             workflow = json.load(f)
 
@@ -94,7 +94,7 @@ def handler(job):
         workflow["266"]["inputs"]["denoise"] = 1.0
         workflow["266"]["inputs"]["steps"] = int(data.get("steps", 22))
 
-        # Fix key name: node 309 expects 'source_latent'
+        # Node 309 expects 'source_latent'
         if "309" in workflow and "inputs" in workflow["309"]:
             workflow["309"]["inputs"]["source_latent"] = ["303", 0]
 
