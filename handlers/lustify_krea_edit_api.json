@@ -1,47 +1,15 @@
 {
-  "54": {
-    "class_type": "VAEDecode",
+  "72": {
+    "class_type": "LoadImage",
     "inputs": {
-      "samples": [
-        "266",
-        0
-      ],
-      "vae": [
-        "116",
-        0
-      ]
-    }
-  },
-  "308": {
-    "class_type": "ImageScaleToTotalPixels",
-    "inputs": {
-      "image": [
-        "300",
-        0
-      ],
-      "megapixels": 1.0,
-      "upscale_method": "lanczos",
-      "resolution_steps": 1,
-      "crop": 0
-    }
-  },
-  "306": {
-    "class_type": "VAEEncode",
-    "inputs": {
-      "pixels": [
-        "308",
-        0
-      ],
-      "vae": [
-        "116",
-        0
-      ]
+      "image": "main_input.jpg",
+      "upload": "image"
     }
   },
   "300": {
     "class_type": "LoadImage",
     "inputs": {
-      "image": "main_input.jpg",
+      "image": "second_input.jpg",
       "upload": "image"
     }
   },
@@ -59,106 +27,6 @@
       "vae_name": "krea2_raw_vae.safetensors"
     }
   },
-  "266": {
-    "class_type": "KSampler",
-    "inputs": {
-      "seed": [
-        "241",
-        0
-      ],
-      "model": [
-        "97",
-        0
-      ],
-      "positive": [
-        "247",
-        0
-      ],
-      "negative": [
-        "101",
-        0
-      ],
-      "latent_image": [
-        "306",
-        0
-      ],
-      "steps": 25,
-      "cfg": 1.0,
-      "sampler_name": "euler",
-      "scheduler": "sgm_uniform",
-      "denoise": 0.85
-    }
-  },
-  "272": {
-    "class_type": "Image Saver Simple",
-    "inputs": {
-      "images": [
-        "90",
-        0
-      ],
-      "metadata": [
-        "246",
-        0
-      ],
-      "filename_prefix": "%time_%basemodelname_%seed",
-      "path": "",
-      "extension": "png",
-      "quality_jpeg_or_webp": 95,
-      "lossless_webp": false,
-      "filename": "output",
-      "embed_workflow": false,
-      "optimize_png": false,
-      "save_workflow_as_json": false
-    }
-  },
-  "246": {
-    "class_type": "Image Saver Metadata",
-    "inputs": {
-      "positive": "edit prompt",
-      "width": 1024,
-      "height": 1024,
-      "seed_value": [
-        "241",
-        0
-      ],
-      "steps": 25,
-      "cfg": 1.0,
-      "sampler_name": "euler",
-      "filename_prefix": "",
-      "path": "",
-      "extension": "png"
-    }
-  },
-  "101": {
-    "class_type": "ConditioningZeroOut",
-    "inputs": {
-      "conditioning": [
-        "247",
-        0
-      ]
-    }
-  },
-  "97": {
-    "class_type": "ModelSamplingAuraFlow",
-    "inputs": {
-      "model": [
-        "309",
-        0
-      ],
-      "shift": 4
-    }
-  },
-  "105": {
-    "class_type": "Power Lora Loader (rgthree)",
-    "inputs": {
-      "model": [
-        "117",
-        0
-      ],
-      "lora_1": "krea\\krea2_identity_edit_v1_2.safetensors",
-      "strength_1": 1
-    }
-  },
   "117": {
     "class_type": "UNETLoader",
     "inputs": {
@@ -166,65 +34,83 @@
       "weight_dtype": "default"
     }
   },
-  "309": {
-    "class_type": "Krea2EditModelPatch",
+  "105": {
+    "class_type": "Power Lora Loader (rgthree)",
     "inputs": {
-      "model": [
-        "105",
-        0
-      ],
-      "source_latent": [
-        "306",
-        0
-      ],
-      "vae": [
-        "116",
-        0
-      ],
-      "source_image": [
-        "308",
-        0
-      ]
-    }
-  },
-  "241": {
-    "class_type": "Seed (rgthree)",
-    "inputs": {
-      "seed": 367334738896668
-    }
-  },
-  "72": {
-    "class_type": "LoadImage",
-    "inputs": {
-      "image": "main_input.jpg",
-      "upload": "image"
+      "model": ["117", 0],
+      "lora_1": "krea/krea2_identity_edit_v1_2.safetensors",
+      "strength_1": 1.0
     }
   },
   "247": {
     "class_type": "Krea2EditGroundedEncode",
     "inputs": {
-      "clip": [
-        "115",
-        0
-      ],
-      "image": [
-        "72",
-        0
-      ],
-      "image_b": [
-        "300",
-        0
-      ],
-      "prompt": ""
+      "clip": ["115", 0],
+      "image": ["72", 0],
+      "prompt": "put her in a red bikini, keep exact same face, body shape and pose"
+    }
+  },
+  "101": {
+    "class_type": "ConditioningZeroOut",
+    "inputs": {
+      "conditioning": ["247", 0]
+    }
+  },
+  "306": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": ["72", 0],
+      "vae": ["116", 0]
+    }
+  },
+  "309": {
+    "class_type": "Krea2EditModelPatch",
+    "inputs": {
+      "model": ["105", 0],
+      "source_latent": ["306", 0],
+      "vae": ["116", 0],
+      "source_image": ["72", 0]
+    }
+  },
+  "97": {
+    "class_type": "ModelSamplingAuraFlow",
+    "inputs": {
+      "model": ["309", 0],
+      "shift": 4
+    }
+  },
+  "241": {
+    "class_type": "Seed (rgthree)",
+    "inputs": {
+      "seed": 0
+    }
+  },
+  "266": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": ["241", 0],
+      "model": ["97", 0],
+      "positive": ["247", 0],
+      "negative": ["101", 0],
+      "latent_image": ["306", 0],
+      "steps": 22,
+      "cfg": 3.5,
+      "sampler_name": "euler",
+      "scheduler": "sgm_uniform",
+      "denoise": 0.85
+    }
+  },
+  "54": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["266", 0],
+      "vae": ["116", 0]
     }
   },
   "90": {
     "class_type": "PreviewImage",
     "inputs": {
-      "images": [
-        "54",
-        0
-      ]
+      "images": ["54", 0]
     }
   }
 }
