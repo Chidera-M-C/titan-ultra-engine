@@ -62,7 +62,9 @@ def handler(job):
         data = job["input"]
         image_base64 = data.get("image")
         second_image_b64 = data.get("second_image")
-        user_prompt = data.get("prompt", "make her wear a red bikini, same face, same person, same pose")
+        user_prompt = data.get("prompt")
+        if not user_prompt:
+            return {"error": "Prompt is required"}
 
         if not image_base64:
             return {"error": "Main image is required"}
@@ -107,9 +109,10 @@ def handler(job):
                 del workflow["309"]["inputs"]["source_image_b"]
 
         # Safer generation settings
-        workflow["266"]["inputs"]["cfg"] = float(data.get("cfg", 3.0))
-        workflow["266"]["inputs"]["denoise"] = float(data.get("denoise", 0.70))
-        workflow["266"]["inputs"]["steps"] = int(data.get("steps", 26))
+        workflow["117"]["inputs"]["unet_name"] = "dark_beast_3_krea2.safetensors"
+        workflow["266"]["inputs"]["cfg"] = float(data.get("cfg", 3.3))
+        workflow["266"]["inputs"]["denoise"] = float(data.get("denoise", 0.80))
+        workflow["266"]["inputs"]["steps"] = int(data.get("steps", 28))
         workflow["266"]["inputs"]["sampler_name"] = data.get("sampler", "euler_ancestral")
         workflow["266"]["inputs"]["scheduler"] = data.get("scheduler", "normal")
 
