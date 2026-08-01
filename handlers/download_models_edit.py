@@ -92,11 +92,12 @@ download_hf(
     "Krea2 CLIP encoder"
 )
 
-# 3. Dark Beast 3.0 Aggressive UNet (Civitai)
-download_civitai(
-    "https://civitai.red/api/download/models/3173268",
-    "/app/ComfyUI/models/diffusion_models/dark_beast_3_krea2.safetensors",
-    "Dark Beast 3.0 Krea2 UNet"
+# 3. Official Krea 2 Turbo (FP8 - recommended)
+download_hf(
+    "Comfy-Org/Krea-2",
+    "diffusion_models/krea2_turbo_fp8_scaled.safetensors",
+    "/app/ComfyUI/models/diffusion_models/krea2_turbo_fp8_scaled.safetensors",
+    "Krea2 Turbo FP8"
 )
 
 # 4. Identity Edit LoRA
