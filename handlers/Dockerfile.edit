@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     git \
     wget \
     tzdata \
+    aria2 \
     && ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime \
     && dpkg-reconfigure --frontend noninteractive tzdata \
     && rm -rf /var/lib/apt/lists/*
@@ -55,7 +56,8 @@ RUN mkdir -p /app/ComfyUI/workflows
 
 COPY download_models_edit.py /app/
 COPY handler_edit.py /app/
-COPY lustify_krea_edit_api.json /app/ComfyUI/workflows/
+# Copy and rename the workflow file to match the path requested by handler_edit.py
+COPY lustify_krea_edit_api.json /app/ComfyUI/workflows/krea2_identity_edit.json
 
 ARG HF_TOKEN
 RUN HF_TOKEN=${HF_TOKEN} python /app/download_models_edit.py
