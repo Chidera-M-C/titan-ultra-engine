@@ -9,7 +9,7 @@ from io import BytesIO
 from PIL import Image
 
 COMFY_URL = "http://127.0.0.1:8188"
-MAX_SIZE = 1024  # Safe max dimension to avoid OOM
+MAX_SIZE = 1024
 
 def start_comfyui():
     import subprocess, threading
@@ -31,7 +31,6 @@ def start_comfyui():
     raise Exception("ComfyUI startup timeout")
 
 def resize_image(image_base64, max_size=MAX_SIZE):
-    """Resize image so the longest side is max_size"""
     if "," in image_base64:
         image_base64 = image_base64.split(",", 1)[1]
     
@@ -48,7 +47,7 @@ def resize_image(image_base64, max_size=MAX_SIZE):
         img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
     
     buffered = BytesIO()
-    img.save(buffered, format="JPEG", quality=92)
+    img.save(buffered, format="JPEG", quality=93)
     return base64.b64encode(buffered.getvalue()).decode()
 
 def upload_image(image_base64, filename="input.jpg"):
@@ -68,14 +67,14 @@ def handler(job):
         if not image_base64:
             return {"error": "Main image is required"}
 
-        # Resize main image to safe size
+        # Resize image
         image_base64 = resize_image(image_base64)
         main_image_name = upload_image(image_base64, "main_input.jpg")
 
         with open("/app/ComfyUI/workflows/krea2_identity_edit.json", "r") as f:
             workflow = json.load(f)
 
-        # Main image + prompt
+        # Set main image and prompt
         workflow["72"]["inputs"]["image"] = main_image_name
         workflow["247"]["inputs"]["prompt"] = user_prompt
 
@@ -83,12 +82,14 @@ def handler(job):
         if second_image_b64:
             second_image_b64 = resize_image(second_image_b64)
             second_image_name = upload_image(second_image_b64, "second_input.jpg")
-            
-            # Make sure node 300 exists
+
             if "300" not in workflow:
                 workflow["300"] = {
                     "class_type": "LoadImage",
-                    "inputs": {"image": second_image_name, "upload": "image"}
+                    "inputs": {
+                        "image": second_image_name,
+                        "upload": "image"
+                    }
                 }
             else:
                 workflow["300"]["inputs"]["image"] = second_image_name
@@ -97,7 +98,7 @@ def handler(job):
             if "309" in workflow and "inputs" in workflow["309"]:
                 workflow["309"]["inputs"]["source_image_b"] = ["300", 0]
         else:
-            # Completely remove second image references
+            # Remove second image completely
             if "300" in workflow:
                 del workflow["300"]
             if "image_b" in workflow.get("247", {}).get("inputs", {}):
@@ -105,20 +106,22 @@ def handler(job):
             if "source_image_b" in workflow.get("309", {}).get("inputs", {}):
                 del workflow["309"]["inputs"]["source_image_b"]
 
-        # Stronger edit settings
-        workflow["266"]["inputs"]["cfg"] = float(data.get("cfg", 3.5))
-        workflow["266"]["inputs"]["denoise"] = float(data.get("denoise", 0.85))
-        workflow["266"]["inputs"]["steps"] = int(data.get("steps", 20))
+        # Safer generation settings
+        workflow["266"]["inputs"]["cfg"] = float(data.get("cfg", 3.0))
+        workflow["266"]["inputs"]["denoise"] = float(data.get("denoise", 0.70))
+        workflow["266"]["inputs"]["steps"] = int(data.get("steps", 26))
+        workflow["266"]["inputs"]["sampler_name"] = data.get("sampler", "euler_ancestral")
+        workflow["266"]["inputs"]["scheduler"] = data.get("scheduler", "normal")
 
-        # Dispatch
+        # Queue the prompt
         resp = requests.post(f"{COMFY_URL}/prompt", json={"prompt": workflow})
         if "prompt_id" not in resp.json():
             return {"error": "Failed to queue prompt", "details": resp.json()}
-        
+
         prompt_id = resp.json()["prompt_id"]
 
-        # Poll for result
-        for _ in range(120):
+        # Wait for result
+        for _ in range(150):
             history = requests.get(f"{COMFY_URL}/history/{prompt_id}").json()
             if prompt_id in history:
                 outputs = history[prompt_id].get("outputs", {})
