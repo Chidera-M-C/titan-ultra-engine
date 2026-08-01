@@ -5,8 +5,11 @@ import base64
 import json
 import requests
 import runpod
+from io import BytesIO
+from PIL import Image
 
 COMFY_URL = "http://127.0.0.1:8188"
+MAX_SIZE = 1024  # Safe max dimension to avoid OOM
 
 def start_comfyui():
     import subprocess, threading
@@ -27,6 +30,27 @@ def start_comfyui():
         time.sleep(3)
     raise Exception("ComfyUI startup timeout")
 
+def resize_image(image_base64, max_size=MAX_SIZE):
+    """Resize image so the longest side is max_size"""
+    if "," in image_base64:
+        image_base64 = image_base64.split(",", 1)[1]
+    
+    img = Image.open(BytesIO(base64.b64decode(image_base64))).convert("RGB")
+    w, h = img.size
+    
+    if max(w, h) > max_size:
+        if w > h:
+            new_w = max_size
+            new_h = int(h * max_size / w)
+        else:
+            new_h = max_size
+            new_w = int(w * max_size / h)
+        img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    
+    buffered = BytesIO()
+    img.save(buffered, format="JPEG", quality=92)
+    return base64.b64encode(buffered.getvalue()).decode()
+
 def upload_image(image_base64, filename="input.jpg"):
     if "," in image_base64:
         image_base64 = image_base64.split(",", 1)[1]
@@ -44,6 +68,8 @@ def handler(job):
         if not image_base64:
             return {"error": "Main image is required"}
 
+        # Resize main image to safe size
+        image_base64 = resize_image(image_base64)
         main_image_name = upload_image(image_base64, "main_input.jpg")
 
         with open("/app/ComfyUI/workflows/krea2_identity_edit.json", "r") as f:
@@ -55,29 +81,44 @@ def handler(job):
 
         # Dual image support
         if second_image_b64:
+            second_image_b64 = resize_image(second_image_b64)
             second_image_name = upload_image(second_image_b64, "second_input.jpg")
-            workflow["300"]["inputs"]["image"] = second_image_name
+            
+            # Make sure node 300 exists
+            if "300" not in workflow:
+                workflow["300"] = {
+                    "class_type": "LoadImage",
+                    "inputs": {"image": second_image_name, "upload": "image"}
+                }
+            else:
+                workflow["300"]["inputs"]["image"] = second_image_name
+
             workflow["247"]["inputs"]["image_b"] = ["300", 0]
-            if "source_image_b" in workflow["309"]["inputs"]:
+            if "309" in workflow and "inputs" in workflow["309"]:
                 workflow["309"]["inputs"]["source_image_b"] = ["300", 0]
         else:
-            # Clean single-image mode
-            if "image_b" in workflow["247"]["inputs"]:
+            # Completely remove second image references
+            if "300" in workflow:
+                del workflow["300"]
+            if "image_b" in workflow.get("247", {}).get("inputs", {}):
                 del workflow["247"]["inputs"]["image_b"]
-            if "source_image_b" in workflow["309"]["inputs"]:
+            if "source_image_b" in workflow.get("309", {}).get("inputs", {}):
                 del workflow["309"]["inputs"]["source_image_b"]
 
-        # Stronger edit settings (important)
+        # Stronger edit settings
         workflow["266"]["inputs"]["cfg"] = float(data.get("cfg", 3.5))
         workflow["266"]["inputs"]["denoise"] = float(data.get("denoise", 0.85))
-        workflow["266"]["inputs"]["steps"] = int(data.get("steps", 22))
+        workflow["266"]["inputs"]["steps"] = int(data.get("steps", 20))
 
         # Dispatch
         resp = requests.post(f"{COMFY_URL}/prompt", json={"prompt": workflow})
-        prompt_id = resp.json().get("prompt_id")
+        if "prompt_id" not in resp.json():
+            return {"error": "Failed to queue prompt", "details": resp.json()}
+        
+        prompt_id = resp.json()["prompt_id"]
 
         # Poll for result
-        for _ in range(100):
+        for _ in range(120):
             history = requests.get(f"{COMFY_URL}/history/{prompt_id}").json()
             if prompt_id in history:
                 outputs = history[prompt_id].get("outputs", {})
