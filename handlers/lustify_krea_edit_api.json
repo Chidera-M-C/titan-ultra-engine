@@ -30,7 +30,7 @@
   "117": {
     "class_type": "UNETLoader",
     "inputs": {
-      "unet_name": "raw.safetensors",
+      "unet_name": "dark_beast_3_krea2.safetensors",
       "weight_dtype": "default"
     }
   },
