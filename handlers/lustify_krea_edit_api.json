@@ -47,7 +47,7 @@
     "inputs": {
       "clip": ["115", 0],
       "image": ["72", 0],
-      "prompt": ""
+      "prompt": "make her wear a red bikini, same face, same person, same pose"
     }
   },
   "101": {
@@ -76,7 +76,7 @@
     "class_type": "ModelSamplingAuraFlow",
     "inputs": {
       "model": ["309", 0],
-      "shift": 4
+      "shift": 3.5
     }
   },
   "241": {
@@ -93,11 +93,11 @@
       "positive": ["247", 0],
       "negative": ["101", 0],
       "latent_image": ["306", 0],
-      "steps": 22,
-      "cfg": 3.5,
-      "sampler_name": "euler",
-      "scheduler": "sgm_uniform",
-      "denoise": 0.85
+      "steps": 26,
+      "cfg": 3.0,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "normal",
+      "denoise": 0.70
     }
   },
   "54": {
