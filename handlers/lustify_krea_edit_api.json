@@ -30,7 +30,7 @@
   "117": {
     "class_type": "UNETLoader",
     "inputs": {
-      "unet_name": "dark_beast_3_krea2.safetensors",
+      "unet_name": "raw.safetensors",
       "weight_dtype": "default"
     }
   },
@@ -47,7 +47,7 @@
     "inputs": {
       "clip": ["115", 0],
       "image": ["72", 0],
-      "prompt": "raise her both hands up, and make her smile"
+      "prompt": ""
     }
   },
   "101": {
@@ -56,21 +56,20 @@
       "conditioning": ["247", 0]
     }
   },
-  "303": {
-    "class_type": "EmptyLatentImage",
+  "306": {
+    "class_type": "VAEEncode",
     "inputs": {
-      "width": 1024,
-      "height": 1024,
-      "batch_size": 1
+      "pixels": ["72", 0],
+      "vae": ["116", 0]
     }
   },
   "309": {
     "class_type": "Krea2EditModelPatch",
     "inputs": {
       "model": ["105", 0],
+      "source_latent": ["306", 0],
       "source_image": ["72", 0],
-      "vae": ["116", 0],
-      "source_latent": ["303", 0]
+      "vae": ["116", 0]
     }
   },
   "97": {
@@ -93,12 +92,12 @@
       "model": ["97", 0],
       "positive": ["247", 0],
       "negative": ["101", 0],
-      "latent_image": ["303", 0],
+      "latent_image": ["306", 0],
       "steps": 22,
-      "cfg": 1.0,
+      "cfg": 3.5,
       "sampler_name": "euler",
       "scheduler": "sgm_uniform",
-      "denoise": 1.0
+      "denoise": 0.85
     }
   },
   "54": {
