@@ -1,5 +1,6 @@
 import os
-import requests
+import subprocess
+import sys
 from huggingface_hub import hf_hub_download
 
 HF_TOKEN = os.getenv("HF_TOKEN", "")
@@ -32,22 +33,35 @@ def download_hf(repo_id, filename, dest_path, label):
         
     print(f"✅ {label} done")
 
-def download_url(url, dest_path, label):
+def download_civitai_aria2(url, dest_path, label):
     if os.path.exists(dest_path):
-        size_mb = os.path.getsize(dest_path) / (1024 * 1024)
-        print(f"✓ {label} already exists ({size_mb:.1f}MB)")
-        return
-        
-    print(f"Downloading {label} from URL...")
-    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
-    
-    response = requests.get(url, stream=True)
-    response.raise_for_status()
-    
-    with open(dest_path, "wb") as f:
-        for chunk in response.iter_content(chunk_size=8192):
-            f.write(chunk)
+        size_gb = os.path.getsize(dest_path) / (1024**3)
+        if size_gb > 15: # Verify it's a valid complete file
+            print(f"✓ {label} already exists ({size_gb:.2f} GB)")
+            return
             
+    print(f"Downloading {label} using aria2c...")
+    dest_dir = os.path.dirname(dest_path)
+    dest_file = os.path.basename(dest_path)
+    os.makedirs(dest_dir, exist_ok=True)
+
+    cmd = [
+        "aria2c",
+        "-x", "16",                  # 16 connections
+        "-s", "16",                  # 16 splits
+        "-k", "1M",                  # chunk size
+        "-c",                        # resume partial downloads
+        "--max-tries=20",            # retry up to 20 times on network drop
+        "--retry-wait=5",            # wait 5s between retries
+        "--dir", dest_dir,
+        "--out", dest_file,
+        url
+    ]
+    
+    result = subprocess.run(cmd)
+    if result.returncode != 0:
+        raise RuntimeError(f"❌ Failed to download {label} via aria2c (Exit code {result.returncode})")
+        
     print(f"✅ {label} done")
 
 # Create directories
@@ -73,8 +87,8 @@ download_hf(
     "Krea2 CLIP encoder"
 )
 
-# 3. Dark Beast 3.0 Aggressive UNet (Civitai)
-download_url(
+# 3. Dark Beast 3.0 Aggressive UNet (Civitai) using aria2c
+download_civitai_aria2(
     "https://civitai.red/api/download/models/3173268?fileId=3054219",
     "/app/ComfyUI/models/diffusion_models/dark_beast_3_krea2.safetensors",
     "Dark Beast 3.0 Krea2 UNet"
