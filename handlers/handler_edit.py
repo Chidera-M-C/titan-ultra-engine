@@ -109,10 +109,10 @@ def handler(job):
                 del workflow["309"]["inputs"]["source_image_b"]
 
         # Safer generation settings
-        workflow["117"]["inputs"]["unet_name"] = "dark_beast_3_krea2.safetensors"
-        workflow["266"]["inputs"]["cfg"] = float(data.get("cfg", 3.3))
+        workflow["117"]["inputs"]["unet_name"] = "krea2_turbo_fp8_scaled.safetensors"
+        workflow["266"]["inputs"]["cfg"] = float(data.get("cfg", 2.5))
         workflow["266"]["inputs"]["denoise"] = float(data.get("denoise", 0.80))
-        workflow["266"]["inputs"]["steps"] = int(data.get("steps", 28))
+        workflow["266"]["inputs"]["steps"] = int(data.get("steps", 12))
         workflow["266"]["inputs"]["sampler_name"] = data.get("sampler", "euler_ancestral")
         workflow["266"]["inputs"]["scheduler"] = data.get("scheduler", "normal")
 
