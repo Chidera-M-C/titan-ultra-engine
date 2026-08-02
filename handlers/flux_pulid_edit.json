@@ -51,10 +51,9 @@
     "inputs": {
       "model": ["50", 0],
       "pulid_flux": ["12", 0],
-      "eva_clip": ["13", 0],
       "face_analysis": ["13", 0],
       "image": ["10", 0],
-      "weight": 0.8,
+      "weight": 0.85,
       "start_at": 0.0,
       "end_at": 1.0
     }
