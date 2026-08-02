@@ -96,7 +96,15 @@ download_hf(
     "PuLID Flux"
 )
 
-# 5. InsightFace (antelopev2)
+# 5. PuLID EVA CLIP model (prevents mid-run cold-start downloading)
+download_hf(
+    "Comfy-Org/puLID_flux_comfyui",
+    "EVA02_CLIP_L_336_psz14_s6B.pt",
+    "/app/ComfyUI/models/pulid/EVA02_CLIP_L_336_psz14_s6B.pt",
+    "PuLID EVA CLIP"
+)
+
+# 6. InsightFace (antelopev2)
 print("Downloading InsightFace antelopev2...")
 snapshot_download(
     repo_id="DIAMONIK7777/antelopev2",
