@@ -58,12 +58,11 @@ RUN pip install --no-cache-dir -r custom_nodes/comfyui_controlnet_aux/requiremen
 RUN pip install --no-cache-dir -r custom_nodes/ComfyUI-PuLID-Flux/requirements.txt || true
 
 # --------------------------------------------------------------------------
-# FIX: Patch BOTH ComfyUI core AND PuLID custom node wrapper for timestep_zero_index
+# PERMANENT FIX: Force PuLID & ComfyUI wrappers to accept **kwargs safely
 # --------------------------------------------------------------------------
+RUN find custom_nodes/ComfyUI-PuLID-Flux/ -name "*.py" -exec sed -i 's/def forward_orig(\([^)]*\)):/def forward_orig(\1, **kwargs):/g' {} + || true
+RUN sed -i 's/transformer_options=transformer_options, //g' /app/ComfyUI/comfy/ldm/flux/model.py || true
 RUN sed -i 's/timestep_zero_index=timestep_zero_index, //g' /app/ComfyUI/comfy/ldm/flux/model.py || true
-RUN sed -i 's/timestep_zero_index=timestep_zero_index/ /g' custom_nodes/ComfyUI-PuLID-Flux/pulid.py 2>/dev/null || true
-RUN sed -i 's/def forward_orig(\([^)]*\)):/def forward_orig(\1, **kwargs):/g' custom_nodes/ComfyUI-PuLID-Flux/pulid.py 2>/dev/null || true
-RUN find custom_nodes/ComfyUI-PuLID-Flux/ -name "*.py" -exec sed -i 's/timestep_zero_index=timestep_zero_index//g' {} + || true
 
 RUN mkdir -p /app/ComfyUI/workflows
 RUN mkdir -p /app/ComfyUI/models/pulid
