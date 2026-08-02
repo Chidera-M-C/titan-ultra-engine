@@ -58,11 +58,13 @@ RUN pip install --no-cache-dir -r custom_nodes/comfyui_controlnet_aux/requiremen
 RUN pip install --no-cache-dir -r custom_nodes/ComfyUI-PuLID-Flux/requirements.txt || true
 
 # --------------------------------------------------------------------------
-# PERMANENT FIX: Force PuLID & ComfyUI wrappers to accept **kwargs safely
+# PERMANENT FIX: Force PuLID functions to accept **kwargs so extra args never crash it
 # --------------------------------------------------------------------------
-RUN find custom_nodes/ComfyUI-PuLID-Flux/ -name "*.py" -exec sed -i 's/def forward_orig(\([^)]*\)):/def forward_orig(\1, **kwargs):/g' {} + || true
-RUN sed -i 's/transformer_options=transformer_options, //g' /app/ComfyUI/comfy/ldm/flux/model.py || true
-RUN sed -i 's/timestep_zero_index=timestep_zero_index, //g' /app/ComfyUI/comfy/ldm/flux/model.py || true
+RUN python -c '\
+import glob;\
+files = glob.glob("custom_nodes/ComfyUI-PuLID-Flux/**/*.py", recursive=True);\
+[open(f, "w").write(open(f).read().replace("def forward_orig(", "def forward_orig(*args, **kwargs): #")) for f in files];\
+' || true
 
 RUN mkdir -p /app/ComfyUI/workflows
 RUN mkdir -p /app/ComfyUI/models/pulid
