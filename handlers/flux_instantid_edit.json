@@ -5,24 +5,73 @@
       "image": "main_input.jpg"
     }
   },
-  "11": {
-    "class_type": "LoadImage",
+  "12": {
+    "class_type": "InstantIDModelLoader",
     "inputs": {
-      "image": "second_input.jpg"
+      "instantid_file": "ip-adapter.bin"
+    }
+  },
+  "13": {
+    "class_type": "InstantIDFaceAnalysis",
+    "inputs": {
+      "provider": "CUDA"
+    }
+  },
+  "14": {
+    "class_type": "ApplyInstantID",
+    "inputs": {
+      "instantid": ["12", 0],
+      "insightface": ["13", 0],
+      "control_net": ["15", 0],
+      "image": ["10", 0],
+      "model": ["50", 0],
+      "positive": ["20", 0],
+      "negative": ["21", 0],
+      "weight": 0.8,
+      "start_at": 0.0,
+      "end_at": 1.0
+    }
+  },
+  "15": {
+    "class_type": "ControlNetLoader",
+    "inputs": {
+      "control_net_name": "instantid_controlnet.safetensors"
     }
   },
   "20": {
     "class_type": "CLIPTextEncode",
     "inputs": {
-      "text": "beautiful woman, detailed face",
+      "text": "",
       "clip": ["40", 0]
     }
   },
   "21": {
     "class_type": "CLIPTextEncode",
     "inputs": {
-      "text": "blurry, low quality, deformed",
+      "text": "blurry, low quality, deformed, ugly",
       "clip": ["40", 0]
+    }
+  },
+  "40": {
+    "class_type": "DualCLIPLoader",
+    "inputs": {
+      "clip_name1": "clip_l.safetensors",
+      "clip_name2": "t5xxl_fp16.safetensors"
+    }
+  },
+  "50": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "flux_nsfw.safetensors",
+      "weight_dtype": "default"
+    }
+  },
+  "60": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
     }
   },
   "30": {
@@ -34,33 +83,10 @@
       "sampler_name": "euler",
       "scheduler": "simple",
       "denoise": 1.0,
-      "model": ["50", 0],
-      "positive": ["20", 0],
-      "negative": ["21", 0],
+      "model": ["14", 0],
+      "positive": ["14", 1],
+      "negative": ["14", 2],
       "latent_image": ["60", 0]
-    }
-  },
-  "40": {
-    "class_type": "DualCLIPLoader",
-    "inputs": {
-      "clip_name1": "clip_l.safetensors",
-      "clip_name2": "t5xxl_fp16.safetensors",
-      "type": "flux"
-    }
-  },
-  "50": {
-    "class_type": "UNETLoader",
-    "inputs": {
-      "unet_name": "fluxed_up.safetensors",
-      "weight_dtype": "default"
-    }
-  },
-  "60": {
-    "class_type": "EmptyLatentImage",
-    "inputs": {
-      "width": 1024,
-      "height": 1024,
-      "batch_size": 1
     }
   },
   "70": {
@@ -80,7 +106,7 @@
     "class_type": "SaveImage",
     "inputs": {
       "images": ["80", 0],
-      "filename_prefix": "flux_edit"
+      "filename_prefix": "flux_instantid"
     }
   }
 }
