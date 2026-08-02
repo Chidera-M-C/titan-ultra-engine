@@ -47,7 +47,7 @@ RUN pip install --no-cache-dir \
     tokenizers \
     sentencepiece
 
-# Custom Nodes - PuLID Flux
+# Custom Nodes - PuLID Flux & dependencies
 RUN git clone https://github.com/balazik/ComfyUI-PuLID-Flux.git custom_nodes/ComfyUI-PuLID-Flux
 RUN git clone https://github.com/Fannovel16/comfyui_controlnet_aux.git custom_nodes/comfyui_controlnet_aux
 RUN git clone https://github.com/rgthree/rgthree-comfy.git custom_nodes/rgthree-comfy
@@ -56,6 +56,9 @@ RUN git clone https://github.com/alexopus/ComfyUI-Image-Saver.git custom_nodes/C
 # Install requirements of custom nodes
 RUN pip install --no-cache-dir -r custom_nodes/comfyui_controlnet_aux/requirements.txt || true
 RUN pip install --no-cache-dir -r custom_nodes/ComfyUI-PuLID-Flux/requirements.txt || true
+
+# Patch ComfyUI FLUX model parameter mismatch to prevent 'timestep_zero_index' TypeError
+RUN sed -i 's/timestep_zero_index=timestep_zero_index, //g' /app/ComfyUI/comfy/ldm/flux/model.py || true
 
 RUN mkdir -p /app/ComfyUI/workflows
 RUN mkdir -p /app/ComfyUI/models/pulid
