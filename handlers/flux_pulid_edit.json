@@ -5,39 +5,6 @@
       "image": "main_input.jpg"
     }
   },
-  "12": {
-    "class_type": "InstantIDModelLoader",
-    "inputs": {
-      "instantid_file": "ip-adapter.bin"
-    }
-  },
-  "13": {
-    "class_type": "InstantIDFaceAnalysis",
-    "inputs": {
-      "provider": "CUDA"
-    }
-  },
-  "14": {
-    "class_type": "ApplyInstantID",
-    "inputs": {
-      "instantid": ["12", 0],
-      "insightface": ["13", 0],
-      "control_net": ["15", 0],
-      "image": ["10", 0],
-      "model": ["50", 0],
-      "positive": ["20", 0],
-      "negative": ["21", 0],
-      "weight": 0.8,
-      "start_at": 0.0,
-      "end_at": 1.0
-    }
-  },
-  "15": {
-    "class_type": "ControlNetLoader",
-    "inputs": {
-      "control_net_name": "instantid_controlnet.safetensors"
-    }
-  },
   "20": {
     "class_type": "CLIPTextEncode",
     "inputs": {
@@ -67,6 +34,31 @@
       "weight_dtype": "default"
     }
   },
+  "12": {
+    "class_type": "PulidFluxModelLoader",
+    "inputs": {
+      "pulid_file": "pulid_flux_v0.9.0.safetensors"
+    }
+  },
+  "13": {
+    "class_type": "PulidFluxInsightFaceLoader",
+    "inputs": {
+      "provider": "CUDA"
+    }
+  },
+  "14": {
+    "class_type": "ApplyPulidFlux",
+    "inputs": {
+      "model": ["50", 0],
+      "pulid_flux": ["12", 0],
+      "eva_clip": ["13", 0],
+      "face_analysis": ["13", 0],
+      "image": ["10", 0],
+      "weight": 0.8,
+      "start_at": 0.0,
+      "end_at": 1.0
+    }
+  },
   "60": {
     "class_type": "EmptyLatentImage",
     "inputs": {
@@ -85,8 +77,8 @@
       "scheduler": "simple",
       "denoise": 1.0,
       "model": ["14", 0],
-      "positive": ["14", 1],
-      "negative": ["14", 2],
+      "positive": ["20", 0],
+      "negative": ["21", 0],
       "latent_image": ["60", 0]
     }
   },
@@ -107,7 +99,7 @@
     "class_type": "SaveImage",
     "inputs": {
       "images": ["80", 0],
-      "filename_prefix": "flux_instantid"
+      "filename_prefix": "flux_pulid"
     }
   }
 }
