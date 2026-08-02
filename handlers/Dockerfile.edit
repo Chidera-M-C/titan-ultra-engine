@@ -58,19 +58,19 @@ RUN pip install --no-cache-dir -r custom_nodes/comfyui_controlnet_aux/requiremen
 RUN pip install --no-cache-dir -r custom_nodes/ComfyUI-PuLID-Flux/requirements.txt || true
 
 # --------------------------------------------------------------------------
-# SAFE FIX: Patch ONLY pulid.py so forward_orig accepts **kwargs without breaking __init__.py
+# SURGICAL FIX: Safely append **kwargs to PuLID's forward functions
 # --------------------------------------------------------------------------
 RUN python3 -c '\
-path = "custom_nodes/ComfyUI-PuLID-Flux/pulid.py"\
-try:\
-    with open(path, "r") as f:\
-        code = f.read()\
-    code = code.replace("def forward_orig(", "def forward_orig(*args, **kwargs): #")\
-    with open(path, "w") as f:\
-        f.write(code)\
-    print("Successfully patched PuLID pulid.py")\
-except Exception as e:\
-    print(f"Patch error: {e}")\
+import os, re;\
+for root, dirs, files in os.walk("custom_nodes/ComfyUI-PuLID-Flux"):\
+    for file in files:\
+        if file.endswith(".py"):\
+            path = os.path.join(root, file);\
+            with open(path, "r", encoding="utf-8") as f: code = f.read();\
+            # Find functions containing "img_ids" and append **kwargs safely inside the parentheses \
+            patched = re.sub(r"(def\s+\w+\s*\([^)]*?img_ids[^)]*?)(\s*\)):", r"\1, **kwargs\2:", code);\
+            patched = patched.replace(", **kwargs, **kwargs):", ", **kwargs):");\
+            with open(path, "w", encoding="utf-8") as f: f.write(patched);\
 ' || true
 
 RUN mkdir -p /app/ComfyUI/workflows
