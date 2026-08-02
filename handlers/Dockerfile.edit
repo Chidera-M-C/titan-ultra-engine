@@ -22,7 +22,14 @@ RUN apt-get update && apt-get install -y \
 
 RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir "numpy>=1.26.0,<2.0.0"
-RUN pip install --no-cache-dir requests Pillow opencv-python-headless
+RUN pip install --no-cache-dir \
+    requests \
+    Pillow \
+    opencv-python-headless \
+    piexif \
+    matplotlib \
+    insightface \
+    onnxruntime-gpu
 
 # Install ComfyUI
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git /app/ComfyUI
@@ -30,14 +37,25 @@ WORKDIR /app/ComfyUI
 
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir \
-    aiohttp torchvision torchaudio spandrel kornia einops \
-    transformers tokenizers sentencepiece insightface onnxruntime-gpu
+    aiohttp \
+    torchvision \
+    torchaudio \
+    spandrel \
+    kornia \
+    einops \
+    transformers \
+    tokenizers \
+    sentencepiece
 
 # Custom Nodes
 RUN git clone https://github.com/cubiq/ComfyUI_InstantID.git custom_nodes/ComfyUI_InstantID
 RUN git clone https://github.com/Fannovel16/comfyui_controlnet_aux.git custom_nodes/comfyui_controlnet_aux
 RUN git clone https://github.com/rgthree/rgthree-comfy.git custom_nodes/rgthree-comfy
 RUN git clone https://github.com/alexopus/ComfyUI-Image-Saver.git custom_nodes/ComfyUI-Image-Saver
+
+# Install requirements of custom nodes
+RUN pip install --no-cache-dir -r custom_nodes/comfyui_controlnet_aux/requirements.txt || true
+RUN pip install --no-cache-dir -r custom_nodes/ComfyUI_InstantID/requirements.txt || true
 
 RUN mkdir -p /app/ComfyUI/workflows
 RUN mkdir -p /app/ComfyUI/models/insightface/models
