@@ -59,11 +59,11 @@ os.makedirs("/app/ComfyUI/models/controlnet", exist_ok=True)
 os.makedirs("/app/ComfyUI/models/instantid", exist_ok=True)
 os.makedirs("/app/ComfyUI/models/insightface/models/antelopev2", exist_ok=True)
 
-# 1. UNET Model (Moved to models/unet for UNETLoader)
+# 1. NSFW Flux UNET
 download_civitai(
-    "https://civitai.red/api/download/models/691639?fileId=639902",
-    "/app/ComfyUI/models/unet/fluxed_up.safetensors",
-    "Fluxed Up NSFW UNET"
+    "https://civitai.red/api/download/models/2835136?fileId=2721540",
+    "/app/ComfyUI/models/unet/flux_nsfw.safetensors",
+    "NSFW Flux UNET"
 )
 
 # 2. VAE Model
