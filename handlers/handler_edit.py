@@ -76,32 +76,35 @@ def handler(job):
         with open("/app/ComfyUI/workflows/flux_instantid_edit.json", "r") as f:
             workflow = json.load(f)
 
-        # Set main image
-        workflow["10"]["inputs"]["image"] = main_image_name          # LoadImage for InstantID
-        workflow["20"]["inputs"]["text"] = user_prompt               # Positive prompt
+        # Set main image and prompt
+        workflow["10"]["inputs"]["image"] = main_image_name
+        workflow["20"]["inputs"]["text"] = user_prompt
 
-        # Optional second image (second person)
+        # Optional second image
         if second_image_b64:
             second_image_b64 = resize_image(second_image_b64)
             second_image_name = upload_image(second_image_b64, "second_input.jpg")
-            workflow["11"]["inputs"]["image"] = second_image_name
-            # You will need to connect node 11 to a second InstantID in the workflow
-        else:
             if "11" in workflow:
-                # Disable or remove second face path if present
-                pass
+                workflow["11"]["inputs"]["image"] = second_image_name
+        else:
+            # Remove second image node to avoid missing file warning
+            if "11" in workflow:
+                del workflow["11"]
 
         # Generation settings
-        workflow["30"]["inputs"]["seed"] = data.get("seed", 0)
-        workflow["30"]["inputs"]["steps"] = int(data.get("steps", 25))
-        workflow["30"]["inputs"]["cfg"] = float(data.get("cfg", 3.5))
+        if "30" in workflow:
+            workflow["30"]["inputs"]["seed"] = int(data.get("seed", 0))
+            workflow["30"]["inputs"]["steps"] = int(data.get("steps", 25))
+            workflow["30"]["inputs"]["cfg"] = float(data.get("cfg", 3.5))
 
-        # Queue
+        # Queue the prompt
         resp = requests.post(f"{COMFY_URL}/prompt", json={"prompt": workflow})
-        if "prompt_id" not in resp.json():
-            return {"error": "Failed to queue prompt", "details": resp.json()}
+        resp_data = resp.json()
 
-        prompt_id = resp.json()["prompt_id"]
+        if "prompt_id" not in resp_data:
+            return {"error": "Failed to queue prompt", "details": resp_data}
+
+        prompt_id = resp_data["prompt_id"]
 
         # Poll for result
         for _ in range(180):
