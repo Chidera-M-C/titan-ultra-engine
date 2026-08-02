@@ -96,6 +96,14 @@ download_hf(
     "InstantID ControlNet"
 )
 
+# T5XXL for Flux
+download_hf(
+    "comfyanonymous/flux_text_encoders",
+    "t5xxl_fp16.safetensors",
+    "/app/ComfyUI/models/clip/t5xxl_fp16.safetensors",
+    "FLUX T5XXL"
+)
+
 # 5. InsightFace (antelopev2)
 print("Downloading InsightFace antelopev2...")
 snapshot_download(
