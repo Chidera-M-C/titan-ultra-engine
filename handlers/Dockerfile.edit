@@ -58,12 +58,19 @@ RUN pip install --no-cache-dir -r custom_nodes/comfyui_controlnet_aux/requiremen
 RUN pip install --no-cache-dir -r custom_nodes/ComfyUI-PuLID-Flux/requirements.txt || true
 
 # --------------------------------------------------------------------------
-# PERMANENT FIX: Force PuLID functions to accept **kwargs so extra args never crash it
+# SAFE FIX: Patch ONLY pulid.py so forward_orig accepts **kwargs without breaking __init__.py
 # --------------------------------------------------------------------------
-RUN python -c '\
-import glob;\
-files = glob.glob("custom_nodes/ComfyUI-PuLID-Flux/**/*.py", recursive=True);\
-[open(f, "w").write(open(f).read().replace("def forward_orig(", "def forward_orig(*args, **kwargs): #")) for f in files];\
+RUN python3 -c '\
+path = "custom_nodes/ComfyUI-PuLID-Flux/pulid.py"\
+try:\
+    with open(path, "r") as f:\
+        code = f.read()\
+    code = code.replace("def forward_orig(", "def forward_orig(*args, **kwargs): #")\
+    with open(path, "w") as f:\
+        f.write(code)\
+    print("Successfully patched PuLID pulid.py")\
+except Exception as e:\
+    print(f"Patch error: {e}")\
 ' || true
 
 RUN mkdir -p /app/ComfyUI/workflows
