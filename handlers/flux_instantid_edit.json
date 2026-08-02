@@ -44,7 +44,7 @@
     "class_type": "CLIPLoader",
     "inputs": {
       "clip_name": "clip_l.safetensors",
-      "type": "flux"
+      "type": "stable_diffusion"
     }
   },
   "50": {
