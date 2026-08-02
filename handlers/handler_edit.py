@@ -61,7 +61,6 @@ def handler(job):
     try:
         data = job["input"]
         image_base64 = data.get("image")
-        second_image_b64 = data.get("second_image")
         user_prompt = data.get("prompt")
 
         if not user_prompt:
@@ -69,27 +68,16 @@ def handler(job):
         if not image_base64:
             return {"error": "Main image is required"}
 
-        # Resize & upload main image
+        # Resize & upload reference image
         image_base64 = resize_image(image_base64)
         main_image_name = upload_image(image_base64, "main_input.jpg")
 
-        with open("/app/ComfyUI/workflows/flux_instantid_edit.json", "r") as f:
+        with open("/app/ComfyUI/workflows/flux_pulid_edit.json", "r") as f:
             workflow = json.load(f)
 
-        # Set main image and prompt
-        workflow["10"]["inputs"]["image"] = main_image_name
-        workflow["20"]["inputs"]["text"] = user_prompt
-
-        # Optional second image
-        if second_image_b64:
-            second_image_b64 = resize_image(second_image_b64)
-            second_image_name = upload_image(second_image_b64, "second_input.jpg")
-            if "11" in workflow:
-                workflow["11"]["inputs"]["image"] = second_image_name
-        else:
-            # Remove second image node to avoid missing file warning
-            if "11" in workflow:
-                del workflow["11"]
+        # Inject image and prompt
+        workflow["10"]["inputs"]["image"] = main_image_name          # Reference image
+        workflow["20"]["inputs"]["text"] = user_prompt               # Positive prompt
 
         # Generation settings
         if "30" in workflow:
@@ -97,7 +85,7 @@ def handler(job):
             workflow["30"]["inputs"]["steps"] = int(data.get("steps", 25))
             workflow["30"]["inputs"]["cfg"] = float(data.get("cfg", 3.5))
 
-        # Queue the prompt
+        # Queue
         resp = requests.post(f"{COMFY_URL}/prompt", json={"prompt": workflow})
         resp_data = resp.json()
 
