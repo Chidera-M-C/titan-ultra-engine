@@ -11,14 +11,20 @@ def download_hf(repo_id, filename, dest_path, label):
         return
     print(f"Downloading {label}...")
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+    
     path = hf_hub_download(
         repo_id=repo_id,
         filename=filename,
         local_dir=os.path.dirname(dest_path),
+        local_dir_use_symlinks=False,
         token=HF_TOKEN or None
     )
-    if path != dest_path:
+    
+    if path != dest_path and os.path.exists(path):
+        if os.path.exists(dest_path):
+            os.remove(dest_path)
         os.rename(path, dest_path)
+        
     print(f"✅ {label} done")
 
 def download_civitai(url, dest_path, label):
@@ -27,8 +33,22 @@ def download_civitai(url, dest_path, label):
         return
     print(f"Downloading {label}...")
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
-    download_url = url + (f"?token={CIVITAI_TOKEN}" if CIVITAI_TOKEN else "")
-    cmd = ["aria2c", "-x", "8", "-s", "8", "-c", "--dir", os.path.dirname(dest_path), "--out", os.path.basename(dest_path), download_url]
+    
+    # Check if URL already contains query parameters (e.g., ?fileId=...)
+    download_url = url
+    if CIVITAI_TOKEN:
+        separator = "&" if "?" in url else "?"
+        download_url += f"{separator}token={CIVITAI_TOKEN}"
+        
+    cmd = [
+        "aria2c", 
+        "-x", "8", 
+        "-s", "8", 
+        "-c", 
+        "--dir", os.path.dirname(dest_path), 
+        "--out", os.path.basename(dest_path), 
+        download_url
+    ]
     subprocess.run(cmd, check=True)
     print(f"✅ {label} done")
 
@@ -38,17 +58,26 @@ os.makedirs("/app/ComfyUI/models/controlnet", exist_ok=True)
 os.makedirs("/app/ComfyUI/models/instantid", exist_ok=True)
 os.makedirs("/app/ComfyUI/models/insightface/models/antelopev2", exist_ok=True)
 
-# 1. Fluxed Up (example - replace with actual latest download link from Civitai)
-# You must update this URL with the real model version ID from Civitai
+# 1. Fluxed Up Checkpoint
 download_civitai(
-    "https://civitai.red/api/download/models/691639?fileId=639902",  # ← Replace with real Fluxed Up link
+    "https://civitai.red/api/download/models/691639?fileId=639902",
     "/app/ComfyUI/models/checkpoints/fluxed_up.safetensors",
     "Fluxed Up NSFW"
 )
 
 # 2. InstantID models
-download_hf("InstantX/InstantID", "ip-adapter.bin", "/app/ComfyUI/models/instantid/ip-adapter.bin", "InstantID IP-Adapter")
-download_hf("InstantX/InstantID", "ControlNetModel/diffusion_pytorch_model.safetensors", "/app/ComfyUI/models/controlnet/instantid_controlnet.safetensors", "InstantID ControlNet")
+download_hf(
+    "InstantX/InstantID", 
+    "ip-adapter.bin", 
+    "/app/ComfyUI/models/instantid/ip-adapter.bin", 
+    "InstantID IP-Adapter"
+)
+download_hf(
+    "InstantX/InstantID", 
+    "ControlNetModel/diffusion_pytorch_model.safetensors", 
+    "/app/ComfyUI/models/controlnet/instantid_controlnet.safetensors", 
+    "InstantID ControlNet"
+)
 
 # 3. InsightFace (antelopev2)
 print("Downloading InsightFace antelopev2...")
