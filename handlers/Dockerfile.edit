@@ -32,7 +32,7 @@ RUN pip install --no-cache-dir \
     onnxruntime-gpu
 
 # Install ComfyUI
-RUN git clone https://github.com/comfyanonymous/ComfyUI.git /app/ComfyUI
+RUN git clone https://github.com/balazik/ComfyUI-PuLID-Flux.git custom_nodes/ComfyUI-PuLID-Flux
 WORKDIR /app/ComfyUI
 
 RUN pip install --no-cache-dir -r requirements.txt
@@ -47,15 +47,15 @@ RUN pip install --no-cache-dir \
     tokenizers \
     sentencepiece
 
-# Custom Nodes - PuLID instead of InstantID
-RUN git clone https://github.com/cubiq/PuLID_ComfyUI.git custom_nodes/PuLID_ComfyUI
+# Custom Nodes - PuLID Flux
+RUN git clone https://github.com/balazik/ComfyUI-PuLID-Flux.git custom_nodes/ComfyUI-PuLID-Flux
 RUN git clone https://github.com/Fannovel16/comfyui_controlnet_aux.git custom_nodes/comfyui_controlnet_aux
 RUN git clone https://github.com/rgthree/rgthree-comfy.git custom_nodes/rgthree-comfy
 RUN git clone https://github.com/alexopus/ComfyUI-Image-Saver.git custom_nodes/ComfyUI-Image-Saver
 
 # Install requirements
 RUN pip install --no-cache-dir -r custom_nodes/comfyui_controlnet_aux/requirements.txt || true
-RUN pip install --no-cache-dir -r custom_nodes/PuLID_ComfyUI/requirements.txt || true
+RUN pip install --no-cache-dir -r custom_nodes/ComfyUI-PuLID-Flux/requirements.txt || true
 
 RUN mkdir -p /app/ComfyUI/workflows
 RUN mkdir -p /app/ComfyUI/models/pulid
