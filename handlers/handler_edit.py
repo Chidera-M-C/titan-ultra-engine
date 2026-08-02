@@ -20,7 +20,7 @@ def start_comfyui():
         )
     threading.Thread(target=run, daemon=True).start()
 
-    for _ in range(50):
+    for _ in range(60):
         try:
             if requests.get(f"{COMFY_URL}/history", timeout=5).status_code == 200:
                 print("✅ ComfyUI ready")
@@ -63,68 +63,48 @@ def handler(job):
         image_base64 = data.get("image")
         second_image_b64 = data.get("second_image")
         user_prompt = data.get("prompt")
+
         if not user_prompt:
             return {"error": "Prompt is required"}
-
         if not image_base64:
             return {"error": "Main image is required"}
 
-        # Resize image
+        # Resize & upload main image
         image_base64 = resize_image(image_base64)
         main_image_name = upload_image(image_base64, "main_input.jpg")
 
-        with open("/app/ComfyUI/workflows/krea2_identity_edit.json", "r") as f:
+        with open("/app/ComfyUI/workflows/flux_instantid_edit.json", "r") as f:
             workflow = json.load(f)
 
-        # Set main image and prompt
-        workflow["72"]["inputs"]["image"] = main_image_name
-        workflow["247"]["inputs"]["prompt"] = user_prompt
+        # Set main image
+        workflow["10"]["inputs"]["image"] = main_image_name          # LoadImage for InstantID
+        workflow["20"]["inputs"]["text"] = user_prompt               # Positive prompt
 
-        # Dual image support
+        # Optional second image (second person)
         if second_image_b64:
             second_image_b64 = resize_image(second_image_b64)
             second_image_name = upload_image(second_image_b64, "second_input.jpg")
-
-            if "300" not in workflow:
-                workflow["300"] = {
-                    "class_type": "LoadImage",
-                    "inputs": {
-                        "image": second_image_name,
-                        "upload": "image"
-                    }
-                }
-            else:
-                workflow["300"]["inputs"]["image"] = second_image_name
-
-            workflow["247"]["inputs"]["image_b"] = ["300", 0]
-            if "309" in workflow and "inputs" in workflow["309"]:
-                workflow["309"]["inputs"]["source_image_b"] = ["300", 0]
+            workflow["11"]["inputs"]["image"] = second_image_name
+            # You will need to connect node 11 to a second InstantID in the workflow
         else:
-            # Remove second image completely
-            if "300" in workflow:
-                del workflow["300"]
-            if "image_b" in workflow.get("247", {}).get("inputs", {}):
-                del workflow["247"]["inputs"]["image_b"]
-            if "source_image_b" in workflow.get("309", {}).get("inputs", {}):
-                del workflow["309"]["inputs"]["source_image_b"]
+            if "11" in workflow:
+                # Disable or remove second face path if present
+                pass
 
-        # Safer generation settings
-        workflow["117"]["inputs"]["unet_name"] = "krea2_turbo_fp8_scaled.safetensors"
-        workflow["266"]["inputs"]["cfg"] = float(data.get("cfg", 2.5))
-        workflow["266"]["inputs"]["denoise"] = float(data.get("denoise", 0.80))
-        workflow["266"]["inputs"]["steps"] = int(data.get("steps", 12))
-        workflow["266"]["inputs"]["sampler_name"] = data.get("sampler", "euler_ancestral")
-        workflow["266"]["inputs"]["scheduler"] = data.get("scheduler", "normal")
+        # Generation settings
+        workflow["30"]["inputs"]["seed"] = data.get("seed", 0)
+        workflow["30"]["inputs"]["steps"] = int(data.get("steps", 25))
+        workflow["30"]["inputs"]["cfg"] = float(data.get("cfg", 3.5))
 
-        # Queue the prompt
+        # Queue
         resp = requests.post(f"{COMFY_URL}/prompt", json={"prompt": workflow})
         if "prompt_id" not in resp.json():
             return {"error": "Failed to queue prompt", "details": resp.json()}
 
         prompt_id = resp.json()["prompt_id"]
 
-        # Wait for result
-        for _ in range(150):
+        # Poll for result
+        for _ in range(180):
             history = requests.get(f"{COMFY_URL}/history/{prompt_id}").json()
             if prompt_id in history:
                 outputs = history[prompt_id].get("outputs", {})
