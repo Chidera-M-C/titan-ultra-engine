@@ -15,15 +15,14 @@ RUN apt-get update && apt-get install -y \
     wget \
     tzdata \
     aria2 \
+    libgoogle-perftools-dev \
     && ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime \
     && dpkg-reconfigure --frontend noninteractive tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir "numpy>=1.26.0,<2.0.0"
-RUN pip install --no-cache-dir \
-    requests \
-    Pillow
+RUN pip install --no-cache-dir requests Pillow opencv-python-headless
 
 # Install ComfyUI
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git /app/ComfyUI
@@ -31,32 +30,21 @@ WORKDIR /app/ComfyUI
 
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir \
-    aiohttp \
-    torchvision \
-    torchaudio \
-    spandrel \
-    kornia \
-    einops \
-    transformers \
-    tokenizers \
-    sentencepiece
+    aiohttp torchvision torchaudio spandrel kornia einops \
+    transformers tokenizers sentencepiece insightface onnxruntime-gpu
 
-# ── krea2edit: pull latest main branch directly
-ARG CACHEBUST=2
-RUN echo "bust=$CACHEBUST" && \
-    git clone https://github.com/lbouaraba/comfyui-krea2edit.git custom_nodes/comfyui-krea2edit
-
-RUN git clone https://github.com/rgthree/rgthree-comfy.git custom_nodes/rgthree-comfy && \
-    pip install --no-cache-dir -r custom_nodes/rgthree-comfy/requirements.txt || true
-
-RUN git clone https://github.com/alexopus/ComfyUI-Image-Saver.git custom_nodes/ComfyUI-Image-Saver && \
-    pip install --no-cache-dir -r custom_nodes/ComfyUI-Image-Saver/requirements.txt || true
+# Custom Nodes
+RUN git clone https://github.com/cubiq/ComfyUI_InstantID.git custom_nodes/ComfyUI_InstantID
+RUN git clone https://github.com/Fannovel16/comfyui_controlnet_aux.git custom_nodes/comfyui_controlnet_aux
+RUN git clone https://github.com/rgthree/rgthree-comfy.git custom_nodes/rgthree-comfy
+RUN git clone https://github.com/alexopus/ComfyUI-Image-Saver.git custom_nodes/ComfyUI-Image-Saver
 
 RUN mkdir -p /app/ComfyUI/workflows
+RUN mkdir -p /app/ComfyUI/models/insightface/models
 
 COPY download_models_edit.py /app/
 COPY handler_edit.py /app/
-COPY lustify_krea_edit_api.json /app/ComfyUI/workflows/krea2_identity_edit.json
+COPY flux_instantid_edit.json /app/ComfyUI/workflows/flux_instantid_edit.json
 
 ARG HF_TOKEN
 ARG CIVITAI_TOKEN
