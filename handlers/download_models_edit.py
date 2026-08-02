@@ -96,9 +96,9 @@ download_hf(
     "PuLID Flux"
 )
 
-# 5. PuLID EVA CLIP model (prevents mid-run cold-start downloading)
+# 5. PuLID EVA CLIP model (Fixed repository ID to QuanSun/EVA-CLIP)
 download_hf(
-    "Comfy-Org/puLID_flux_comfyui",
+    "QuanSun/EVA-CLIP",
     "EVA02_CLIP_L_336_psz14_s6B.pt",
     "/app/ComfyUI/models/pulid/EVA02_CLIP_L_336_psz14_s6B.pt",
     "PuLID EVA CLIP"
