@@ -46,11 +46,16 @@
       "provider": "CUDA"
     }
   },
+  "16": {
+    "class_type": "PulidFluxEvaClipLoader",
+    "inputs": {}
+  },
   "14": {
     "class_type": "ApplyPulidFlux",
     "inputs": {
       "model": ["50", 0],
       "pulid_flux": ["12", 0],
+      "eva_clip": ["16", 0],
       "face_analysis": ["13", 0],
       "image": ["10", 0],
       "weight": 0.85,
