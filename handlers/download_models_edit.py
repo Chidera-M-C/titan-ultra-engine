@@ -51,12 +51,11 @@ def download_civitai(url, dest_path, label):
     subprocess.run(cmd, check=True)
     print(f"✅ {label} done")
 
-# Required Model Directories
+# Directories
 os.makedirs("/app/ComfyUI/models/unet", exist_ok=True)
 os.makedirs("/app/ComfyUI/models/vae", exist_ok=True)
 os.makedirs("/app/ComfyUI/models/clip", exist_ok=True)
-os.makedirs("/app/ComfyUI/models/controlnet", exist_ok=True)
-os.makedirs("/app/ComfyUI/models/instantid", exist_ok=True)
+os.makedirs("/app/ComfyUI/models/pulid", exist_ok=True)
 os.makedirs("/app/ComfyUI/models/insightface/models/antelopev2", exist_ok=True)
 
 # 1. NSFW Flux UNET
@@ -66,15 +65,15 @@ download_civitai(
     "NSFW Flux UNET"
 )
 
-# 2. VAE Model
+# 2. VAE
 download_hf(
     "black-forest-labs/FLUX.1-schnell",
-    "vae/diffusion_pytorch_model.safetensors",
+    "ae.safetensors",
     "/app/ComfyUI/models/vae/ae.safetensors",
-    "FLUX VAE (ae.safetensors)"
+    "FLUX VAE"
 )
 
-# 3. CLIP Model
+# 3. Text Encoders
 download_hf(
     "comfyanonymous/flux_text_encoders",
     "clip_l.safetensors",
@@ -82,26 +81,19 @@ download_hf(
     "FLUX CLIP L"
 )
 
-# 4. InstantID models
-download_hf(
-    "InstantX/InstantID", 
-    "ip-adapter.bin", 
-    "/app/ComfyUI/models/instantid/ip-adapter.bin", 
-    "InstantID IP-Adapter"
-)
-download_hf(
-    "InstantX/InstantID", 
-    "ControlNetModel/diffusion_pytorch_model.safetensors", 
-    "/app/ComfyUI/models/controlnet/instantid_controlnet.safetensors", 
-    "InstantID ControlNet"
-)
-
-# T5XXL for Flux
 download_hf(
     "comfyanonymous/flux_text_encoders",
     "t5xxl_fp16.safetensors",
     "/app/ComfyUI/models/clip/t5xxl_fp16.safetensors",
     "FLUX T5XXL"
+)
+
+# 4. PuLID Flux model
+download_hf(
+    "guozinan/PuLID",
+    "pulid_flux_v0.9.0.safetensors",
+    "/app/ComfyUI/models/pulid/pulid_flux_v0.9.0.safetensors",
+    "PuLID Flux"
 )
 
 # 5. InsightFace (antelopev2)
