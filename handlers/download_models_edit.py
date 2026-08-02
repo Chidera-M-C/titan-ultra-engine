@@ -34,7 +34,6 @@ def download_civitai(url, dest_path, label):
     print(f"Downloading {label}...")
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
     
-    # Check if URL already contains query parameters (e.g., ?fileId=...)
     download_url = url
     if CIVITAI_TOKEN:
         separator = "&" if "?" in url else "?"
@@ -52,20 +51,38 @@ def download_civitai(url, dest_path, label):
     subprocess.run(cmd, check=True)
     print(f"✅ {label} done")
 
-# Directories
-os.makedirs("/app/ComfyUI/models/checkpoints", exist_ok=True)
+# Required Model Directories
+os.makedirs("/app/ComfyUI/models/unet", exist_ok=True)
+os.makedirs("/app/ComfyUI/models/vae", exist_ok=True)
+os.makedirs("/app/ComfyUI/models/clip", exist_ok=True)
 os.makedirs("/app/ComfyUI/models/controlnet", exist_ok=True)
 os.makedirs("/app/ComfyUI/models/instantid", exist_ok=True)
 os.makedirs("/app/ComfyUI/models/insightface/models/antelopev2", exist_ok=True)
 
-# 1. Fluxed Up Checkpoint
+# 1. UNET Model (Moved to models/unet for UNETLoader)
 download_civitai(
     "https://civitai.red/api/download/models/691639?fileId=639902",
-    "/app/ComfyUI/models/checkpoints/fluxed_up.safetensors",
-    "Fluxed Up NSFW"
+    "/app/ComfyUI/models/unet/fluxed_up.safetensors",
+    "Fluxed Up NSFW UNET"
 )
 
-# 2. InstantID models
+# 2. VAE Model
+download_hf(
+    "black-forest-labs/FLUX.1-schnell",
+    "vae/diffusion_pytorch_model.safetensors",
+    "/app/ComfyUI/models/vae/ae.safetensors",
+    "FLUX VAE (ae.safetensors)"
+)
+
+# 3. CLIP Model
+download_hf(
+    "comfyanonymous/flux_text_encoders",
+    "clip_l.safetensors",
+    "/app/ComfyUI/models/clip/clip_l.safetensors",
+    "FLUX CLIP L"
+)
+
+# 4. InstantID models
 download_hf(
     "InstantX/InstantID", 
     "ip-adapter.bin", 
@@ -79,7 +96,7 @@ download_hf(
     "InstantID ControlNet"
 )
 
-# 3. InsightFace (antelopev2)
+# 5. InsightFace (antelopev2)
 print("Downloading InsightFace antelopev2...")
 snapshot_download(
     repo_id="DIAMONIK7777/antelopev2",
@@ -87,4 +104,4 @@ snapshot_download(
     token=HF_TOKEN or None
 )
 
-print("✅ All models downloaded")
+print("✅ All models downloaded successfully")
