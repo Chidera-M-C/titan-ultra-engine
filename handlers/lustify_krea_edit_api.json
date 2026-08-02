@@ -1,116 +1,85 @@
 {
-  "72": {
+  "10": {
     "class_type": "LoadImage",
     "inputs": {
-      "image": "main_input.jpg",
-      "upload": "image"
+      "image": "main_input.jpg"
     }
   },
-  "300": {
+  "11": {
     "class_type": "LoadImage",
     "inputs": {
-      "image": "second_input.jpg",
-      "upload": "image"
+      "image": "second_input.jpg"
     }
   },
-  "115": {
+  "20": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "beautiful woman, detailed face",
+      "clip": ["40", 0]
+    }
+  },
+  "21": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "blurry, low quality, deformed",
+      "clip": ["40", 0]
+    }
+  },
+  "30": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 0,
+      "steps": 25,
+      "cfg": 3.5,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1.0,
+      "model": ["50", 0],
+      "positive": ["20", 0],
+      "negative": ["21", 0],
+      "latent_image": ["60", 0]
+    }
+  },
+  "40": {
     "class_type": "CLIPLoader",
     "inputs": {
-      "clip_name": "qwen3vl_4b_fp8_scaled.safetensors",
-      "type": "krea2",
-      "device": "default"
+      "clip_name": "clip_l.safetensors",
+      "type": "flux"
     }
   },
-  "116": {
-    "class_type": "VAELoader",
-    "inputs": {
-      "vae_name": "krea2_raw_vae.safetensors"
-    }
-  },
-  "117": {
+  "50": {
     "class_type": "UNETLoader",
     "inputs": {
-      "unet_name": "krea2_turbo_fp8_scaled.safetensors",
+      "unet_name": "fluxed_up.safetensors",
       "weight_dtype": "default"
     }
   },
-  "105": {
-    "class_type": "Power Lora Loader (rgthree)",
+  "60": {
+    "class_type": "EmptyLatentImage",
     "inputs": {
-      "model": ["117", 0],
-      "lora_1": "krea/krea2_identity_edit_v1_2.safetensors",
-      "strength_1": 1.0
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
     }
   },
-  "247": {
-    "class_type": "Krea2EditGroundedEncode",
+  "70": {
+    "class_type": "VAELoader",
     "inputs": {
-      "clip": ["115", 0],
-      "image": ["72", 0],
-      "prompt": "make her wear a red bikini, same face, same person, same pose"
+      "vae_name": "ae.safetensors"
     }
   },
-  "101": {
-    "class_type": "ConditioningZeroOut",
-    "inputs": {
-      "conditioning": ["247", 0]
-    }
-  },
-  "306": {
-    "class_type": "VAEEncode",
-    "inputs": {
-      "pixels": ["72", 0],
-      "vae": ["116", 0]
-    }
-  },
-  "309": {
-    "class_type": "Krea2EditModelPatch",
-    "inputs": {
-      "model": ["105", 0],
-      "source_latent": ["306", 0],
-      "source_image": ["72", 0],
-      "vae": ["116", 0]
-    }
-  },
-  "97": {
-    "class_type": "ModelSamplingAuraFlow",
-    "inputs": {
-      "model": ["309", 0],
-      "shift": 3.5
-    }
-  },
-  "241": {
-    "class_type": "Seed (rgthree)",
-    "inputs": {
-      "seed": 0
-    }
-  },
-  "266": {
-    "class_type": "KSampler",
-    "inputs": {
-      "seed": ["241", 0],
-      "model": ["97", 0],
-      "positive": ["247", 0],
-      "negative": ["101", 0],
-      "latent_image": ["306", 0],
-      "steps": 26,
-      "cfg": 3.0,
-      "sampler_name": "euler_ancestral",
-      "scheduler": "normal",
-      "denoise": 0.70
-    }
-  },
-  "54": {
+  "80": {
     "class_type": "VAEDecode",
     "inputs": {
-      "samples": ["266", 0],
-      "vae": ["116", 0]
+      "samples": ["30", 0],
+      "vae": ["70", 0]
     }
   },
   "90": {
-    "class_type": "PreviewImage",
+    "class_type": "SaveImage",
     "inputs": {
-      "images": ["54", 0]
+      "images": ["80", 0],
+      "filename_prefix": "flux_edit"
     }
   }
 }
