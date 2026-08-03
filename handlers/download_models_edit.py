@@ -51,19 +51,23 @@ hf_hub_download(
     token=HF_TOKEN or None
 )
 
-# 4. OpenPose ControlNet (Snapshot required for Diffusers model structure)
+# 4. OpenPose ControlNet (Filtered to ignore heavy .bin files)
 print("Downloading OpenPose ControlNet...")
 snapshot_download(
     repo_id="thibaud/controlnet-openpose-sdxl-1.0",
     local_dir="/workspace/controlnet_openpose_xl",
+    allow_patterns=["*.json", "*.safetensors"],
+    ignore_patterns=["*.bin", "*.pt", "*non_ema*"],
     token=HF_TOKEN or None
 )
 
-# 5. Canny ControlNet
+# 5. Canny ControlNet (Filtered to ignore heavy .bin files)
 print("Downloading Canny ControlNet...")
 snapshot_download(
     repo_id="diffusers/controlnet-canny-sdxl-1.0",
     local_dir="/workspace/controlnet_canny_xl",
+    allow_patterns=["*.json", "*.safetensors"],
+    ignore_patterns=["*.bin", "*.pt", "*non_ema*"],
     token=HF_TOKEN or None
 )
 
