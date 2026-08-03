@@ -156,7 +156,7 @@ def handler(job):
             prompt=positive,
             negative_prompt=negative,
             image=[pose_map, canny_map],
-            ip_adapter_image=input_image,
+            ip_adapter_image=[input_image],   # ← wrap in list
             controlnet_conditioning_scale=[pose_strength, canny_strength],
             num_inference_steps=35,
             guidance_scale=7.0,
