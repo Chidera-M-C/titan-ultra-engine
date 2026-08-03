@@ -1,125 +1,172 @@
 import sys
+sys.stdout = sys.__stdout__
+sys.stderr = sys.__stderr__
+
+# Force unbuffered output so RunPod captures all logs
 import os
-import time
-import base64
-import json
-import requests
+os.environ['PYTHONUNBUFFERED'] = '1'
+
+import torch
 import runpod
-from io import BytesIO
-from PIL import Image
+from diffusers import (
+    StableDiffusionXLControlNetPipeline,
+    ControlNetModel,
+    DPMSolverMultistepScheduler,
+    AutoencoderKL
+)
+from controlnet_aux import OpenposeDetector, CannyDetector
+import io, base64
+from PIL import Image, ImageFilter, ImageEnhance
 
-COMFY_URL = "http://127.0.0.1:8188"
-MAX_SIZE = 1024
+# --- CONFIG ---
+JUGGERNAUT_PATH  = "/workspace/juggernaut_xl.safetensors"
+VAE_PATH         = "/workspace/sdxl_vae.safetensors"
+DETAIL_LORA_PATH = "/workspace/add-detail-xl.safetensors"
+OPENPOSE_PATH    = "/workspace/controlnet_openpose_xl"
+CANNY_PATH       = "/workspace/controlnet_canny_xl"
 
-def start_comfyui():
-    import subprocess, threading
-    def run():
-        subprocess.Popen(
-            [sys.executable, "main.py", "--listen", "0.0.0.0", "--port", "8188"],
-            cwd="/app/ComfyUI"
+pipeline         = None
+openpose         = None
+canny_detector   = None
+
+def load_models():
+    global pipeline, openpose, canny_detector
+
+    if pipeline is None:
+        print("Loading VAE...")
+        vae = AutoencoderKL.from_single_file(
+            VAE_PATH, torch_dtype=torch.float16
+        ).to("cuda")
+
+        print("Loading ControlNet OpenPose...")
+        controlnet_pose = ControlNetModel.from_pretrained(
+            OPENPOSE_PATH, torch_dtype=torch.float16
+        ).to("cuda")
+
+        print("Loading ControlNet Canny...")
+        controlnet_canny = ControlNetModel.from_pretrained(
+            CANNY_PATH, torch_dtype=torch.float16
+        ).to("cuda")
+
+        print("Loading Juggernaut XL pipeline...")
+        pipeline = StableDiffusionXLControlNetPipeline.from_single_file(
+            JUGGERNAUT_PATH,
+            controlnet=[controlnet_pose, controlnet_canny],
+            vae=vae,
+            torch_dtype=torch.float16,
+            use_safetensors=True,
+            variant="fp16"
+        ).to("cuda")
+
+        print("Fusing Detail LoRA...")
+        pipeline.load_lora_weights(DETAIL_LORA_PATH)
+        pipeline.fuse_lora(lora_scale=0.6)
+
+        pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
+            pipeline.scheduler.config,
+            use_karras_sigmas=True,
+            algorithm_type="dpmsolver++"
         )
-    threading.Thread(target=run, daemon=True).start()
+        pipeline.enable_vae_slicing()
+        pipeline.enable_vae_tiling()
+        pipeline.enable_attention_slicing(slice_size="auto")
 
-    for _ in range(60):
-        try:
-            if requests.get(f"{COMFY_URL}/history", timeout=5).status_code == 200:
-                print("✅ ComfyUI ready")
-                return True
-        except:
-            pass
-        time.sleep(3)
-    raise Exception("ComfyUI startup timeout")
+        print("Loading OpenPose detector...")
+        openpose = OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
 
-def resize_image(image_base64, max_size=MAX_SIZE):
-    if "," in image_base64:
-        image_base64 = image_base64.split(",", 1)[1]
-    
-    img = Image.open(BytesIO(base64.b64decode(image_base64))).convert("RGB")
-    w, h = img.size
-    
-    if max(w, h) > max_size:
-        if w > h:
-            new_w = max_size
-            new_h = int(h * max_size / w)
-        else:
-            new_h = max_size
-            new_w = int(w * max_size / h)
-        img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
-    
-    buffered = BytesIO()
-    img.save(buffered, format="JPEG", quality=93)
-    return base64.b64encode(buffered.getvalue()).decode()
+        print("Loading Canny detector...")
+        canny_detector = CannyDetector()
 
-def upload_image(image_base64, filename="input.jpg"):
-    if "," in image_base64:
-        image_base64 = image_base64.split(",", 1)[1]
-    files = {"image": (filename, base64.b64decode(image_base64), "image/jpeg")}
-    r = requests.post(f"{COMFY_URL}/upload/image", files=files)
-    return r.json()["name"]
+        print("✓ All edit models loaded successfully")
+
+def get_dimensions(image):
+    w, h = image.size
+    w = int(w // 8 * 8)
+    h = int(h // 8 * 8)
+    if w > 1536: w = 1536
+    if h > 1536: h = 1536
+    return w, h
+
+def build_prompts(user_prompt, user_negative=''):
+    positive = (
+        f"{user_prompt}, photorealistic, masterpiece, best quality, ultra detailed, "
+        f"sharp focus, realistic skin, natural lighting, consistent identity, "
+        f"same person same face, preserve facial features, preserve background"
+    )
+    negative = (
+        "different person, changed face, distorted face, deformed, bad anatomy, "
+        "mutated hands, fused fingers, extra fingers, missing fingers, "
+        "blurry, low quality, jpeg artifacts, worst quality, ugly, "
+        "watermark, text, signature"
+    )
+    if user_negative:
+        negative = f"{user_negative}, {negative}"
+    return positive, negative
+
+def post_process(image):
+    image = image.filter(ImageFilter.UnsharpMask(radius=1.5, percent=120, threshold=2))
+    image = ImageEnhance.Contrast(image).enhance(1.1)
+    image = ImageEnhance.Sharpness(image).enhance(1.2)
+    return image
 
 def handler(job):
     try:
-        data = job["input"]
-        image_base64 = data.get("image")
-        user_prompt = data.get("prompt")
+        input_data     = job['input']
+        user_prompt    = input_data.get('prompt', 'standing pose, confident expression')
+        user_negative  = input_data.get('negative_prompt', '')
+        image_base64   = input_data.get('image')
+        pose_strength  = float(input_data.get('pose_strength', 0.6))
+        canny_strength = float(input_data.get('canny_strength', 0.4))
 
-        if not user_prompt:
-            return {"error": "Prompt is required"}
         if not image_base64:
-            return {"error": "Main image is required"}
+            return {"error": "No image provided"}
 
-        # Resize & upload reference image
-        # Resize & upload reference image
-        image_base64 = resize_image(image_base64)
-        main_image_name = upload_image(image_base64, "main_input.jpg")
+        image_data  = base64.b64decode(image_base64.split(",")[1] if "," in image_base64 else image_base64)
+        input_image = Image.open(io.BytesIO(image_data)).convert("RGB")
+        w, h        = get_dimensions(input_image)
+        input_image = input_image.resize((w, h), Image.Resampling.LANCZOS)
 
-        with open("/app/ComfyUI/workflows/flux_pulid_edit.json", "r") as f:
-            workflow = json.load(f)
+        positive, negative = build_prompts(user_prompt, user_negative)
 
-        # Inject image and prompt
-        workflow["10"]["inputs"]["image"] = main_image_name          # Reference image
-        workflow["20"]["inputs"]["text"] = user_prompt               # Positive prompt
+        runpod.serverless.progress_update(job, "EXTRACTING_POSE")
+        pose_map = openpose(input_image, include_body=True, include_hand=True)
+        pose_map = pose_map.resize((w, h))
 
-        # Generation settings
-        if "30" in workflow:
-            workflow["30"]["inputs"]["seed"] = int(data.get("seed", 0))
-            workflow["30"]["inputs"]["steps"] = int(data.get("steps", 25))
-            workflow["30"]["inputs"]["cfg"] = float(data.get("cfg", 3.5))
+        runpod.serverless.progress_update(job, "EXTRACTING_EDGES")
+        canny_map = canny_detector(input_image, low_threshold=100, high_threshold=200)
+        canny_map = canny_map.resize((w, h))
 
-        # Queue
-        resp = requests.post(f"{COMFY_URL}/prompt", json={"prompt": workflow})
-        resp_data = resp.json()
+        runpod.serverless.progress_update(job, "GENERATING_EDIT")
+        result = pipeline(
+            prompt=positive,
+            negative_prompt=negative,
+            image=[pose_map, canny_map],
+            controlnet_conditioning_scale=[pose_strength, canny_strength],
+            num_inference_steps=35,
+            guidance_scale=7.0,
+            width=w,
+            height=h,
+        ).images[0]
 
-        if "prompt_id" not in resp_data:
-            return {"error": "Failed to queue prompt", "details": resp_data}
+        result = post_process(result)
 
-        prompt_id = resp_data["prompt_id"]
+        buffered = io.BytesIO()
+        result.save(buffered, format="JPEG", quality=85, optimize=True, progressive=True)
 
-        # Poll for result
-        for _ in range(180):
-            history = requests.get(f"{COMFY_URL}/history/{prompt_id}").json()
-            if prompt_id in history:
-                outputs = history[prompt_id].get("outputs", {})
-                for node_id, node_output in outputs.items():
-                    if "images" in node_output and len(node_output["images"]) > 0:
-                        img = node_output["images"][0]
-                        filename = img["filename"]
-                        subfolder = img.get("subfolder", "")
-                        folder_type = img.get("type", "output")
-                        image_path = os.path.join("/app/ComfyUI", folder_type, subfolder, filename)
-
-                        if os.path.exists(image_path):
-                            with open(image_path, "rb") as f:
-                                result_b64 = base64.b64encode(f.read()).decode()
-                            return {"image": f"data:image/jpeg;base64,{result_b64}"}
-            time.sleep(2)
-
-        return {"error": "Timeout waiting for image"}
+        return {"image": f"data:image/jpeg;base64,{base64.b64encode(buffered.getvalue()).decode()}"}
 
     except Exception as e:
         import traceback
         return {"error": str(e), "traceback": traceback.format_exc()}
 
+
 if __name__ == "__main__":
-    start_comfyui()
-    runpod.serverless.start({"handler": handler})
+    try:
+        load_models()
+        print("✓ Startup complete, listening for jobs...", flush=True)
+        runpod.serverless.start({"handler": handler})
+    except Exception as e:
+        import traceback
+        print(f"FATAL STARTUP ERROR: {e}", file=sys.stderr, flush=True)
+        traceback.print_exc(file=sys.stderr)
+        sys.exit(1)
