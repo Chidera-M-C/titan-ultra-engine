@@ -5,32 +5,7 @@ from huggingface_hub import hf_hub_download, snapshot_download
 HF_TOKEN = os.getenv("HF_TOKEN", "")
 CIVITAI_TOKEN = os.getenv("CIVITAI_TOKEN", "")
 
-def download_hf(repo_id, filename, dest_path, label):
-    if os.path.exists(dest_path):
-        print(f"✓ {label} already exists")
-        return
-    print(f"Downloading {label}...")
-    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
-    
-    path = hf_hub_download(
-        repo_id=repo_id,
-        filename=filename,
-        local_dir=os.path.dirname(dest_path),
-        local_dir_use_symlinks=False,
-        token=HF_TOKEN or None
-    )
-    
-    if path != dest_path and os.path.exists(path):
-        if os.path.exists(dest_path):
-            os.remove(dest_path)
-        os.rename(path, dest_path)
-        
-    print(f"✅ {label} done")
-
 def download_civitai(url, dest_path, label):
-    if os.path.exists(dest_path):
-        print(f"✓ {label} already exists")
-        return
     print(f"Downloading {label}...")
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
     
@@ -51,65 +26,50 @@ def download_civitai(url, dest_path, label):
     subprocess.run(cmd, check=True)
     print(f"✅ {label} done")
 
-# Directories
-os.makedirs("/app/ComfyUI/models/unet", exist_ok=True)
-os.makedirs("/app/ComfyUI/models/vae", exist_ok=True)
-os.makedirs("/app/ComfyUI/models/clip", exist_ok=True)
-os.makedirs("/app/ComfyUI/models/pulid", exist_ok=True)
-os.makedirs("/app/ComfyUI/models/insightface/models/antelopev2", exist_ok=True)
-
-# 1. NSFW Flux UNET
+# 1. Juggernaut XL
 download_civitai(
-    "https://civitai.red/api/download/models/2835136?fileId=2721540",
-    "/app/ComfyUI/models/unet/flux_nsfw.safetensors",
-    "NSFW Flux UNET"
+    "https://civitai.com/api/download/models/1759168?type=Model&format=SafeTensor&size=full&fp=fp16",
+    "/workspace/juggernaut_xl.safetensors",
+    "Juggernaut XL"
 )
 
 # 2. VAE
-download_hf(
-    "black-forest-labs/FLUX.1-schnell",
-    "ae.safetensors",
-    "/app/ComfyUI/models/vae/ae.safetensors",
-    "FLUX VAE"
-)
-
-# 3. Text Encoders
-download_hf(
-    "comfyanonymous/flux_text_encoders",
-    "clip_l.safetensors",
-    "/app/ComfyUI/models/clip/clip_l.safetensors",
-    "FLUX CLIP L"
-)
-
-download_hf(
-    "comfyanonymous/flux_text_encoders",
-    "t5xxl_fp16.safetensors",
-    "/app/ComfyUI/models/clip/t5xxl_fp16.safetensors",
-    "FLUX T5XXL"
-)
-
-# 4. PuLID Flux model
-download_hf(
-    "guozinan/PuLID",
-    "pulid_flux_v0.9.0.safetensors",
-    "/app/ComfyUI/models/pulid/pulid_flux_v0.9.0.safetensors",
-    "PuLID Flux"
-)
-
-# 5. PuLID EVA CLIP model (Fixed repository ID to QuanSun/EVA-CLIP)
-download_hf(
-    "QuanSun/EVA-CLIP",
-    "EVA02_CLIP_L_336_psz14_s6B.pt",
-    "/app/ComfyUI/models/pulid/EVA02_CLIP_L_336_psz14_s6B.pt",
-    "PuLID EVA CLIP"
-)
-
-# 6. InsightFace (antelopev2)
-print("Downloading InsightFace antelopev2...")
-snapshot_download(
-    repo_id="DIAMONIK7777/antelopev2",
-    local_dir="/app/ComfyUI/models/insightface/models/antelopev2",
+print("Downloading VAE...")
+hf_hub_download(
+    repo_id="madebyollin/sdxl-vae-fp16-fix",
+    filename="sdxl_vae.safetensors",
+    local_dir="/workspace",
     token=HF_TOKEN or None
 )
 
-print("✅ All models downloaded successfully")
+# 3. Detail LoRA
+print("Downloading Detail LoRA...")
+hf_hub_download(
+    repo_id="LyliaEngine/add-detail-xl",
+    filename="add-detail-xl.safetensors",
+    local_dir="/workspace",
+    token=HF_TOKEN or None
+)
+
+# 4. OpenPose ControlNet (Snapshot required for Diffusers model structure)
+print("Downloading OpenPose ControlNet...")
+snapshot_download(
+    repo_id="thibaud/controlnet-openpose-sdxl-1.0",
+    local_dir="/workspace/controlnet_openpose_xl",
+    token=HF_TOKEN or None
+)
+
+# 5. Canny ControlNet
+print("Downloading Canny ControlNet...")
+snapshot_download(
+    repo_id="diffusers/controlnet-canny-sdxl-1.0",
+    local_dir="/workspace/controlnet_canny_xl",
+    token=HF_TOKEN or None
+)
+
+# 6. Pre-cache ControlNet Detectors (Downloads weights to HF_HOME cache)
+print("Caching OpenPose Detector Weights...")
+from controlnet_aux import OpenposeDetector
+OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
+
+print("✅ All edit models baked into image successfully")
