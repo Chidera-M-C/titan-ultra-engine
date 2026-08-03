@@ -74,4 +74,13 @@ print("Caching OpenPose Detector Weights...")
 from controlnet_aux import OpenposeDetector
 OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
 
+# 7. IP-Adapter Plus Face SDXL
+print("Downloading IP-Adapter Face Weights...")
+snapshot_download(
+    repo_id="h94/IP-Adapter",
+    allow_patterns=["sdxl_models/ip-adapter-plus-face_sdxl_vit-h.safetensors", "models/image_encoder/*"],
+    local_dir="/workspace/ip_adapter",
+    token=HF_TOKEN or None
+)
+
 print("✅ All edit models baked into image successfully")
