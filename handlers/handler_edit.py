@@ -81,10 +81,13 @@ def load_models():
 
 def get_dimensions(image):
     w, h = image.size
-    w = int(w // 8 * 8)
-    h = int(h // 8 * 8)
+    # Must be multiples of 64 for SDXL / ControlNet latent alignments
+    w = int(w // 64 * 64)
+    h = int(h // 64 * 64)
     if w > 1536: w = 1536
     if h > 1536: h = 1536
+    w = max(512, w)
+    h = max(512, h)
     return w, h
 
 def build_prompts(user_prompt, user_negative=''):
