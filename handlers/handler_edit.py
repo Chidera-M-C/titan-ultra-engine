@@ -69,6 +69,7 @@ def handler(job):
             return {"error": "Main image is required"}
 
         # Resize & upload reference image
+        # Resize & upload reference image
         image_base64 = resize_image(image_base64)
         main_image_name = upload_image(image_base64, "main_input.jpg")
 
