@@ -1,11 +1,8 @@
-FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime
+FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
 
-WORKDIR /workspace
+WORKDIR /app
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    TZ=UTC \
-    HF_HOME=/workspace/huggingface_cache
-
+# Install missing system libraries + aria2 for Civitai downloads
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libsm6 \
@@ -16,25 +13,52 @@ RUN apt-get update && apt-get install -y \
     aria2 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir --upgrade pip
+# Install numpy first and lock it down
+RUN pip install --no-cache-dir "numpy==1.24.4"
+
+# Install core packages with compatible versions
 RUN pip install --no-cache-dir \
-    runpod \
-    requests \
-    Pillow \
-    numpy \
-    diffusers \
-    transformers \
-    accelerate \
-    controlnet_aux \
-    opencv-python-headless \
-    huggingface_hub
+    accelerate==0.28.0 \
+    transformers==4.40.0 \
+    diffusers==0.27.2 \
+    safetensors==0.4.3 \
+    huggingface_hub==0.22.2 \
+    Pillow==10.3.0 \
+    requests==2.31.0
 
-COPY download_models_edit.py /workspace/
-COPY handler_edit.py /workspace/
+# Install peft for LoRA fusion backend
+RUN pip install --no-cache-dir "peft==0.10.0"
 
-# Build-time model caching
+# Install remaining requirements
+RUN pip install --no-cache-dir \
+    runpod==1.6.2 \
+    timm==0.9.16 \
+    controlnet-aux==0.0.7 \
+    opencv-python-headless==4.9.0.80 \
+    matplotlib==3.7.5
+
+# Patch out mediapipe
+RUN sed -i 's/from .mediapipe_face import MediapipeFaceDetector/pass  # mediapipe disabled/' \
+    /opt/conda/lib/python3.10/site-packages/controlnet_aux/__init__.py
+
+# Force numpy reinstall to guard against silent upgrades
+RUN pip install --no-cache-dir --force-reinstall "numpy==1.24.4"
+
+# Copy download script & run model cache build
+COPY download_models_edit.py /app/
+COPY handler_edit.py /app/
+
 ARG HF_TOKEN
 ARG CIVITAI_TOKEN
-RUN HF_TOKEN=${HF_TOKEN} CIVITAI_TOKEN=${CIVITAI_TOKEN} python /workspace/download_models_edit.py
+RUN HF_TOKEN=${HF_TOKEN} CIVITAI_TOKEN=${CIVITAI_TOKEN} python /app/download_models_edit.py
+
+# Verify everything loads cleanly
+RUN python -c "import torch; print('torch OK:', torch.__version__)"
+RUN python -c "import numpy; print('numpy OK:', numpy.__version__)"
+RUN python -c "from diffusers import StableDiffusionXLControlNetPipeline, ControlNetModel; print('diffusers OK')"
+RUN python -c "from controlnet_aux import OpenposeDetector; print('controlnet_aux OK')"
+RUN python -c "import peft; print('peft OK:', peft.__version__)"
+RUN python -c "import runpod; print('runpod OK')"
+RUN python -c "import cv2; print('cv2 OK')"
 
 CMD ["python", "-u", "handler_edit.py"]
