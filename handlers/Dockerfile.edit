@@ -51,31 +51,15 @@ RUN pip install --no-cache-dir \
     tokenizers \
     sentencepiece
 
-# Custom Nodes - PuLID Flux & dependencies
-RUN git clone https://github.com/balazik/ComfyUI-PuLID-Flux.git custom_nodes/ComfyUI-PuLID-Flux
+# Custom Nodes - PuLID Flux (maintained fork, kept in sync with ComfyUI core) & dependencies
+RUN git clone https://github.com/lldacing/ComfyUI_PuLID_Flux_ll.git custom_nodes/ComfyUI_PuLID_Flux_ll
 RUN git clone https://github.com/Fannovel16/comfyui_controlnet_aux.git custom_nodes/comfyui_controlnet_aux
 RUN git clone https://github.com/rgthree/rgthree-comfy.git custom_nodes/rgthree-comfy
 RUN git clone https://github.com/alexopus/ComfyUI-Image-Saver.git custom_nodes/ComfyUI-Image-Saver
 
 # Install requirements of custom nodes
 RUN pip install --no-cache-dir -r custom_nodes/comfyui_controlnet_aux/requirements.txt || true
-RUN pip install --no-cache-dir -r custom_nodes/ComfyUI-PuLID-Flux/requirements.txt || true
-
-# --------------------------------------------------------------------------
-# BULLETPROOF FIX: Safely strip trailing commas and append **kwargs
-# --------------------------------------------------------------------------
-RUN python3 -c '\
-import os, re;\
-def replacer(m):\
-    return m.group(1).rstrip(", \\t\\n\\r") + ", **kwargs" + m.group(2);\
-for root, dirs, files in os.walk("custom_nodes/ComfyUI-PuLID-Flux"):\
-    for file in files:\
-        if file.endswith(".py"):\
-            path = os.path.join(root, file);\
-            with open(path, "r", encoding="utf-8") as f: code = f.read();\
-            patched = re.sub(r"(def forward_orig\s*\([^)]*?)(\)\s*(?:->\s*[^:]*)?:)", replacer, code);\
-            with open(path, "w", encoding="utf-8") as f: f.write(patched);\
-' || true
+RUN pip install --no-cache-dir -r custom_nodes/ComfyUI_PuLID_Flux_ll/requirements.txt || true
 
 RUN mkdir -p /app/ComfyUI/workflows
 RUN mkdir -p /app/ComfyUI/models/pulid
