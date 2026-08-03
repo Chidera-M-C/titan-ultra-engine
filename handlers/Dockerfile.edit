@@ -1,9 +1,10 @@
 FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime
 
-WORKDIR /app
+WORKDIR /workspace
 
 ENV DEBIAN_FRONTEND=noninteractive \
-    TZ=UTC
+    TZ=UTC \
+    HF_HOME=/workspace/huggingface_cache
 
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
@@ -11,79 +12,29 @@ RUN apt-get update && apt-get install -y \
     libxrender1 \
     libxext6 \
     libgl1-mesa-glx \
-    git \
     wget \
-    tzdata \
     aria2 \
-    libgoogle-perftools-dev \
-    && ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime \
-    && dpkg-reconfigure --frontend noninteractive tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir --upgrade pip
-RUN pip install --no-cache-dir "numpy>=1.26.0,<2.0.0"
 RUN pip install --no-cache-dir \
+    runpod \
     requests \
     Pillow \
-    opencv-python-headless \
-    piexif \
-    matplotlib \
-    insightface \
-    onnxruntime-gpu
-
-# Cache bust for ComfyUI to ensure fresh unpinned clone
-ARG COMFY_CACHEBUST=1
-RUN echo "comfy-bust=$COMFY_CACHEBUST"
-
-# Install ComfyUI properly
-RUN git clone https://github.com/comfyanonymous/ComfyUI.git /app/ComfyUI
-WORKDIR /app/ComfyUI
-
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir \
-    aiohttp \
-    torchvision \
-    torchaudio \
-    spandrel \
-    kornia \
-    einops \
+    numpy \
+    diffusers \
     transformers \
-    tokenizers \
-    sentencepiece
+    accelerate \
+    controlnet_aux \
+    opencv-python-headless \
+    huggingface_hub
 
-# Custom Nodes - PuLID Flux (maintained fork, kept in sync with ComfyUI core) & dependencies
-RUN git clone https://github.com/lldacing/ComfyUI_PuLID_Flux_ll.git custom_nodes/ComfyUI_PuLID_Flux_ll
-RUN git clone https://github.com/Fannovel16/comfyui_controlnet_aux.git custom_nodes/comfyui_controlnet_aux
-RUN git clone https://github.com/rgthree/rgthree-comfy.git custom_nodes/rgthree-comfy
-RUN git clone https://github.com/alexopus/ComfyUI-Image-Saver.git custom_nodes/ComfyUI-Image-Saver
+COPY download_models_edit.py /workspace/
+COPY handler_edit.py /workspace/
 
-# Build deps required to compile insightface from source (avoids silent wheel-build failures)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential python3-dev cmake \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install requirements of custom nodes (no `|| true` here — a failed install must fail the build,
-# not silently produce a container where the node can't import)
-RUN pip install --no-cache-dir -r custom_nodes/comfyui_controlnet_aux/requirements.txt
-RUN pip install --no-cache-dir -r custom_nodes/ComfyUI_PuLID_Flux_ll/requirements.txt
-# facenet-pytorch is imported unconditionally by pulidflux.py but is NOT in requirements.txt
-# (per the fork's own README) — install it explicitly or every node in the file fails to register
-RUN pip install --no-cache-dir facenet-pytorch --no-deps
-
-RUN mkdir -p /app/ComfyUI/workflows
-RUN mkdir -p /app/ComfyUI/models/pulid
-RUN mkdir -p /app/ComfyUI/models/insightface/models
-
-COPY download_models_edit.py /app/
-COPY handler_edit.py /app/
-COPY flux_pulid_edit.json /app/ComfyUI/workflows/flux_pulid_edit.json
-
+# Build-time model caching
 ARG HF_TOKEN
 ARG CIVITAI_TOKEN
-RUN HF_TOKEN=${HF_TOKEN} CIVITAI_TOKEN=${CIVITAI_TOKEN} python /app/download_models_edit.py
+RUN HF_TOKEN=${HF_TOKEN} CIVITAI_TOKEN=${CIVITAI_TOKEN} python /workspace/download_models_edit.py
 
-WORKDIR /app
-
-RUN pip install --no-cache-dir "runpod>=1.7.0" brotli "aiohttp[speedups]>=3.10.0"
-
-CMD ["python", "handler_edit.py"]
+CMD ["python", "-u", "handler_edit.py"]
