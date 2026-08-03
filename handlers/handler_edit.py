@@ -62,6 +62,15 @@ def load_models():
         pipeline.load_lora_weights(DETAIL_LORA_PATH)
         pipeline.fuse_lora(lora_scale=0.6)
 
+        print("Loading IP-Adapter Face...")
+        pipeline.load_ip_adapter(
+            "/workspace/ip_adapter/sdxl_models",
+            subfolder="",
+            weight_name="ip-adapter-plus-face_sdxl_vit-h.safetensors",
+            image_encoder_folder="/workspace/ip_adapter/models/image_encoder"
+        )
+        pipeline.set_ip_adapter_scale(0.75)
+
         pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
             pipeline.scheduler.config,
             use_karras_sigmas=True,
@@ -114,12 +123,13 @@ def post_process(image):
 
 def handler(job):
     try:
-        input_data     = job['input']
-        user_prompt    = input_data.get('prompt', 'standing pose, confident expression')
-        user_negative  = input_data.get('negative_prompt', '')
-        image_base64   = input_data.get('image')
-        pose_strength  = float(input_data.get('pose_strength', 0.6))
-        canny_strength = float(input_data.get('canny_strength', 0.4))
+        input_data       = job['input']
+        user_prompt      = input_data.get('prompt', 'standing pose, confident expression')
+        user_negative    = input_data.get('negative_prompt', '')
+        image_base64     = input_data.get('image')
+        pose_strength    = float(input_data.get('pose_strength', 0.6))
+        canny_strength   = float(input_data.get('canny_strength', 0.4))
+        ip_adapter_scale = float(input_data.get('ip_adapter_scale', 0.75))
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -139,11 +149,14 @@ def handler(job):
         canny_map = canny_detector(input_image, low_threshold=100, high_threshold=200)
         canny_map = canny_map.resize((w, h))
 
+        pipeline.set_ip_adapter_scale(ip_adapter_scale)
+
         runpod.serverless.progress_update(job, "GENERATING_EDIT")
         result = pipeline(
             prompt=positive,
             negative_prompt=negative,
             image=[pose_map, canny_map],
+            ip_adapter_image=input_image,
             controlnet_conditioning_scale=[pose_strength, canny_strength],
             num_inference_steps=35,
             guidance_scale=7.0,
