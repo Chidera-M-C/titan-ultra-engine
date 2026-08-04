@@ -51,11 +51,17 @@ hf_hub_download(
     token=HF_TOKEN or None
 )
 
-# 4. OpenPose ControlNet (Full download required as repo lacks .safetensors)
+# 4. OpenPose ControlNet
+# Switched from thibaud/controlnet-openpose-sdxl-1.0 (no native .safetensors,
+# which forced diffusers to fall back to unsafe pickle deserialization at
+# load time) to xinsir/controlnet-openpose-sdxl-1.0, which ships
+# diffusion_pytorch_model.safetensors directly.
 print("Downloading OpenPose ControlNet...")
 snapshot_download(
-    repo_id="thibaud/controlnet-openpose-sdxl-1.0",
+    repo_id="xinsir/controlnet-openpose-sdxl-1.0",
     local_dir="/workspace/controlnet_openpose_xl",
+    allow_patterns=["*.json", "diffusion_pytorch_model.safetensors"],
+    ignore_patterns=["*.bin", "*.pt", "*twins*", "*.webp"],
     token=HF_TOKEN or None
 )
 
