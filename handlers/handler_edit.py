@@ -13,7 +13,6 @@ import io, base64
 from PIL import Image, ImageFilter, ImageEnhance
 
 from diffusers import (
-    StableDiffusionXLControlNetPipeline,
     StableDiffusionXLControlNetImg2ImgPipeline,
     ControlNetModel,
     DPMSolverMultistepScheduler,
@@ -62,7 +61,7 @@ def load_models():
         ).to("cuda")
 
         print("Loading Juggernaut XL pipeline...")
-        base_pipeline = StableDiffusionXLControlNetPipeline.from_single_file(
+        base_pipeline = StableDiffusionXLControlNetImg2ImgPipeline.from_single_file(
             JUGGERNAUT_PATH,
             controlnet=[controlnet_pose, controlnet_canny],
             vae=vae,
@@ -83,15 +82,6 @@ def load_models():
         base_pipeline.enable_vae_slicing()
         base_pipeline.enable_vae_tiling()
         base_pipeline.enable_attention_slicing(slice_size="auto")
-
-        # Convert to an img2img-capable pipeline BEFORE wrapping it with
-        # IPAdapterFaceIDPlusXL (from_pipe shares components, no reload).
-        # IPAdapterFaceIDPlusXL.generate() just forwards unrecognized kwargs
-        # straight into whatever `self.pipe` is -- it has no opinion on
-        # txt2img vs img2img. Wrapping the img2img variant means we can pass
-        # a real init image (preserves background/lighting/structure from the
-        # source photo) instead of generating purely from noise.
-        base_pipeline = StableDiffusionXLControlNetImg2ImgPipeline.from_pipe(base_pipeline)
 
         print("Loading IP-Adapter FaceID Plus v2...")
         ip_model = IPAdapterFaceIDPlusXL(
