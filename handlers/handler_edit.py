@@ -2,7 +2,6 @@ import sys
 sys.stdout = sys.__stdout__
 sys.stderr = sys.__stderr__
 
-# Force unbuffered output so RunPod captures all logs
 import os
 os.environ['PYTHONUNBUFFERED'] = '1'
 
@@ -63,13 +62,6 @@ def load_models():
         pipeline.load_lora_weights(DETAIL_LORA_PATH)
         pipeline.fuse_lora(lora_scale=0.6)
 
-        # NOTE: memory-optimization calls (enable_attention_slicing in particular)
-        # must run BEFORE load_ip_adapter(). enable_attention_slicing() re-registers
-        # attention processors on the UNet, which silently overwrites the
-        # IPAdapterAttnProcessor2_0 instances installed by load_ip_adapter(). That
-        # caused cross-attention to receive the IP-Adapter's (text, image) embedding
-        # tuple but hit a processor that only knows how to handle a plain tensor,
-        # raising: AttributeError: 'tuple' object has no attribute 'shape'
         pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
             pipeline.scheduler.config,
             use_karras_sigmas=True,
@@ -88,15 +80,7 @@ def load_models():
         )
         pipeline.set_ip_adapter_scale(0.75)
 
-        # Convert to an img2img-capable pipeline (shares the same loaded
-        # weights/components -- from_pipe does not reload anything). This is
-        # the main lever for facial fidelity: previously the pipeline started
-        # from pure Gaussian noise and rebuilt the face from scratch, guided
-        # only by IP-Adapter's CLIP embedding + the pose/canny structure maps.
-        # Feeding the real source image as the init latent (at a low `strength`
-        # in the handler) means the model is *editing* the actual pixels
-        # instead of re-synthesizing them, which keeps far more of the true
-        # bone structure / skin / features intact.
+        # Convert to img2img pipeline
         pipeline = StableDiffusionXLControlNetImg2ImgPipeline.from_pipe(pipeline)
 
         print("Loading OpenPose detector...")
@@ -109,7 +93,6 @@ def load_models():
 
 def get_dimensions(image):
     w, h = image.size
-    # Must be multiples of 64 for SDXL / ControlNet latent alignments
     w = int(w // 64 * 64)
     h = int(h // 64 * 64)
     if w > 1536: w = 1536
@@ -120,11 +103,13 @@ def get_dimensions(image):
 
 def build_prompts(user_prompt, user_negative=''):
     positive = (
-        f"{user_prompt}, photorealistic, masterpiece, best quality, ultra detailed, "
-        f"sharp focus, realistic skin, natural lighting, consistent identity, "
-        f"same person same face, preserve facial features, preserve background"
+        f"{user_prompt}, completely nude, fully naked, no clothes, no fabric, bare skin, "
+        f"photorealistic, masterpiece, best quality, ultra detailed, sharp focus, "
+        f"realistic skin texture, natural lighting, consistent identity, "
+        f"same person, same face, same body, preserve facial features"
     )
     negative = (
+        "clothes, clothing, dress, shirt, fabric, covered, dressed, "
         "different person, changed face, distorted face, deformed, bad anatomy, "
         "mutated hands, fused fingers, extra fingers, missing fingers, "
         "blurry, low quality, jpeg artifacts, worst quality, ugly, "
@@ -146,17 +131,12 @@ def handler(job):
         user_prompt      = input_data.get('prompt', 'standing pose, confident expression')
         user_negative    = input_data.get('negative_prompt', '')
         image_base64     = input_data.get('image')
-        pose_strength    = float(input_data.get('pose_strength', 0.6))
-        canny_strength   = float(input_data.get('canny_strength', 0.4))
-        ip_adapter_scale = float(input_data.get('ip_adapter_scale', 0.85))
-        # Denoise strength for the img2img pass. Lower = more of the real
-        # source image's pixels (face, skin, lighting) survive -> higher
-        # facial fidelity, but less freedom to move the body into a very
-        # different pose. Higher = more freedom, but leans back on IP-Adapter
-        # alone for identity (like before). 0.45-0.6 is a reasonable starting
-        # range if you need a real pose change; go lower (0.3-0.4) if the
-        # pose change is subtle and you want maximum face fidelity.
-        strength         = float(input_data.get('strength', 0.5))
+
+        # Stronger defaults for clothing removal
+        pose_strength    = float(input_data.get('pose_strength', 0.60))
+        canny_strength   = float(input_data.get('canny_strength', 0.28))
+        ip_adapter_scale = float(input_data.get('ip_adapter_scale', 0.72))
+        strength         = float(input_data.get('strength', 0.78))   # ← main lever
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -182,14 +162,11 @@ def handler(job):
         result = pipeline(
             prompt=positive,
             negative_prompt=negative,
-            image=input_image,                 # ← real source pixels = init latent (img2img)
+            image=input_image,
             control_image=[pose_map, canny_map],
             strength=strength,
             ip_adapter_image=[input_image],
             controlnet_conditioning_scale=[pose_strength, canny_strength],
-            # effective denoise steps ≈ num_inference_steps * strength, so bump
-            # the step count up from the old txt2img value to keep enough real
-            # steps at low strength (e.g. 60 * 0.5 ≈ 30 actual steps)
             num_inference_steps=60,
             guidance_scale=7.0,
             width=w,
@@ -199,7 +176,7 @@ def handler(job):
         result = post_process(result)
 
         buffered = io.BytesIO()
-        result.save(buffered, format="JPEG", quality=85, optimize=True, progressive=True)
+        result.save(buffered, format="JPEG", quality=90, optimize=True, progressive=True)
 
         return {"image": f"data:image/jpeg;base64,{base64.b64encode(buffered.getvalue()).decode()}"}
 
