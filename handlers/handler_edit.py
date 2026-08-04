@@ -60,7 +60,7 @@ def load_models():
 
         print("Fusing Detail LoRA...")
         pipeline.load_lora_weights(DETAIL_LORA_PATH)
-        pipeline.fuse_lora(lora_scale=0.55)
+        pipeline.fuse_lora(lora_scale=0.6)
 
         pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
             pipeline.scheduler.config,
@@ -78,7 +78,7 @@ def load_models():
             weight_name="ip-adapter-plus-face_sdxl_vit-h.safetensors",
             image_encoder_folder="/workspace/ip_adapter/models/image_encoder"
         )
-        pipeline.set_ip_adapter_scale(0.80)
+        pipeline.set_ip_adapter_scale(0.75)
 
         # Convert to img2img pipeline
         pipeline = StableDiffusionXLControlNetImg2ImgPipeline.from_pipe(pipeline)
@@ -106,10 +106,10 @@ def build_prompts(user_prompt, user_negative=''):
         f"{user_prompt}, completely nude, fully naked, no clothes, no fabric, bare skin, "
         f"photorealistic, masterpiece, best quality, ultra detailed, sharp focus, "
         f"realistic skin texture, natural lighting, consistent identity, "
-        f"same person, same face, same body, preserve facial features, high detail face"
+        f"same person, same face, same body, preserve facial features"
     )
     negative = (
-        "clothes, clothing, dress, shirt, pants, fabric, covered, dressed, "
+        "clothes, clothing, dress, shirt, fabric, covered, dressed, "
         "different person, changed face, distorted face, deformed, bad anatomy, "
         "mutated hands, fused fingers, extra fingers, missing fingers, "
         "blurry, low quality, jpeg artifacts, worst quality, ugly, "
@@ -120,9 +120,9 @@ def build_prompts(user_prompt, user_negative=''):
     return positive, negative
 
 def post_process(image):
-    image = image.filter(ImageFilter.UnsharpMask(radius=1.4, percent=115, threshold=2))
-    image = ImageEnhance.Contrast(image).enhance(1.08)
-    image = ImageEnhance.Sharpness(image).enhance(1.15)
+    image = image.filter(ImageFilter.UnsharpMask(radius=1.5, percent=120, threshold=2))
+    image = ImageEnhance.Contrast(image).enhance(1.1)
+    image = ImageEnhance.Sharpness(image).enhance(1.2)
     return image
 
 def handler(job):
@@ -132,11 +132,11 @@ def handler(job):
         user_negative    = input_data.get('negative_prompt', '')
         image_base64     = input_data.get('image')
 
-        # Best balanced defaults
-        pose_strength    = float(input_data.get('pose_strength', 0.58))
-        canny_strength   = float(input_data.get('canny_strength', 0.22))
-        ip_adapter_scale = float(input_data.get('ip_adapter_scale', 0.82))
-        strength         = float(input_data.get('strength', 0.68))
+        # Stronger defaults for clothing removal
+        pose_strength    = float(input_data.get('pose_strength', 0.50))
+        canny_strength   = float(input_data.get('canny_strength', 0.20))
+        ip_adapter_scale = float(input_data.get('ip_adapter_scale', 0.1))
+        strength         = float(input_data.get('strength', 0.85))   # ← main lever
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -167,8 +167,8 @@ def handler(job):
             strength=strength,
             ip_adapter_image=[input_image],
             controlnet_conditioning_scale=[pose_strength, canny_strength],
-            num_inference_steps=55,
-            guidance_scale=6.8,
+            num_inference_steps=60,
+            guidance_scale=7.0,
             width=w,
             height=h,
         ).images[0]
@@ -176,7 +176,7 @@ def handler(job):
         result = post_process(result)
 
         buffered = io.BytesIO()
-        result.save(buffered, format="JPEG", quality=92, optimize=True, progressive=True)
+        result.save(buffered, format="JPEG", quality=90, optimize=True, progressive=True)
 
         return {"image": f"data:image/jpeg;base64,{base64.b64encode(buffered.getvalue()).decode()}"}
 
