@@ -133,10 +133,10 @@ def handler(job):
         image_base64     = input_data.get('image')
 
         # Stronger defaults for clothing removal
-        pose_strength    = float(input_data.get('pose_strength', 0.50))
-        canny_strength   = float(input_data.get('canny_strength', 0.20))
-        ip_adapter_scale = float(input_data.get('ip_adapter_scale', 0.1))
-        strength         = float(input_data.get('strength', 0.85))   # ← main lever
+        pose_strength    = float(input_data.get('pose_strength', 0.60))
+        canny_strength   = float(input_data.get('canny_strength', 0.28))
+        ip_adapter_scale = float(input_data.get('ip_adapter_scale', 0.72))
+        strength         = float(input_data.get('strength', 0.78))   # ← main lever
 
         if not image_base64:
             return {"error": "No image provided"}
