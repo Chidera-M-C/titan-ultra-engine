@@ -14,6 +14,7 @@ from PIL import Image, ImageFilter, ImageEnhance
 
 from diffusers import (
     StableDiffusionXLControlNetPipeline,
+    StableDiffusionXLControlNetImg2ImgPipeline,
     ControlNetModel,
     DPMSolverMultistepScheduler,
     AutoencoderKL
@@ -83,6 +84,15 @@ def load_models():
         base_pipeline.enable_vae_tiling()
         base_pipeline.enable_attention_slicing(slice_size="auto")
 
+        # Convert to an img2img-capable pipeline BEFORE wrapping it with
+        # IPAdapterFaceIDPlusXL (from_pipe shares components, no reload).
+        # IPAdapterFaceIDPlusXL.generate() just forwards unrecognized kwargs
+        # straight into whatever `self.pipe` is -- it has no opinion on
+        # txt2img vs img2img. Wrapping the img2img variant means we can pass
+        # a real init image (preserves background/lighting/structure from the
+        # source photo) instead of generating purely from noise.
+        base_pipeline = StableDiffusionXLControlNetImg2ImgPipeline.from_pipe(base_pipeline)
+
         print("Loading IP-Adapter FaceID Plus v2...")
         ip_model = IPAdapterFaceIDPlusXL(
             base_pipeline,
@@ -142,6 +152,12 @@ def handler(job):
         # "Plus" half of FaceID-Plus) influences results, separate from the
         # ArcFace identity lock itself. 1.0 = default/full strength.
         s_scale          = float(input_data.get('s_scale', 1.0))
+        # Img2img denoise strength: lower = more of the real source pixels
+        # (background, lighting, skin tone) survive, less freedom to move
+        # into a very different pose. Higher = more freedom, closer to pure
+        # txt2img behavior. 0.45-0.6 is a good starting point for a real
+        # pose/outfit change; go lower (0.3-0.4) for subtle edits.
+        strength         = float(input_data.get('strength', 0.5))
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -192,14 +208,17 @@ def handler(job):
             negative_prompt=negative,
             faceid_embeds=faceid_embeds,
             face_image=face_image,
-            # NOTE: the underlying pipe is StableDiffusionXLControlNetPipeline
-            # (txt2img + ControlNet), whose conditioning-image kwarg is named
-            # `image`, not `control_image`. `control_image` isn't a recognised
-            # parameter there, so it was being silently dropped by **kwargs,
-            # leaving `image=None` -> crash with 2 ControlNets loaded.
-            image=[pose_map, canny_map],
+            # StableDiffusionXLControlNetImg2ImgPipeline splits these two
+            # roles into separate kwargs:
+            #   image         -> the real init latent (source photo pixels)
+            #   control_image -> the ControlNet condition maps (pose/edges)
+            #   strength      -> how much of the init image survives
+            image=input_image,
+            control_image=[pose_map, canny_map],
+            strength=strength,
             controlnet_conditioning_scale=[pose_strength, canny_strength],
-            num_inference_steps=35,
+            # effective denoise steps ≈ num_inference_steps * strength
+            num_inference_steps=70,
             guidance_scale=7.0,
             width=w,
             height=h,
