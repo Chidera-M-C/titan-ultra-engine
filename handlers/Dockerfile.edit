@@ -5,7 +5,6 @@ ENV TZ=UTC
 
 WORKDIR /app
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     tzdata \
     g++ \
@@ -23,40 +22,35 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && dpkg-reconfigure --frontend noninteractive tzdata \
     && rm -rf /var/lib/apt/lists/*
 
-# Pin numpy to guard against version conflicts
 RUN pip install --no-cache-dir "numpy==1.24.4"
 
-# Safely install torchvision for PyTorch 2.1.0 / CUDA 11.8
-RUN pip install --no-cache-dir torchvision==0.16.0+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
-
-# Install core runtime requirements
 RUN pip install --no-cache-dir \
     accelerate==0.28.0 \
     transformers==4.40.0 \
-    diffusers==0.29.2 \
+    diffusers==0.27.2 \
     safetensors==0.4.3 \
-    huggingface_hub==0.23.2 \
+    huggingface_hub==0.22.2 \
     Pillow==10.3.0 \
     requests==2.31.0 \
     runpod==1.6.2 \
     timm==0.9.16 \
     controlnet-aux==0.0.7 \
     opencv-python-headless==4.9.0.80 \
-    matplotlib==3.7.5 \
     insightface==0.7.3 \
     onnxruntime-gpu==1.16.3 \
     einops==0.7.0 \
     peft==0.10.0
 
-# Install Tencent IP-Adapter repo directly
 RUN pip install --no-cache-dir git+https://github.com/tencent-ailab/IP-Adapter.git
 
-# Patch out mediapipe from controlnet_aux
 RUN sed -i 's/from .mediapipe_face import MediapipeFaceDetector/pass  # mediapipe disabled/' \
     /opt/conda/lib/python3.10/site-packages/controlnet_aux/__init__.py
 
-# Lock numpy
 RUN pip install --no-cache-dir --force-reinstall "numpy==1.24.4"
+
+# Pre-cache InsightFace model (matches working character setup)
+COPY download_insightface.py /app/
+RUN python /app/download_insightface.py
 
 COPY download_models_edit.py /app/
 COPY handler_edit.py /app/
