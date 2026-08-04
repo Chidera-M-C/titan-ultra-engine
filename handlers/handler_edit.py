@@ -62,15 +62,13 @@ def load_models():
         pipeline.load_lora_weights(DETAIL_LORA_PATH)
         pipeline.fuse_lora(lora_scale=0.6)
 
-        print("Loading IP-Adapter Face...")
-        pipeline.load_ip_adapter(
-            "/workspace/ip_adapter/sdxl_models",
-            subfolder="",
-            weight_name="ip-adapter-plus-face_sdxl_vit-h.safetensors",
-            image_encoder_folder="/workspace/ip_adapter/models/image_encoder"
-        )
-        pipeline.set_ip_adapter_scale(0.75)
-
+        # NOTE: memory-optimization calls (enable_attention_slicing in particular)
+        # must run BEFORE load_ip_adapter(). enable_attention_slicing() re-registers
+        # attention processors on the UNet, which silently overwrites the
+        # IPAdapterAttnProcessor2_0 instances installed by load_ip_adapter(). That
+        # caused cross-attention to receive the IP-Adapter's (text, image) embedding
+        # tuple but hit a processor that only knows how to handle a plain tensor,
+        # raising: AttributeError: 'tuple' object has no attribute 'shape'
         pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
             pipeline.scheduler.config,
             use_karras_sigmas=True,
@@ -79,6 +77,15 @@ def load_models():
         pipeline.enable_vae_slicing()
         pipeline.enable_vae_tiling()
         pipeline.enable_attention_slicing(slice_size="auto")
+
+        print("Loading IP-Adapter Face...")
+        pipeline.load_ip_adapter(
+            "/workspace/ip_adapter/sdxl_models",
+            subfolder="",
+            weight_name="ip-adapter-plus-face_sdxl_vit-h.safetensors",
+            image_encoder_folder="/workspace/ip_adapter/models/image_encoder"
+        )
+        pipeline.set_ip_adapter_scale(0.75)
 
         print("Loading OpenPose detector...")
         openpose = OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
