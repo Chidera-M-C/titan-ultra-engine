@@ -1,25 +1,35 @@
 FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
 
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
 WORKDIR /app
 
-# Install missing system libraries + aria2 for Civitai downloads
-RUN apt-get update && apt-get install -y \
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tzdata \
+    g++ \
+    git \
     libglib2.0-0 \
     libsm6 \
-    libxrender1 \
     libxext6 \
+    libxrender-dev \
+    libgomp1 \
     libgl1-mesa-glx \
     wget \
     aria2 \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+    && echo $TZ > /etc/timezone \
+    && dpkg-reconfigure --frontend noninteractive tzdata \
     && rm -rf /var/lib/apt/lists/*
 
-# Install numpy first and lock it down
+# Pin numpy to guard against version conflicts
 RUN pip install --no-cache-dir "numpy==1.24.4"
 
-# Safely install torchvision matched strictly to PyTorch 2.1.0 / CUDA 11.8
+# Safely install torchvision for PyTorch 2.1.0 / CUDA 11.8
 RUN pip install --no-cache-dir torchvision==0.16.0+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
 
-# Install core packages with compatible versions (Bumped huggingface_hub for Diffusers 0.29.2)
+# Install core runtime requirements
 RUN pip install --no-cache-dir \
     accelerate==0.28.0 \
     transformers==4.40.0 \
@@ -27,41 +37,32 @@ RUN pip install --no-cache-dir \
     safetensors==0.4.3 \
     huggingface_hub==0.23.2 \
     Pillow==10.3.0 \
-    requests==2.31.0
-
-# Install peft for LoRA fusion backend
-RUN pip install --no-cache-dir "peft==0.10.0"
-
-# Install remaining requirements
-RUN pip install --no-cache-dir \
+    requests==2.31.0 \
     runpod==1.6.2 \
     timm==0.9.16 \
     controlnet-aux==0.0.7 \
     opencv-python-headless==4.9.0.80 \
-    matplotlib==3.7.5
+    matplotlib==3.7.5 \
+    insightface==0.7.3 \
+    onnxruntime-gpu==1.16.3 \
+    einops==0.7.0 \
+    peft==0.10.0
 
-# Patch out mediapipe
+# Install Tencent IP-Adapter repo directly
+RUN pip install --no-cache-dir git+https://github.com/tencent-ailab/IP-Adapter.git
+
+# Patch out mediapipe from controlnet_aux
 RUN sed -i 's/from .mediapipe_face import MediapipeFaceDetector/pass  # mediapipe disabled/' \
     /opt/conda/lib/python3.10/site-packages/controlnet_aux/__init__.py
 
-# Force numpy reinstall to guard against silent upgrades
+# Lock numpy
 RUN pip install --no-cache-dir --force-reinstall "numpy==1.24.4"
 
-# Copy download script & run model cache build
 COPY download_models_edit.py /app/
 COPY handler_edit.py /app/
 
 ARG HF_TOKEN
 ARG CIVITAI_TOKEN
 RUN HF_TOKEN=${HF_TOKEN} CIVITAI_TOKEN=${CIVITAI_TOKEN} python /app/download_models_edit.py
-
-# Verify everything loads cleanly
-RUN python -c "import torch; print('torch OK:', torch.__version__)"
-RUN python -c "import numpy; print('numpy OK:', numpy.__version__)"
-RUN python -c "from diffusers import StableDiffusionXLControlNetPipeline, ControlNetModel; print('diffusers OK')"
-RUN python -c "from controlnet_aux import OpenposeDetector; print('controlnet_aux OK')"
-RUN python -c "import peft; print('peft OK:', peft.__version__)"
-RUN python -c "import runpod; print('runpod OK')"
-RUN python -c "import cv2; print('cv2 OK')"
 
 CMD ["python", "-u", "handler_edit.py"]
