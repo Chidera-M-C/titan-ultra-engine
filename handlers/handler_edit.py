@@ -13,6 +13,7 @@ import io, base64
 from PIL import Image, ImageFilter, ImageEnhance
 
 from diffusers import (
+    StableDiffusionXLControlNetPipeline,
     StableDiffusionXLControlNetImg2ImgPipeline,
     ControlNetModel,
     DPMSolverMultistepScheduler,
@@ -61,7 +62,15 @@ def load_models():
         ).to("cuda")
 
         print("Loading Juggernaut XL pipeline...")
-        base_pipeline = StableDiffusionXLControlNetImg2ImgPipeline.from_single_file(
+        # StableDiffusionXLControlNetImg2ImgPipeline has neither from_single_file
+        # nor from_pipe wired up in diffusers==0.27.2 (pinned in the Dockerfile) --
+        # both are added to each pipeline class individually over time, and this
+        # one just doesn't have them yet at this version. Sidestep both: build
+        # the txt2img ControlNet pipeline (which does support from_single_file
+        # in this version), then hand-construct the Img2Img pipeline from its
+        # exact same component objects via the plain __init__ constructor, which
+        # every pipeline class has supported since day one -- no version gate.
+        txt2img_pipe = StableDiffusionXLControlNetPipeline.from_single_file(
             JUGGERNAUT_PATH,
             controlnet=[controlnet_pose, controlnet_canny],
             vae=vae,
@@ -71,8 +80,19 @@ def load_models():
         ).to("cuda")
 
         print("Fusing Detail LoRA...")
-        base_pipeline.load_lora_weights(DETAIL_LORA_PATH)
-        base_pipeline.fuse_lora(lora_scale=0.6)
+        txt2img_pipe.load_lora_weights(DETAIL_LORA_PATH)
+        txt2img_pipe.fuse_lora(lora_scale=0.6)
+
+        base_pipeline = StableDiffusionXLControlNetImg2ImgPipeline(
+            vae=txt2img_pipe.vae,
+            text_encoder=txt2img_pipe.text_encoder,
+            text_encoder_2=txt2img_pipe.text_encoder_2,
+            tokenizer=txt2img_pipe.tokenizer,
+            tokenizer_2=txt2img_pipe.tokenizer_2,
+            unet=txt2img_pipe.unet,
+            controlnet=txt2img_pipe.controlnet,
+            scheduler=txt2img_pipe.scheduler,
+        ).to("cuda")
 
         base_pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
             base_pipeline.scheduler.config,
