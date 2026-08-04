@@ -20,6 +20,7 @@ from diffusers import (
 )
 from ip_adapter.ip_adapter_faceid import IPAdapterFaceIDPlusXL
 from insightface.app import FaceAnalysis
+from insightface.utils import face_align
 from controlnet_aux import OpenposeDetector, CannyDetector
 
 # --- CONFIG ---
@@ -137,6 +138,10 @@ def handler(job):
         pose_strength    = float(input_data.get('pose_strength', 0.60))
         canny_strength   = float(input_data.get('canny_strength', 0.30))
         face_scale       = float(input_data.get('face_scale', 0.85))
+        # s_scale controls how strongly the CLIP face-structure signal (the
+        # "Plus" half of FaceID-Plus) influences results, separate from the
+        # ArcFace identity lock itself. 1.0 = default/full strength.
+        s_scale          = float(input_data.get('s_scale', 1.0))
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -146,17 +151,28 @@ def handler(job):
         w, h        = get_dimensions(input_image)
         input_image = input_image.resize((w, h), Image.Resampling.LANCZOS)
 
-        # --- STEP 1: Extract 512-dim Face Vector In-Memory ---
+        # --- STEP 1: Extract 512-dim Face Vector + aligned face crop ---
         cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
         faces   = app.get(cv2_img)
-        
+
         if len(faces) == 0:
             return {"error": "No face detected in input image by InsightFace"}
 
         # Sort faces by bounding box size to select the dominant face
         faces = sorted(faces, key=lambda x: (x.bbox[2] - x.bbox[0]) * (x.bbox[3] - x.bbox[1]), reverse=True)
-        face_embedding = faces[0].normed_embedding
-        faceid_embeds  = torch.tensor([face_embedding], dtype=torch.float16).to("cuda")
+        best_face = faces[0]
+
+        faceid_embeds = torch.from_numpy(best_face.normed_embedding).unsqueeze(0).to(
+            dtype=torch.float16, device="cuda"
+        )
+
+        # The "Plus" half of FaceID-Plus needs a tightly aligned face crop
+        # (not the whole photo) fed through the CLIP image encoder for facial
+        # structure detail -- this is exactly what the official reference
+        # implementation does with insightface's own alignment utility, using
+        # the landmarks we already have from the detection call above.
+        aligned_face_bgr = face_align.norm_crop(cv2_img, landmark=best_face.kps, image_size=224)
+        face_image = Image.fromarray(cv2.cvtColor(aligned_face_bgr, cv2.COLOR_BGR2RGB))
 
         # --- STEP 2: Extract ControlNet Condition Maps ---
         runpod.serverless.progress_update(job, "EXTRACTING_POSE")
@@ -175,14 +191,20 @@ def handler(job):
             prompt=positive,
             negative_prompt=negative,
             faceid_embeds=faceid_embeds,
-            face_image=input_image,
-            control_image=[pose_map, canny_map],
+            face_image=face_image,
+            # NOTE: the underlying pipe is StableDiffusionXLControlNetPipeline
+            # (txt2img + ControlNet), whose conditioning-image kwarg is named
+            # `image`, not `control_image`. `control_image` isn't a recognised
+            # parameter there, so it was being silently dropped by **kwargs,
+            # leaving `image=None` -> crash with 2 ControlNets loaded.
+            image=[pose_map, canny_map],
             controlnet_conditioning_scale=[pose_strength, canny_strength],
             num_inference_steps=35,
             guidance_scale=7.0,
             width=w,
             height=h,
             scale=face_scale,
+            s_scale=s_scale,
             num_samples=1,
         )
 
