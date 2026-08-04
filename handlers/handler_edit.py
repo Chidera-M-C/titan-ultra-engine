@@ -62,14 +62,6 @@ def load_models():
         ).to("cuda")
 
         print("Loading Juggernaut XL pipeline...")
-        # StableDiffusionXLControlNetImg2ImgPipeline has neither from_single_file
-        # nor from_pipe wired up in diffusers==0.27.2 (pinned in the Dockerfile) --
-        # both are added to each pipeline class individually over time, and this
-        # one just doesn't have them yet at this version. Sidestep both: build
-        # the txt2img ControlNet pipeline (which does support from_single_file
-        # in this version), then hand-construct the Img2Img pipeline from its
-        # exact same component objects via the plain __init__ constructor, which
-        # every pipeline class has supported since day one -- no version gate.
         txt2img_pipe = StableDiffusionXLControlNetPipeline.from_single_file(
             JUGGERNAUT_PATH,
             controlnet=[controlnet_pose, controlnet_canny],
@@ -81,7 +73,7 @@ def load_models():
 
         print("Fusing Detail LoRA...")
         txt2img_pipe.load_lora_weights(DETAIL_LORA_PATH)
-        txt2img_pipe.fuse_lora(lora_scale=0.6)
+        txt2img_pipe.fuse_lora(lora_scale=0.55)
 
         base_pipeline = StableDiffusionXLControlNetImg2ImgPipeline(
             vae=txt2img_pipe.vae,
@@ -130,23 +122,27 @@ def get_dimensions(image):
 
 def build_prompts(user_prompt, user_negative=''):
     positive = (
-        f"{user_prompt}, photorealistic, masterpiece, best quality, ultra detailed, "
-        f"sharp focus, realistic skin texture, natural lighting, consistent identity, "
+        f"{user_prompt}, completely nude, fully naked, no clothes, no fabric, bare skin, "
+        f"photorealistic, masterpiece, best quality, ultra detailed, "
+        f"realistic skin texture, natural lighting, consistent identity, "
         f"same person, same face, preserve facial features"
     )
     negative = (
+        "clothes, clothing, dress, shirt, pants, fabric, covered, dressed, "
         "different person, changed face, distorted face, deformed, bad anatomy, "
         "mutated hands, fused fingers, extra fingers, missing fingers, "
-        "blurry, low quality, jpeg artifacts, worst quality, ugly, watermark, text"
+        "blurry, low quality, jpeg artifacts, worst quality, ugly, watermark, text, "
+        "cartoon, anime, illustration, painting, oversharp"
     )
     if user_negative:
         negative = f"{user_negative}, {negative}"
     return positive, negative
 
 def post_process(image):
-    image = image.filter(ImageFilter.UnsharpMask(radius=1.5, percent=120, threshold=2))
-    image = ImageEnhance.Contrast(image).enhance(1.1)
-    image = ImageEnhance.Sharpness(image).enhance(1.2)
+    # Mild post-processing to avoid cartoonish look
+    image = image.filter(ImageFilter.UnsharpMask(radius=1.0, percent=75, threshold=3))
+    image = ImageEnhance.Contrast(image).enhance(1.04)
+    image = ImageEnhance.Sharpness(image).enhance(1.05)
     return image
 
 def handler(job):
@@ -155,19 +151,13 @@ def handler(job):
         user_prompt      = input_data.get('prompt', 'standing pose, confident expression')
         user_negative    = input_data.get('negative_prompt', '')
         image_base64     = input_data.get('image')
-        pose_strength    = float(input_data.get('pose_strength', 0.60))
-        canny_strength   = float(input_data.get('canny_strength', 0.30))
-        face_scale       = float(input_data.get('face_scale', 0.85))
-        # s_scale controls how strongly the CLIP face-structure signal (the
-        # "Plus" half of FaceID-Plus) influences results, separate from the
-        # ArcFace identity lock itself. 1.0 = default/full strength.
+
+        # Balanced defaults for strong clothing removal + good face
+        pose_strength    = float(input_data.get('pose_strength', 0.55))
+        canny_strength   = float(input_data.get('canny_strength', 0.20))
+        face_scale       = float(input_data.get('face_scale', 0.82))
         s_scale          = float(input_data.get('s_scale', 1.0))
-        # Img2img denoise strength: lower = more of the real source pixels
-        # (background, lighting, skin tone) survive, less freedom to move
-        # into a very different pose. Higher = more freedom, closer to pure
-        # txt2img behavior. 0.45-0.6 is a good starting point for a real
-        # pose/outfit change; go lower (0.3-0.4) for subtle edits.
-        strength         = float(input_data.get('strength', 0.5))
+        strength         = float(input_data.get('strength', 0.70))
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -177,14 +167,13 @@ def handler(job):
         w, h        = get_dimensions(input_image)
         input_image = input_image.resize((w, h), Image.Resampling.LANCZOS)
 
-        # --- STEP 1: Extract 512-dim Face Vector + aligned face crop ---
+        # --- Extract Face Embedding + aligned face ---
         cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
         faces   = app.get(cv2_img)
 
         if len(faces) == 0:
             return {"error": "No face detected in input image by InsightFace"}
 
-        # Sort faces by bounding box size to select the dominant face
         faces = sorted(faces, key=lambda x: (x.bbox[2] - x.bbox[0]) * (x.bbox[3] - x.bbox[1]), reverse=True)
         best_face = faces[0]
 
@@ -192,15 +181,10 @@ def handler(job):
             dtype=torch.float16, device="cuda"
         )
 
-        # The "Plus" half of FaceID-Plus needs a tightly aligned face crop
-        # (not the whole photo) fed through the CLIP image encoder for facial
-        # structure detail -- this is exactly what the official reference
-        # implementation does with insightface's own alignment utility, using
-        # the landmarks we already have from the detection call above.
         aligned_face_bgr = face_align.norm_crop(cv2_img, landmark=best_face.kps, image_size=224)
         face_image = Image.fromarray(cv2.cvtColor(aligned_face_bgr, cv2.COLOR_BGR2RGB))
 
-        # --- STEP 2: Extract ControlNet Condition Maps ---
+        # --- ControlNet maps ---
         runpod.serverless.progress_update(job, "EXTRACTING_POSE")
         pose_map = openpose(input_image, include_body=True, include_hand=True)
         pose_map = pose_map.resize((w, h))
@@ -211,25 +195,19 @@ def handler(job):
 
         positive, negative = build_prompts(user_prompt, user_negative)
 
-        # --- STEP 3: Generate Output Image ---
+        # --- Generate ---
         runpod.serverless.progress_update(job, "GENERATING_EDIT")
         images = ip_model.generate(
             prompt=positive,
             negative_prompt=negative,
             faceid_embeds=faceid_embeds,
             face_image=face_image,
-            # StableDiffusionXLControlNetImg2ImgPipeline splits these two
-            # roles into separate kwargs:
-            #   image         -> the real init latent (source photo pixels)
-            #   control_image -> the ControlNet condition maps (pose/edges)
-            #   strength      -> how much of the init image survives
             image=input_image,
             control_image=[pose_map, canny_map],
             strength=strength,
             controlnet_conditioning_scale=[pose_strength, canny_strength],
-            # effective denoise steps ≈ num_inference_steps * strength
-            num_inference_steps=70,
-            guidance_scale=7.0,
+            num_inference_steps=60,
+            guidance_scale=6.8,
             width=w,
             height=h,
             scale=face_scale,
@@ -240,7 +218,7 @@ def handler(job):
         result = post_process(images[0])
 
         buffered = io.BytesIO()
-        result.save(buffered, format="JPEG", quality=90, optimize=True, progressive=True)
+        result.save(buffered, format="JPEG", quality=92, optimize=True, progressive=True)
 
         return {"image": f"data:image/jpeg;base64,{base64.b64encode(buffered.getvalue()).decode()}"}
 
