@@ -110,26 +110,69 @@ def load_models():
 
         print("✓ FaceID Edit pipeline initialized successfully")
 
-def get_dimensions(image):
+def get_dimensions(image, max_size=1536, min_size=512, multiple=64):
+    """Preserve aspect ratio as closely as possible while satisfying SDXL constraints."""
     w, h = image.size
-    w = int(w // 64 * 64)
-    h = int(h // 64 * 64)
-    if w > 1536: w = 1536
-    if h > 1536: h = 1536
-    w = max(512, w)
-    h = max(512, h)
+    aspect = w / float(h)
+
+    # 1. Scale down if either side exceeds max_size
+    if w > max_size or h > max_size:
+        if aspect >= 1.0:          # landscape or square
+            w = max_size
+            h = int(round(w / aspect))
+        else:                      # portrait
+            h = max_size
+            w = int(round(h * aspect))
+
+    # 2. Scale up if either side is below min_size
+    if w < min_size or h < min_size:
+        if aspect >= 1.0:
+            w = min_size
+            h = int(round(w / aspect))
+        else:
+            h = min_size
+            w = int(round(h * aspect))
+
+    # 3. Snap both sides to nearest multiple of 64
+    w = max(min_size, int(round(w / multiple) * multiple))
+    h = max(min_size, int(round(h / multiple) * multiple))
+
+    # 4. Final safety clamp
+    w = min(w, max_size // multiple * multiple)
+    h = min(h, max_size // multiple * multiple)
+
     return w, h
 
 def build_prompts(user_prompt, user_negative=''):
-    positive = user_prompt.strip()
-    negative = user_negative.strip()
-    return positive, negative  
+    positive = (
+        f"{user_prompt}, completely nude, fully naked, no clothes, no fabric, bare skin, "
+        f"photorealistic, masterpiece, best quality, ultra detailed, "
+        f"natural skin texture, visible pores, subtle freckles, fine skin imperfections, "
+        f"realistic subsurface scattering, soft natural lighting, film grain, "
+        f"analog photography, shot on Kodak Portra 400, 35mm, slight film grain, "
+        f"consistent identity, same person, same face, preserve facial features, "
+        f"natural expression, realistic anatomy"
+    )
+
+    negative = (
+        "clothes, clothing, dress, shirt, pants, fabric, covered, dressed, "
+        "different person, changed face, distorted face, deformed, bad anatomy, "
+        "mutated hands, fused fingers, extra fingers, missing fingers, "
+        "blurry, low quality, jpeg artifacts, worst quality, ugly, watermark, text, "
+        "cartoon, anime, illustration, painting, 3d render, cgi, "
+        "plastic skin, doll-like, smooth skin, airbrushed, porcelain skin, "
+        "overly smooth, waxy, artificial, synthetic, glossy plastic, "
+        "oversharp, oversaturated, heavy makeup, perfect skin, flawless skin"
+    )
+
+    if user_negative:
+        negative = f"{user_negative}, {negative}"
+    return positive, negative
 
 def post_process(image):
-    # Mild post-processing to avoid cartoonish look
-    image = image.filter(ImageFilter.UnsharpMask(radius=1.0, percent=75, threshold=3))
-    image = ImageEnhance.Contrast(image).enhance(1.04)
-    image = ImageEnhance.Sharpness(image).enhance(1.05)
+    # Mild post-processing – avoid amplifying plastic look
+    image = image.filter(ImageFilter.UnsharpMask(radius=0.8, percent=60, threshold=4))
+    image = ImageEnhance.Contrast(image).enhance(1.02)
     return image
 
 def handler(job):
@@ -151,8 +194,12 @@ def handler(job):
 
         image_data  = base64.b64decode(image_base64.split(",")[1] if "," in image_base64 else image_base64)
         input_image = Image.open(io.BytesIO(image_data)).convert("RGB")
-        w, h        = get_dimensions(input_image)
+        
+        orig_w, orig_h = input_image.size
+        w, h = get_dimensions(input_image)
         input_image = input_image.resize((w, h), Image.Resampling.LANCZOS)
+        
+        print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} (aspect {w/h:.3f} vs {orig_w/orig_h:.3f})")
 
         # --- Extract Face Embedding + aligned face ---
         cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
@@ -194,7 +241,7 @@ def handler(job):
             strength=strength,
             controlnet_conditioning_scale=[pose_strength, canny_strength],
             num_inference_steps=64,
-            guidance_scale=6.3,
+            guidance_scale=6.0,          # slightly lowered from 6.3
             width=w,
             height=h,
             scale=face_scale,
