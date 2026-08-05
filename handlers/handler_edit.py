@@ -186,14 +186,16 @@ def build_prompts(user_prompt, user_negative=''):
     )
 
     negative = (
-        "clothes, clothing, dress, shirt, pants, fabric, covered, dressed, "
-        "different person, changed face, distorted face, deformed, bad anatomy, "
-        "mutated hands, fused fingers, extra fingers, missing fingers, "
-        "blurry, low quality, jpeg artifacts, worst quality, ugly, watermark, text, "
-        "cartoon, anime, illustration, painting, 3d render, cgi, "
-        "plastic skin, doll-like, smooth skin, airbrushed, porcelain skin, "
-        "overly smooth, waxy, artificial, synthetic, glossy plastic, "
-        "oversharp, oversaturated, heavy makeup, perfect skin, flawless skin"
+        "no clothes, no clothing, no dress, no shirt, no pants, no fabric, clothless, without clothes, "
+        "no different person, no changed face, no distorted face, no deformed face, "
+        "no bad anatomy, no deformed body, no disfigured, no mutated, "
+        "no mutated hands, no fused fingers, no extra fingers, no missing fingers, no too many fingers, "
+        "no blurry, no low quality, no jpeg artifacts, no worst quality, no ugly, "
+        "no watermark, no text, no signature, "
+        "no cartoon, no anime, no illustration, no painting, no 3d render, no cgi, "
+        "no plastic skin, no doll-like, no porcelain skin, no smooth skin, no airbrushed, "
+        "no overly smooth, no waxy, no artificial skin, no synthetic, no glossy plastic, "
+        "no oversharp, no oversaturated, no heavy makeup, no perfect skin, no flawless skin"
     )
 
     if user_negative:
