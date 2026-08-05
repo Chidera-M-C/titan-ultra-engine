@@ -123,12 +123,7 @@ def get_dimensions(image):
 def build_prompts(user_prompt, user_negative=''):
     positive = user_prompt.strip()
     negative = user_negative.strip()
-    return positive, negative
-    
-    )
-    if user_negative:
-        negative = f"{user_negative}, {negative}"
-    return positive, negative
+    return positive, negative  
 
 def post_process(image):
     # Mild post-processing to avoid cartoonish look
