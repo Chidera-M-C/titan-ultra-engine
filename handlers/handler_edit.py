@@ -115,16 +115,14 @@ def get_dimensions(image, max_size=1536, min_size=512, multiple=64):
     w, h = image.size
     aspect = w / float(h)
 
-    # 1. Scale down if either side exceeds max_size
     if w > max_size or h > max_size:
-        if aspect >= 1.0:          # landscape or square
+        if aspect >= 1.0:
             w = max_size
             h = int(round(w / aspect))
-        else:                      # portrait
+        else:
             h = max_size
             w = int(round(h * aspect))
 
-    # 2. Scale up if either side is below min_size
     if w < min_size or h < min_size:
         if aspect >= 1.0:
             w = min_size
@@ -133,15 +131,48 @@ def get_dimensions(image, max_size=1536, min_size=512, multiple=64):
             h = min_size
             w = int(round(h * aspect))
 
-    # 3. Snap both sides to nearest multiple of 64
     w = max(min_size, int(round(w / multiple) * multiple))
     h = max(min_size, int(round(h / multiple) * multiple))
 
-    # 4. Final safety clamp
     w = min(w, max_size // multiple * multiple)
     h = min(h, max_size // multiple * multiple)
 
     return w, h
+
+def is_action_prompt(user_prompt: str) -> bool:
+    """Detect if the prompt requests a significantly different pose or sexual act."""
+    prompt_lower = user_prompt.lower()
+
+    action_keywords = [
+        # Positions
+        "doggy", "doggystyle", "doggy style", "from behind", "prone bone", "bent over",
+        "missionary", "cowgirl", "reverse cowgirl", "amazon", "mating press", "full nelson",
+        "nelson", "standing sex", "against the wall", "lifted", "legs up", "piledriver",
+        "spooning", "side fuck", "lotus", "bridge",
+
+        # Oral & related
+        "sucking", "blowjob", "blow job", "deepthroat", "deep throat", "facefuck", "face fuck",
+        "oral", "cocksucking", "throat fuck", "irrumatio",
+
+        # General sex acts
+        "fucking", "fuck", "pounded", "railed", "railing", "merciless", "rough", "hardcore",
+        "pounding", "thrusting", "penetrating", "penetration", "getting fucked", "being fucked",
+        "creampie", "cum inside", "breeding",
+
+        # Male genitalia presence
+        "dick", "cock", "penis", "thick cock", "big dick", "black cock", "white cock",
+        "hard cock", "erect", "veiny", "ballsack", "balls", "testicles",
+
+        # Multiple people / orientations
+        "threesome", "threeway", "ffm", "mmf", "gangbang", "group sex", "orgy",
+        "lesbian", "girls only", "two girls", "scissoring", "tribbing",
+        "male", "man", "guy", "boyfriend", "husband", "stranger",
+
+        # Extra intensity
+        "rough sex", "violent", "slapping", "choking", "hair pulling", "spanking"
+    ]
+
+    return any(kw in prompt_lower for kw in action_keywords)
 
 def build_prompts(user_prompt, user_negative=''):
     positive = (
@@ -151,7 +182,7 @@ def build_prompts(user_prompt, user_negative=''):
         f"realistic subsurface scattering, soft natural lighting, film grain, "
         f"analog photography, shot on Kodak Portra 400, 35mm, slight film grain, "
         f"consistent identity, same person, same face, preserve facial features, "
-        f"natural expression, realistic anatomy"
+        f"natural expression, realistic anatomy, dynamic pose, intense action"
     )
 
     negative = (
@@ -170,7 +201,6 @@ def build_prompts(user_prompt, user_negative=''):
     return positive, negative
 
 def post_process(image):
-    # Mild post-processing – avoid amplifying plastic look
     image = image.filter(ImageFilter.UnsharpMask(radius=0.8, percent=60, threshold=4))
     image = ImageEnhance.Contrast(image).enhance(1.02)
     return image
@@ -182,24 +212,41 @@ def handler(job):
         user_negative    = input_data.get('negative_prompt', '')
         image_base64     = input_data.get('image')
 
-        # Balanced defaults for strong clothing removal + good face
-        pose_strength    = float(input_data.get('pose_strength', 0.55))
-        canny_strength   = float(input_data.get('canny_strength', 0.20))
-        face_scale       = float(input_data.get('face_scale', 0.72))
+        # --- Frontend slider mapping ---
+        # Pose strength: UI "Higher = more pose change" → invert for ControlNet
+        raw_pose = float(input_data.get('pose_strength', input_data.get('poseStrength', 0.5)))
+        pose_strength = max(0.12, min(0.85, 1.0 - raw_pose))
+
+        # Structure strength: UI "Higher = preserve more structure"
+        raw_structure = float(input_data.get('structure_strength', input_data.get('structureStrength', 0.6)))
+        canny_strength = max(0.05, min(0.45, raw_structure * 0.4))
+
+        # Other parameters
+        face_scale       = float(input_data.get('face_scale', 0.75))
         s_scale          = float(input_data.get('s_scale', 0.75))
-        strength         = float(input_data.get('strength', 0.70))
+        strength         = float(input_data.get('strength', 0.72))
+        guidance_scale   = 6.0
+
+        # --- Adaptive freedom for sex acts / new poses ---
+        if is_action_prompt(user_prompt):
+            print("→ Action / sex-act prompt detected – increasing creative freedom")
+            pose_strength = min(pose_strength, 0.28)
+            canny_strength = min(canny_strength, 0.10)
+            strength = min(max(strength, 0.75), 0.82)
+            guidance_scale = 6.6
+            face_scale = max(face_scale, 0.78)   # protect identity a bit more
 
         if not image_base64:
             return {"error": "No image provided"}
 
         image_data  = base64.b64decode(image_base64.split(",")[1] if "," in image_base64 else image_base64)
         input_image = Image.open(io.BytesIO(image_data)).convert("RGB")
-        
+
         orig_w, orig_h = input_image.size
         w, h = get_dimensions(input_image)
         input_image = input_image.resize((w, h), Image.Resampling.LANCZOS)
-        
-        print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} (aspect {w/h:.3f} vs {orig_w/orig_h:.3f})")
+
+        print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} | Pose: {pose_strength:.2f} | Canny: {canny_strength:.2f} | Strength: {strength:.2f}")
 
         # --- Extract Face Embedding + aligned face ---
         cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
@@ -241,7 +288,7 @@ def handler(job):
             strength=strength,
             controlnet_conditioning_scale=[pose_strength, canny_strength],
             num_inference_steps=64,
-            guidance_scale=6.0,          # slightly lowered from 6.3
+            guidance_scale=guidance_scale,
             width=w,
             height=h,
             scale=face_scale,
