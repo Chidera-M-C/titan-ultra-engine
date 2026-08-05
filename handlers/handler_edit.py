@@ -73,7 +73,7 @@ def load_models():
 
         print("Fusing Detail LoRA...")
         txt2img_pipe.load_lora_weights(DETAIL_LORA_PATH)
-        txt2img_pipe.fuse_lora(lora_scale=0.55)
+        txt2img_pipe.fuse_lora(lora_scale=0.45)   # lowered from 0.55
 
         base_pipeline = StableDiffusionXLControlNetImg2ImgPipeline(
             vae=txt2img_pipe.vae,
@@ -215,11 +215,9 @@ def handler(job):
         image_base64     = input_data.get('image')
 
         # --- Frontend slider mapping ---
-        # Pose strength: UI "Higher = more pose change" → invert for ControlNet
         raw_pose = float(input_data.get('pose_strength', input_data.get('poseStrength', 0.5)))
         pose_strength = max(0.12, min(0.85, 1.0 - raw_pose))
 
-        # Structure strength: UI "Higher = preserve more structure"
         raw_structure = float(input_data.get('structure_strength', input_data.get('structureStrength', 0.6)))
         canny_strength = max(0.05, min(0.45, raw_structure * 0.4))
 
@@ -227,16 +225,16 @@ def handler(job):
         face_scale       = float(input_data.get('face_scale', 0.75))
         s_scale          = float(input_data.get('s_scale', 0.75))
         strength         = float(input_data.get('strength', 0.72))
-        guidance_scale   = 6.0
+        guidance_scale   = 7.2          # raised from 6.0
 
         # --- Adaptive freedom for sex acts / new poses ---
         if is_action_prompt(user_prompt):
             print("→ Action / sex-act prompt detected – increasing creative freedom")
             pose_strength = min(pose_strength, 0.28)
             canny_strength = min(canny_strength, 0.10)
-            strength = min(max(strength, 0.75), 0.82)
-            guidance_scale = 6.6
-            face_scale = max(face_scale, 0.78)   # protect identity a bit more
+            strength = min(max(strength, 0.72), 0.76)   # capped lower than before
+            guidance_scale = 7.7
+            face_scale = max(face_scale, 0.78)
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -248,7 +246,7 @@ def handler(job):
         w, h = get_dimensions(input_image)
         input_image = input_image.resize((w, h), Image.Resampling.LANCZOS)
 
-        print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} | Pose: {pose_strength:.2f} | Canny: {canny_strength:.2f} | Strength: {strength:.2f}")
+        print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} | Pose: {pose_strength:.2f} | Canny: {canny_strength:.2f} | Strength: {strength:.2f} | CFG: {guidance_scale}")
 
         # --- Extract Face Embedding + aligned face ---
         cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
@@ -289,7 +287,7 @@ def handler(job):
             control_image=[pose_map, canny_map],
             strength=strength,
             controlnet_conditioning_scale=[pose_strength, canny_strength],
-            num_inference_steps=64,
+            num_inference_steps=90,          # raised from 64
             guidance_scale=guidance_scale,
             width=w,
             height=h,
