@@ -28,7 +28,7 @@ def download_civitai(url, dest_path, label):
 
 # 1. Base Checkpoint & VAE
 download_civitai(
-    "https://civitai.com/api/download/models/1759168?type=Model&format=SafeTensor&size=full&fp=fp16",
+    "https://civitai.red/api/download/models/1081768?fileId=986850",
     "/workspace/juggernaut_xl.safetensors",
     "Juggernaut XL"
 )
