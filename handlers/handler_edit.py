@@ -121,18 +121,10 @@ def get_dimensions(image):
     return w, h
 
 def build_prompts(user_prompt, user_negative=''):
-    positive = (
-        f"{user_prompt}, completely nude, fully naked, no clothes, no fabric, bare skin, "
-        f"photorealistic, masterpiece, best quality, ultra detailed, "
-        f"realistic skin texture, natural lighting, consistent identity, "
-        f"same person, same face, preserve facial features"
-    )
-    negative = (
-        "clothes, clothing, dress, shirt, pants, fabric, covered, dressed, "
-        "different person, changed face, distorted face, deformed, bad anatomy, "
-        "mutated hands, fused fingers, extra fingers, missing fingers, "
-        "blurry, low quality, jpeg artifacts, worst quality, ugly, watermark, text, "
-        "cartoon, anime, illustration, painting, oversharp"
+    positive = user_prompt.strip()
+    negative = user_negative.strip()
+    return positive, negative
+    
     )
     if user_negative:
         negative = f"{user_negative}, {negative}"
