@@ -155,8 +155,8 @@ def handler(job):
         # Balanced defaults for strong clothing removal + good face
         pose_strength    = float(input_data.get('pose_strength', 0.55))
         canny_strength   = float(input_data.get('canny_strength', 0.20))
-        face_scale       = float(input_data.get('face_scale', 0.82))
-        s_scale          = float(input_data.get('s_scale', 1.0))
+        face_scale       = float(input_data.get('face_scale', 0.72))
+        s_scale          = float(input_data.get('s_scale', 0.75))
         strength         = float(input_data.get('strength', 0.70))
 
         if not image_base64:
@@ -206,8 +206,8 @@ def handler(job):
             control_image=[pose_map, canny_map],
             strength=strength,
             controlnet_conditioning_scale=[pose_strength, canny_strength],
-            num_inference_steps=60,
-            guidance_scale=6.8,
+            num_inference_steps=64,
+            guidance_scale=6.3,
             width=w,
             height=h,
             scale=face_scale,
@@ -218,7 +218,7 @@ def handler(job):
         result = post_process(images[0])
 
         buffered = io.BytesIO()
-        result.save(buffered, format="JPEG", quality=92, optimize=True, progressive=True)
+        result.save(buffered, format="JPEG", quality=95, optimize=True, progressive=True)
 
         return {"image": f"data:image/jpeg;base64,{base64.b64encode(buffered.getvalue()).decode()}"}
 
