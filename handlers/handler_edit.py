@@ -73,7 +73,7 @@ def load_models():
 
         print("Fusing Detail LoRA...")
         txt2img_pipe.load_lora_weights(DETAIL_LORA_PATH)
-        txt2img_pipe.fuse_lora(lora_scale=0.45)
+        txt2img_pipe.fuse_lora(lora_scale=0.55)          # ← restored to better realism value
 
         base_pipeline = StableDiffusionXLControlNetImg2ImgPipeline(
             vae=txt2img_pipe.vae,
@@ -142,27 +142,37 @@ def is_action_prompt(user_prompt: str) -> bool:
     prompt_lower = user_prompt.lower()
 
     action_keywords = [
+        # Positions
         "doggy", "doggystyle", "doggy style", "from behind", "prone bone", "bent over",
         "missionary", "cowgirl", "reverse cowgirl", "amazon", "mating press", "full nelson",
         "nelson", "standing sex", "against the wall", "lifted", "legs up", "piledriver",
         "spooning", "side fuck", "lotus", "bridge",
+
+        # Oral & related
         "sucking", "blowjob", "blow job", "deepthroat", "deep throat", "facefuck", "face fuck",
         "oral", "cocksucking", "throat fuck", "irrumatio",
+
+        # General sex acts
         "fucking", "fuck", "pounded", "railed", "railing", "merciless", "rough", "hardcore",
         "pounding", "thrusting", "penetrating", "penetration", "getting fucked", "being fucked",
         "creampie", "cum inside", "breeding",
+
+        # Male genitalia presence
         "dick", "cock", "penis", "thick cock", "big dick", "black cock", "white cock",
         "hard cock", "erect", "veiny", "ballsack", "balls", "testicles",
+
+        # Multiple people / orientations
         "threesome", "threeway", "ffm", "mmf", "gangbang", "group sex", "orgy",
         "lesbian", "girls only", "two girls", "scissoring", "tribbing",
         "male", "man", "guy", "boyfriend", "husband", "stranger",
+
+        # Extra intensity
         "rough sex", "violent", "slapping", "choking", "hair pulling", "spanking"
     ]
 
     return any(kw in prompt_lower for kw in action_keywords)
 
 def build_prompts(user_prompt, user_negative=''):
-    # Shortened to stay safely under 77 tokens
     positive = (
         f"{user_prompt}, completely nude, fully naked, bare skin, "
         f"photorealistic, masterpiece, best quality, ultra detailed, "
@@ -171,17 +181,16 @@ def build_prompts(user_prompt, user_negative=''):
         f"consistent identity, same face, realistic anatomy"
     )
 
+    # Classic negative (better realism)
     negative = (
-        "no clothes, no clothing, no dress, no shirt, no pants, no fabric, clothless, without clothes, "
-        "no different person, no changed face, no distorted face, no deformed face, "
-        "no bad anatomy, no deformed body, no disfigured, no mutated, "
-        "no mutated hands, no fused fingers, no extra fingers, no missing fingers, no too many fingers, "
-        "no blurry, no low quality, no jpeg artifacts, no worst quality, no ugly, "
-        "no watermark, no text, no signature, "
-        "no cartoon, no anime, no illustration, no painting, no 3d render, no cgi, "
-        "no plastic skin, no doll-like, no porcelain skin, no smooth skin, no airbrushed, "
-        "no overly smooth, no waxy, no artificial skin, no synthetic, no glossy plastic, "
-        "no oversharp, no oversaturated, no heavy makeup, no perfect skin, no flawless skin"
+        "clothes, clothing, dress, shirt, pants, fabric, covered, dressed, "
+        "different person, changed face, distorted face, deformed, bad anatomy, "
+        "mutated hands, fused fingers, extra fingers, missing fingers, "
+        "blurry, low quality, jpeg artifacts, worst quality, ugly, watermark, text, "
+        "cartoon, anime, illustration, painting, 3d render, cgi, "
+        "plastic skin, doll-like, porcelain skin, smooth skin, airbrushed, "
+        "overly smooth, waxy, artificial, synthetic, glossy plastic, "
+        "oversharp, oversaturated, heavy makeup, perfect skin, flawless skin"
     )
 
     if user_negative:
@@ -189,8 +198,10 @@ def build_prompts(user_prompt, user_negative=''):
     return positive, negative
 
 def post_process(image):
-    image = image.filter(ImageFilter.UnsharpMask(radius=0.8, percent=60, threshold=4))
-    image = ImageEnhance.Contrast(image).enhance(1.02)
+    # Stronger post-processing from the better realism script
+    image = image.filter(ImageFilter.UnsharpMask(radius=1.0, percent=75, threshold=3))
+    image = ImageEnhance.Contrast(image).enhance(1.04)
+    image = ImageEnhance.Sharpness(image).enhance(1.05)
     return image
 
 def handler(job):
@@ -207,18 +218,18 @@ def handler(job):
         raw_structure = float(input_data.get('structure_strength', input_data.get('structureStrength', 0.6)))
         canny_strength = max(0.05, min(0.45, raw_structure * 0.4))
 
-        face_scale       = float(input_data.get('face_scale', 0.75))
-        s_scale          = float(input_data.get('s_scale', 0.75))
-        strength         = float(input_data.get('strength', 0.72))
-        guidance_scale   = 7.2
+        face_scale       = float(input_data.get('face_scale', 0.82))
+        s_scale          = float(input_data.get('s_scale', 1.0))
+        strength         = float(input_data.get('strength', 0.70))
+        guidance_scale   = 6.8          # ← better realism value
 
         if is_action_prompt(user_prompt):
             print("→ Action / sex-act prompt detected – increasing creative freedom")
-            pose_strength = min(pose_strength, 0.28)
-            canny_strength = min(canny_strength, 0.10)
-            strength = min(max(strength, 0.72), 0.76)
-            guidance_scale = 7.7
-            face_scale = max(face_scale, 0.78)
+            pose_strength = min(pose_strength, 0.32)      # slightly higher floor for realism
+            canny_strength = min(canny_strength, 0.12)
+            strength = min(max(strength, 0.70), 0.73)     # capped lower
+            guidance_scale = 7.0
+            face_scale = max(face_scale, 0.82)
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -263,8 +274,8 @@ def handler(job):
         # --- Generate ---
         runpod.serverless.progress_update(job, "GENERATING_EDIT")
 
-        # Force 90 steps (IP-Adapter was ignoring the argument)
-        ip_model.pipe.scheduler.set_timesteps(90, device="cuda")
+        # Force steps
+        ip_model.pipe.scheduler.set_timesteps(72, device="cuda")
 
         images = ip_model.generate(
             prompt=positive,
@@ -275,7 +286,7 @@ def handler(job):
             control_image=[pose_map, canny_map],
             strength=strength,
             controlnet_conditioning_scale=[pose_strength, canny_strength],
-            num_inference_steps=90,
+            num_inference_steps=72,
             guidance_scale=guidance_scale,
             width=w,
             height=h,
@@ -287,7 +298,7 @@ def handler(job):
         result = post_process(images[0])
 
         buffered = io.BytesIO()
-        result.save(buffered, format="JPEG", quality=95, optimize=True, progressive=True)
+        result.save(buffered, format="JPEG", quality=93, optimize=True, progressive=True)
 
         return {"image": f"data:image/jpeg;base64,{base64.b64encode(buffered.getvalue()).decode()}"}
 
