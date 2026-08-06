@@ -142,20 +142,31 @@ def is_action_prompt(user_prompt: str) -> bool:
     prompt_lower = user_prompt.lower()
 
     action_keywords = [
+        # Positions
         "doggy", "doggystyle", "doggy style", "from behind", "prone bone", "bent over",
         "missionary", "cowgirl", "reverse cowgirl", "amazon", "mating press", "full nelson",
         "nelson", "standing sex", "against the wall", "lifted", "legs up", "piledriver",
         "spooning", "side fuck", "lotus", "bridge",
+
+        # Oral & related
         "sucking", "blowjob", "blow job", "deepthroat", "deep throat", "facefuck", "face fuck",
         "oral", "cocksucking", "throat fuck", "irrumatio",
+
+        # General sex acts
         "fucking", "fuck", "pounded", "railed", "railing", "merciless", "rough", "hardcore",
         "pounding", "thrusting", "penetrating", "penetration", "getting fucked", "being fucked",
         "creampie", "cum inside", "breeding",
+
+        # Male genitalia presence
         "dick", "cock", "penis", "thick cock", "big dick", "black cock", "white cock",
         "hard cock", "erect", "veiny", "ballsack", "balls", "testicles",
+
+        # Multiple people / orientations
         "threesome", "threeway", "ffm", "mmf", "gangbang", "group sex", "orgy",
         "lesbian", "girls only", "two girls", "scissoring", "tribbing",
         "male", "man", "guy", "boyfriend", "husband", "stranger",
+
+        # Extra intensity
         "rough sex", "violent", "slapping", "choking", "hair pulling", "spanking"
     ]
 
