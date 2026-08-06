@@ -73,7 +73,7 @@ def load_models():
 
         print("Fusing Detail LoRA...")
         txt2img_pipe.load_lora_weights(DETAIL_LORA_PATH)
-        txt2img_pipe.fuse_lora(lora_scale=0.45)   # lowered from 0.55
+        txt2img_pipe.fuse_lora(lora_scale=0.45)
 
         base_pipeline = StableDiffusionXLControlNetImg2ImgPipeline(
             vae=txt2img_pipe.vae,
@@ -111,7 +111,6 @@ def load_models():
         print("✓ FaceID Edit pipeline initialized successfully")
 
 def get_dimensions(image, max_size=1536, min_size=512, multiple=64):
-    """Preserve aspect ratio as closely as possible while satisfying SDXL constraints."""
     w, h = image.size
     aspect = w / float(h)
 
@@ -140,49 +139,36 @@ def get_dimensions(image, max_size=1536, min_size=512, multiple=64):
     return w, h
 
 def is_action_prompt(user_prompt: str) -> bool:
-    """Detect if the prompt requests a significantly different pose or sexual act."""
     prompt_lower = user_prompt.lower()
 
     action_keywords = [
-        # Positions
         "doggy", "doggystyle", "doggy style", "from behind", "prone bone", "bent over",
         "missionary", "cowgirl", "reverse cowgirl", "amazon", "mating press", "full nelson",
         "nelson", "standing sex", "against the wall", "lifted", "legs up", "piledriver",
         "spooning", "side fuck", "lotus", "bridge",
-
-        # Oral & related
         "sucking", "blowjob", "blow job", "deepthroat", "deep throat", "facefuck", "face fuck",
         "oral", "cocksucking", "throat fuck", "irrumatio",
-
-        # General sex acts
         "fucking", "fuck", "pounded", "railed", "railing", "merciless", "rough", "hardcore",
         "pounding", "thrusting", "penetrating", "penetration", "getting fucked", "being fucked",
         "creampie", "cum inside", "breeding",
-
-        # Male genitalia presence
         "dick", "cock", "penis", "thick cock", "big dick", "black cock", "white cock",
         "hard cock", "erect", "veiny", "ballsack", "balls", "testicles",
-
-        # Multiple people / orientations
         "threesome", "threeway", "ffm", "mmf", "gangbang", "group sex", "orgy",
         "lesbian", "girls only", "two girls", "scissoring", "tribbing",
         "male", "man", "guy", "boyfriend", "husband", "stranger",
-
-        # Extra intensity
         "rough sex", "violent", "slapping", "choking", "hair pulling", "spanking"
     ]
 
     return any(kw in prompt_lower for kw in action_keywords)
 
 def build_prompts(user_prompt, user_negative=''):
+    # Shortened to stay safely under 77 tokens
     positive = (
-        f"{user_prompt}, completely nude, fully naked, no clothes, no fabric, bare skin, "
+        f"{user_prompt}, completely nude, fully naked, bare skin, "
         f"photorealistic, masterpiece, best quality, ultra detailed, "
-        f"natural skin texture, visible pores, subtle freckles, fine skin imperfections, "
-        f"realistic subsurface scattering, soft natural lighting, film grain, "
-        f"analog photography, shot on Kodak Portra 400, 35mm, slight film grain, "
-        f"consistent identity, same person, same face, preserve facial features, "
-        f"natural expression, realistic anatomy, dynamic pose, intense action"
+        f"natural skin texture, visible pores, subtle freckles, "
+        f"realistic skin, soft natural lighting, film grain, "
+        f"consistent identity, same face, realistic anatomy"
     )
 
     negative = (
@@ -214,25 +200,23 @@ def handler(job):
         user_negative    = input_data.get('negative_prompt', '')
         image_base64     = input_data.get('image')
 
-        # --- Frontend slider mapping ---
+        # Frontend slider mapping
         raw_pose = float(input_data.get('pose_strength', input_data.get('poseStrength', 0.5)))
         pose_strength = max(0.12, min(0.85, 1.0 - raw_pose))
 
         raw_structure = float(input_data.get('structure_strength', input_data.get('structureStrength', 0.6)))
         canny_strength = max(0.05, min(0.45, raw_structure * 0.4))
 
-        # Other parameters
         face_scale       = float(input_data.get('face_scale', 0.75))
         s_scale          = float(input_data.get('s_scale', 0.75))
         strength         = float(input_data.get('strength', 0.72))
-        guidance_scale   = 7.2          # raised from 6.0
+        guidance_scale   = 7.2
 
-        # --- Adaptive freedom for sex acts / new poses ---
         if is_action_prompt(user_prompt):
             print("→ Action / sex-act prompt detected – increasing creative freedom")
             pose_strength = min(pose_strength, 0.28)
             canny_strength = min(canny_strength, 0.10)
-            strength = min(max(strength, 0.72), 0.76)   # capped lower than before
+            strength = min(max(strength, 0.72), 0.76)
             guidance_scale = 7.7
             face_scale = max(face_scale, 0.78)
 
@@ -248,7 +232,7 @@ def handler(job):
 
         print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} | Pose: {pose_strength:.2f} | Canny: {canny_strength:.2f} | Strength: {strength:.2f} | CFG: {guidance_scale}")
 
-        # --- Extract Face Embedding + aligned face ---
+        # Face embedding
         cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
         faces   = app.get(cv2_img)
 
@@ -265,7 +249,7 @@ def handler(job):
         aligned_face_bgr = face_align.norm_crop(cv2_img, landmark=best_face.kps, image_size=224)
         face_image = Image.fromarray(cv2.cvtColor(aligned_face_bgr, cv2.COLOR_BGR2RGB))
 
-        # --- ControlNet maps ---
+        # ControlNet maps
         runpod.serverless.progress_update(job, "EXTRACTING_POSE")
         pose_map = openpose(input_image, include_body=True, include_hand=True)
         pose_map = pose_map.resize((w, h))
@@ -278,6 +262,10 @@ def handler(job):
 
         # --- Generate ---
         runpod.serverless.progress_update(job, "GENERATING_EDIT")
+
+        # Force 90 steps (IP-Adapter was ignoring the argument)
+        ip_model.pipe.scheduler.set_timesteps(90, device="cuda")
+
         images = ip_model.generate(
             prompt=positive,
             negative_prompt=negative,
@@ -287,7 +275,7 @@ def handler(job):
             control_image=[pose_map, canny_map],
             strength=strength,
             controlnet_conditioning_scale=[pose_strength, canny_strength],
-            num_inference_steps=90,          # raised from 64
+            num_inference_steps=90,
             guidance_scale=guidance_scale,
             width=w,
             height=h,
