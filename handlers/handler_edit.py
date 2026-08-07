@@ -25,13 +25,15 @@ from insightface.utils import face_align
 from controlnet_aux import OpenposeDetector, CannyDetector
 
 # --- CONFIG ---
-JUGGERNAUT_PATH    = "/workspace/juggernaut_xl.safetensors"
-VAE_PATH           = "/workspace/sdxl_vae.safetensors"
-DETAIL_LORA_PATH   = "/workspace/add-detail-xl.safetensors"
-OPENPOSE_PATH      = "/workspace/controlnet_openpose_xl"
-CANNY_PATH         = "/workspace/controlnet_canny_xl"
-IPADAPTER_PATH     = "/workspace/ip-adapter-faceid-plusv2_sdxl.bin"
-IMAGE_ENCODER_PATH = "/workspace/image_encoder"
+JUGGERNAUT_PATH      = "/workspace/juggernaut_xl.safetensors"
+VAE_PATH             = "/workspace/sdxl_vae.safetensors"
+DETAIL_LORA_PATH     = "/workspace/detail_tweaker.safetensors"
+REALISM_LORA_PATH    = "/workspace/realism.safetensors"
+NSFW_LORA_PATH       = "/workspace/nsfw_allinone.safetensors"
+OPENPOSE_PATH        = "/workspace/controlnet_openpose_xl"
+CANNY_PATH           = "/workspace/controlnet_canny_xl"
+IPADAPTER_PATH       = "/workspace/ip-adapter-faceid-plusv2_sdxl.bin"
+IMAGE_ENCODER_PATH   = "/workspace/image_encoder"
 
 base_pipeline  = None
 ip_model       = None
@@ -48,18 +50,11 @@ def load_models():
         app.prepare(ctx_id=0, det_size=(640, 640))
 
         print("Loading VAE...")
-        vae = AutoencoderKL.from_single_file(
-            VAE_PATH, torch_dtype=torch.float16
-        ).to("cuda")
+        vae = AutoencoderKL.from_single_file(VAE_PATH, torch_dtype=torch.float16).to("cuda")
 
         print("Loading ControlNets...")
-        controlnet_pose = ControlNetModel.from_pretrained(
-            OPENPOSE_PATH, torch_dtype=torch.float16
-        ).to("cuda")
-
-        controlnet_canny = ControlNetModel.from_pretrained(
-            CANNY_PATH, torch_dtype=torch.float16
-        ).to("cuda")
+        controlnet_pose = ControlNetModel.from_pretrained(OPENPOSE_PATH, torch_dtype=torch.float16).to("cuda")
+        controlnet_canny = ControlNetModel.from_pretrained(CANNY_PATH, torch_dtype=torch.float16).to("cuda")
 
         print("Loading Juggernaut XL pipeline...")
         txt2img_pipe = StableDiffusionXLControlNetPipeline.from_single_file(
@@ -71,9 +66,14 @@ def load_models():
             variant="fp16"
         ).to("cuda")
 
-        print("Fusing Detail LoRA...")
-        txt2img_pipe.load_lora_weights(DETAIL_LORA_PATH)
-        txt2img_pipe.fuse_lora(lora_scale=0.55)          # ← restored to better realism value
+        # Load the three LoRAs with adapter names
+        print("Loading LoRAs...")
+        txt2img_pipe.load_lora_weights(DETAIL_LORA_PATH, adapter_name="detail")
+        txt2img_pipe.load_lora_weights(REALISM_LORA_PATH, adapter_name="realism")
+        txt2img_pipe.load_lora_weights(NSFW_LORA_PATH, adapter_name="nsfw")
+
+        # Default: Detail + Realism active, NSFW off
+        txt2img_pipe.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
 
         base_pipeline = StableDiffusionXLControlNetImg2ImgPipeline(
             vae=txt2img_pipe.vae,
@@ -85,6 +85,9 @@ def load_models():
             controlnet=txt2img_pipe.controlnet,
             scheduler=txt2img_pipe.scheduler,
         ).to("cuda")
+
+        # Copy the adapter state
+        base_pipeline.unet = txt2img_pipe.unet
 
         base_pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
             base_pipeline.scheduler.config,
@@ -132,45 +135,29 @@ def get_dimensions(image, max_size=1536, min_size=512, multiple=64):
 
     w = max(min_size, int(round(w / multiple) * multiple))
     h = max(min_size, int(round(h / multiple) * multiple))
-
     w = min(w, max_size // multiple * multiple)
     h = min(h, max_size // multiple * multiple)
-
     return w, h
 
 def is_action_prompt(user_prompt: str) -> bool:
     prompt_lower = user_prompt.lower()
-
     action_keywords = [
-        # Positions
         "doggy", "doggystyle", "doggy style", "from behind", "prone bone", "bent over",
         "missionary", "cowgirl", "reverse cowgirl", "amazon", "mating press", "full nelson",
         "nelson", "standing sex", "against the wall", "lifted", "legs up", "piledriver",
         "spooning", "side fuck", "lotus", "bridge",
-
-        # Oral & related
         "sucking", "blowjob", "blow job", "deepthroat", "deep throat", "facefuck", "face fuck",
         "oral", "cocksucking", "throat fuck", "irrumatio",
-
-        # General sex acts
-        # General sex acts
         "fucking", "fuck", "pounded", "railed", "railing", "merciless", "rough", "hardcore",
         "pounding", "thrusting", "penetrating", "penetration", "getting fucked", "being fucked",
         "creampie", "cum inside", "breeding",
-
-        # Male genitalia presence
         "dick", "cock", "penis", "thick cock", "big dick", "black cock", "white cock",
         "hard cock", "erect", "veiny", "ballsack", "balls", "testicles",
-
-        # Multiple people / orientations
         "threesome", "threeway", "ffm", "mmf", "gangbang", "group sex", "orgy",
         "lesbian", "girls only", "two girls", "scissoring", "tribbing",
         "male", "man", "guy", "boyfriend", "husband", "stranger",
-
-        # Extra intensity
         "rough sex", "violent", "slapping", "choking", "hair pulling", "spanking"
     ]
-
     return any(kw in prompt_lower for kw in action_keywords)
 
 def build_prompts(user_prompt, user_negative=''):
@@ -182,7 +169,6 @@ def build_prompts(user_prompt, user_negative=''):
         f"consistent identity, same face, realistic anatomy"
     )
 
-    # Classic negative (better realism)
     negative = (
         "clothes, clothing, dress, shirt, pants, fabric, covered, dressed, "
         "different person, changed face, distorted face, deformed, bad anatomy, "
@@ -199,7 +185,6 @@ def build_prompts(user_prompt, user_negative=''):
     return positive, negative
 
 def post_process(image):
-    # Stronger post-processing from the better realism script
     image = image.filter(ImageFilter.UnsharpMask(radius=1.0, percent=75, threshold=3))
     image = ImageEnhance.Contrast(image).enhance(1.04)
     image = ImageEnhance.Sharpness(image).enhance(1.05)
@@ -222,15 +207,29 @@ def handler(job):
         face_scale       = float(input_data.get('face_scale', 0.82))
         s_scale          = float(input_data.get('s_scale', 1.0))
         strength         = float(input_data.get('strength', 0.70))
-        guidance_scale   = 6.8          # ← better realism value
+        guidance_scale   = 6.8
 
-        if is_action_prompt(user_prompt):
-            print("→ Action / sex-act prompt detected – increasing creative freedom")
-            pose_strength = min(pose_strength, 0.32)      # slightly higher floor for realism
+        is_sexual = is_action_prompt(user_prompt)
+
+        if is_sexual:
+            print("→ Sexual / explicit act detected – dropping OpenPose + activating NSFW LoRA")
+            pose_strength = 0.0          # completely drop pose ControlNet
             canny_strength = min(canny_strength, 0.12)
-            strength = min(max(strength, 0.70), 0.73)     # capped lower
+            strength = min(max(strength, 0.70), 0.73)
             guidance_scale = 7.0
             face_scale = max(face_scale, 0.82)
+
+            # Activate all three LoRAs
+            ip_model.pipe.set_adapters(
+                ["detail", "realism", "nsfw"],
+                adapter_weights=[0.55, 0.65, 0.85]
+            )
+        else:
+            # Normal mode – only Detail + Realism
+            ip_model.pipe.set_adapters(
+                ["detail", "realism"],
+                adapter_weights=[0.55, 0.65]
+            )
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -242,7 +241,7 @@ def handler(job):
         w, h = get_dimensions(input_image)
         input_image = input_image.resize((w, h), Image.Resampling.LANCZOS)
 
-        print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} | Pose: {pose_strength:.2f} | Canny: {canny_strength:.2f} | Strength: {strength:.2f} | CFG: {guidance_scale}")
+        print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} | Pose: {pose_strength:.2f} | Canny: {canny_strength:.2f} | Strength: {strength:.2f} | CFG: {guidance_scale} | Sexual: {is_sexual}")
 
         # Face embedding
         cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
@@ -254,10 +253,7 @@ def handler(job):
         faces = sorted(faces, key=lambda x: (x.bbox[2] - x.bbox[0]) * (x.bbox[3] - x.bbox[1]), reverse=True)
         best_face = faces[0]
 
-        faceid_embeds = torch.from_numpy(best_face.normed_embedding).unsqueeze(0).to(
-            dtype=torch.float16, device="cuda"
-        )
-
+        faceid_embeds = torch.from_numpy(best_face.normed_embedding).unsqueeze(0).to(dtype=torch.float16, device="cuda")
         aligned_face_bgr = face_align.norm_crop(cv2_img, landmark=best_face.kps, image_size=224)
         face_image = Image.fromarray(cv2.cvtColor(aligned_face_bgr, cv2.COLOR_BGR2RGB))
 
@@ -275,8 +271,7 @@ def handler(job):
         # --- Generate ---
         runpod.serverless.progress_update(job, "GENERATING_EDIT")
 
-        # Force steps
-        ip_model.pipe.scheduler.set_timesteps(72, device="cuda")
+        ip_model.pipe.scheduler.set_timesteps(55, device="cuda")
 
         images = ip_model.generate(
             prompt=positive,
@@ -287,7 +282,7 @@ def handler(job):
             control_image=[pose_map, canny_map],
             strength=strength,
             controlnet_conditioning_scale=[pose_strength, canny_strength],
-            num_inference_steps=55,
+            num_inference_steps=65,
             guidance_scale=guidance_scale,
             width=w,
             height=h,
