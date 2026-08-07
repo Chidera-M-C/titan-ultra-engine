@@ -153,6 +153,7 @@ def is_action_prompt(user_prompt: str) -> bool:
         "oral", "cocksucking", "throat fuck", "irrumatio",
 
         # General sex acts
+        # General sex acts
         "fucking", "fuck", "pounded", "railed", "railing", "merciless", "rough", "hardcore",
         "pounding", "thrusting", "penetrating", "penetration", "getting fucked", "being fucked",
         "creampie", "cum inside", "breeding",
