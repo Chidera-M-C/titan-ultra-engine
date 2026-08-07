@@ -287,7 +287,7 @@ def handler(job):
             control_image=[pose_map, canny_map],
             strength=strength,
             controlnet_conditioning_scale=[pose_strength, canny_strength],
-            num_inference_steps=65,
+            num_inference_steps=55,
             guidance_scale=guidance_scale,
             width=w,
             height=h,
