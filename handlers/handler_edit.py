@@ -204,7 +204,7 @@ def handler(job):
         face_scale       = float(input_data.get('face_scale', 0.82))
         s_scale          = float(input_data.get('s_scale', 1.0))
         strength         = float(input_data.get('strength', 0.70))
-        guidance_scale   = 7
+        guidance_scale   = 7.0
         num_steps        = 65
 
         is_sexual = is_action_prompt(user_prompt)
@@ -219,9 +219,9 @@ def handler(job):
             # Near pure generation from noise
             strength = 0.97
             
-            guidance_scale = 7.0
+            guidance_scale = 4.0
             face_scale = max(face_scale, 0.84)
-            num_steps = 55          # ← dropped as requested
+            num_steps = 42          # ← dropped as requested
         else:
             print("→ Normal undress mode (img2img)")
 
