@@ -66,13 +66,12 @@ def load_models():
             variant="fp16"
         ).to("cuda")
 
-        # Load the three LoRAs with adapter names
         print("Loading LoRAs...")
         txt2img_pipe.load_lora_weights(DETAIL_LORA_PATH, adapter_name="detail")
         txt2img_pipe.load_lora_weights(REALISM_LORA_PATH, adapter_name="realism")
         txt2img_pipe.load_lora_weights(NSFW_LORA_PATH, adapter_name="nsfw")
 
-        # Default: Detail + Realism active, NSFW off
+        # Default adapters
         txt2img_pipe.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
 
         base_pipeline = StableDiffusionXLControlNetImg2ImgPipeline(
@@ -86,7 +85,6 @@ def load_models():
             scheduler=txt2img_pipe.scheduler,
         ).to("cuda")
 
-        # Copy the adapter state
         base_pipeline.unet = txt2img_pipe.unet
 
         base_pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
@@ -197,7 +195,7 @@ def handler(job):
         user_negative    = input_data.get('negative_prompt', '')
         image_base64     = input_data.get('image')
 
-        # Frontend slider mapping
+        # Frontend slider mapping (used mainly for normal mode)
         raw_pose = float(input_data.get('pose_strength', input_data.get('poseStrength', 0.5)))
         pose_strength = max(0.12, min(0.85, 1.0 - raw_pose))
 
@@ -208,16 +206,23 @@ def handler(job):
         s_scale          = float(input_data.get('s_scale', 1.0))
         strength         = float(input_data.get('strength', 0.70))
         guidance_scale   = 6.8
+        num_steps        = 60
 
         is_sexual = is_action_prompt(user_prompt)
 
         if is_sexual:
-            print("→ Sexual / explicit act detected – dropping OpenPose + activating NSFW LoRA")
-            pose_strength = 0.0          # completely drop pose ControlNet
-            canny_strength = min(canny_strength, 0.12)
-            strength = min(max(strength, 0.70), 0.73)
+            print("→ Sexual / explicit act detected → switching to pure FaceID txt2img mode")
+            
+            # Completely disable both ControlNets
+            pose_strength = 0.0
+            canny_strength = 0.0
+            
+            # Near pure generation from noise
+            strength = 0.98
+            
             guidance_scale = 7.0
-            face_scale = max(face_scale, 0.82)
+            face_scale = max(face_scale, 0.85)
+            num_steps = 65
 
             # Activate all three LoRAs
             ip_model.pipe.set_adapters(
@@ -225,7 +230,8 @@ def handler(job):
                 adapter_weights=[0.55, 0.65, 0.85]
             )
         else:
-            # Normal mode – only Detail + Realism
+            print("→ Normal undress mode (img2img)")
+            # Keep your current best settings
             ip_model.pipe.set_adapters(
                 ["detail", "realism"],
                 adapter_weights=[0.55, 0.65]
@@ -257,7 +263,7 @@ def handler(job):
         aligned_face_bgr = face_align.norm_crop(cv2_img, landmark=best_face.kps, image_size=224)
         face_image = Image.fromarray(cv2.cvtColor(aligned_face_bgr, cv2.COLOR_BGR2RGB))
 
-        # ControlNet maps
+        # ControlNet maps (still generated, but will be zeroed in sexual mode)
         runpod.serverless.progress_update(job, "EXTRACTING_POSE")
         pose_map = openpose(input_image, include_body=True, include_hand=True)
         pose_map = pose_map.resize((w, h))
@@ -271,7 +277,7 @@ def handler(job):
         # --- Generate ---
         runpod.serverless.progress_update(job, "GENERATING_EDIT")
 
-        ip_model.pipe.scheduler.set_timesteps(55, device="cuda")
+        ip_model.pipe.scheduler.set_timesteps(num_steps, device="cuda")
 
         images = ip_model.generate(
             prompt=positive,
@@ -282,7 +288,7 @@ def handler(job):
             control_image=[pose_map, canny_map],
             strength=strength,
             controlnet_conditioning_scale=[pose_strength, canny_strength],
-            num_inference_steps=65,
+            num_inference_steps=num_steps,
             guidance_scale=guidance_scale,
             width=w,
             height=h,
