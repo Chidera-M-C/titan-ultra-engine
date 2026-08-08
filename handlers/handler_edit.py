@@ -204,8 +204,8 @@ def handler(job):
         face_scale       = float(input_data.get('face_scale', 0.82))
         s_scale          = float(input_data.get('s_scale', 1.0))
         strength         = float(input_data.get('strength', 0.70))
-        guidance_scale   = 6.8
-        num_steps        = 60
+        guidance_scale   = 7
+        num_steps        = 65
 
         is_sexual = is_action_prompt(user_prompt)
 
