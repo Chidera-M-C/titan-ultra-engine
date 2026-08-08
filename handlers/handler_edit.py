@@ -157,12 +157,13 @@ def is_action_prompt(user_prompt: str) -> bool:
     return any(kw in prompt_lower for kw in action_keywords)
 
 def build_prompts(user_prompt, user_negative=''):
+    # Removed identity-forcing phrases so the model can freely change head orientation
     positive = (
         f"{user_prompt}, completely nude, fully naked, bare skin, "
         f"photorealistic, masterpiece, best quality, ultra detailed, "
         f"natural skin texture, visible pores, subtle freckles, "
         f"realistic skin, soft natural lighting, film grain, "
-        f"consistent identity, same face, realistic anatomy"
+        f"realistic anatomy"
     )
 
     negative = (
@@ -220,7 +221,7 @@ def handler(job):
             
             guidance_scale = 7.0
             face_scale = max(face_scale, 0.84)
-            num_steps = 65
+            num_steps = 55          # ← dropped as requested
         else:
             print("→ Normal undress mode (img2img)")
 
@@ -240,7 +241,7 @@ def handler(job):
         w, h = get_dimensions(input_image)
         input_image = input_image.resize((w, h), Image.Resampling.LANCZOS)
 
-        print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} | Pose: {pose_strength:.2f} | Canny: {canny_strength:.2f} | Strength: {strength:.2f} | CFG: {guidance_scale} | Sexual: {is_sexual}")
+        print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} | Pose: {pose_strength:.2f} | Canny: {canny_strength:.2f} | Strength: {strength:.2f} | CFG: {guidance_scale} | Steps: {num_steps} | Sexual: {is_sexual}")
 
         # Face embedding
         cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
