@@ -219,7 +219,7 @@ def handler(job):
             # Near pure generation from noise
             strength = 0.97
             
-            guidance_scale = 4.0
+            guidance_scale = 9.0
             face_scale = max(face_scale, 0.84)
             num_steps = 42          # ← dropped as requested
         else:
