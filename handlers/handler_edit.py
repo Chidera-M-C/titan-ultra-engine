@@ -29,7 +29,6 @@ JUGGERNAUT_PATH      = "/workspace/juggernaut_xl.safetensors"
 VAE_PATH             = "/workspace/sdxl_vae.safetensors"
 DETAIL_LORA_PATH     = "/workspace/detail_tweaker.safetensors"
 REALISM_LORA_PATH    = "/workspace/realism.safetensors"
-NSFW_LORA_PATH       = "/workspace/nsfw_allinone.safetensors"
 OPENPOSE_PATH        = "/workspace/controlnet_openpose_xl"
 CANNY_PATH           = "/workspace/controlnet_canny_xl"
 IPADAPTER_PATH       = "/workspace/ip-adapter-faceid-plusv2_sdxl.bin"
@@ -66,12 +65,11 @@ def load_models():
             variant="fp16"
         ).to("cuda")
 
-        print("Loading LoRAs...")
+        print("Loading LoRAs (Detail + Realism only)...")
         txt2img_pipe.load_lora_weights(DETAIL_LORA_PATH, adapter_name="detail")
         txt2img_pipe.load_lora_weights(REALISM_LORA_PATH, adapter_name="realism")
-        txt2img_pipe.load_lora_weights(NSFW_LORA_PATH, adapter_name="nsfw")
 
-        # Default adapters
+        # Always use Detail + Realism
         txt2img_pipe.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
 
         base_pipeline = StableDiffusionXLControlNetImg2ImgPipeline(
@@ -195,7 +193,7 @@ def handler(job):
         user_negative    = input_data.get('negative_prompt', '')
         image_base64     = input_data.get('image')
 
-        # Frontend slider mapping (used mainly for normal mode)
+        # Frontend slider mapping (mainly for normal mode)
         raw_pose = float(input_data.get('pose_strength', input_data.get('poseStrength', 0.5)))
         pose_strength = max(0.12, min(0.85, 1.0 - raw_pose))
 
@@ -211,31 +209,26 @@ def handler(job):
         is_sexual = is_action_prompt(user_prompt)
 
         if is_sexual:
-            print("→ Sexual / explicit act detected → switching to pure FaceID txt2img mode")
+            print("→ Sexual / explicit act detected → pure FaceID txt2img mode (no ControlNets)")
             
             # Completely disable both ControlNets
             pose_strength = 0.0
             canny_strength = 0.0
             
             # Near pure generation from noise
-            strength = 0.98
+            strength = 0.97
             
             guidance_scale = 7.0
-            face_scale = max(face_scale, 0.85)
+            face_scale = max(face_scale, 0.84)
             num_steps = 65
-
-            # Activate all three LoRAs
-            ip_model.pipe.set_adapters(
-                ["detail", "realism", "nsfw"],
-                adapter_weights=[0.55, 0.65, 0.85]
-            )
         else:
             print("→ Normal undress mode (img2img)")
-            # Keep your current best settings
-            ip_model.pipe.set_adapters(
-                ["detail", "realism"],
-                adapter_weights=[0.55, 0.65]
-            )
+
+        # Always use only Detail + Realism
+        ip_model.pipe.set_adapters(
+            ["detail", "realism"],
+            adapter_weights=[0.55, 0.65]
+        )
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -263,7 +256,7 @@ def handler(job):
         aligned_face_bgr = face_align.norm_crop(cv2_img, landmark=best_face.kps, image_size=224)
         face_image = Image.fromarray(cv2.cvtColor(aligned_face_bgr, cv2.COLOR_BGR2RGB))
 
-        # ControlNet maps (still generated, but will be zeroed in sexual mode)
+        # ControlNet maps
         runpod.serverless.progress_update(job, "EXTRACTING_POSE")
         pose_map = openpose(input_image, include_body=True, include_hand=True)
         pose_map = pose_map.resize((w, h))
