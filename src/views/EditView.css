@@ -206,7 +206,7 @@
 /* ── Hint row (Copied from PromptBox for EditView) ── */
 .prompt-hint-row {
   overflow: hidden;
-  max-height: 40px;
+  max-height: 43px;
   opacity: 1;
   transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
 }
@@ -221,7 +221,7 @@
   background: rgba(168, 85, 247, 0.08);
   border: 1px solid rgba(168, 85, 247, 0.25);
   border-radius: 8px;
-  padding: 4px 10px;
+  padding: 5px 10px;
   margin: 0 0 6px 4px;
   letter-spacing: 0.3px;
   width: fit-content;
