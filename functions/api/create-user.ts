@@ -43,7 +43,7 @@ export const onRequestPost = async (context: any) => {
       const { data: updated, error: updateErr } = await supabase
         .from('user')
         .update({
-          credits: existing.credits ?? 6,
+          credits: existing.credits ?? 10, // <-- FIX: Updated fallback from 6 to 10
           traffic_source: shouldUpdateSource ? traffic_source : (existing.traffic_source ?? 'direct'),
           referrer: shouldUpdateSource ? (referrer || '') : (existing.referrer ?? ''),
         })
