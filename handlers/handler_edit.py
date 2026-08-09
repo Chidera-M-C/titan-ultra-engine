@@ -48,7 +48,7 @@ EXPLICIT_PRESETS = [
             "doggy", "doggystyle", "doggy style", "from behind", "prone bone",
             "bent over", "ass up", "on all fours", "being fucked", "getting fucked"
         ],
-        "before": "on all fours, ass up back arched looking over shoulder, 1man’s thick hard cock slamming deep into her pussy from behind, 1girl, ",
+        "before": "on all fours, ass up back arched looking over shoulder, 1man thick hard cock slamming deep into her pussy from behind, 1girl, ",
         "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
     },
     {
@@ -57,7 +57,7 @@ EXPLICIT_PRESETS = [
             "missionary", "missionary sex", "man on top", "on her back", "sex",
             "legs spread", "having sex", "sexing"
         ],
-        "before": "lying on back legs spread wide knees up, 1man’s thick hard cock pounding deep into her pussy from above, 1girl, ",
+        "before": "lying on back legs spread wide knees up, 1man thick hard cock pounding deep into her pussy from above, 1girl, ",
         "after": ", high angle masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
     },
     {
@@ -65,7 +65,7 @@ EXPLICIT_PRESETS = [
         "keywords": [
             "spooning", "side fuck", "side sex", "spooning sex"
         ],
-        "before": "lying on her side one leg raised body curved, 1man’s thick hard cock thrusting deep into her pussy from behind, 1girl, 1man, ",
+        "before": "lying on her side one leg raised body curved, 1man thick hard cock thrusting deep into her pussy from behind, 1girl, 1man, ",
         "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
     },
     {
@@ -74,7 +74,7 @@ EXPLICIT_PRESETS = [
             "sucking", "blowjob", "blow job", "deepthroat", "deep throat",
             "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"
         ],
-        "before": "kneeling forward mouth wide open eyes watering, 1man’s thick hard cock buried balls deep inside her mouth, 1girl, ",
+        "before": "kneeling forward mouth wide open eyes watering, 1man thick hard cock buried balls deep inside her mouth, 1girl, ",
         "after": ", high-angle masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
     },
     {
@@ -90,7 +90,7 @@ EXPLICIT_PRESETS = [
         "keywords": [
             "cowgirl", "reverse cowgirl", "riding", "riding cock", "on top"
         ],
-        "before": "straddling on top hips rolling downward, 1man’s thick hard cock buried deep in her pussy from below, 1girl, ",
+        "before": "straddling on top hips rolling downward, 1man thick hard cock buried deep in her pussy from below, 1girl, ",
         "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
     },
     {
@@ -98,7 +98,7 @@ EXPLICIT_PRESETS = [
         "keywords": [
             "creampie", "cum inside", "breeding", "bred", "internal cumshot", "cum in pussy"
         ],
-        "before": "lying back legs spread pussy gaping, 1man man’s thick hard cock pumping cum deep inside her pussy, 1girl, ",
+        "before": "lying back legs spread pussy gaping, 1man thick hard cock pumping cum deep inside her pussy, 1girl, ",
         "after": ", high-angle masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
     },
     {
@@ -106,7 +106,7 @@ EXPLICIT_PRESETS = [
         "keywords": [
             "standing sex", "leg raised", "standing doggy", "against the wall", "one leg up"
         ],
-        "before": "standing one leg hooked high body pinned to wall, 1man’s thick hard cock thrusting deep into her pussy from behind, 1girl, 1man, ",
+        "before": "standing one leg hooked high body pinned to wall, 1man thick hard cock thrusting deep into her pussy from behind, 1girl, 1man, ",
         "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
     },
 ]
