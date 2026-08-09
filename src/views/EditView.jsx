@@ -111,7 +111,7 @@ export default function EditView({ onGenerate, loading, image, error, onViewImag
                   {/* --- NEW RIBBON ADDED HERE --- */}
                   <div className="prompt-hint-row">
                     <p className="prompt-hint">
-                      For better nudifying, the reference outfit must match the skin tone, use any vanilla image model to do this
+                      For better output, the reference outfit must match the skin tone, use any vanilla image model to do this
                     </p>
                   </div>
                 </div>
