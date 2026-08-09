@@ -40,6 +40,117 @@ app            = None
 openpose       = None
 canny_detector = None
 
+# ---------- Explicit Prompt Presets (first match wins) ----------
+EXPLICIT_PRESETS = [
+    {
+        "name": "doggy",
+        "keywords": [
+            "doggy", "doggystyle", "doggy style", "from behind", "prone bone",
+            "bent over", "ass up", "on all fours", "being fucked", "getting fucked"
+        ],
+        "prompt": (
+            "Doggy style, on all fours ass up back arched looking over shoulder, "
+            "man’s thick hard cock slamming deep into her pussy from behind, 1girl, "
+            "{user_prompt}, rear view masterpiece, photorealistic, best quality, ultra detailed, "
+            "natural skin texture, visible pores, subtle freckles, realistic skin, "
+            "soft natural lighting, film grain, realistic anatomy"
+        )
+    },
+    {
+        "name": "missionary",
+        "keywords": [
+            "missionary", "missionary sex", "man on top", "on her back",
+            "legs spread", "having sex", "sexing"
+        ],
+        "prompt": (
+            "Missionary, lying on back legs spread wide knees up, "
+            "man’s thick hard cock pounding deep into her pussy from above, 1girl, "
+            "{user_prompt}, high angle masterpiece, photorealistic, best quality, ultra detailed, "
+            "natural skin texture, visible pores, subtle freckles, realistic skin, "
+            "soft natural lighting, film grain, realistic anatomy"
+        )
+    },
+    {
+        "name": "spooning",
+        "keywords": [
+            "spooning", "side fuck", "side sex", "spooning sex"
+        ],
+        "prompt": (
+            "Spooning, lying on her side one leg raised body curved, "
+            "man’s thick hard cock thrusting deep into her pussy from behind, 1girl, 1man, "
+            "{user_prompt}, side view masterpiece, photorealistic, best quality, ultra detailed, "
+            "natural skin texture, visible pores, subtle freckles, realistic skin, "
+            "soft natural lighting, film grain, realistic anatomy"
+        )
+    },
+    {
+        "name": "oral",
+        "keywords": [
+            "sucking", "blowjob", "blow job", "deepthroat", "deep throat",
+            "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"
+        ],
+        "prompt": (
+            "Oral sex, kneeling forward mouth wide open eyes watering, "
+            "man’s thick hard cock buried balls deep inside her mouth, 1girl, "
+            "{user_prompt}, low angle masterpiece, photorealistic, best quality, ultra detailed, "
+            "natural skin texture, visible pores, subtle freckles, realistic skin, "
+            "soft natural lighting, film grain, realistic anatomy"
+        )
+    },
+    {
+        "name": "cumshot",
+        "keywords": [
+            "cumshot", "cum on face", "facial", "semen", "covered in cum", "cum on tits"
+        ],
+        "prompt": (
+            "Cumshot, thick cum blasting across her face and big tits, "
+            "sticky white loads dripping down her cheeks lips and cleavage, 1girl, "
+            "{user_prompt}, high angle masterpiece, photorealistic, best quality, ultra detailed, "
+            "natural skin texture, visible pores, subtle freckles, realistic skin, "
+            "soft natural lighting, film grain, realistic anatomy"
+        )
+    },
+    {
+        "name": "cowgirl",
+        "keywords": [
+            "cowgirl", "reverse cowgirl", "riding", "riding cock", "on top"
+        ],
+        "prompt": (
+            "Cowgirl, straddling on top hips rolling downward, "
+            "man’s thick hard cock buried deep in her pussy from below, 1girl, "
+            "{user_prompt}, high angle masterpiece, photorealistic, best quality, ultra detailed, "
+            "natural skin texture, visible pores, subtle freckles, realistic skin, "
+            "soft natural lighting, film grain, realistic anatomy"
+        )
+    },
+    {
+        "name": "creampie",
+        "keywords": [
+            "creampie", "cum inside", "breeding", "internal cumshot", "cum in pussy"
+        ],
+        "prompt": (
+            "Creampie, lying back legs spread pussy gaping, "
+            "man’s thick hard cock pumping cum deep inside her pussy, 1girl, "
+            "{user_prompt}, close-up masterpiece, photorealistic, best quality, ultra detailed, "
+            "natural skin texture, visible pores, subtle freckles, realistic skin, "
+            "soft natural lighting, film grain, realistic anatomy"
+        )
+    },
+    {
+        "name": "standing_doggy",
+        "keywords": [
+            "standing sex", "leg raised", "standing doggy", "against the wall", "one leg up"
+        ],
+        "prompt": (
+            "Standing doggy, standing one leg hooked high body pinned to wall, "
+            "man’s thick hard cock thrusting deep into her pussy from behind, 1girl, 1man, "
+            "{user_prompt}, side view masterpiece, photorealistic, best quality, ultra detailed, "
+            "natural skin texture, visible pores, subtle freckles, realistic skin, "
+            "soft natural lighting, film grain, realistic anatomy"
+        )
+    },
+]
+
 def load_models():
     global base_pipeline, ip_model, app, openpose, canny_detector
 
@@ -68,8 +179,6 @@ def load_models():
         print("Loading LoRAs (Detail + Realism only)...")
         txt2img_pipe.load_lora_weights(DETAIL_LORA_PATH, adapter_name="detail")
         txt2img_pipe.load_lora_weights(REALISM_LORA_PATH, adapter_name="realism")
-
-        # Always use Detail + Realism
         txt2img_pipe.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
 
         base_pipeline = StableDiffusionXLControlNetImg2ImgPipeline(
@@ -135,37 +244,38 @@ def get_dimensions(image, max_size=1536, min_size=512, multiple=64):
     h = min(h, max_size // multiple * multiple)
     return w, h
 
-def is_action_prompt(user_prompt: str) -> bool:
+def ensure_min_file_size(image, min_bytes=600 * 1024):
+    """Upscale image if its JPEG size is under 600 KB (aspect-ratio safe)."""
+    buf = io.BytesIO()
+    image.save(buf, format="JPEG", quality=95)
+    current_size = buf.tell()
+
+    if current_size >= min_bytes:
+        return image
+
+    print(f"→ Image is {current_size/1024:.1f} KB (< 600 KB) – upscaling...")
+
+    w, h = image.size
+    target_long = 1280
+    long_side = max(w, h)
+    if long_side < target_long:
+        scale = target_long / long_side
+        new_w = int(round(w * scale / 64) * 64)
+        new_h = int(round(h * scale / 64) * 64)
+        image = image.resize((new_w, new_h), Image.Resampling.LANCZOS)
+        print(f"→ Upscaled to {new_w}x{new_h}")
+
+    return image
+
+def get_explicit_preset(user_prompt: str):
+    """Return the first matching preset or None."""
     prompt_lower = user_prompt.lower()
-    action_keywords = [
-        "doggy", "doggystyle", "doggy style", "from behind", "prone bone", "bent over",
-        "missionary", "cowgirl", "reverse cowgirl", "amazon", "mating press", "full nelson",
-        "nelson", "standing sex", "against the wall", "lifted", "legs up", "piledriver",
-        "spooning", "side fuck", "lotus", "bridge",
-        "sucking", "blowjob", "blow job", "deepthroat", "deep throat", "facefuck", "face fuck",
-        "oral", "cocksucking", "throat fuck", "irrumatio",
-        "fucking", "fuck", "pounded", "railed", "railing", "merciless", "rough", "hardcore",
-        "pounding", "thrusting", "penetrating", "penetration", "getting fucked", "being fucked",
-        "creampie", "cum inside", "breeding",
-        "dick", "cock", "penis", "thick cock", "big dick", "black cock", "white cock",
-        "hard cock", "erect", "veiny", "ballsack", "balls", "testicles",
-        "threesome", "threeway", "ffm", "mmf", "gangbang", "group sex", "orgy",
-        "lesbian", "girls only", "two girls", "scissoring", "tribbing",
-        "male", "man", "guy", "boyfriend", "husband", "stranger",
-        "rough sex", "violent", "slapping", "choking", "hair pulling", "spanking"
-    ]
-    return any(kw in prompt_lower for kw in action_keywords)
+    for preset in EXPLICIT_PRESETS:
+        if any(kw in prompt_lower for kw in preset["keywords"]):
+            return preset
+    return None
 
-def build_prompts(user_prompt, user_negative=''):
-    # Removed identity-forcing phrases so the model can freely change head orientation
-    positive = (
-        f"{user_prompt}, completely nude, fully naked, bare skin, "
-        f"photorealistic, masterpiece, best quality, ultra detailed, "
-        f"natural skin texture, visible pores, subtle freckles, "
-        f"realistic skin, soft natural lighting, film grain, "
-        f"realistic anatomy"
-    )
-
+def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
     negative = (
         "clothes, clothing, dress, shirt, pants, fabric, covered, dressed, "
         "different person, changed face, distorted face, deformed, bad anatomy, "
@@ -179,6 +289,20 @@ def build_prompts(user_prompt, user_negative=''):
 
     if user_negative:
         negative = f"{user_negative}, {negative}"
+
+    if is_sexual and preset is not None:
+        # Clean .format() injection – user_prompt goes exactly in the middle
+        positive = preset["prompt"].format(user_prompt=user_prompt)
+    else:
+        # Non-explicit general positive
+        positive = (
+            f"{user_prompt}, completely nude, fully naked, bare skin, "
+            f"photorealistic, masterpiece, best quality, ultra detailed, "
+            f"natural skin texture, visible pores, subtle freckles, "
+            f"realistic skin, soft natural lighting, film grain, "
+            f"realistic anatomy"
+        )
+
     return positive, negative
 
 def post_process(image):
@@ -205,37 +329,41 @@ def handler(job):
         s_scale          = float(input_data.get('s_scale', 1.0))
         strength         = float(input_data.get('strength', 0.70))
         guidance_scale   = 7.0
-        num_steps        = 65
+        num_steps        = 45
 
-        is_sexual = is_action_prompt(user_prompt)
+        # ----- Explicit detection & preset selection -----
+        preset = get_explicit_preset(user_prompt)
+        is_sexual = preset is not None
+
+        # Safety net for very common ambiguous phrases → default to doggy
+        if not is_sexual:
+            lower = user_prompt.lower()
+            if any(x in lower for x in ["being fucked", "getting fucked", "fucked hard", "pounded"]):
+                preset = EXPLICIT_PRESETS[0]  # doggy
+                is_sexual = True
 
         if is_sexual:
-            print("→ Sexual / explicit act detected → pure FaceID txt2img mode (no ControlNets)")
-            
-            # Completely disable both ControlNets
+            print(f"→ Explicit mode activated – using preset: {preset['name']}")
             pose_strength = 0.0
             canny_strength = 0.0
-            
-            # Near pure generation from noise
             strength = 0.97
-            
             guidance_scale = 9.0
             face_scale = max(face_scale, 0.84)
-            num_steps = 42          # ← dropped as requested
+            num_steps = 42
         else:
             print("→ Normal undress mode (img2img)")
 
-        # Always use only Detail + Realism
-        ip_model.pipe.set_adapters(
-            ["detail", "realism"],
-            adapter_weights=[0.55, 0.65]
-        )
+        # Always Detail + Realism
+        ip_model.pipe.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
 
         if not image_base64:
             return {"error": "No image provided"}
 
         image_data  = base64.b64decode(image_base64.split(",")[1] if "," in image_base64 else image_base64)
         input_image = Image.open(io.BytesIO(image_data)).convert("RGB")
+
+        # Upscale if under 600 KB
+        input_image = ensure_min_file_size(input_image)
 
         orig_w, orig_h = input_image.size
         w, h = get_dimensions(input_image)
@@ -266,7 +394,7 @@ def handler(job):
         canny_map = canny_detector(input_image, low_threshold=100, high_threshold=200)
         canny_map = canny_map.resize((w, h))
 
-        positive, negative = build_prompts(user_prompt, user_negative)
+        positive, negative = build_prompts(user_prompt, user_negative, is_sexual=is_sexual, preset=preset)
 
         # --- Generate ---
         runpod.serverless.progress_update(job, "GENERATING_EDIT")
