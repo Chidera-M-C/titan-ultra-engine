@@ -256,6 +256,7 @@ export default function MyImagesView({ images, likedImages, onSelectPrompt, onVi
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState(null);
   const [addedImages, setAddedImages] = useState([]);
+  const [editedImages, setEditedImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -271,6 +272,22 @@ export default function MyImagesView({ images, likedImages, onSelectPrompt, onVi
       .order('created_at', { ascending: false })
       .then(({ data }) => {
         setAddedImages((data || []).map(img => ({ ...img, url: img.image_url })));
+      });
+  }, [user]);
+
+  // Load user's private edited images
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('images')
+      .select('*')
+      .eq('user_id', user.id)
+      .or('style.eq.edit,category.eq.edit')
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (!error && data) {
+          setEditedImages(data.map(img => ({ ...img, url: img.url || img.image_url })));
+        }
       });
   }, [user]);
 
@@ -320,6 +337,17 @@ export default function MyImagesView({ images, likedImages, onSelectPrompt, onVi
   const getImages = (cat) => {
     if (cat.key === 'liked') return sortByDate(likedImages || []);
     if (cat.key === 'added') return sortByDate(addedImages);
+    if (cat.key === 'edited') {
+      // Merge passed-in props with directly fetched user edit images
+      const propEdits = allImages.filter(cat.filter);
+      const combined = [...editedImages];
+      propEdits.forEach(pImg => {
+        if (!combined.some(cImg => cImg.id === pImg.id)) {
+          combined.push(pImg);
+        }
+      });
+      return sortByDate(combined);
+    }
     return sortByDate(allImages.filter(cat.filter));
   };
 
