@@ -87,7 +87,7 @@ export function AuthProvider({ children }) {
 
       if (res.ok) {
         const data = await res.json();
-        setCredits(data.credits ?? 6);
+        setCredits(data.credits ?? 10);
         setProfile({
           username: data.username || '',
           avatar_url: data.avatar_url || '',
