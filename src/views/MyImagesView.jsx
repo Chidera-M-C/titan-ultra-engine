@@ -204,7 +204,11 @@ const CATEGORIES = [
     description: 'Your AI generated images',
     icon: Sparkles,
     accent: '#7c3aed',
-    filter: (img) => !img.category || img.category === '' || (img.category !== 'edit' && img.category !== 'character' && img.category !== 'faceswap'),
+    filter: (img) => 
+      (!img.category && !img.style) || 
+      (img.category !== 'edit' && img.style !== 'edit' && 
+       img.category !== 'character' && img.style !== 'character' && 
+       img.category !== 'faceswap' && img.style !== 'faceswap'),
   },
   {
     key: 'liked',
@@ -220,7 +224,7 @@ const CATEGORIES = [
     description: 'Images with your characters',
     icon: User,
     accent: '#0ea5e9',
-    filter: (img) => img.category === 'character',
+    filter: (img) => img.category === 'character' || img.style === 'character',
   },
   {
     key: 'edited',
@@ -228,7 +232,7 @@ const CATEGORIES = [
     description: 'Your edited images',
     icon: Pencil,
     accent: '#f59e0b',
-    filter: (img) => img.category === 'edit',
+    filter: (img) => img.category === 'edit' || img.style === 'edit',
   },
   {
     key: 'faceswap',
@@ -236,7 +240,7 @@ const CATEGORIES = [
     description: 'Your face swap results',
     icon: Shuffle,
     accent: '#10b981',
-    filter: (img) => img.category === 'faceswap',
+    filter: (img) => img.category === 'faceswap' || img.style === 'faceswap',
   },
   {
     key: 'added',
