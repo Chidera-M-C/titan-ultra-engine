@@ -48,40 +48,25 @@ EXPLICIT_PRESETS = [
             "doggy", "doggystyle", "doggy style", "from behind", "prone bone",
             "bent over", "ass up", "on all fours", "being fucked", "getting fucked"
         ],
-        "prompt": (
-            "Doggy style, on all fours ass up back arched looking over shoulder, "
-            "man’s thick hard cock slamming deep into her pussy from behind, 1girl, "
-            "{user_prompt}, rear view masterpiece, photorealistic, best quality, ultra detailed, "
-            "natural skin texture, visible pores, subtle freckles, realistic skin, "
-            "soft natural lighting, film grain, realistic anatomy"
-        )
+        "before": "on all fours, ass up back arched looking over shoulder, 1man’s thick hard cock slamming deep into her pussy from behind, 1girl, ",
+        "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
     },
     {
         "name": "missionary",
         "keywords": [
-            "missionary", "missionary sex", "man on top", "on her back",
+            "missionary", "missionary sex", "man on top", "on her back", "sex",
             "legs spread", "having sex", "sexing"
         ],
-        "prompt": (
-            "Missionary, lying on back legs spread wide knees up, "
-            "man’s thick hard cock pounding deep into her pussy from above, 1girl, "
-            "{user_prompt}, high angle masterpiece, photorealistic, best quality, ultra detailed, "
-            "natural skin texture, visible pores, subtle freckles, realistic skin, "
-            "soft natural lighting, film grain, realistic anatomy"
-        )
+        "before": "lying on back legs spread wide knees up, 1man’s thick hard cock pounding deep into her pussy from above, 1girl, ",
+        "after": ", high angle masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
     },
     {
         "name": "spooning",
         "keywords": [
             "spooning", "side fuck", "side sex", "spooning sex"
         ],
-        "prompt": (
-            "Spooning, lying on her side one leg raised body curved, "
-            "man’s thick hard cock thrusting deep into her pussy from behind, 1girl, 1man, "
-            "{user_prompt}, side view masterpiece, photorealistic, best quality, ultra detailed, "
-            "natural skin texture, visible pores, subtle freckles, realistic skin, "
-            "soft natural lighting, film grain, realistic anatomy"
-        )
+        "before": "lying on her side one leg raised body curved, 1man’s thick hard cock thrusting deep into her pussy from behind, 1girl, 1man, ",
+        "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
     },
     {
         "name": "oral",
@@ -89,65 +74,40 @@ EXPLICIT_PRESETS = [
             "sucking", "blowjob", "blow job", "deepthroat", "deep throat",
             "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"
         ],
-        "prompt": (
-            "Oral sex, kneeling forward mouth wide open eyes watering, "
-            "man’s thick hard cock buried balls deep inside her mouth, 1girl, "
-            "{user_prompt}, low angle masterpiece, photorealistic, best quality, ultra detailed, "
-            "natural skin texture, visible pores, subtle freckles, realistic skin, "
-            "soft natural lighting, film grain, realistic anatomy"
-        )
+        "before": "kneeling forward mouth wide open eyes watering, 1man’s thick hard cock buried balls deep inside her mouth, 1girl, ",
+        "after": ", high-angle masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
     },
     {
         "name": "cumshot",
         "keywords": [
             "cumshot", "cum on face", "facial", "semen", "covered in cum", "cum on tits"
         ],
-        "prompt": (
-            "Cumshot, thick cum blasting across her face and big tits, "
-            "sticky white loads dripping down her cheeks lips and cleavage, 1girl, "
-            "{user_prompt}, high angle masterpiece, photorealistic, best quality, ultra detailed, "
-            "natural skin texture, visible pores, subtle freckles, realistic skin, "
-            "soft natural lighting, film grain, realistic anatomy"
-        )
+        "before": "thick cum blasting across her face and big tits, sticky white loads dripping down her cheeks lips and cleavage, 1girl, ",
+        "after": ", high angle masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
     },
     {
         "name": "cowgirl",
         "keywords": [
             "cowgirl", "reverse cowgirl", "riding", "riding cock", "on top"
         ],
-        "prompt": (
-            "Cowgirl, straddling on top hips rolling downward, "
-            "man’s thick hard cock buried deep in her pussy from below, 1girl, "
-            "{user_prompt}, high angle masterpiece, photorealistic, best quality, ultra detailed, "
-            "natural skin texture, visible pores, subtle freckles, realistic skin, "
-            "soft natural lighting, film grain, realistic anatomy"
-        )
+        "before": "straddling on top hips rolling downward, 1man’s thick hard cock buried deep in her pussy from below, 1girl, ",
+        "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
     },
     {
         "name": "creampie",
         "keywords": [
-            "creampie", "cum inside", "breeding", "internal cumshot", "cum in pussy"
+            "creampie", "cum inside", "breeding", "bred", "internal cumshot", "cum in pussy"
         ],
-        "prompt": (
-            "Creampie, lying back legs spread pussy gaping, "
-            "man’s thick hard cock pumping cum deep inside her pussy, 1girl, "
-            "{user_prompt}, close-up masterpiece, photorealistic, best quality, ultra detailed, "
-            "natural skin texture, visible pores, subtle freckles, realistic skin, "
-            "soft natural lighting, film grain, realistic anatomy"
-        )
+        "before": "lying back legs spread pussy gaping, 1man man’s thick hard cock pumping cum deep inside her pussy, 1girl, ",
+        "after": ", high-angle masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
     },
     {
         "name": "standing_doggy",
         "keywords": [
             "standing sex", "leg raised", "standing doggy", "against the wall", "one leg up"
         ],
-        "prompt": (
-            "Standing doggy, standing one leg hooked high body pinned to wall, "
-            "man’s thick hard cock thrusting deep into her pussy from behind, 1girl, 1man, "
-            "{user_prompt}, side view masterpiece, photorealistic, best quality, ultra detailed, "
-            "natural skin texture, visible pores, subtle freckles, realistic skin, "
-            "soft natural lighting, film grain, realistic anatomy"
-        )
+        "before": "standing one leg hooked high body pinned to wall, 1man’s thick hard cock thrusting deep into her pussy from behind, 1girl, 1man, ",
+        "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
     },
 ]
 
@@ -291,8 +251,8 @@ def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
         negative = f"{user_negative}, {negative}"
 
     if is_sexual and preset is not None:
-        # Clean .format() injection – user_prompt goes exactly in the middle
-        positive = preset["prompt"].format(user_prompt=user_prompt)
+        # Real variable insertion using before + after
+        positive = f"{preset['before']}{user_prompt}{preset['after']}"
     else:
         # Non-explicit general positive
         positive = (
