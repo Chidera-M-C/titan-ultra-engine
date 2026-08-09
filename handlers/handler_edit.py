@@ -2,110 +2,132 @@ import sys
 sys.stdout = sys.__stdout__
 sys.stderr = sys.__stderr__
 
-# Force unbuffered output so RunPod captures all logs
 import os
 os.environ['PYTHONUNBUFFERED'] = '1'
 
 import torch
 import runpod
+import cv2
+import numpy as np
+import io, base64
+from PIL import Image, ImageFilter, ImageEnhance
+
 from diffusers import (
     StableDiffusionXLControlNetPipeline,
+    StableDiffusionXLControlNetImg2ImgPipeline,
     ControlNetModel,
     DPMSolverMultistepScheduler,
     AutoencoderKL
 )
+from ip_adapter.ip_adapter_faceid import IPAdapterFaceIDPlusXL
+from insightface.app import FaceAnalysis
+from insightface.utils import face_align
 from controlnet_aux import OpenposeDetector, CannyDetector
-import io, base64, os, requests
-import numpy as np
-from PIL import Image, ImageFilter, ImageEnhance
 
 # --- CONFIG ---
-CIVITAI_TOKEN    = os.environ.get("CIVITAI_API_TOKEN", "")  # ← reads from RunPod env vars
+JUGGERNAUT_PATH      = "/workspace/juggernaut_xl.safetensors"
+VAE_PATH             = "/workspace/sdxl_vae.safetensors"
+DETAIL_LORA_PATH     = "/workspace/detail_tweaker.safetensors"
+REALISM_LORA_PATH    = "/workspace/realism.safetensors"
+OPENPOSE_PATH        = "/workspace/controlnet_openpose_xl"
+CANNY_PATH           = "/workspace/controlnet_canny_xl"
+IPADAPTER_PATH       = "/workspace/ip-adapter-faceid-plusv2_sdxl.bin"
+IMAGE_ENCODER_PATH   = "/workspace/image_encoder"
 
-JUGGERNAUT_PATH  = "/workspace/juggernaut_xl.safetensors"
-VAE_PATH         = "/workspace/sdxl_vae.safetensors"
-DETAIL_LORA_PATH = "/workspace/add-detail-xl.safetensors"
-OPENPOSE_PATH    = "/workspace/controlnet_openpose_xl"
-CANNY_PATH       = "/workspace/controlnet_canny_xl"
+base_pipeline  = None
+ip_model       = None
+app            = None
+openpose       = None
+canny_detector = None
 
-JUGGERNAUT_LINK  = "https://civitai.com/api/download/models/1759168?type=Model&format=SafeTensor&size=full&fp=fp16"
-VAE_LINK         = "https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/sdxl_vae.safetensors"
-DETAIL_LORA_LINK = "https://huggingface.co/LyliaEngine/add-detail-xl/resolve/main/add-detail-xl.safetensors"
-OPENPOSE_HF      = "thibaud/controlnet-openpose-sdxl-1.0"
-CANNY_HF         = "diffusers/controlnet-canny-sdxl-1.0"
-
-pipeline         = None
-openpose         = None
-canny_detector   = None
-
-def download_file(url, path, label):
-    if not os.path.exists(path):
-        print(f"Downloading {label}...")
-
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        if "civitai.com" in url:
-            if not CIVITAI_TOKEN:
-                raise RuntimeError(f"CIVITAI_API_TOKEN not set — cannot download {label}!")
-            headers['Authorization'] = f'Bearer {CIVITAI_TOKEN}'
-
-        r = requests.get(url, headers=headers, stream=True, allow_redirects=True)
-        r.raise_for_status()
-
-        # Catch HTML error pages disguised as downloads
-        content_type = r.headers.get('content-type', '')
-        if 'text/html' in content_type:
-            raise RuntimeError(f"{label} download returned an HTML page — Civitai token may be invalid!")
-
-        total_size = int(r.headers.get('content-length', 0))
-        with open(path, 'wb') as f:
-            downloaded = 0
-            for chunk in r.iter_content(chunk_size=1024 * 1024):
-                f.write(chunk)
-                downloaded += len(chunk)
-                if total_size:
-                    print(f"  {(downloaded / total_size) * 100:.1f}%", end='\r')
-
-        # Sanity check — model files should be at least 10MB
-        size_mb = os.path.getsize(path) / (1024 * 1024)
-        if size_mb < 10:
-            os.remove(path)
-            raise RuntimeError(f"{label} is only {size_mb:.1f}MB — download likely failed. Check token and URL.")
-
-        print(f"  {label} downloaded successfully ({size_mb:.0f}MB)")
-    else:
-        size_mb = os.path.getsize(path) / (1024 * 1024)
-        print(f"  {label} already exists ({size_mb:.0f}MB), skipping download")
+# ---------- Explicit Prompt Presets (first match wins) ----------
+EXPLICIT_PRESETS = [
+    {
+        "name": "doggy",
+        "keywords": [
+            "doggy", "doggystyle", "doggy style", "from behind", "prone bone",
+            "bent over", "ass up", "on all fours", "being fucked", "getting fucked"
+        ],
+        "before": "on all fours, ass up back arched looking over shoulder, 1man thick hard cock slamming deep into her pussy from behind, 1girl, ",
+        "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+    },
+    {
+        "name": "missionary",
+        "keywords": [
+            "missionary", "missionary sex", "man on top", "on her back", "sex",
+            "legs spread", "having sex", "sexing"
+        ],
+        "before": "lying on back legs spread wide knees up, 1man thick hard cock pounding deep into her pussy from above, 1girl, ",
+        "after": ", high angle masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+    },
+    {
+        "name": "spooning",
+        "keywords": [
+            "spooning", "side fuck", "side sex", "spooning sex"
+        ],
+        "before": "lying on her side one leg raised body curved, 1man thick hard cock thrusting deep into her pussy from behind, 1girl, 1man, ",
+        "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+    },
+    {
+        "name": "oral",
+        "keywords": [
+            "sucking", "blowjob", "blow job", "deepthroat", "deep throat",
+            "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"
+        ],
+        "before": "kneeling forward mouth wide open eyes watering, 1man thick hard cock buried balls deep inside her mouth, 1girl, ",
+        "after": ", high-angle masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+    },
+    {
+        "name": "cumshot",
+        "keywords": [
+            "cumshot", "cum on face", "facial", "semen", "covered in cum", "cum on tits"
+        ],
+        "before": "thick cum blasting across her face and big tits, sticky white loads dripping down her cheeks lips and cleavage, 1girl, ",
+        "after": ", high angle masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+    },
+    {
+        "name": "cowgirl",
+        "keywords": [
+            "cowgirl", "reverse cowgirl", "riding", "riding cock", "on top"
+        ],
+        "before": "straddling on top hips rolling downward, 1man thick hard cock buried deep in her pussy from below, 1girl, ",
+        "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+    },
+    {
+        "name": "creampie",
+        "keywords": [
+            "creampie", "cum inside", "breeding", "bred", "internal cumshot", "cum in pussy"
+        ],
+        "before": "lying back legs spread pussy gaping, 1man thick hard cock pumping cum deep inside her pussy, 1girl, ",
+        "after": ", high-angle masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+    },
+    {
+        "name": "standing_doggy",
+        "keywords": [
+            "standing sex", "leg raised", "standing doggy", "against the wall", "one leg up"
+        ],
+        "before": "standing one leg hooked high body pinned to wall, 1man thick hard cock thrusting deep into her pussy from behind, 1girl, 1man, ",
+        "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+    },
+]
 
 def load_models():
-    global pipeline, openpose, canny_detector
+    global base_pipeline, ip_model, app, openpose, canny_detector
 
-    if pipeline is None:
-        # Token check upfront
-        if not CIVITAI_TOKEN:
-            print("⚠️  WARNING: CIVITAI_API_TOKEN not set — Civitai downloads will fail!")
-        else:
-            print(f"✓ Civitai token loaded ({CIVITAI_TOKEN[:6]}...)")
+    if base_pipeline is None:
+        print("Initializing InsightFace engine...")
+        app = FaceAnalysis(name='buffalo_l', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+        app.prepare(ctx_id=0, det_size=(640, 640))
 
-        download_file(JUGGERNAUT_LINK,  JUGGERNAUT_PATH,  "Juggernaut XL")
-        download_file(VAE_LINK,         VAE_PATH,          "SDXL VAE")
-        download_file(DETAIL_LORA_LINK, DETAIL_LORA_PATH,  "Detail Tweaker LoRA")
+        print("Loading VAE...")
+        vae = AutoencoderKL.from_single_file(VAE_PATH, torch_dtype=torch.float16).to("cuda")
 
-        vae = AutoencoderKL.from_single_file(
-            VAE_PATH, torch_dtype=torch.float16
-        ).to("cuda")
-
-        print("Loading ControlNet OpenPose...")
-        controlnet_pose = ControlNetModel.from_pretrained(
-            OPENPOSE_HF, torch_dtype=torch.float16
-        ).to("cuda")
-
-        print("Loading ControlNet Canny...")
-        controlnet_canny = ControlNetModel.from_pretrained(
-            CANNY_HF, torch_dtype=torch.float16
-        ).to("cuda")
+        print("Loading ControlNets...")
+        controlnet_pose = ControlNetModel.from_pretrained(OPENPOSE_PATH, torch_dtype=torch.float16).to("cuda")
+        controlnet_canny = ControlNetModel.from_pretrained(CANNY_PATH, torch_dtype=torch.float16).to("cuda")
 
         print("Loading Juggernaut XL pipeline...")
-        pipeline = StableDiffusionXLControlNetPipeline.from_single_file(
+        txt2img_pipe = StableDiffusionXLControlNetPipeline.from_single_file(
             JUGGERNAUT_PATH,
             controlnet=[controlnet_pose, controlnet_canny],
             vae=vae,
@@ -114,75 +136,216 @@ def load_models():
             variant="fp16"
         ).to("cuda")
 
-        pipeline.load_lora_weights(DETAIL_LORA_PATH)
-        pipeline.fuse_lora(lora_scale=0.6)
+        print("Loading LoRAs (Detail + Realism only)...")
+        txt2img_pipe.load_lora_weights(DETAIL_LORA_PATH, adapter_name="detail")
+        txt2img_pipe.load_lora_weights(REALISM_LORA_PATH, adapter_name="realism")
+        txt2img_pipe.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
 
-        pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
-            pipeline.scheduler.config,
+        base_pipeline = StableDiffusionXLControlNetImg2ImgPipeline(
+            vae=txt2img_pipe.vae,
+            text_encoder=txt2img_pipe.text_encoder,
+            text_encoder_2=txt2img_pipe.text_encoder_2,
+            tokenizer=txt2img_pipe.tokenizer,
+            tokenizer_2=txt2img_pipe.tokenizer_2,
+            unet=txt2img_pipe.unet,
+            controlnet=txt2img_pipe.controlnet,
+            scheduler=txt2img_pipe.scheduler,
+        ).to("cuda")
+
+        base_pipeline.unet = txt2img_pipe.unet
+
+        base_pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
+            base_pipeline.scheduler.config,
             use_karras_sigmas=True,
             algorithm_type="dpmsolver++"
         )
-        pipeline.enable_vae_slicing()
-        pipeline.enable_vae_tiling()
-        pipeline.enable_attention_slicing(slice_size="auto")
+        base_pipeline.enable_vae_slicing()
+        base_pipeline.enable_vae_tiling()
+        base_pipeline.enable_attention_slicing(slice_size="auto")
 
-        print("Loading OpenPose detector...")
+        print("Loading IP-Adapter FaceID Plus v2...")
+        ip_model = IPAdapterFaceIDPlusXL(
+            base_pipeline,
+            image_encoder_path=IMAGE_ENCODER_PATH,
+            ip_ckpt=IPADAPTER_PATH,
+            device="cuda",
+            torch_dtype=torch.float16,
+        )
+
+        print("Loading detectors...")
         openpose = OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
-
-        print("Loading Canny detector...")
         canny_detector = CannyDetector()
 
-        print("✓ All edit models loaded successfully")
+        print("✓ FaceID Edit pipeline initialized successfully")
 
-def get_dimensions(image):
+def get_dimensions(image, max_size=1536, min_size=512, multiple=64):
     w, h = image.size
-    w = int(w // 8 * 8)
-    h = int(h // 8 * 8)
-    if w > 1536: w = 1536
-    if h > 1536: h = 1536
+    aspect = w / float(h)
+
+    if w > max_size or h > max_size:
+        if aspect >= 1.0:
+            w = max_size
+            h = int(round(w / aspect))
+        else:
+            h = max_size
+            w = int(round(h * aspect))
+
+    if w < min_size or h < min_size:
+        if aspect >= 1.0:
+            w = min_size
+            h = int(round(w / aspect))
+        else:
+            h = min_size
+            w = int(round(h * aspect))
+
+    w = max(min_size, int(round(w / multiple) * multiple))
+    h = max(min_size, int(round(h / multiple) * multiple))
+    w = min(w, max_size // multiple * multiple)
+    h = min(h, max_size // multiple * multiple)
     return w, h
 
-def build_prompts(user_prompt, user_negative=''):
-    positive = (
-        f"{user_prompt}, photorealistic, masterpiece, best quality, ultra detailed, "
-        f"sharp focus, realistic skin, natural lighting, consistent identity, "
-        f"same person same face, preserve facial features, preserve background"
-    )
+def ensure_min_file_size(image, min_bytes=600 * 1024):
+    """Upscale image if its JPEG size is under 600 KB (aspect-ratio safe)."""
+    buf = io.BytesIO()
+    image.save(buf, format="JPEG", quality=95)
+    current_size = buf.tell()
+
+    if current_size >= min_bytes:
+        return image
+
+    print(f"→ Image is {current_size/1024:.1f} KB (< 600 KB) – upscaling...")
+
+    w, h = image.size
+    target_long = 1280
+    long_side = max(w, h)
+    if long_side < target_long:
+        scale = target_long / long_side
+        new_w = int(round(w * scale / 64) * 64)
+        new_h = int(round(h * scale / 64) * 64)
+        image = image.resize((new_w, new_h), Image.Resampling.LANCZOS)
+        print(f"→ Upscaled to {new_w}x{new_h}")
+
+    return image
+
+def get_explicit_preset(user_prompt: str):
+    """Return the first matching preset or None."""
+    prompt_lower = user_prompt.lower()
+    for preset in EXPLICIT_PRESETS:
+        if any(kw in prompt_lower for kw in preset["keywords"]):
+            return preset
+    return None
+
+def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
     negative = (
+        "clothes, clothing, dress, shirt, pants, fabric, covered, dressed, "
         "different person, changed face, distorted face, deformed, bad anatomy, "
         "mutated hands, fused fingers, extra fingers, missing fingers, "
-        "blurry, low quality, jpeg artifacts, worst quality, ugly, "
-        "watermark, text, signature"
+        "blurry, low quality, jpeg artifacts, worst quality, ugly, watermark, text, "
+        "cartoon, anime, illustration, painting, 3d render, cgi, "
+        "plastic skin, doll-like, porcelain skin, smooth skin, airbrushed, "
+        "overly smooth, waxy, artificial, synthetic, glossy plastic, "
+        "oversharp, oversaturated, heavy makeup, perfect skin, flawless skin"
     )
+
     if user_negative:
         negative = f"{user_negative}, {negative}"
+
+    if is_sexual and preset is not None:
+        # Real variable insertion using before + after
+        positive = f"{preset['before']}{user_prompt}{preset['after']}"
+    else:
+        # Non-explicit general positive
+        positive = (
+            f"{user_prompt}, completely nude, fully naked, bare skin, "
+            f"photorealistic, masterpiece, best quality, ultra detailed, "
+            f"natural skin texture, visible pores, subtle freckles, "
+            f"realistic skin, soft natural lighting, film grain, "
+            f"realistic anatomy"
+        )
+
     return positive, negative
 
 def post_process(image):
-    image = image.filter(ImageFilter.UnsharpMask(radius=1.5, percent=120, threshold=2))
-    image = ImageEnhance.Contrast(image).enhance(1.1)
-    image = ImageEnhance.Sharpness(image).enhance(1.2)
+    image = image.filter(ImageFilter.UnsharpMask(radius=1.0, percent=75, threshold=3))
+    image = ImageEnhance.Contrast(image).enhance(1.04)
+    image = ImageEnhance.Sharpness(image).enhance(1.05)
     return image
 
 def handler(job):
     try:
-        input_data     = job['input']
-        user_prompt    = input_data.get('prompt', 'standing pose, confident expression')
-        user_negative  = input_data.get('negative_prompt', '')
-        image_base64   = input_data.get('image')
-        pose_strength  = float(input_data.get('pose_strength', 0.6))
-        canny_strength = float(input_data.get('canny_strength', 0.4))
+        input_data       = job['input']
+        user_prompt      = input_data.get('prompt', 'standing pose, confident expression')
+        user_negative    = input_data.get('negative_prompt', '')
+        image_base64     = input_data.get('image')
+
+        # Frontend slider mapping (mainly for normal mode)
+        raw_pose = float(input_data.get('pose_strength', input_data.get('poseStrength', 0.5)))
+        pose_strength = max(0.12, min(0.85, 1.0 - raw_pose))
+
+        raw_structure = float(input_data.get('structure_strength', input_data.get('structureStrength', 0.6)))
+        canny_strength = max(0.05, min(0.45, raw_structure * 0.4))
+
+        face_scale       = float(input_data.get('face_scale', 0.82))
+        s_scale          = float(input_data.get('s_scale', 1.0))
+        strength         = float(input_data.get('strength', 0.70))
+        guidance_scale   = 7.0
+        num_steps        = 45
+
+        # ----- Explicit detection & preset selection -----
+        preset = get_explicit_preset(user_prompt)
+        is_sexual = preset is not None
+
+        # Safety net for very common ambiguous phrases → default to doggy
+        if not is_sexual:
+            lower = user_prompt.lower()
+            if any(x in lower for x in ["being fucked", "getting fucked", "fucked hard", "pounded"]):
+                preset = EXPLICIT_PRESETS[0]  # doggy
+                is_sexual = True
+
+        if is_sexual:
+            print(f"→ Explicit mode activated – using preset: {preset['name']}")
+            pose_strength = 0.0
+            canny_strength = 0.0
+            strength = 0.97
+            guidance_scale = 9.0
+            face_scale = max(face_scale, 0.84)
+            num_steps = 42
+        else:
+            print("→ Normal undress mode (img2img)")
+
+        # Always Detail + Realism
+        ip_model.pipe.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
 
         if not image_base64:
             return {"error": "No image provided"}
 
         image_data  = base64.b64decode(image_base64.split(",")[1] if "," in image_base64 else image_base64)
         input_image = Image.open(io.BytesIO(image_data)).convert("RGB")
-        w, h        = get_dimensions(input_image)
+
+        # Upscale if under 600 KB
+        input_image = ensure_min_file_size(input_image)
+
+        orig_w, orig_h = input_image.size
+        w, h = get_dimensions(input_image)
         input_image = input_image.resize((w, h), Image.Resampling.LANCZOS)
 
-        positive, negative = build_prompts(user_prompt, user_negative)
+        print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} | Pose: {pose_strength:.2f} | Canny: {canny_strength:.2f} | Strength: {strength:.2f} | CFG: {guidance_scale} | Steps: {num_steps} | Sexual: {is_sexual}")
 
+        # Face embedding
+        cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
+        faces   = app.get(cv2_img)
+
+        if len(faces) == 0:
+            return {"error": "No face detected in input image by InsightFace"}
+
+        faces = sorted(faces, key=lambda x: (x.bbox[2] - x.bbox[0]) * (x.bbox[3] - x.bbox[1]), reverse=True)
+        best_face = faces[0]
+
+        faceid_embeds = torch.from_numpy(best_face.normed_embedding).unsqueeze(0).to(dtype=torch.float16, device="cuda")
+        aligned_face_bgr = face_align.norm_crop(cv2_img, landmark=best_face.kps, image_size=224)
+        face_image = Image.fromarray(cv2.cvtColor(aligned_face_bgr, cv2.COLOR_BGR2RGB))
+
+        # ControlNet maps
         runpod.serverless.progress_update(job, "EXTRACTING_POSE")
         pose_map = openpose(input_image, include_body=True, include_hand=True)
         pose_map = pose_map.resize((w, h))
@@ -191,22 +354,35 @@ def handler(job):
         canny_map = canny_detector(input_image, low_threshold=100, high_threshold=200)
         canny_map = canny_map.resize((w, h))
 
+        positive, negative = build_prompts(user_prompt, user_negative, is_sexual=is_sexual, preset=preset)
+
+        # --- Generate ---
         runpod.serverless.progress_update(job, "GENERATING_EDIT")
-        result = pipeline(
+
+        ip_model.pipe.scheduler.set_timesteps(num_steps, device="cuda")
+
+        images = ip_model.generate(
             prompt=positive,
             negative_prompt=negative,
-            image=[pose_map, canny_map],
+            faceid_embeds=faceid_embeds,
+            face_image=face_image,
+            image=input_image,
+            control_image=[pose_map, canny_map],
+            strength=strength,
             controlnet_conditioning_scale=[pose_strength, canny_strength],
-            num_inference_steps=35,
-            guidance_scale=7.0,
+            num_inference_steps=num_steps,
+            guidance_scale=guidance_scale,
             width=w,
             height=h,
-        ).images[0]
+            scale=face_scale,
+            s_scale=s_scale,
+            num_samples=1,
+        )
 
-        result = post_process(result)
+        result = post_process(images[0])
 
         buffered = io.BytesIO()
-        result.save(buffered, format="JPEG", quality=85, optimize=True, progressive=True)
+        result.save(buffered, format="JPEG", quality=93, optimize=True, progressive=True)
 
         return {"image": f"data:image/jpeg;base64,{base64.b64encode(buffered.getvalue()).decode()}"}
 
@@ -218,21 +394,10 @@ def handler(job):
 if __name__ == "__main__":
     try:
         load_models()
-        print("✓ Startup complete, listening for jobs...")
+        print("✓ Startup complete, listening for jobs...", flush=True)
         runpod.serverless.start({"handler": handler})
     except Exception as e:
         import traceback
-        print(f"FATAL STARTUP ERROR: {e}")
-        traceback.print_exc()
-        raise
-
-if __name__ == "__main__":
-    try:
-        load_models()
-        print("✓ Startup complete", flush=True)
-        runpod.serverless.start({"handler": handler})
-    except Exception as e:
-        import traceback
-        print(f"FATAL: {e}", file=sys.stderr, flush=True)
+        print(f"FATAL STARTUP ERROR: {e}", file=sys.stderr, flush=True)
         traceback.print_exc(file=sys.stderr)
         sys.exit(1)

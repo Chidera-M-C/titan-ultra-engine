@@ -40,9 +40,12 @@ export default function ExploreView({ promptRef, onSelectPrompt, onViewImage, on
     setImages([]); // ✅ clear stale images immediately on category switch
   
     try {
+      // ── Always filter out 'edit' images from Explore feed ──────────
       let query = supabase
         .from('images')
         .select('*')
+        .neq('style', 'edit')
+        .neq('category', 'edit')
         .order('created_at', { ascending: false });
   
       if (activeCategory !== 'All') {

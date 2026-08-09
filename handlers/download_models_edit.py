@@ -1,51 +1,98 @@
-import requests, os
+import os
+import subprocess
+from huggingface_hub import hf_hub_download, snapshot_download
 
-CIVITAI_TOKEN = os.environ.get("CIVITAI_TOKEN", "")
-HF_TOKEN = os.environ.get("HF_TOKEN", "")  # ← ADD THIS
+HF_TOKEN = os.getenv("HF_TOKEN", "")
+CIVITAI_TOKEN = os.getenv("CIVITAI_TOKEN", "")
 
-def download(url, path, label):
-    if os.path.exists(path):
-        print(f"  {label} already exists, skipping")
-        return
+def download_civitai(url, dest_path, label):
     print(f"Downloading {label}...")
-    headers = {"User-Agent": "Mozilla/5.0"}
-    if "civitai.com" in url and CIVITAI_TOKEN:
-        headers["Authorization"] = f"Bearer {CIVITAI_TOKEN}"
-    if "huggingface.co" in url and HF_TOKEN:        # ← ADD THIS
-        headers["Authorization"] = f"Bearer {HF_TOKEN}"  # ← ADD THIS
-    r = requests.get(url, headers=headers, stream=True)
-    r.raise_for_status()
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    total_size = int(r.headers.get("content-length", 0))
-    with open(path, "wb") as f:
-        downloaded = 0
-        for chunk in r.iter_content(chunk_size=1024 * 1024):
-            f.write(chunk)
-            downloaded += len(chunk)
-            if total_size:
-                print(f"  {(downloaded/total_size)*100:.1f}%", end="\r")
-    print(f"  {label} done")
+    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+    
+    download_url = url
+    if CIVITAI_TOKEN:
+        separator = "&" if "?" in url else "?"
+        download_url += f"{separator}token={CIVITAI_TOKEN}"
+        
+    cmd = [
+        "aria2c", 
+        "-x", "8", 
+        "-s", "8", 
+        "-c", 
+        "--dir", os.path.dirname(dest_path), 
+        "--out", os.path.basename(dest_path), 
+        download_url
+    ]
+    subprocess.run(cmd, check=True)
+    print(f"✅ {label} done")
 
-def download_hf_model(repo_id, local_path, label):
-    if os.path.exists(local_path):
-        print(f"  {label} already exists, skipping")
-        return
-    print(f"Downloading {label} from HuggingFace...")
-    from huggingface_hub import snapshot_download
-    snapshot_download(
-        repo_id=repo_id,
-        local_dir=local_path,
-        token=HF_TOKEN or None  # ← ADD THIS
-    )
-    print(f"  {label} done")
+# 1. Base Checkpoint & VAE
+download_civitai(
+    "https://civitai.red/api/download/models/2551619?fileId=2440003",
+    "/workspace/juggernaut_xl.safetensors",
+    "Juggernaut XL"
+)
 
-# Civitai models
-download("https://civitai.com/api/download/models/1759168?type=Model&format=SafeTensor&size=full&fp=fp16", "/tmp/juggernaut_xl.safetensors", "Juggernaut XL")
-download("https://huggingface.co/madebyollin/sdxl-vae-fp16-fix/resolve/main/sdxl_vae.safetensors", "/tmp/sdxl_vae.safetensors", "SDXL VAE")
-download("https://huggingface.co/LyliaEngine/add-detail-xl/resolve/main/add-detail-xl.safetensors", "/tmp/add-detail-xl.safetensors", "Detail Tweaker LoRA")
+hf_hub_download(
+    repo_id="madebyollin/sdxl-vae-fp16-fix",
+    filename="sdxl_vae.safetensors",
+    local_dir="/workspace",
+    token=HF_TOKEN or None
+)
 
-# ControlNet models from HuggingFace
-download_hf_model("thibaud/controlnet-openpose-sdxl-1.0", "/tmp/controlnet_openpose_xl", "ControlNet OpenPose XL")
-download_hf_model("diffusers/controlnet-canny-sdxl-1.0",  "/tmp/controlnet_canny_xl",    "ControlNet Canny XL")
+# 2. Detail Tweaker LoRA
+download_civitai(
+    "https://civitai.red/api/download/models/135867?fileId=99264",
+    "/workspace/detail_tweaker.safetensors",
+    "Detail Tweaker LoRA"
+)
 
-print("All edit models downloaded successfully")
+# 3. Realism LoRA
+download_civitai(
+    "https://civitai.red/api/download/models/1236430?fileId=1141672",
+    "/workspace/realism.safetensors",
+    "Realism LoRA"
+)
+
+# 4. ControlNets
+snapshot_download(
+    repo_id="xinsir/controlnet-openpose-sdxl-1.0",
+    local_dir="/workspace/controlnet_openpose_xl",
+    allow_patterns=["*.json", "diffusion_pytorch_model.safetensors"],
+    token=HF_TOKEN or None
+)
+
+snapshot_download(
+    repo_id="diffusers/controlnet-canny-sdxl-1.0",
+    local_dir="/workspace/controlnet_canny_xl",
+    allow_patterns=["*.json", "*.safetensors"],
+    token=HF_TOKEN or None
+)
+
+# 5. IP-Adapter FaceID Plus v2
+hf_hub_download(
+    repo_id="h94/IP-Adapter-FaceID",
+    filename="ip-adapter-faceid-plusv2_sdxl.bin",
+    local_dir="/workspace",
+    token=HF_TOKEN or None
+)
+
+hf_hub_download(
+    repo_id="h94/IP-Adapter-FaceID",
+    filename="ip-adapter-faceid-plusv2_sdxl_lora.safetensors",
+    local_dir="/workspace",
+    token=HF_TOKEN or None
+)
+
+# 6. CLIP Image Encoder
+snapshot_download(
+    repo_id="laion/CLIP-ViT-H-14-laion2B-s32B-b79K",
+    local_dir="/workspace/image_encoder",
+    token=HF_TOKEN or None
+)
+
+# 7. OpenPose Pre-cache
+from controlnet_aux import OpenposeDetector
+OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
+
+print("✅ All edit models downloaded successfully")

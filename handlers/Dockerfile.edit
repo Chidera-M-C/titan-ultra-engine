@@ -1,20 +1,29 @@
 FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
 
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
 WORKDIR /app
 
-# Install missing system libraries
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tzdata \
+    g++ \
+    git \
     libglib2.0-0 \
     libsm6 \
-    libxrender1 \
     libxext6 \
+    libxrender-dev \
+    libgomp1 \
     libgl1-mesa-glx \
+    wget \
+    aria2 \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+    && echo $TZ > /etc/timezone \
+    && dpkg-reconfigure --frontend noninteractive tzdata \
     && rm -rf /var/lib/apt/lists/*
 
-# Install numpy first and lock it down before anything else touches it
 RUN pip install --no-cache-dir "numpy==1.24.4"
 
-# Install core packages with versions known to work together
 RUN pip install --no-cache-dir \
     accelerate==0.28.0 \
     transformers==4.40.0 \
@@ -22,36 +31,32 @@ RUN pip install --no-cache-dir \
     safetensors==0.4.3 \
     huggingface_hub==0.22.2 \
     Pillow==10.3.0 \
-    requests==2.31.0
-
-# Install peft AFTER transformers and accelerate so the backend is recognized
-# Install peft AFTER transformers and accelerate so the backend is recognized
-RUN pip install --no-cache-dir "peft==0.10.0"
-
-# Install remaining packages
-RUN pip install --no-cache-dir \
+    requests==2.31.0 \
     runpod==1.6.2 \
     timm==0.9.16 \
     controlnet-aux==0.0.7 \
     opencv-python-headless==4.9.0.80 \
-    matplotlib==3.7.5
+    insightface==0.7.3 \
+    onnxruntime-gpu==1.16.3 \
+    einops==0.7.0 \
+    peft==0.10.0
 
-# Patch out mediapipe (not needed, causes import errors)
+RUN pip install --no-cache-dir git+https://github.com/tencent-ailab/IP-Adapter.git
+
 RUN sed -i 's/from .mediapipe_face import MediapipeFaceDetector/pass  # mediapipe disabled/' \
     /opt/conda/lib/python3.10/site-packages/controlnet_aux/__init__.py
 
-# Force numpy to stay at 1.24.4 — some packages silently upgrade it
 RUN pip install --no-cache-dir --force-reinstall "numpy==1.24.4"
 
-COPY handler_edit.py .
+# Pre-cache InsightFace model (matches working character setup)
+COPY download_insightface.py /app/
+RUN python /app/download_insightface.py
 
-# Verify everything loads cleanly
-RUN python -c "import torch; print('torch OK:', torch.__version__)"
-RUN python -c "import numpy; print('numpy OK:', numpy.__version__)"
-RUN python -c "from diffusers import StableDiffusionXLControlNetPipeline, ControlNetModel; print('diffusers OK')"
-RUN python -c "from controlnet_aux import OpenposeDetector; print('controlnet_aux OK')"
-RUN python -c "import peft; print('peft OK:', peft.__version__)"
-RUN python -c "import runpod; print('runpod OK')"
-RUN python -c "import cv2; print('cv2 OK')"
+COPY download_models_edit.py /app/
+COPY handler_edit.py /app/
 
-CMD ["python", "handler_edit.py"]
+ARG HF_TOKEN
+ARG CIVITAI_TOKEN
+RUN HF_TOKEN=${HF_TOKEN} CIVITAI_TOKEN=${CIVITAI_TOKEN} python /app/download_models_edit.py
+
+CMD ["python", "-u", "handler_edit.py"]

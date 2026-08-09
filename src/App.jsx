@@ -416,7 +416,7 @@ export default function App() {
         (async () => {
           try {
             console.log('Deducting credits for user:', user?.id);
-            await deductCreditsLive(2);
+            await deductCreditsLive(4);
             const publicUrl = await saveAiImage(user.id, base64Image, prompt, styleId);
             setUserGallery(prev => [{
               id:         Date.now(),
@@ -442,7 +442,7 @@ export default function App() {
   const generateImage = async () => {
     if (!user) { setLoginModalOpen(true); return; }
     if (!prompt || loading) return;
-    if (credits < 2) { setError('Insufficient credits.'); setViewState('result'); return; }
+    if (credits < 4) { setError('Insufficient credits.'); setViewState('result'); return; }
     setViewState('result');
     setLoading(true);
     setError(null);
@@ -482,7 +482,7 @@ export default function App() {
   // ── Generate (style) ──────────────────────────────────────────────────
   const handleStyleGenerate = async (finalPrompt, aspectRatio, negativePrompt, attachedImage) => {
     if (!user) { setLoginModalOpen(true); return; }
-    if (credits < 2) { setStyleError('Insufficient credits.'); return; }
+    if (credits < 4) { setStyleError('Insufficient credits.'); return; }
     setStyleLoading(true);
     setStyleError(null);
     setStyleImage(null);
@@ -517,7 +517,7 @@ export default function App() {
   // ── Generate (edit) ───────────────────────────────────────────────────
   const handleEditViewGenerate = async ({ image, prompt, negativePrompt, poseStrength, cannyStrength }) => {
     if (!user) { setLoginModalOpen(true); return; }
-    if (credits < 2) { setEditViewError('Insufficient credits.'); return; }
+    if (credits < 4) { setEditViewError('Insufficient credits.'); return; }
     setEditViewLoading(true);
     setEditViewError(null);
     setEditViewImage(null);
@@ -540,7 +540,7 @@ export default function App() {
   // ── Face swap ─────────────────────────────────────────────────────────
   const handleFaceSwap = async ({ targetImage, sourceImage }) => {
     if (!user) { setLoginModalOpen(true); return; }
-    if (credits < 2) { setFaceswapError('Insufficient credits.'); return; }
+    if (credits < 4) { setFaceswapError('Insufficient credits.'); return; }
     setFaceswapLoading(true);
     setFaceswapError(null);
     setFaceswapResult(null);
