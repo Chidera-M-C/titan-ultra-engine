@@ -109,6 +109,24 @@ EXPLICIT_PRESETS = [
         "before": "standing one leg hooked high body pinned to wall, 1man thick hard cock thrusting deep into her pussy from behind, 1girl, 1man, ",
         "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
     },
+    {
+        "name": "masturbation",
+        "keywords": [
+            "masturbation", "masturbating", "fingering", "touching herself",
+            "rubbing clit", "solo play", "self pleasure", "fingers in pussy"
+        ],
+        "before": "lying on back legs spread, one hand fingers buried deep in her wet pussy, other hand squeezing and stimulating her breast, 1girl, ",
+        "after": ", high angle masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+    },
+    {
+        "name": "anal",
+        "keywords": [
+            "anal", "anal sex", "ass fuck", "fucked in the ass",
+            "cock in ass", "anal penetration", "asshole", "in the anus"
+        ],
+        "before": "on all fours ass up back arched looking over shoulder, 1man thick hard cock stretching and slamming deep into her tight asshole, anus gripping the shaft, 1girl, ",
+        "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+    },
 ]
 
 def load_models():
@@ -287,9 +305,9 @@ def handler(job):
 
         face_scale       = float(input_data.get('face_scale', 0.82))
         s_scale          = float(input_data.get('s_scale', 1.0))
-        strength         = float(input_data.get('strength', 0.70))
+        strength         = float(input_data.get('strength', 0.78))
         guidance_scale   = 7.0
-        num_steps        = 45
+        num_steps        = 40
 
         # ----- Explicit detection & preset selection -----
         preset = get_explicit_preset(user_prompt)
