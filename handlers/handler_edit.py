@@ -40,29 +40,29 @@ app            = None
 openpose       = None
 canny_detector = None
 
-# ---------- Explicit Prompt Presets (first match wins) ----------
+# ---------- Explicit Prompt Presets ----------
 EXPLICIT_PRESETS = [
     {
         "name": "doggy",
-        "keywords": [
+        "tailored_keywords": [
             "doggy", "doggystyle", "doggy style", "from behind", "prone bone",
-            "bent over", "ass up", "on all fours", "being fucked", "getting fucked"
+            "bent over", "ass up", "on all fours"
         ],
         "before": "on all fours, ass up back arched looking over shoulder, 1man thick hard cock slamming deep into her pussy from behind, 1girl, ",
         "after": ", rear view masterpiece, photorealistic RAW photo, best quality, 8k resolution, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic professional photography, soft dramatic lighting with warm highlights and deep shadows, flawless smooth skin with perfect realistic texture"
     },
     {
         "name": "missionary",
-        "keywords": [
-            "missionary", "missionary sex", "man on top", "on her back", "sex",
-            "legs spread", "having sex", "sexing"
+        "tailored_keywords": [
+            "missionary", "missionary sex", "man on top", "on her back",
+            "legs spread"
         ],
         "before": "lying on back, legs spread wide knees up, 1man thick hard cock pounding deep into her pussy from above, 1girl, ",
         "after": ", high angle masterpiece, photorealistic RAW photo, best quality, 8k resolution, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic professional photography, soft dramatic lighting with warm highlights and deep shadows, flawless smooth skin with perfect realistic texture"
     },
     {
         "name": "spooning",
-        "keywords": [
+        "tailored_keywords": [
             "spooning", "side fuck", "side sex", "spooning sex"
         ],
         "before": "lying on her side one leg raised body curved, 1man thick hard cock thrusting deep into her pussy from behind, 1girl, 1man, ",
@@ -70,7 +70,7 @@ EXPLICIT_PRESETS = [
     },
     {
         "name": "oral",
-        "keywords": [
+        "tailored_keywords": [
             "sucking", "blowjob", "blow job", "deepthroat", "deep throat",
             "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"
         ],
@@ -79,7 +79,7 @@ EXPLICIT_PRESETS = [
     },
     {
         "name": "cumshot",
-        "keywords": [
+        "tailored_keywords": [
             "cumshot", "cum on face", "facial", "semen", "covered in cum", "cum on tits"
         ],
         "before": "thick cum blasting across her face and big tits, sticky white loads dripping down her cheeks lips and cleavage, 1girl, ",
@@ -87,7 +87,7 @@ EXPLICIT_PRESETS = [
     },
     {
         "name": "cowgirl",
-        "keywords": [
+        "tailored_keywords": [
             "cowgirl", "reverse cowgirl", "riding", "riding cock", "on top"
         ],
         "before": "straddling on top hips rolling downward, 1man thick hard cock buried deep in her pussy from below, 1girl, ",
@@ -95,7 +95,7 @@ EXPLICIT_PRESETS = [
     },
     {
         "name": "creampie",
-        "keywords": [
+        "tailored_keywords": [
             "creampie", "cum inside", "breeding", "bred", "internal cumshot", "cum in pussy"
         ],
         "before": "lying back legs spread pussy gaping, 1man thick hard cock pumping cum deep inside her pussy, 1girl, ",
@@ -103,7 +103,7 @@ EXPLICIT_PRESETS = [
     },
     {
         "name": "standing_doggy",
-        "keywords": [
+        "tailored_keywords": [
             "standing sex", "leg raised", "standing doggy", "against the wall", "one leg up"
         ],
         "before": "standing one leg hooked high body pinned to wall, 1man thick hard cock thrusting deep into her pussy from behind, 1girl, 1man, ",
@@ -111,7 +111,7 @@ EXPLICIT_PRESETS = [
     },
     {
         "name": "masturbation",
-        "keywords": [
+        "tailored_keywords": [
             "masturbation", "masturbating", "fingering", "touching herself",
             "rubbing clit", "solo play", "self pleasure", "fingers in pussy"
         ],
@@ -120,12 +120,36 @@ EXPLICIT_PRESETS = [
     },
     {
         "name": "anal",
-        "keywords": [
+        "tailored_keywords": [
             "anal", "anal sex", "ass fuck", "fucked in the ass",
-            "cock in ass", "anal penetration", "asshole", "in the anus"
+            "cock in ass", "anal penetration", "asshole", "ass hole", "in the anus"
         ],
         "before": "on all fours ass up back arched looking over shoulder, 1man thick hard cock slamming deep into her tight asshole, 1girl, ",
         "after": ", rear view masterpiece, photorealistic RAW photo, best quality, 8k resolution, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic professional photography, soft studio lighting with warm highlights and deep shadows, flawless smooth skin with perfect realistic texture"
+    },
+    {
+	    "name": "reverse_cowgirl",
+	    "tailored_keywords": [
+			"reverse cowgirl", "reverse riding", "facing away", "riding reverse"
+		],
+	    "before": "straddling on top, facing away hips rolling downward, 1man thick hard cock buried deep in her pussy from below, 1girl, ",
+	    "after": ", rear view masterpiece, photorealistic RAW photo, best quality, 8k resolution, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic professional photography, soft studio lighting with warm highlights and deep shadows, flawless smooth skin with perfect realistic texture"
+	},
+]
+
+# Ordered global fallbacks (only used when NO tailored keyword is found)
+GLOBAL_FALLBACKS = [
+    {
+        "keywords": ["being fucked", "getting fucked", "fucked hard", "pounded", "railed", "fucked from behind"],
+        "default": "doggy"
+    },
+    {
+        "keywords": ["having sex", "making love", "love making", "sexing"],
+        "default": "missionary"
+    },
+    {
+        "keywords": ["fucked", "fuck", "sex"],
+        "default": "doggy"
     },
 ]
 
@@ -246,11 +270,26 @@ def ensure_min_file_size(image, min_bytes=600 * 1024):
     return image
 
 def get_explicit_preset(user_prompt: str):
-    """Return the first matching preset or None."""
+    """
+    Watertight matching logic:
+    1. Tailored keywords have absolute priority
+    2. Only if no tailored match → use ordered global fallbacks
+    """
     prompt_lower = user_prompt.lower()
+
+    # 1. Highest priority: tailored keywords
     for preset in EXPLICIT_PRESETS:
-        if any(kw in prompt_lower for kw in preset["keywords"]):
+        if any(kw in prompt_lower for kw in preset["tailored_keywords"]):
             return preset
+
+    # 2. Global fallbacks (ordered)
+    for group in GLOBAL_FALLBACKS:
+        if any(kw in prompt_lower for kw in group["keywords"]):
+            # Find the preset by name
+            for preset in EXPLICIT_PRESETS:
+                if preset["name"] == group["default"]:
+                    return preset
+
     return None
 
 def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
@@ -269,10 +308,8 @@ def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
         negative = f"{user_negative}, {negative}"
 
     if is_sexual and preset is not None:
-        # Real variable insertion using before + after
         positive = f"{preset['before']}{user_prompt}{preset['after']}"
     else:
-        # Non-explicit general positive
         positive = (
             f"{user_prompt}, completely nude, fully naked, bare skin, "
             f"photorealistic, masterpiece, best quality, ultra detailed, "
@@ -312,13 +349,6 @@ def handler(job):
         # ----- Explicit detection & preset selection -----
         preset = get_explicit_preset(user_prompt)
         is_sexual = preset is not None
-
-        # Safety net for very common ambiguous phrases → default to doggy
-        if not is_sexual:
-            lower = user_prompt.lower()
-            if any(x in lower for x in ["being fucked", "getting fucked", "fucked hard", "pounded"]):
-                preset = EXPLICIT_PRESETS[0]  # doggy
-                is_sexual = True
 
         if is_sexual:
             print(f"→ Explicit mode activated – using preset: {preset['name']}")
