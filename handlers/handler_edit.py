@@ -88,7 +88,7 @@ EXPLICIT_PRESETS = [
     {
         "name": "cowgirl",
         "tailored_keywords": [
-            "cowgirl", "reverse cowgirl", "riding", "riding cock", "on top"
+            "cowgirl", "riding", "riding cock", "on top"
         ],
         "before": "straddling on top hips rolling downward, 1man thick hard cock buried deep in her pussy from below, 1girl, ",
         "after": ", rear view masterpiece, photorealistic RAW photo, best quality, 8k resolution, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic professional photography, soft studio lighting with warm highlights and deep shadows, flawless smooth skin with perfect realistic texture"
@@ -130,7 +130,7 @@ EXPLICIT_PRESETS = [
     {
 	    "name": "reverse_cowgirl",
 	    "tailored_keywords": [
-			"reverse cowgirl", "reverse riding", "facing away", "riding reverse"
+			"reverse cowgirl", "reverse riding", "facing away", "riding reverse", "cowgirl reverse"
 		],
 	    "before": "straddling on top, facing away hips rolling downward, 1man thick hard cock buried deep in her pussy from below, 1girl, ",
 	    "after": ", rear view masterpiece, photorealistic RAW photo, best quality, 8k resolution, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic professional photography, soft studio lighting with warm highlights and deep shadows, flawless smooth skin with perfect realistic texture"
