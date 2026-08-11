@@ -49,7 +49,7 @@ EXPLICIT_PRESETS = [
             "bent over", "ass up", "on all fours", "being fucked", "getting fucked"
         ],
         "before": "on all fours, ass up back arched looking over shoulder, 1man thick hard cock slamming deep into her pussy from behind, 1girl, ",
-        "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+        "after": ", rear view masterpiece, photorealistic RAW photo, best quality, 8k resolution, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic professional photography, soft dramatic lighting with warm highlights and deep shadows, flawless smooth skin with perfect realistic texture"
     },
     {
         "name": "missionary",
@@ -57,8 +57,8 @@ EXPLICIT_PRESETS = [
             "missionary", "missionary sex", "man on top", "on her back", "sex",
             "legs spread", "having sex", "sexing"
         ],
-        "before": "lying on back legs spread wide knees up, 1man thick hard cock pounding deep into her pussy from above, 1girl, ",
-        "after": ", high angle masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+        "before": "lying on back, legs spread wide knees up, 1man thick hard cock pounding deep into her pussy from above, 1girl, ",
+        "after": ", high angle masterpiece, photorealistic RAW photo, best quality, 8k resolution, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic professional photography, soft dramatic lighting with warm highlights and deep shadows, flawless smooth skin with perfect realistic texture"
     },
     {
         "name": "spooning",
@@ -66,7 +66,7 @@ EXPLICIT_PRESETS = [
             "spooning", "side fuck", "side sex", "spooning sex"
         ],
         "before": "lying on her side one leg raised body curved, 1man thick hard cock thrusting deep into her pussy from behind, 1girl, 1man, ",
-        "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+        "after": ", rear view masterpiece, photorealistic RAW photo, best quality, 8k resolution, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic professional photography, soft dramatic lighting with warm highlights and deep shadows, flawless smooth skin with perfect realistic texture"
     },
     {
         "name": "oral",
@@ -75,7 +75,7 @@ EXPLICIT_PRESETS = [
             "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"
         ],
         "before": "kneeling forward mouth wide open eyes watering, 1man thick hard cock buried balls deep inside her mouth, 1girl, ",
-        "after": ", high-angle masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+        "after": ", high-angle masterpiece, photorealistic RAW photo, best quality, 8k resolution, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic professional photography, soft dramatic lighting with warm highlights and deep shadows, flawless smooth skin with perfect realistic texture"
     },
     {
         "name": "cumshot",
@@ -83,7 +83,7 @@ EXPLICIT_PRESETS = [
             "cumshot", "cum on face", "facial", "semen", "covered in cum", "cum on tits"
         ],
         "before": "thick cum blasting across her face and big tits, sticky white loads dripping down her cheeks lips and cleavage, 1girl, ",
-        "after": ", high angle masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+        "after": ", high angle masterpiece, photorealistic RAW photo, best quality, 8k resolution, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic professional photography, soft studio lighting with warm highlights and deep shadows, flawless smooth skin with perfect realistic texture"
     },
     {
         "name": "cowgirl",
@@ -91,7 +91,7 @@ EXPLICIT_PRESETS = [
             "cowgirl", "reverse cowgirl", "riding", "riding cock", "on top"
         ],
         "before": "straddling on top hips rolling downward, 1man thick hard cock buried deep in her pussy from below, 1girl, ",
-        "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+        "after": ", rear view masterpiece, photorealistic RAW photo, best quality, 8k resolution, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic professional photography, soft studio lighting with warm highlights and deep shadows, flawless smooth skin with perfect realistic texture"
     },
     {
         "name": "creampie",
@@ -99,7 +99,7 @@ EXPLICIT_PRESETS = [
             "creampie", "cum inside", "breeding", "bred", "internal cumshot", "cum in pussy"
         ],
         "before": "lying back legs spread pussy gaping, 1man thick hard cock pumping cum deep inside her pussy, 1girl, ",
-        "after": ", high-angle masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+        "after": ", high-angle masterpiece, photorealistic RAW photo, best quality, 8k resolution, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic professional photography, soft studio lighting with warm highlights and deep shadows, flawless smooth skin with perfect realistic texture"
     },
     {
         "name": "standing_doggy",
@@ -107,7 +107,7 @@ EXPLICIT_PRESETS = [
             "standing sex", "leg raised", "standing doggy", "against the wall", "one leg up"
         ],
         "before": "standing one leg hooked high body pinned to wall, 1man thick hard cock thrusting deep into her pussy from behind, 1girl, 1man, ",
-        "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+        "after": ", rear view masterpiece, photorealistic RAW photo, best quality, 8k resolution, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic professional photography, soft studio lighting with warm highlights and deep shadows, flawless smooth skin with perfect realistic texture"
     },
     {
         "name": "masturbation",
@@ -116,7 +116,7 @@ EXPLICIT_PRESETS = [
             "rubbing clit", "solo play", "self pleasure", "fingers in pussy"
         ],
         "before": "lying on back legs spread, one hand fingers buried deep in her wet pussy, other hand squeezing and stimulating her breast, 1girl, ",
-        "after": ", high angle masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+        "after": ", high angle masterpiece, photorealistic RAW photo, best quality, 8k resolution, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic professional photography, soft studio lighting with warm highlights and deep shadows, flawless smooth skin with perfect realistic texture"
     },
     {
         "name": "anal",
@@ -124,8 +124,8 @@ EXPLICIT_PRESETS = [
             "anal", "anal sex", "ass fuck", "fucked in the ass",
             "cock in ass", "anal penetration", "asshole", "in the anus"
         ],
-        "before": "on all fours ass up back arched looking over shoulder, 1man thick hard cock stretching and slamming deep into her tight asshole, anus gripping the shaft, 1girl, ",
-        "after": ", rear view masterpiece, photorealistic, best quality, ultra detailed, natural skin texture, visible pores, subtle freckles, realistic skin, soft natural lighting, film grain, realistic anatomy"
+        "before": "on all fours ass up back arched looking over shoulder, 1man thick hard cock slamming deep into her tight asshole, 1girl, ",
+        "after": ", rear view masterpiece, photorealistic RAW photo, best quality, 8k resolution, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic professional photography, soft studio lighting with warm highlights and deep shadows, flawless smooth skin with perfect realistic texture"
     },
 ]
 
@@ -327,7 +327,7 @@ def handler(job):
             strength = 0.97
             guidance_scale = 9.0
             face_scale = max(face_scale, 0.84)
-            num_steps = 42
+            num_steps = 38
         else:
             print("→ Normal undress mode (img2img)")
 
