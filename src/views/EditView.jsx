@@ -182,11 +182,11 @@ export default function EditView({ onGenerate, loading, image, error, onViewImag
               {loading ? (
                 <><div className="edit-spinner" /> Editing...</>
               ) : (
-                <><Send size={16} /> Generate Edit <Zap size={14} fill="currentColor" style={{marginLeft:4}} />2</>
+                <><Send size={16} /> Generate Edit <Zap size={14} fill="currentColor" style={{marginLeft:4}} />4</>
               )}
             </button>
-            {credits < 2 && (
-              <p className="edit-credits-warn">Insufficient credits</p>
+            {credits < 4 && (
+              <p className="edit-credits-warn">Insufficient credits, grab a credit pack to keep editing</p>
             )}
           </div>
         </div>
