@@ -204,7 +204,7 @@ export default function EditView({ onGenerate, loading, image, error, onViewImag
           {loading && (
             <div className="edit-result-loading">
               <PulseLoader />
-              <p>Editing your image...</p>
+              <p>Editing your image in 60sec...</p>
             </div>
           )}
 
