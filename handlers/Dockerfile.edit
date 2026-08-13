@@ -48,6 +48,9 @@ RUN sed -i 's/from .mediapipe_face import MediapipeFaceDetector/pass  # mediapip
 
 RUN pip install --no-cache-dir --force-reinstall "numpy==1.24.4"
 
+# Prevent ml_dtypes from auto-updating to >=0.3.0 which requires NumPy 1.25+
+RUN pip install --no-cache-dir "ml-dtypes<0.3.0"
+
 # Pre-cache InsightFace model (matches working character setup)
 COPY download_insightface.py /app/
 RUN python /app/download_insightface.py
