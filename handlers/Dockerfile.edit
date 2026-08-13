@@ -24,7 +24,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN pip install --no-cache-dir "numpy==1.24.4"
 
+# Explicitly pin onnx and ml-dtypes to compatible versions
 RUN pip install --no-cache-dir \
+    "ml-dtypes==0.3.1" \
+    "onnx==1.15.0" \
     accelerate==0.28.0 \
     transformers==4.40.0 \
     diffusers==0.27.2 \
@@ -47,9 +50,6 @@ RUN sed -i 's/from .mediapipe_face import MediapipeFaceDetector/pass  # mediapip
     /opt/conda/lib/python3.10/site-packages/controlnet_aux/__init__.py
 
 RUN pip install --no-cache-dir --force-reinstall "numpy==1.24.4"
-
-# Prevent ml_dtypes from auto-updating to >=0.3.0 which requires NumPy 1.25+
-RUN pip install --no-cache-dir "ml-dtypes<0.3.0"
 
 # Pre-cache InsightFace model (matches working character setup)
 COPY download_insightface.py /app/
