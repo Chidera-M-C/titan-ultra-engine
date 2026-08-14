@@ -9,8 +9,8 @@ const PACKAGES: Record<string, { name: string; credits: number; stars: number }>
 const CREDITS_PER_EDIT = 4;
 const FREE_CREDITS = 15;
 
-// TODO: point this at your actual image-editing handler (same one your frontend calls)
-const EDIT_HANDLER_URL = 'https://yoursite.com/api/edit-image';
+// Your RunPod endpoint
+const EDIT_HANDLER_URL = 'https://api.runpod.ai/v2/em5th9pvdrelyb/runsync';
 
 async function sendMessage(token: string, chatId: number | string, text: string, extra: any = {}) {
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -21,13 +21,24 @@ async function sendMessage(token: string, chatId: number | string, text: string,
 }
 
 async function sendPhoto(token: string, chatId: number | string, photoBase64: string, caption?: string) {
-  // Telegram needs multipart form data for a raw photo upload
   const form = new FormData();
   form.append('chat_id', String(chatId));
   if (caption) form.append('caption', caption);
-  const blob = await (await fetch(`data:image/png;base64,${photoBase64}`)).blob();
-  form.append('photo', blob, 'edited.png');
-  await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, { method: 'POST', body: form });
+
+  // Convert pure base64 → Blob
+  const byteCharacters = atob(photoBase64);
+  const byteArrays = [];
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteArrays.push(byteCharacters.charCodeAt(i));
+  }
+  const blob = new Blob([new Uint8Array(byteArrays)], { type: 'image/jpeg' });
+
+  form.append('photo', blob, 'edited.jpg');
+
+  await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+    method: 'POST',
+    body: form,
+  });
 }
 
 async function getFileUrl(token: string, fileId: string): Promise<string> {
@@ -73,14 +84,13 @@ export const onRequestPost = async (context: any) => {
     return new Response('Bad Request', { status: 400 });
   }
 
-  // ── /start: register the user, give free credits ────────────────────────
+  // ── /start ───────────────────────────────────────────────────────────────
   if (update.message?.text === '/start') {
     const chatId     = update.message.chat.id;
     const tgUserId   = String(update.message.from.id);
     const tgUsername = update.message.from?.username || '';
     const firstName  = update.message.from?.first_name || 'there';
 
-    // Create the user if they don't exist yet; leave credits alone if they do
     const { data: existing } = await supabase
       .from('telegram_users')
       .select('id, credits')
@@ -98,13 +108,13 @@ export const onRequestPost = async (context: any) => {
 
     await sendMessage(BOT_TOKEN, chatId,
       `👋 Hey <b>${firstName}</b>!\n\n` +
-      `Upload a photo with an instruction (e.g. "make the background a sunset", "remove the object on the left"), and send it — our AI will edit it for you.\n\n` +
+      `Upload a photo with an instruction (e.g. "make her nude", "doggy style", "remove the background"), and send it — our AI will edit it for you.\n\n` +
       `You've got <b>${FREE_CREDITS} free credits</b> to start (each edit costs ${CREDITS_PER_EDIT}).`
     );
     return new Response('OK');
   }
 
-  // ── /credits: check balance ──────────────────────────────────────────────
+  // ── /credits ─────────────────────────────────────────────────────────────
   if (update.message?.text === '/credits') {
     const chatId   = update.message.chat.id;
     const tgUserId = String(update.message.from.id);
@@ -120,7 +130,7 @@ export const onRequestPost = async (context: any) => {
     return new Response('OK');
   }
 
-  // ── /buy: show packages ──────────────────────────────────────────────────
+  // ── /buy ─────────────────────────────────────────────────────────────────
   if (update.message?.text === '/buy') {
     await sendMessage(BOT_TOKEN, update.message.chat.id,
       `Pick a credit package:`, { reply_markup: creditMenu() }
@@ -128,18 +138,18 @@ export const onRequestPost = async (context: any) => {
     return new Response('OK');
   }
 
-  // ── Photo + instruction upload → run the edit ────────────────────────────
+  // ── Photo + caption → Edit ───────────────────────────────────────────────
   if (update.message?.photo) {
     const chatId    = update.message.chat.id;
     const tgUserId  = String(update.message.from.id);
     const caption   = update.message.caption || '';
 
     if (!caption) {
-      await sendMessage(BOT_TOKEN, chatId, `Please add an instruction as the caption on your photo — e.g. "make it black and white".`);
+      await sendMessage(BOT_TOKEN, chatId, `Please add an instruction as the caption on your photo — e.g. "doggy style" or "make her nude".`);
       return new Response('OK');
     }
 
-    // Check credit balance first
+    // Check credits
     const { data: user } = await supabase
       .from('telegram_users')
       .select('credits')
@@ -154,14 +164,14 @@ export const onRequestPost = async (context: any) => {
       return new Response('OK');
     }
 
-    await sendMessage(BOT_TOKEN, chatId, `🔄 Editing your photo... this usually takes about a minute.`);
+    await sendMessage(BOT_TOKEN, chatId, `🔄 Editing your photo... this usually takes 40–70 seconds.`);
 
-    // Telegram sends multiple sizes — take the largest
+    // Get largest photo
     const photos = update.message.photo;
     const largest = photos[photos.length - 1];
     const fileUrl = await getFileUrl(BOT_TOKEN, largest.file_id);
 
-    // Download the image and convert to base64, same as your frontend does
+    // Download → pure base64
     const imgRes = await fetch(fileUrl);
     const imgBuffer = await imgRes.arrayBuffer();
     const base64Image = btoa(String.fromCharCode(...new Uint8Array(imgBuffer)));
@@ -174,18 +184,48 @@ export const onRequestPost = async (context: any) => {
       .single();
 
     try {
-      // Call your existing image-editing handler — same call your web frontend makes
+      // ── Call your RunPod handler ────────────────────────────────────────
+      const dataUrl = `data:image/jpeg;base64,${base64Image}`;
+
       const editRes = await fetch(EDIT_HANDLER_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: base64Image, instruction: caption }),
+        headers: {
+          'Content-Type': 'application/json',
+          // Uncomment if your endpoint needs the key:
+          // 'Authorization': `Bearer ${env.RUNPOD_API_KEY}`
+        },
+        body: JSON.stringify({
+          input: {
+            prompt: caption,
+            image: dataUrl
+          }
+        }),
       });
 
-      if (!editRes.ok) throw new Error(`Handler returned ${editRes.status}`);
-      const result = await editRes.json();
-      const editedBase64 = result.image; // adjust field name to match your handler's response
+      if (!editRes.ok) {
+        const errText = await editRes.text();
+        throw new Error(`Handler returned ${editRes.status}: ${errText}`);
+      }
 
-      // Deduct credits and send result
+      const result = await editRes.json();
+
+      // Your handler returns { image: "data:image/jpeg;base64,..." } or { error: "..." }
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      let editedBase64 = result.image || result.output?.image;
+
+      if (!editedBase64) {
+        throw new Error('No image returned from handler');
+      }
+
+      // Strip data URL prefix
+      if (editedBase64.startsWith('data:')) {
+        editedBase64 = editedBase64.split(',')[1];
+      }
+
+      // Deduct credits
       await supabase
         .from('telegram_users')
         .update({ credits: user.credits - CREDITS_PER_EDIT })
@@ -196,13 +236,21 @@ export const onRequestPost = async (context: any) => {
         .update({ status: 'done', completed_at: new Date().toISOString() })
         .eq('id', editRow?.id);
 
-      await sendPhoto(BOT_TOKEN, chatId, editedBase64, `✅ Done! ${user.credits - CREDITS_PER_EDIT} credits left.`);
-    } catch (err) {
+      await sendPhoto(
+        BOT_TOKEN,
+        chatId,
+        editedBase64,
+        `✅ Done! ${user.credits - CREDITS_PER_EDIT} credits left.`
+      );
+
+    } catch (err: any) {
       console.error('[bot] edit failed:', err);
+
       await supabase
         .from('image_edits')
         .update({ status: 'failed' })
         .eq('id', editRow?.id);
+
       await sendMessage(BOT_TOKEN, chatId, `❌ Something went wrong editing your photo. You haven't been charged — please try again.`);
     }
 
@@ -244,8 +292,8 @@ export const onRequestPost = async (context: any) => {
         chat_id: chatId,
         title: `${pkg.name} — ${pkg.credits} credits`,
         description: `Top up your photo-editing credits.`,
-        payload: purchase?.id, // used to find this purchase after payment
-        currency: 'XTR', // Telegram Stars
+        payload: purchase?.id,
+        currency: 'XTR',
         prices: [{ label: pkg.name, amount: pkg.stars }],
       }),
     });
@@ -259,7 +307,7 @@ export const onRequestPost = async (context: any) => {
     return new Response('OK');
   }
 
-  // ── Successful payment → add credits ─────────────────────────────────────
+  // ── Successful payment ───────────────────────────────────────────────────
   if (update.message?.successful_payment) {
     const chatId      = update.message.chat.id;
     const tgUserId    = String(update.message.from.id);
