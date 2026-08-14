@@ -25,7 +25,6 @@ async function sendPhoto(token: string, chatId: number | string, photoBase64: st
   form.append('chat_id', String(chatId));
   if (caption) form.append('caption', caption);
 
-  // Convert pure base64 → Blob
   const byteCharacters = atob(photoBase64);
   const byteArrays = [];
   for (let i = 0; i < byteCharacters.length; i++) {
@@ -140,9 +139,10 @@ export const onRequestPost = async (context: any) => {
 
   // ── Photo + caption → Edit ───────────────────────────────────────────────
   if (update.message?.photo) {
-    const chatId    = update.message.chat.id;
-    const tgUserId  = String(update.message.from.id);
-    const caption   = update.message.caption || '';
+    const chatId     = update.message.chat.id;
+    const tgUserId   = String(update.message.from.id);
+    const caption    = update.message.caption || '';
+    const updateId   = update.update_id;
 
     if (!caption) {
       await sendMessage(BOT_TOKEN, chatId, `Please add an instruction as the caption on your photo — e.g. "doggy style" or "make her nude".`);
@@ -164,27 +164,45 @@ export const onRequestPost = async (context: any) => {
       return new Response('OK');
     }
 
-    await sendMessage(BOT_TOKEN, chatId, `🔄 Editing your photo... this usually takes 40–70 seconds.`);
+    // === DEDUPLICATION: Prevent processing the same update multiple times ===
+    const { data: alreadyProcessed } = await supabase
+      .from('image_edits')
+      .select('id')
+      .eq('telegram_update_id', updateId)
+      .maybeSingle();
 
-    // Get largest photo
-    const photos = update.message.photo;
-    const largest = photos[photos.length - 1];
-    const fileUrl = await getFileUrl(BOT_TOKEN, largest.file_id);
+    if (alreadyProcessed) {
+      // Already handled this update → just acknowledge
+      return new Response('OK');
+    }
 
-    // Download → pure base64
-    const imgRes = await fetch(fileUrl);
-    const imgBuffer = await imgRes.arrayBuffer();
-    const base64Image = btoa(String.fromCharCode(...new Uint8Array(imgBuffer)));
-
-    // Log the request
+    // Create the edit record immediately (locks this update_id)
     const { data: editRow } = await supabase
       .from('image_edits')
-      .insert({ telegram_user_id: tgUserId, instruction: caption, status: 'processing' })
+      .insert({
+        telegram_user_id: tgUserId,
+        instruction: caption,
+        status: 'processing',
+        telegram_update_id: updateId
+      })
       .select('id')
       .single();
 
+    // Notify user only once
+    await sendMessage(BOT_TOKEN, chatId, `🔄 Editing your photo... this usually takes 40–70 seconds.`);
+
     try {
-      // ── Call your RunPod handler ────────────────────────────────────────
+      // Get largest photo
+      const photos = update.message.photo;
+      const largest = photos[photos.length - 1];
+      const fileUrl = await getFileUrl(BOT_TOKEN, largest.file_id);
+
+      // Download → pure base64
+      const imgRes = await fetch(fileUrl);
+      const imgBuffer = await imgRes.arrayBuffer();
+      const base64Image = btoa(String.fromCharCode(...new Uint8Array(imgBuffer)));
+
+      // ── Call RunPod ─────────────────────────────────────────────────────
       const dataUrl = `data:image/jpeg;base64,${base64Image}`;
 
       const editRes = await fetch(EDIT_HANDLER_URL, {
@@ -208,7 +226,6 @@ export const onRequestPost = async (context: any) => {
 
       const result = await editRes.json();
 
-      // Your handler returns { image: "data:image/jpeg;base64,..." } or { error: "..." }
       if (result.error) {
         throw new Error(result.error);
       }
@@ -232,7 +249,10 @@ export const onRequestPost = async (context: any) => {
 
       await supabase
         .from('image_edits')
-        .update({ status: 'done', completed_at: new Date().toISOString() })
+        .update({ 
+          status: 'done', 
+          completed_at: new Date().toISOString() 
+        })
         .eq('id', editRow?.id);
 
       await sendPhoto(
