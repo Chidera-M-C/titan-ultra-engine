@@ -191,8 +191,7 @@ export const onRequestPost = async (context: any) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Uncomment if your endpoint needs the key:
-          // 'Authorization': `Bearer ${env.RUNPOD_API_KEY}`
+          'Authorization': `Bearer ${env.RUNPOD_API_KEY}`
         },
         body: JSON.stringify({
           input: {
