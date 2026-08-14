@@ -130,7 +130,7 @@ EXPLICIT_PRESETS = [
     {
 	    "name": "reverse_cowgirl",
 	    "tailored_keywords": [
-			"reverse cowgirl", "reverse riding", "facing away", "riding reverse", "cowgirl reverse"
+			"reverse", "reverse cowgirl", "reverse riding", "facing away", "riding reverse", "cowgirl reverse"
 		],
 	    "before": "straddling on top, facing away hips rolling downward, 1man thick hard cock buried deep in her pussy from below, 1girl, ",
 	    "after": ", rear view masterpiece, photorealistic RAW photo, best quality, 8k resolution, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic professional photography, soft studio lighting with warm highlights and deep shadows, flawless smooth skin with perfect realistic texture"
@@ -311,12 +311,16 @@ def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
         positive = f"{preset['before']}{user_prompt}{preset['after']}"
     else:
         positive = (
-            f"{user_prompt}, completely nude, fully naked, bare skin, "
-            f"photorealistic, masterpiece, best quality, ultra detailed, "
-            f"natural skin texture, visible pores, subtle freckles, "
-            f"realistic skin, soft natural lighting, film grain, "
-            f"realistic anatomy"
-        )
+		    f"{user_prompt}, (completely nude:1.4), (fully naked:1.35), (bare skin:1.3), "
+		    f"Photorealistic raw photo, photorealistic, masterpiece, best quality, "
+		    f"8k uhd, ultra detailed 8k, sharp focus, intricate details, "
+		    f"ultra realistic, hyper realistic, "
+		    f"soft cinematic lighting with warm highlights, soft natural lighting, "
+		    f"flawless smooth velvet soft lifelike skin with natural pores and subtle sheen, "
+		    f"flawless skin texture, natural skin texture, visible pores, subtle freckles, "
+		    f"studio portrait, shallow depth of field, cinematic composition, "
+		    f"high fashion editorial, perfect anatomy, realistic anatomy, film grain"
+		)
 
     return positive, negative
 
@@ -342,9 +346,9 @@ def handler(job):
 
         face_scale       = float(input_data.get('face_scale', 0.82))
         s_scale          = float(input_data.get('s_scale', 1.0))
-        strength         = float(input_data.get('strength', 0.78))
-        guidance_scale   = 7.0
-        num_steps        = 40
+        strength         = float(input_data.get('strength', 0.9))
+        guidance_scale   = 9.0
+        num_steps        = 38
 
         # ----- Explicit detection & preset selection -----
         preset = get_explicit_preset(user_prompt)

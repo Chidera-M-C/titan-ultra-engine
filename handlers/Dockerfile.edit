@@ -24,7 +24,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN pip install --no-cache-dir "numpy==1.24.4"
 
+# Explicitly pin onnx and ml-dtypes to compatible versions
 RUN pip install --no-cache-dir \
+    "ml-dtypes==0.3.1" \
+    "onnx==1.15.0" \
     accelerate==0.28.0 \
     transformers==4.40.0 \
     diffusers==0.27.2 \
