@@ -344,10 +344,10 @@ def handler(job):
         raw_structure = float(input_data.get('structure_strength', input_data.get('structureStrength', 0.6)))
         canny_strength = max(0.05, min(0.45, raw_structure * 0.4))
 
-        face_scale       = float(input_data.get('face_scale', 0.82))
+        face_scale       = float(input_data.get('face_scale', 0.95))
         s_scale          = float(input_data.get('s_scale', 1.0))
-        strength         = float(input_data.get('strength', 0.8))
-        guidance_scale   = 8.0
+        strength         = float(input_data.get('strength', 0.9))
+        guidance_scale   = 9.0
         num_steps        = 40
 
         # ----- Explicit detection & preset selection -----
