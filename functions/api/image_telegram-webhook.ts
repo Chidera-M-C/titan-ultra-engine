@@ -197,10 +197,17 @@ export const onRequestPost = async (context: any) => {
       const largest = photos[photos.length - 1];
       const fileUrl = await getFileUrl(BOT_TOKEN, largest.file_id);
 
-      // Download → pure base64
-      const imgRes = await fetch(fileUrl);
-      const imgBuffer = await imgRes.arrayBuffer();
-      const base64Image = btoa(String.fromCharCode(...new Uint8Array(imgBuffer)));
+			// Download → pure base64 (safe method)
+			const imgRes = await fetch(fileUrl);
+			const imgBuffer = await imgRes.arrayBuffer();
+			const bytes = new Uint8Array(imgBuffer);
+			
+			let binary = '';
+			const chunkSize = 0x8000; // 32KB chunks
+			for (let i = 0; i < bytes.length; i += chunkSize) {
+			  binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+			}
+			const base64Image = btoa(binary);
 
       // ── Call RunPod ─────────────────────────────────────────────────────
       const dataUrl = `data:image/jpeg;base64,${base64Image}`;
