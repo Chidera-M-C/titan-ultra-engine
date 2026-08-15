@@ -48,17 +48,22 @@ export const onRequestPost = async (context: any) => {
     return new Response('Bad Request', { status: 400 });
   }
 
-  console.log('[callback] Received payload keys:', Object.keys(body));
-  console.log('[callback] job id:', body.id);
-  console.log('[callback] status:', body.status);
-  console.log('[callback] has output?', !!body.output);
-  console.log('[callback] output keys:', body.output ? Object.keys(body.output) : null);
-
   const jobId = body.id;
+  const status = body.status;
+
+  console.log('[callback] job:', jobId, 'status:', status);
+
+  // ────────────────────────────────────────────────
+  // ONLY process the final result
+  // ────────────────────────────────────────────────
+  if (status !== 'COMPLETED' && status !== 'FAILED') {
+    console.log('[callback] Ignoring intermediate status:', status);
+    return new Response('OK');
+  }
 
   if (!jobId) {
     console.error('[callback] Missing job id');
-    return new Response('Missing job id', { status: 400 });
+    return new Response('OK');
   }
 
   // Find the matching edit record
@@ -70,19 +75,19 @@ export const onRequestPost = async (context: any) => {
 
   if (findError) {
     console.error('[callback] Supabase find error:', findError);
+    return new Response('OK');
   }
 
   if (!edit) {
     console.error('[callback] No edit found for job', jobId);
-    // Still return 200 so RunPod stops retrying
     return new Response('OK');
   }
 
-  console.log('[callback] Found edit:', edit.id, 'status:', edit.status, 'chat:', edit.telegram_chat_id);
+  console.log('[callback] Found edit:', edit.id, 'current status:', edit.status);
 
-  // Already processed?
-  if (edit.status === 'done' || edit.status === 'failed') {
-    console.log('[callback] Already processed, skipping');
+  // Only skip if we already successfully finished it
+  if (edit.status === 'done') {
+    console.log('[callback] Already done, skipping');
     return new Response('OK');
   }
 
@@ -90,38 +95,39 @@ export const onRequestPost = async (context: any) => {
   const tgUserId = edit.telegram_user_id;
 
   if (!chatId) {
-    console.error('[callback] Missing telegram_chat_id on edit record');
+    console.error('[callback] Missing telegram_chat_id');
     return new Response('OK');
   }
 
   try {
-    if (body.status === 'FAILED' || body.error) {
-      throw new Error(body.error || body.status || 'RunPod job failed');
+    if (status === 'FAILED' || body.error) {
+      throw new Error(body.error || 'RunPod job failed');
     }
 
-    // Try every common place the image can be
+    // Try every common place the final image can live
     let editedBase64: string | null =
       body.output?.image ||
       body.output?.images?.[0] ||
-      body.output?.[0]?.image ||
+      (Array.isArray(body.output) ? body.output[0]?.image || body.output[0] : null) ||
       body.image ||
       body.result?.image ||
       null;
 
-    // Sometimes the whole output is just the base64 string
-    if (!editedBase64 && typeof body.output === 'string' && body.output.length > 1000) {
+    // Sometimes the entire output is just the base64 string
+    if (!editedBase64 && typeof body.output === 'string' && body.output.length > 500) {
       editedBase64 = body.output;
     }
 
     if (!editedBase64) {
-      console.error('[callback] Could not find image. Full output sample:', JSON.stringify(body.output)?.slice(0, 300));
+      console.error('[callback] Could not find image. output type:', typeof body.output);
+      console.error('[callback] output sample:', JSON.stringify(body.output)?.slice(0, 400));
       throw new Error('No image found in RunPod output');
     }
 
     console.log('[callback] Image found, length:', editedBase64.length);
 
     // Strip data URL prefix if present
-    if (editedBase64.startsWith('data:')) {
+    if (typeof editedBase64 === 'string' && editedBase64.startsWith('data:')) {
       editedBase64 = editedBase64.split(',')[1];
     }
 
