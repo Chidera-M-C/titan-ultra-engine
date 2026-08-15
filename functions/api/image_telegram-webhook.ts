@@ -243,14 +243,13 @@ export const onRequestPost = async (context: any) => {
       }
 
       const job = await editRes.json();
-      // job.id is the RunPod job ID
 
-      // Store the job ID so the callback can find this edit
       await supabase
         .from('image_edits')
         .update({
           runpod_job_id: job.id,
-          telegram_chat_id: String(chatId), // useful for the callback
+          telegram_chat_id: String(chatId),
+          status: 'processing',   // keep it processing
         })
         .eq('id', editRow?.id);
 
