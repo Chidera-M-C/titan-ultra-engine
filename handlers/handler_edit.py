@@ -346,9 +346,9 @@ def handler(job):
 
         face_scale       = float(input_data.get('face_scale', 0.82))
         s_scale          = float(input_data.get('s_scale', 1.0))
-        strength         = float(input_data.get('strength', 0.9))
-        guidance_scale   = 9.0
-        num_steps        = 38
+        strength         = float(input_data.get('strength', 0.8))
+        guidance_scale   = 8.0
+        num_steps        = 40
 
         # ----- Explicit detection & preset selection -----
         preset = get_explicit_preset(user_prompt)
