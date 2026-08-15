@@ -9,8 +9,8 @@ const PACKAGES: Record<string, { name: string; credits: number; stars: number }>
 const CREDITS_PER_EDIT = 4;
 const FREE_CREDITS = 15;
 
-// Your RunPod endpoint (keep /runsync for now)
-const EDIT_HANDLER_URL = 'https://api.runpod.ai/v2/em5th9pvdrelyb/runsync';
+// IMPORTANT: now using the ASYNC endpoint
+const EDIT_HANDLER_URL = 'https://api.runpod.ai/v2/em5th9pvdrelyb/run';
 
 async function sendMessage(token: string, chatId: number | string, text: string, extra: any = {}) {
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -174,7 +174,7 @@ export const onRequestPost = async (context: any) => {
       return new Response('OK');
     }
 
-    // === DEDUPLICATION: Prevent processing the same update multiple times ===
+    // === DEDUPLICATION ===
     const { data: alreadyProcessed } = await supabase
       .from('image_edits')
       .select('id')
@@ -185,7 +185,7 @@ export const onRequestPost = async (context: any) => {
       return new Response('OK');
     }
 
-    // Create the edit record immediately (locks this update_id)
+    // Create the edit record
     const { data: editRow } = await supabase
       .from('image_edits')
       .insert({
@@ -197,108 +197,79 @@ export const onRequestPost = async (context: any) => {
       .select('id')
       .single();
 
-    // Notify user only once
     await sendMessage(BOT_TOKEN, chatId, `🔄 Editing your photo... this usually takes 40–70 seconds.`);
 
-    // ────────────────────────────────────────────────────────────────
-    // CRITICAL: Return 200 to Telegram IMMEDIATELY.
-    // All heavy work runs in the background via waitUntil.
-    // ────────────────────────────────────────────────────────────────
-    context.waitUntil(
-      (async () => {
-        try {
-          // Get largest photo
-          const photos = update.message.photo;
-          const largest = photos[photos.length - 1];
-          const fileUrl = await getFileUrl(BOT_TOKEN, largest.file_id);
+    try {
+      // Get largest photo
+      const photos = update.message.photo;
+      const largest = photos[photos.length - 1];
+      const fileUrl = await getFileUrl(BOT_TOKEN, largest.file_id);
 
-          // Download → pure base64
-          const imgRes = await fetch(fileUrl);
-          const imgBuffer = await imgRes.arrayBuffer();
-          const bytes = new Uint8Array(imgBuffer);
+      // Download → base64
+      const imgRes = await fetch(fileUrl);
+      const imgBuffer = await imgRes.arrayBuffer();
+      const bytes = new Uint8Array(imgBuffer);
 
-          let binary = '';
-          const chunkSize = 0x8000; // 32KB chunks
-          for (let i = 0; i < bytes.length; i += chunkSize) {
-            binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-          }
-          const base64Image = btoa(binary);
+      let binary = '';
+      const chunkSize = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+      }
+      const base64Image = btoa(binary);
+      const dataUrl = `data:image/jpeg;base64,${base64Image}`;
 
-          // ── Call RunPod (this can take 40-70s) ──────────────────────────
-          const dataUrl = `data:image/jpeg;base64,${base64Image}`;
-          const editRes = await fetch(EDIT_HANDLER_URL, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${env.RUNPOD_API_KEY}`,
-            },
-            body: JSON.stringify({
-              input: {
-                prompt: caption,
-                image: dataUrl,
-              },
-            }),
-          });
+      // ── Submit ASYNC job to RunPod ──────────────────────────────────────
+      // RunPod will call our callback when finished
+      const callbackUrl = `https://nudely.org/api/image_runpod-callback`;
 
-          if (!editRes.ok) {
-            const errText = await editRes.text();
-            throw new Error(`Handler returned ${editRes.status}: ${errText}`);
-          }
+      const editRes = await fetch(EDIT_HANDLER_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${env.RUNPOD_API_KEY}`,
+        },
+        body: JSON.stringify({
+          input: {
+            prompt: caption,
+            image: dataUrl,
+          },
+          webhook: callbackUrl, // ← RunPod will POST the result here
+        }),
+      });
 
-          const result = await editRes.json();
+      if (!editRes.ok) {
+        const errText = await editRes.text();
+        throw new Error(`RunPod submit failed ${editRes.status}: ${errText}`);
+      }
 
-          if (result.error) {
-            throw new Error(result.error);
-          }
+      const job = await editRes.json();
+      // job.id is the RunPod job ID
 
-          let editedBase64 = result.image || result.output?.image;
-          if (!editedBase64) {
-            throw new Error('No image returned from handler');
-          }
+      // Store the job ID so the callback can find this edit
+      await supabase
+        .from('image_edits')
+        .update({
+          runpod_job_id: job.id,
+          telegram_chat_id: String(chatId), // useful for the callback
+        })
+        .eq('id', editRow?.id);
 
-          // Strip data URL prefix if present
-          if (editedBase64.startsWith('data:')) {
-            editedBase64 = editedBase64.split(',')[1];
-          }
+    } catch (err: any) {
+      console.error('[bot] submit failed:', err);
 
-          // Deduct credits
-          await supabase
-            .from('telegram_users')
-            .update({ credits: user.credits - CREDITS_PER_EDIT })
-            .eq('telegram_user_id', tgUserId);
+      await supabase
+        .from('image_edits')
+        .update({ status: 'failed' })
+        .eq('id', editRow?.id);
 
-          await supabase
-            .from('image_edits')
-            .update({
-              status: 'done',
-              completed_at: new Date().toISOString(),
-            })
-            .eq('id', editRow?.id);
+      await sendMessage(
+        BOT_TOKEN,
+        chatId,
+        `❌ Something went wrong starting the edit. You haven't been charged — please try again.`
+      );
+    }
 
-          await sendPhoto(
-            BOT_TOKEN,
-            chatId,
-            editedBase64,
-            `✅ Done! ${user.credits - CREDITS_PER_EDIT} credits left.`
-          );
-        } catch (err: any) {
-          console.error('[bot] edit failed:', err);
-
-          await supabase
-            .from('image_edits')
-            .update({ status: 'failed' })
-            .eq('id', editRow?.id);
-
-          await sendMessage(
-            BOT_TOKEN,
-            chatId,
-            `❌ Something went wrong editing your photo. You haven't been charged — please try again.`
-          );
-        }
-      })()
-    );
-
-    // Return immediately so Telegram doesn't timeout
+    // Return immediately – the real work happens in the callback
     return new Response('OK');
   }
 
