@@ -338,17 +338,17 @@ def handler(job):
         image_base64     = input_data.get('image')
 
         # Frontend slider mapping (mainly for normal mode)
-        raw_pose = float(input_data.get('pose_strength', input_data.get('poseStrength', 0.5)))
-        pose_strength = max(0.12, min(0.85, 1.0 - raw_pose))
-
-        raw_structure = float(input_data.get('structure_strength', input_data.get('structureStrength', 0.6)))
-        canny_strength = max(0.05, min(0.45, raw_structure * 0.4))
-
-        face_scale       = float(input_data.get('face_scale', 0.95))
-        s_scale          = float(input_data.get('s_scale', 1.0))
-        strength         = float(input_data.get('strength', 0.9))
-        guidance_scale   = 9.0
-        num_steps        = 40
+		raw_pose = float(input_data.get('pose_strength', input_data.get('poseStrength', 0.85)))  # was 0.5
+		pose_strength = max(0.08, min(0.75, 1.0 - raw_pose))   # → ~0.15
+		
+		raw_structure = float(input_data.get('structure_strength', input_data.get('structureStrength', 0.25)))  # was 0.6
+		canny_strength = max(0.03, min(0.35, raw_structure * 0.4))  # → ~0.10
+		
+		face_scale = float(input_data.get('face_scale', 0.90))      # was 0.95
+		s_scale = float(input_data.get('s_scale', 1.0))
+		strength = float(input_data.get('strength', 0.93))          # was 0.9
+		guidance_scale = 9.0
+		num_steps = 40
 
         # ----- Explicit detection & preset selection -----
         preset = get_explicit_preset(user_prompt)
