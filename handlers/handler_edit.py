@@ -262,7 +262,6 @@ def get_explicit_preset(user_prompt: str):
     # 2. Global fallbacks (ordered)
     for group in GLOBAL_FALLBACKS:
         if any(kw in prompt_lower for kw in group["keywords"]):
-            # Find the preset by name
             for preset in EXPLICIT_PRESETS:
                 if preset["name"] == group["default"]:
                     return preset
@@ -310,14 +309,16 @@ def handler(job):
         user_negative = input_data.get('negative_prompt', '')
         image_base64 = input_data.get('image')
 
-        # Frontend slider mapping (mainly for normal mode)
-        raw_pose = float(input_data.get('pose_strength', input_data.get('poseStrength', 0.85)))  # was 0.5
-        pose_strength = max(0.08, min(0.75, 1.0 - raw_pose))   # → ~0.15
-        raw_structure = float(input_data.get('structure_strength', input_data.get('structureStrength', 0.25)))  # was 0.6
-        canny_strength = max(0.03, min(0.35, raw_structure * 0.4))  # → ~0.10
-        face_scale = float(input_data.get('face_scale', 0.90))      # was 0.95
-        s_scale = float(input_data.get('s_scale', 1.0))
-        strength = float(input_data.get('strength', 0.93))          # was 0.9
+        # Frontend slider mapping (mainly for normal mode) - improved body shape retention
+        raw_pose = float(input_data.get('pose_strength', input_data.get('poseStrength', 0.70)))
+        pose_strength = max(0.12, min(0.75, 1.0 - raw_pose))   # → ~0.30
+
+        raw_structure = float(input_data.get('structure_strength', input_data.get('structureStrength', 0.55)))
+        canny_strength = max(0.08, min(0.40, raw_structure * 0.45))  # → ~0.25
+
+        face_scale = float(input_data.get('face_scale', 0.90))
+        s_scale = float(input_data.get('s_scale', 1.05))
+        strength = float(input_data.get('strength', 0.91))
         guidance_scale = 9.0
         num_steps = 40
 
