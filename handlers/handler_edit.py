@@ -309,30 +309,31 @@ def handler(job):
         user_negative = input_data.get('negative_prompt', '')
         image_base64 = input_data.get('image')
 
-        # Frontend slider mapping (mainly for normal mode) - improved body shape retention
+        # ---------- Non-sexual defaults (Option A) ----------
         raw_pose = float(input_data.get('pose_strength', input_data.get('poseStrength', 0.70)))
-        pose_strength = max(0.12, min(0.75, 1.0 - raw_pose))   # → ~0.30
+        pose_strength = max(0.12, min(0.75, 1.0 - raw_pose))          # ~0.30
 
         raw_structure = float(input_data.get('structure_strength', input_data.get('structureStrength', 0.55)))
-        canny_strength = max(0.08, min(0.40, raw_structure * 0.45))  # → ~0.25
+        canny_strength = max(0.08, min(0.40, raw_structure * 0.45))    # ~0.25
 
-        face_scale = float(input_data.get('face_scale', 0.90))
+        face_scale = float(input_data.get('face_scale', 0.97))         # stronger face lock
         s_scale = float(input_data.get('s_scale', 1.05))
-        strength = float(input_data.get('strength', 0.91))
+        strength = float(input_data.get('strength', 0.89))
         guidance_scale = 9.0
         num_steps = 40
 
-        # ----- Explicit detection & preset selection -----
+        # ---------- Explicit / Sexual mode ----------
         preset = get_explicit_preset(user_prompt)
         is_sexual = preset is not None
+
         if is_sexual:
             print(f"→ Explicit mode activated – using preset: {preset['name']}")
             pose_strength = 0.0
             canny_strength = 0.0
-            strength = 0.97
-            guidance_scale = 9.0
-            face_scale = max(face_scale, 0.84)
-            num_steps = 38
+            strength = 0.89
+            guidance_scale = 8.5
+            face_scale = max(face_scale, 0.92)
+            num_steps = 44
         else:
             print("→ Normal undress mode (img2img)")
 
@@ -351,7 +352,7 @@ def handler(job):
         w, h = get_dimensions(input_image)
         input_image = input_image.resize((w, h), Image.Resampling.LANCZOS)
 
-        print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} | Pose: {pose_strength:.2f} | Canny: {canny_strength:.2f} | Strength: {strength:.2f} | CFG: {guidance_scale} | Steps: {num_steps} | Sexual: {is_sexual}")
+        print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} | Pose: {pose_strength:.2f} | Canny: {canny_strength:.2f} | Strength: {strength:.2f} | FaceScale: {face_scale:.2f} | CFG: {guidance_scale} | Steps: {num_steps} | Sexual: {is_sexual}")
 
         # Face embedding
         cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
