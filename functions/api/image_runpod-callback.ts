@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-const CREDITS_PER_EDIT = 1; // ← updated
+const STARS_PER_EDIT = 8;
 
 async function sendPhoto(token: string, chatId: number | string, photoBase64: string, caption?: string) {
   const form = new FormData();
@@ -57,9 +57,7 @@ export const onRequestPost = async (context: any) => {
     return new Response('OK');
   }
 
-  if (!jobId) {
-    return new Response('OK');
-  }
+  if (!jobId) return new Response('OK');
 
   const { data: edit, error: findError } = await supabase
     .from('image_edits')
@@ -79,9 +77,7 @@ export const onRequestPost = async (context: any) => {
   const chatId = edit.telegram_chat_id;
   const tgUserId = edit.telegram_user_id;
 
-  if (!chatId) {
-    return new Response('OK');
-  }
+  if (!chatId) return new Response('OK');
 
   try {
     if (status === 'FAILED' || body.error) {
@@ -108,7 +104,7 @@ export const onRequestPost = async (context: any) => {
       editedBase64 = editedBase64.split(',')[1];
     }
 
-    // Convert base64 → Blob
+    // Convert to Blob for Storage
     const byteCharacters = atob(editedBase64);
     const byteArrays = new Uint8Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
@@ -116,7 +112,6 @@ export const onRequestPost = async (context: any) => {
     }
     const blob = new Blob([byteArrays], { type: 'image/jpeg' });
 
-    // Upload to Supabase Storage
     const fileName = `edited/${edit.id}-${Date.now()}.jpg`;
 
     const { error: uploadError } = await supabase.storage
@@ -130,44 +125,45 @@ export const onRequestPost = async (context: any) => {
       throw new Error(`Storage upload failed: ${uploadError.message}`);
     }
 
-    // Get public URL
     const { data: publicUrlData } = supabase.storage
       .from('bot-edits')
       .getPublicUrl(fileName);
 
     const editedImageUrl = publicUrlData.publicUrl;
 
-    // Deduct credits
+    // Deduct stars
     const { data: user } = await supabase
       .from('telegram_users')
-      .select('credits')
+      .select('stars')
       .eq('telegram_user_id', tgUserId)
       .maybeSingle();
+
+    const newStars = Math.max(0, (user?.stars ?? 0) - STARS_PER_EDIT);
 
     if (user) {
       await supabase
         .from('telegram_users')
-        .update({ credits: Math.max(0, user.credits - CREDITS_PER_EDIT) })
+        .update({ stars: newStars })
         .eq('telegram_user_id', tgUserId);
     }
 
-    // Update the edit record
+    // Update edit record
     await supabase
       .from('image_edits')
       .update({
         status: 'done',
         completed_at: new Date().toISOString(),
         edited_image: editedImageUrl,
-        credits_charged: CREDITS_PER_EDIT,
+        credits_charged: STARS_PER_EDIT,
       })
       .eq('id', edit.id);
 
-    // Send photo to user
+    // Send result
     await sendPhoto(
       BOT_TOKEN,
       chatId,
       editedBase64,
-      `✅ Done! ${Math.max(0, (user?.credits ?? 0) - CREDITS_PER_EDIT)} credits left.`
+      `✅ Done! You have <b>${newStars} stars</b> left.`
     );
 
     console.log('[callback] Success →', chatId);
