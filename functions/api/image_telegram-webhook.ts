@@ -1,18 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 
-const PACKAGES: Record<string, { name: string; credits: number; stars: number }> = {
-  single:   { name: '1 Image',     credits: 1,    stars: 8 },
-  pack10:   { name: '10 Images',   credits: 10,   stars: 70 },
-  pack50:   { name: '50 Images',   credits: 50,   stars: 300 },
-  pack100:  { name: '100 Images',  credits: 100,  stars: 550 },
-  pack500:  { name: '500 Images',  credits: 500,  stars: 2400 },
-  pack1000: { name: '1000 Images', credits: 1000, stars: 4500 },
+const PACKAGES: Record<string, { name: string; stars: number }> = {
+  single:   { name: '1 Image',     stars: 8 },
+  pack10:   { name: '10 Images',   stars: 70 },
+  pack50:   { name: '50 Images',   stars: 300 },
+  pack100:  { name: '100 Images',  stars: 550 },
+  pack500:  { name: '500 Images',  stars: 2400 },
+  pack1000: { name: '1000 Images', stars: 4500 },
 };
 
-const CREDITS_PER_EDIT = 1;
-const FREE_CREDITS = 2;
+const STARS_PER_EDIT = 8;
+const FREE_STARS = 16; // 2 free images
 
-// Async RunPod endpoint
 const EDIT_HANDLER_URL = 'https://api.runpod.ai/v2/em5th9pvdrelyb/run';
 
 async function sendMessage(token: string, chatId: number | string, text: string, extra: any = {}) {
@@ -78,7 +77,7 @@ export const onRequestPost = async (context: any) => {
 
     const { data: existing } = await supabase
       .from('telegram_users')
-      .select('id, credits')
+      .select('id, stars')
       .eq('telegram_user_id', tgUserId)
       .maybeSingle();
 
@@ -87,7 +86,7 @@ export const onRequestPost = async (context: any) => {
         telegram_user_id: tgUserId,
         telegram_username: tgUsername,
         first_name: firstName,
-        credits: FREE_CREDITS,
+        stars: FREE_STARS,
       });
     }
 
@@ -95,34 +94,35 @@ export const onRequestPost = async (context: any) => {
       BOT_TOKEN,
       chatId,
       `👋 Hey <b>${firstName}</b>!\n\n` +
-        `Upload a photo with an instruction (e.g. "make her nude", "doggy style"), and send it — our AI will edit it for you.\n\n` +
-        `You've got <b>${FREE_CREDITS} free credits</b> to start (each edit costs ${CREDITS_PER_EDIT} credit).`
+        `Upload a photo with an instruction (e.g. "make her nude", "doggy style") and send it.\n\n` +
+        `You've got <b>${FREE_STARS} free stars</b> (enough for 2 images).\n` +
+        `Each edit costs <b>${STARS_PER_EDIT} ⭐</b>.`
     );
     return new Response('OK');
   }
 
-  // ── /credits ─────────────────────────────────────────────────────────────
-  if (update.message?.text === '/credits') {
+  // ── /credits or /stars ───────────────────────────────────────────────────
+  if (update.message?.text === '/credits' || update.message?.text === '/stars') {
     const chatId = update.message.chat.id;
     const tgUserId = String(update.message.from.id);
 
     const { data: user } = await supabase
       .from('telegram_users')
-      .select('credits')
+      .select('stars')
       .eq('telegram_user_id', tgUserId)
       .maybeSingle();
 
     await sendMessage(
       BOT_TOKEN,
       chatId,
-      `💳 You have <b>${user?.credits ?? 0} credits</b> left.\n\nUse /buy to top up.`
+      `⭐ You have <b>${user?.stars ?? 0} stars</b> left.\n\nUse /buy to top up.`
     );
     return new Response('OK');
   }
 
   // ── /buy ─────────────────────────────────────────────────────────────────
   if (update.message?.text === '/buy') {
-    await sendMessage(BOT_TOKEN, update.message.chat.id, `Pick a credit package:`, {
+    await sendMessage(BOT_TOKEN, update.message.chat.id, `Pick a package:`, {
       reply_markup: creditMenu(),
     });
     return new Response('OK');
@@ -139,23 +139,23 @@ export const onRequestPost = async (context: any) => {
       await sendMessage(
         BOT_TOKEN,
         chatId,
-        `Please add an instruction as the caption on your photo — e.g. "doggy style" or "make her nude".`
+        `Please add an instruction as the caption — e.g. "doggy style" or "make her nude".`
       );
       return new Response('OK');
     }
 
-    // Check credits
+    // Check stars balance
     const { data: user } = await supabase
       .from('telegram_users')
-      .select('credits')
+      .select('stars')
       .eq('telegram_user_id', tgUserId)
       .maybeSingle();
 
-    if (!user || user.credits < CREDITS_PER_EDIT) {
+    if (!user || user.stars < STARS_PER_EDIT) {
       await sendMessage(
         BOT_TOKEN,
         chatId,
-        `⚠️ You don't have enough credits for this edit (need ${CREDITS_PER_EDIT}).\n\nUse /buy to top up.`,
+        `⚠️ You need at least <b>${STARS_PER_EDIT} stars</b> for one edit.\n\nUse /buy to top up.`,
         { reply_markup: creditMenu() }
       );
       return new Response('OK');
@@ -173,18 +173,16 @@ export const onRequestPost = async (context: any) => {
     }
 
     try {
-      // Get largest photo
       const photos = update.message.photo;
       const largest = photos[photos.length - 1];
       const fileUrl = await getFileUrl(BOT_TOKEN, largest.file_id);
 
-      // Download image
       const imgRes = await fetch(fileUrl);
       const imgBuffer = await imgRes.arrayBuffer();
       const bytes = new Uint8Array(imgBuffer);
       const blob = new Blob([bytes], { type: 'image/jpeg' });
 
-      // Upload reference image to Supabase Storage
+      // Upload reference image
       const refFileName = `reference/${tgUserId}-${Date.now()}.jpg`;
 
       const { error: uploadError } = await supabase.storage
@@ -215,7 +213,7 @@ export const onRequestPost = async (context: any) => {
           status: 'processing',
           telegram_update_id: updateId,
           telegram_chat_id: String(chatId),
-          credits_charged: CREDITS_PER_EDIT,
+          credits_charged: STARS_PER_EDIT,
         })
         .select('id')
         .single();
@@ -226,7 +224,7 @@ export const onRequestPost = async (context: any) => {
 
       await sendMessage(BOT_TOKEN, chatId, `🔄 Editing your photo... this usually takes 40–70 seconds.`);
 
-      // Convert to base64 for RunPod
+      // Prepare base64 for RunPod
       let binary = '';
       const chunkSize = 0x8000;
       for (let i = 0; i < bytes.length; i += chunkSize) {
@@ -235,7 +233,6 @@ export const onRequestPost = async (context: any) => {
       const base64Image = btoa(binary);
       const dataUrl = `data:image/jpeg;base64,${base64Image}`;
 
-      // Submit job to RunPod
       const callbackUrl = `https://nudely.org/api/image_runpod-callback`;
 
       const editRes = await fetch(EDIT_HANDLER_URL, {
@@ -267,7 +264,6 @@ export const onRequestPost = async (context: any) => {
 
     } catch (err: any) {
       console.error('[bot] submit failed:', err);
-
       await sendMessage(
         BOT_TOKEN,
         chatId,
@@ -278,7 +274,7 @@ export const onRequestPost = async (context: any) => {
     return new Response('OK');
   }
 
-  // ── Package selection → Telegram Stars invoice ───────────────────────────
+  // ── Package selection ────────────────────────────────────────────────────
   if (update.callback_query?.data?.startsWith('buy_')) {
     const query = update.callback_query;
     const chatId = query.message.chat.id;
@@ -299,7 +295,6 @@ export const onRequestPost = async (context: any) => {
       .insert({
         telegram_user_id: tgUserId,
         package_name: pkg.name,
-        credits: pkg.credits,
         stars: pkg.stars,
         status: 'pending',
       })
@@ -311,8 +306,8 @@ export const onRequestPost = async (context: any) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
-        title: `${pkg.name}`,
-        description: `Top up your photo-editing credits.`,
+        title: pkg.name,
+        description: `Top up your stars for photo editing.`,
         payload: purchase?.id,
         currency: 'XTR',
         prices: [{ label: pkg.name, amount: pkg.stars }],
@@ -336,22 +331,22 @@ export const onRequestPost = async (context: any) => {
 
     const { data: purchase } = await supabase
       .from('telegram_purchases')
-      .select('credits, package_name')
+      .select('stars, package_name')
       .eq('id', purchaseId)
       .maybeSingle();
 
     if (purchase) {
       const { data: user } = await supabase
         .from('telegram_users')
-        .select('credits')
+        .select('stars')
         .eq('telegram_user_id', tgUserId)
         .maybeSingle();
 
-      const newBalance = (user?.credits || 0) + purchase.credits;
+      const newBalance = (user?.stars || 0) + purchase.stars;
 
       await supabase
         .from('telegram_users')
-        .update({ credits: newBalance })
+        .update({ stars: newBalance })
         .eq('telegram_user_id', tgUserId);
 
       await supabase
@@ -362,7 +357,7 @@ export const onRequestPost = async (context: any) => {
       await sendMessage(
         BOT_TOKEN,
         chatId,
-        `✅ <b>Payment confirmed!</b>\n\n📦 ${purchase.package_name} — +${purchase.credits} credits\n💳 New balance: <b>${newBalance} credits</b>\n\nSend a photo with an instruction to keep editing!`
+        `✅ <b>Payment confirmed!</b>\n\n📦 ${purchase.package_name}\n⭐ +${purchase.stars} stars\n💳 New balance: <b>${newBalance} stars</b>\n\nSend a photo with an instruction to continue!`
       );
     }
 
