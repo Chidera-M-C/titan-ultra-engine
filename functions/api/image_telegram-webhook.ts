@@ -1,15 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 
 const PACKAGES: Record<string, { name: string; credits: number; stars: number }> = {
-  starter: { name: 'Starter', credits: 100, stars: 750 },
-  creator: { name: 'Pro', credits: 500, stars: 3000 },
-  master: { name: 'Studio', credits: 1500, stars: 7500 },
+  single:   { name: '1 Image',     credits: 1,    stars: 8 },
+  pack10:   { name: '10 Images',   credits: 10,   stars: 70 },
+  pack50:   { name: '50 Images',   credits: 50,   stars: 300 },
+  pack100:  { name: '100 Images',  credits: 100,  stars: 550 },
+  pack500:  { name: '500 Images',  credits: 500,  stars: 2400 },
+  pack1000: { name: '1000 Images', credits: 1000, stars: 4500 },
 };
 
-const CREDITS_PER_EDIT = 4;
-const FREE_CREDITS = 15;
+const CREDITS_PER_EDIT = 1;
+const FREE_CREDITS = 2;
 
-// IMPORTANT: now using the ASYNC endpoint
+// Async RunPod endpoint
 const EDIT_HANDLER_URL = 'https://api.runpod.ai/v2/em5th9pvdrelyb/run';
 
 async function sendMessage(token: string, chatId: number | string, text: string, extra: any = {}) {
@@ -17,25 +20,6 @@ async function sendMessage(token: string, chatId: number | string, text: string,
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', ...extra }),
-  });
-}
-
-async function sendPhoto(token: string, chatId: number | string, photoBase64: string, caption?: string) {
-  const form = new FormData();
-  form.append('chat_id', String(chatId));
-  if (caption) form.append('caption', caption);
-
-  const byteCharacters = atob(photoBase64);
-  const byteArrays = [];
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteArrays.push(byteCharacters.charCodeAt(i));
-  }
-  const blob = new Blob([new Uint8Array(byteArrays)], { type: 'image/jpeg' });
-  form.append('photo', blob, 'edited.jpg');
-
-  await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-    method: 'POST',
-    body: form,
   });
 }
 
@@ -56,9 +40,12 @@ async function answerPreCheckout(token: string, id: string, ok: boolean, errorMe
 function creditMenu() {
   return {
     inline_keyboard: [
-      [{ text: '⚡ Starter — 100 credits (750 ⭐)', callback_data: 'buy_starter' }],
-      [{ text: '🔥 Pro — 500 credits (3,000 ⭐)', callback_data: 'buy_creator' }],
-      [{ text: '👑 Studio — 1,500 credits (7,500 ⭐)', callback_data: 'buy_master' }],
+      [{ text: '1️⃣  1 Image — 8 ⭐ (~$0.12)', callback_data: 'buy_single' }],
+      [{ text: '🔟  10 Images — 70 ⭐ (~$1.05)', callback_data: 'buy_pack10' }],
+      [{ text: '5️⃣0️⃣  50 Images — 300 ⭐ (~$4.50)', callback_data: 'buy_pack50' }],
+      [{ text: '💯  100 Images — 550 ⭐ (~$8.25)', callback_data: 'buy_pack100' }],
+      [{ text: '🔥  500 Images — 2,400 ⭐ (~$36)', callback_data: 'buy_pack500' }],
+      [{ text: '👑  1000 Images — 4,500 ⭐ (~$67.50)', callback_data: 'buy_pack1000' }],
     ],
   };
 }
@@ -108,8 +95,8 @@ export const onRequestPost = async (context: any) => {
       BOT_TOKEN,
       chatId,
       `👋 Hey <b>${firstName}</b>!\n\n` +
-        `Upload a photo with an instruction (e.g. "make her nude", "doggy style", "remove the background"), and send it — our AI will edit it for you.\n\n` +
-        `You've got <b>${FREE_CREDITS} free credits</b> to start (each edit costs ${CREDITS_PER_EDIT}).`
+        `Upload a photo with an instruction (e.g. "make her nude", "doggy style"), and send it — our AI will edit it for you.\n\n` +
+        `You've got <b>${FREE_CREDITS} free credits</b> to start (each edit costs ${CREDITS_PER_EDIT} credit).`
     );
     return new Response('OK');
   }
@@ -174,7 +161,7 @@ export const onRequestPost = async (context: any) => {
       return new Response('OK');
     }
 
-    // === DEDUPLICATION ===
+    // Deduplication
     const { data: alreadyProcessed } = await supabase
       .from('image_edits')
       .select('id')
@@ -185,31 +172,61 @@ export const onRequestPost = async (context: any) => {
       return new Response('OK');
     }
 
-    // Create the edit record
-    const { data: editRow } = await supabase
-      .from('image_edits')
-      .insert({
-        telegram_user_id: tgUserId,
-        instruction: caption,
-        status: 'processing',
-        telegram_update_id: updateId,
-      })
-      .select('id')
-      .single();
-
-    await sendMessage(BOT_TOKEN, chatId, `🔄 Editing your photo... this usually takes 40–70 seconds.`);
-
     try {
       // Get largest photo
       const photos = update.message.photo;
       const largest = photos[photos.length - 1];
       const fileUrl = await getFileUrl(BOT_TOKEN, largest.file_id);
 
-      // Download → base64
+      // Download image
       const imgRes = await fetch(fileUrl);
       const imgBuffer = await imgRes.arrayBuffer();
       const bytes = new Uint8Array(imgBuffer);
+      const blob = new Blob([bytes], { type: 'image/jpeg' });
 
+      // Upload reference image to Supabase Storage
+      const refFileName = `reference/${tgUserId}-${Date.now()}.jpg`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('bot-edits')
+        .upload(refFileName, blob, {
+          contentType: 'image/jpeg',
+          upsert: true,
+        });
+
+      if (uploadError) {
+        throw new Error(`Failed to upload reference image: ${uploadError.message}`);
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from('bot-edits')
+        .getPublicUrl(refFileName);
+
+      const referenceImageUrl = publicUrlData.publicUrl;
+
+      // Create edit record
+      const { data: editRow, error: insertError } = await supabase
+        .from('image_edits')
+        .insert({
+          telegram_user_id: tgUserId,
+          instruction: caption,
+          user_prompt: caption,
+          reference_image: referenceImageUrl,
+          status: 'processing',
+          telegram_update_id: updateId,
+          telegram_chat_id: String(chatId),
+          credits_charged: CREDITS_PER_EDIT,
+        })
+        .select('id')
+        .single();
+
+      if (insertError) {
+        throw new Error(`Failed to create edit record: ${insertError.message}`);
+      }
+
+      await sendMessage(BOT_TOKEN, chatId, `🔄 Editing your photo... this usually takes 40–70 seconds.`);
+
+      // Convert to base64 for RunPod
       let binary = '';
       const chunkSize = 0x8000;
       for (let i = 0; i < bytes.length; i += chunkSize) {
@@ -218,8 +235,7 @@ export const onRequestPost = async (context: any) => {
       const base64Image = btoa(binary);
       const dataUrl = `data:image/jpeg;base64,${base64Image}`;
 
-      // ── Submit ASYNC job to RunPod ──────────────────────────────────────
-      // RunPod will call our callback when finished
+      // Submit job to RunPod
       const callbackUrl = `https://nudely.org/api/image_runpod-callback`;
 
       const editRes = await fetch(EDIT_HANDLER_URL, {
@@ -233,7 +249,7 @@ export const onRequestPost = async (context: any) => {
             prompt: caption,
             image: dataUrl,
           },
-          webhook: callbackUrl, // ← RunPod will POST the result here
+          webhook: callbackUrl,
         }),
       });
 
@@ -246,20 +262,11 @@ export const onRequestPost = async (context: any) => {
 
       await supabase
         .from('image_edits')
-        .update({
-          runpod_job_id: job.id,
-          telegram_chat_id: String(chatId),
-          status: 'processing',   // keep it processing
-        })
-        .eq('id', editRow?.id);
+        .update({ runpod_job_id: job.id })
+        .eq('id', editRow.id);
 
     } catch (err: any) {
       console.error('[bot] submit failed:', err);
-
-      await supabase
-        .from('image_edits')
-        .update({ status: 'failed' })
-        .eq('id', editRow?.id);
 
       await sendMessage(
         BOT_TOKEN,
@@ -268,7 +275,6 @@ export const onRequestPost = async (context: any) => {
       );
     }
 
-    // Return immediately – the real work happens in the callback
     return new Response('OK');
   }
 
@@ -305,7 +311,7 @@ export const onRequestPost = async (context: any) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
-        title: `${pkg.name} — ${pkg.credits} credits`,
+        title: `${pkg.name}`,
         description: `Top up your photo-editing credits.`,
         payload: purchase?.id,
         currency: 'XTR',
