@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-const CREDITS_PER_EDIT = 4;
+const CREDITS_PER_EDIT = 1; // ← updated
 
 async function sendPhoto(token: string, chatId: number | string, photoBase64: string, caption?: string) {
   const form = new FormData();
@@ -53,41 +53,26 @@ export const onRequestPost = async (context: any) => {
 
   console.log('[callback] job:', jobId, 'status:', status);
 
-  // ────────────────────────────────────────────────
-  // ONLY process the final result
-  // ────────────────────────────────────────────────
   if (status !== 'COMPLETED' && status !== 'FAILED') {
-    console.log('[callback] Ignoring intermediate status:', status);
     return new Response('OK');
   }
 
   if (!jobId) {
-    console.error('[callback] Missing job id');
     return new Response('OK');
   }
 
-  // Find the matching edit record
   const { data: edit, error: findError } = await supabase
     .from('image_edits')
     .select('id, telegram_user_id, telegram_chat_id, status')
     .eq('runpod_job_id', jobId)
     .maybeSingle();
 
-  if (findError) {
-    console.error('[callback] Supabase find error:', findError);
+  if (findError || !edit) {
+    console.error('[callback] Edit not found for job', jobId);
     return new Response('OK');
   }
 
-  if (!edit) {
-    console.error('[callback] No edit found for job', jobId);
-    return new Response('OK');
-  }
-
-  console.log('[callback] Found edit:', edit.id, 'current status:', edit.status);
-
-  // Only skip if we already successfully finished it
   if (edit.status === 'done') {
-    console.log('[callback] Already done, skipping');
     return new Response('OK');
   }
 
@@ -95,7 +80,6 @@ export const onRequestPost = async (context: any) => {
   const tgUserId = edit.telegram_user_id;
 
   if (!chatId) {
-    console.error('[callback] Missing telegram_chat_id');
     return new Response('OK');
   }
 
@@ -104,7 +88,6 @@ export const onRequestPost = async (context: any) => {
       throw new Error(body.error || 'RunPod job failed');
     }
 
-    // Try every common place the final image can live
     let editedBase64: string | null =
       body.output?.image ||
       body.output?.images?.[0] ||
@@ -113,23 +96,46 @@ export const onRequestPost = async (context: any) => {
       body.result?.image ||
       null;
 
-    // Sometimes the entire output is just the base64 string
     if (!editedBase64 && typeof body.output === 'string' && body.output.length > 500) {
       editedBase64 = body.output;
     }
 
     if (!editedBase64) {
-      console.error('[callback] Could not find image. output type:', typeof body.output);
-      console.error('[callback] output sample:', JSON.stringify(body.output)?.slice(0, 400));
       throw new Error('No image found in RunPod output');
     }
 
-    console.log('[callback] Image found, length:', editedBase64.length);
-
-    // Strip data URL prefix if present
-    if (typeof editedBase64 === 'string' && editedBase64.startsWith('data:')) {
+    if (editedBase64.startsWith('data:')) {
       editedBase64 = editedBase64.split(',')[1];
     }
+
+    // Convert base64 → Blob
+    const byteCharacters = atob(editedBase64);
+    const byteArrays = new Uint8Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteArrays[i] = byteCharacters.charCodeAt(i);
+    }
+    const blob = new Blob([byteArrays], { type: 'image/jpeg' });
+
+    // Upload to Supabase Storage
+    const fileName = `edited/${edit.id}-${Date.now()}.jpg`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('bot-edits')
+      .upload(fileName, blob, {
+        contentType: 'image/jpeg',
+        upsert: true,
+      });
+
+    if (uploadError) {
+      throw new Error(`Storage upload failed: ${uploadError.message}`);
+    }
+
+    // Get public URL
+    const { data: publicUrlData } = supabase.storage
+      .from('bot-edits')
+      .getPublicUrl(fileName);
+
+    const editedImageUrl = publicUrlData.publicUrl;
 
     // Deduct credits
     const { data: user } = await supabase
@@ -145,16 +151,18 @@ export const onRequestPost = async (context: any) => {
         .eq('telegram_user_id', tgUserId);
     }
 
-    // Mark done
+    // Update the edit record
     await supabase
       .from('image_edits')
       .update({
         status: 'done',
         completed_at: new Date().toISOString(),
+        edited_image: editedImageUrl,
+        credits_charged: CREDITS_PER_EDIT,
       })
       .eq('id', edit.id);
 
-    // Send the photo
+    // Send photo to user
     await sendPhoto(
       BOT_TOKEN,
       chatId,
@@ -162,7 +170,7 @@ export const onRequestPost = async (context: any) => {
       `✅ Done! ${Math.max(0, (user?.credits ?? 0) - CREDITS_PER_EDIT)} credits left.`
     );
 
-    console.log('[callback] Successfully sent photo to', chatId);
+    console.log('[callback] Success →', chatId);
   } catch (err: any) {
     console.error('[callback] FAILED:', err?.message || err);
 
@@ -178,7 +186,7 @@ export const onRequestPost = async (context: any) => {
         `❌ Something went wrong editing your photo. You haven't been charged — please try again.`
       );
     } catch (e) {
-      console.error('[callback] Also failed to send error message', e);
+      console.error('[callback] Failed to send error message', e);
     }
   }
 
