@@ -39,12 +39,12 @@ async function answerPreCheckout(token: string, id: string, ok: boolean, errorMe
 function creditMenu() {
   return {
     inline_keyboard: [
-      [{ text: '1️⃣  1 Image — 8 ⭐ (~$0.12)', callback_data: 'buy_single' }],
-      [{ text: '🔟  10 Images — 70 ⭐ (~$1.05)', callback_data: 'buy_pack10' }],
-      [{ text: '5️⃣0️⃣  50 Images — 300 ⭐ (~$4.50)', callback_data: 'buy_pack50' }],
-      [{ text: '💯  100 Images — 550 ⭐ (~$8.25)', callback_data: 'buy_pack100' }],
-      [{ text: '🔥  500 Images — 2,400 ⭐ (~$36)', callback_data: 'buy_pack500' }],
-      [{ text: '👑  1000 Images — 4,500 ⭐ (~$67.50)', callback_data: 'buy_pack1000' }],
+      [{ text: '1 Image — 8 ⭐ (~$0.12)', callback_data: 'buy_single' }],
+      [{ text: '10 Images — 70 ⭐ (~$1.05)', callback_data: 'buy_pack10' }],
+      [{ text: '50 Images — 300 ⭐ (~$4.50)', callback_data: 'buy_pack50' }],
+      [{ text: '100 Images — 550 ⭐ (~$8.25)', callback_data: 'buy_pack100' }],
+      [{ text: '500 Images — 2,400 ⭐ (~$36)', callback_data: 'buy_pack500' }],
+      [{ text: '1000 Images — 4,500 ⭐ (~$67.50)', callback_data: 'buy_pack1000' }],
     ],
   };
 }
