@@ -8,10 +8,11 @@ import runpod
 import cv2
 import numpy as np
 import io, base64
-from PIL import Image, ImageFilter, ImageEnhance
+from PIL import Image, ImageFilter, ImageEnhance, ImageOps
 from diffusers import (
     StableDiffusionXLControlNetPipeline,
     StableDiffusionXLControlNetImg2ImgPipeline,
+    StableDiffusionXLInpaintPipeline,
     ControlNetModel,
     DPMSolverMultistepScheduler,
     AutoencoderKL
@@ -20,9 +21,12 @@ from ip_adapter.ip_adapter_faceid import IPAdapterFaceIDPlusXL
 from insightface.app import FaceAnalysis
 from insightface.utils import face_align
 from controlnet_aux import OpenposeDetector, CannyDetector
+from transformers import SegformerImageProcessor, SegformerForSemanticSegmentation
+import torch.nn.functional as F
 
 # --- CONFIG ---
 JUGGERNAUT_PATH = "/workspace/juggernaut_xl.safetensors"
+JUGGERNAUT_INPAINT_PATH = "/workspace/juggernaut_xl_inpaint.safetensors"
 VAE_PATH = "/workspace/sdxl_vae.safetensors"
 DETAIL_LORA_PATH = "/workspace/detail_tweaker.safetensors"
 REALISM_LORA_PATH = "/workspace/realism.safetensors"
@@ -33,9 +37,12 @@ IMAGE_ENCODER_PATH = "/workspace/image_encoder"
 
 base_pipeline = None
 ip_model = None
+inpaint_pipeline = None
 app = None
 openpose = None
 canny_detector = None
+seg_processor = None
+seg_model = None
 
 # ---------- Explicit Prompt Presets ----------
 EXPLICIT_PRESETS = [
@@ -134,7 +141,6 @@ EXPLICIT_PRESETS = [
     },
 ]
 
-# Ordered global fallbacks (only used when NO tailored keyword is found)
 GLOBAL_FALLBACKS = [
     {
         "keywords": ["being fucked", "getting fucked", "fucked hard", "pounded", "railed", "fucked from behind"],
@@ -151,17 +157,20 @@ GLOBAL_FALLBACKS = [
 ]
 
 def load_models():
-    global base_pipeline, ip_model, app, openpose, canny_detector
+    global base_pipeline, ip_model, inpaint_pipeline, app, openpose, canny_detector, seg_processor, seg_model
     if base_pipeline is None:
         print("Initializing InsightFace engine...")
         app = FaceAnalysis(name='buffalo_l', providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
         app.prepare(ctx_id=0, det_size=(640, 640))
+
         print("Loading VAE...")
         vae = AutoencoderKL.from_single_file(VAE_PATH, torch_dtype=torch.float16).to("cuda")
+
         print("Loading ControlNets...")
         controlnet_pose = ControlNetModel.from_pretrained(OPENPOSE_PATH, torch_dtype=torch.float16).to("cuda")
         controlnet_canny = ControlNetModel.from_pretrained(CANNY_PATH, torch_dtype=torch.float16).to("cuda")
-        print("Loading Juggernaut XL pipeline...")
+
+        print("Loading Juggernaut XL (explicit path)...")
         txt2img_pipe = StableDiffusionXLControlNetPipeline.from_single_file(
             JUGGERNAUT_PATH,
             controlnet=[controlnet_pose, controlnet_canny],
@@ -170,10 +179,12 @@ def load_models():
             use_safetensors=True,
             variant="fp16"
         ).to("cuda")
-        print("Loading LoRAs (Detail + Realism only)...")
+
+        print("Loading LoRAs (Detail + Realism)...")
         txt2img_pipe.load_lora_weights(DETAIL_LORA_PATH, adapter_name="detail")
         txt2img_pipe.load_lora_weights(REALISM_LORA_PATH, adapter_name="realism")
         txt2img_pipe.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
+
         base_pipeline = StableDiffusionXLControlNetImg2ImgPipeline(
             vae=txt2img_pipe.vae,
             text_encoder=txt2img_pipe.text_encoder,
@@ -193,6 +204,7 @@ def load_models():
         base_pipeline.enable_vae_slicing()
         base_pipeline.enable_vae_tiling()
         base_pipeline.enable_attention_slicing(slice_size="auto")
+
         print("Loading IP-Adapter FaceID Plus v2...")
         ip_model = IPAdapterFaceIDPlusXL(
             base_pipeline,
@@ -201,10 +213,46 @@ def load_models():
             device="cuda",
             torch_dtype=torch.float16,
         )
+
+        # ---------- Dedicated Inpaint Pipeline (non-explicit) ----------
+        print("Loading Juggernaut XL Inpaint pipeline...")
+        inpaint_pipeline = StableDiffusionXLInpaintPipeline.from_single_file(
+            JUGGERNAUT_INPAINT_PATH,
+            torch_dtype=torch.float16,
+            use_safetensors=True,
+            variant="fp16"
+        ).to("cuda")
+
+        # Share heavy components to save VRAM
+        inpaint_pipeline.vae = base_pipeline.vae
+        inpaint_pipeline.text_encoder = base_pipeline.text_encoder
+        inpaint_pipeline.text_encoder_2 = base_pipeline.text_encoder_2
+        inpaint_pipeline.tokenizer = base_pipeline.tokenizer
+        inpaint_pipeline.tokenizer_2 = base_pipeline.tokenizer_2
+
+        inpaint_pipeline.load_lora_weights(DETAIL_LORA_PATH, adapter_name="detail")
+        inpaint_pipeline.load_lora_weights(REALISM_LORA_PATH, adapter_name="realism")
+        inpaint_pipeline.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
+
+        inpaint_pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
+            inpaint_pipeline.scheduler.config,
+            use_karras_sigmas=True,
+            algorithm_type="dpmsolver++"
+        )
+        inpaint_pipeline.enable_vae_slicing()
+        inpaint_pipeline.enable_vae_tiling()
+        inpaint_pipeline.enable_attention_slicing(slice_size="auto")
+
+        print("Loading clothing segmentation model (SegFormer)...")
+        seg_processor = SegformerImageProcessor.from_pretrained("mattmdjaga/segformer_b2_clothes")
+        seg_model = SegformerForSemanticSegmentation.from_pretrained("mattmdjaga/segformer_b2_clothes").to("cuda")
+        seg_model.eval()
+
         print("Loading detectors...")
         openpose = OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
         canny_detector = CannyDetector()
-        print("✓ FaceID Edit pipeline initialized successfully")
+
+        print("✓ All pipelines initialized successfully")
 
 def get_dimensions(image, max_size=1536, min_size=512, multiple=64):
     w, h = image.size
@@ -230,7 +278,6 @@ def get_dimensions(image, max_size=1536, min_size=512, multiple=64):
     return w, h
 
 def ensure_min_file_size(image, min_bytes=600 * 1024):
-    """Upscale image if its JPEG size is under 600 KB (aspect-ratio safe)."""
     buf = io.BytesIO()
     image.save(buf, format="JPEG", quality=95)
     current_size = buf.tell()
@@ -249,17 +296,10 @@ def ensure_min_file_size(image, min_bytes=600 * 1024):
     return image
 
 def get_explicit_preset(user_prompt: str):
-    """
-    Watertight matching logic:
-    1. Tailored keywords have absolute priority
-    2. Only if no tailored match → use ordered global fallbacks
-    """
     prompt_lower = user_prompt.lower()
-    # 1. Highest priority: tailored keywords
     for preset in EXPLICIT_PRESETS:
         if any(kw in prompt_lower for kw in preset["tailored_keywords"]):
             return preset
-    # 2. Global fallbacks (ordered)
     for group in GLOBAL_FALLBACKS:
         if any(kw in prompt_lower for kw in group["keywords"]):
             for preset in EXPLICIT_PRESETS:
@@ -296,6 +336,39 @@ def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
         )
     return positive, negative
 
+def generate_clothing_mask(image: Image.Image, dilate_px=12, feather_px=6) -> Image.Image:
+    """
+    Automatic clothing mask using SegFormer B2 Clothes.
+    White = clothing (to be inpainted / removed)
+    Black = keep (face, hair, skin, background, hands...)
+    """
+    inputs = seg_processor(images=image, return_tensors="pt").to("cuda")
+    with torch.no_grad():
+        outputs = seg_model(**inputs)
+        logits = outputs.logits
+
+    upsampled = F.interpolate(
+        logits, size=image.size[::-1], mode="bilinear", align_corners=False
+    )
+    pred = upsampled.argmax(dim=1)[0].cpu().numpy()
+
+    # Labels that correspond to clothing in mattmdjaga/segformer_b2_clothes
+    # 1: Hat, 4: Upper-clothes, 5: Skirt, 6: Pants, 7: Dress, 8: Belt, 9: shoe?, etc.
+    clothing_labels = {1, 4, 5, 6, 7, 8}          # expand if needed
+    mask = np.isin(pred, list(clothing_labels)).astype(np.uint8) * 255
+
+    mask_img = Image.fromarray(mask).convert("L")
+
+    # Dilate so we fully cover fabric edges
+    if dilate_px > 0:
+        mask_img = mask_img.filter(ImageFilter.MaxFilter(dilate_px * 2 + 1))
+
+    # Feather edges for clean blending
+    if feather_px > 0:
+        mask_img = mask_img.filter(ImageFilter.GaussianBlur(radius=feather_px))
+
+    return mask_img
+
 def post_process(image):
     image = image.filter(ImageFilter.UnsharpMask(radius=1.0, percent=75, threshold=3))
     image = ImageEnhance.Contrast(image).enhance(1.04)
@@ -309,14 +382,14 @@ def handler(job):
         user_negative = input_data.get('negative_prompt', '')
         image_base64 = input_data.get('image')
 
-        # ---------- Non-sexual defaults (Option A) ----------
+        # ---------- Defaults ----------
         raw_pose = float(input_data.get('pose_strength', input_data.get('poseStrength', 0.70)))
-        pose_strength = max(0.12, min(0.75, 1.0 - raw_pose))          # ~0.30
+        pose_strength = max(0.12, min(0.75, 1.0 - raw_pose))
 
         raw_structure = float(input_data.get('structure_strength', input_data.get('structureStrength', 0.55)))
-        canny_strength = max(0.08, min(0.40, raw_structure * 0.45))    # ~0.25
+        canny_strength = max(0.08, min(0.40, raw_structure * 0.45))
 
-        face_scale = float(input_data.get('face_scale', 0.97))         # stronger face lock
+        face_scale = float(input_data.get('face_scale', 0.97))
         s_scale = float(input_data.get('s_scale', 1.05))
         strength = float(input_data.get('strength', 0.89))
         guidance_scale = 9.0
@@ -335,10 +408,7 @@ def handler(job):
             face_scale = max(face_scale, 0.92)
             num_steps = 44
         else:
-            print("→ Normal undress mode (img2img)")
-
-        # Always Detail + Realism
-        ip_model.pipe.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
+            print("→ Non-explicit undress mode (dedicated inpaint + auto clothing mask)")
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -346,58 +416,94 @@ def handler(job):
         image_data = base64.b64decode(image_base64.split(",")[1] if "," in image_base64 else image_base64)
         input_image = Image.open(io.BytesIO(image_data)).convert("RGB")
 
-        # Upscale if under 600 KB
         input_image = ensure_min_file_size(input_image)
         orig_w, orig_h = input_image.size
         w, h = get_dimensions(input_image)
         input_image = input_image.resize((w, h), Image.Resampling.LANCZOS)
 
-        print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} | Pose: {pose_strength:.2f} | Canny: {canny_strength:.2f} | Strength: {strength:.2f} | FaceScale: {face_scale:.2f} | CFG: {guidance_scale} | Steps: {num_steps} | Sexual: {is_sexual}")
-
-        # Face embedding
-        cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
-        faces = app.get(cv2_img)
-        if len(faces) == 0:
-            return {"error": "No face detected in input image by InsightFace"}
-
-        faces = sorted(faces, key=lambda x: (x.bbox[2] - x.bbox[0]) * (x.bbox[3] - x.bbox[1]), reverse=True)
-        best_face = faces[0]
-        faceid_embeds = torch.from_numpy(best_face.normed_embedding).unsqueeze(0).to(dtype=torch.float16, device="cuda")
-        aligned_face_bgr = face_align.norm_crop(cv2_img, landmark=best_face.kps, image_size=224)
-        face_image = Image.fromarray(cv2.cvtColor(aligned_face_bgr, cv2.COLOR_BGR2RGB))
-
-        # ControlNet maps
-        runpod.serverless.progress_update(job, "EXTRACTING_POSE")
-        pose_map = openpose(input_image, include_body=True, include_hand=True)
-        pose_map = pose_map.resize((w, h))
-        runpod.serverless.progress_update(job, "EXTRACTING_EDGES")
-        canny_map = canny_detector(input_image, low_threshold=100, high_threshold=200)
-        canny_map = canny_map.resize((w, h))
+        print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} | Sexual: {is_sexual}")
 
         positive, negative = build_prompts(user_prompt, user_negative, is_sexual=is_sexual, preset=preset)
 
-        # --- Generate ---
-        runpod.serverless.progress_update(job, "GENERATING_EDIT")
-        ip_model.pipe.scheduler.set_timesteps(num_steps, device="cuda")
-        images = ip_model.generate(
-            prompt=positive,
-            negative_prompt=negative,
-            faceid_embeds=faceid_embeds,
-            face_image=face_image,
-            image=input_image,
-            control_image=[pose_map, canny_map],
-            strength=strength,
-            controlnet_conditioning_scale=[pose_strength, canny_strength],
-            num_inference_steps=num_steps,
-            guidance_scale=guidance_scale,
-            width=w,
-            height=h,
-            scale=face_scale,
-            s_scale=s_scale,
-            num_samples=1,
-        )
+        # ============================================================
+        # EXPLICIT PATH  (unchanged logic)
+        # ============================================================
+        if is_sexual:
+            # Face embedding
+            cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
+            faces = app.get(cv2_img)
+            if len(faces) == 0:
+                return {"error": "No face detected in input image by InsightFace"}
 
-        result = post_process(images[0])
+            faces = sorted(faces, key=lambda x: (x.bbox[2] - x.bbox[0]) * (x.bbox[3] - x.bbox[1]), reverse=True)
+            best_face = faces[0]
+            faceid_embeds = torch.from_numpy(best_face.normed_embedding).unsqueeze(0).to(dtype=torch.float16, device="cuda")
+            aligned_face_bgr = face_align.norm_crop(cv2_img, landmark=best_face.kps, image_size=224)
+            face_image = Image.fromarray(cv2.cvtColor(aligned_face_bgr, cv2.COLOR_BGR2RGB))
+
+            # ControlNet maps
+            runpod.serverless.progress_update(job, "EXTRACTING_POSE")
+            pose_map = openpose(input_image, include_body=True, include_hand=True)
+            pose_map = pose_map.resize((w, h))
+            runpod.serverless.progress_update(job, "EXTRACTING_EDGES")
+            canny_map = canny_detector(input_image, low_threshold=100, high_threshold=200)
+            canny_map = canny_map.resize((w, h))
+
+            ip_model.pipe.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
+
+            runpod.serverless.progress_update(job, "GENERATING_EDIT")
+            ip_model.pipe.scheduler.set_timesteps(num_steps, device="cuda")
+            images = ip_model.generate(
+                prompt=positive,
+                negative_prompt=negative,
+                faceid_embeds=faceid_embeds,
+                face_image=face_image,
+                image=input_image,
+                control_image=[pose_map, canny_map],
+                strength=strength,
+                controlnet_conditioning_scale=[pose_strength, canny_strength],
+                num_inference_steps=num_steps,
+                guidance_scale=guidance_scale,
+                width=w,
+                height=h,
+                scale=face_scale,
+                s_scale=s_scale,
+                num_samples=1,
+            )
+            result = post_process(images[0])
+
+        # ============================================================
+        # NON-EXPLICIT PATH  (dedicated inpaint + auto mask)
+        # ============================================================
+        else:
+            runpod.serverless.progress_update(job, "GENERATING_CLOTHING_MASK")
+            mask = generate_clothing_mask(input_image, dilate_px=12, feather_px=6)
+            mask = mask.resize((w, h), Image.Resampling.LANCZOS)
+
+            # Optional: still run face detection just for logging / future refine
+            cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
+            faces = app.get(cv2_img)
+            if len(faces) == 0:
+                print("⚠ No face detected – continuing with pure inpaint")
+
+            inpaint_pipeline.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
+
+            runpod.serverless.progress_update(job, "GENERATING_INPAINT")
+            result = inpaint_pipeline(
+                prompt=positive,
+                negative_prompt=negative,
+                image=input_image,
+                mask_image=mask,
+                strength=0.92,                    # high is safe because mask protects everything else
+                guidance_scale=8.0,
+                num_inference_steps=36,
+                width=w,
+                height=h,
+            ).images[0]
+
+            result = post_process(result)
+
+        # ---------- Save & return ----------
         buffered = io.BytesIO()
         result.save(buffered, format="JPEG", quality=93, optimize=True, progressive=True)
         return {"image": f"data:image/jpeg;base64,{base64.b64encode(buffered.getvalue()).decode()}"}
