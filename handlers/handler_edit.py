@@ -230,9 +230,13 @@ def load_models():
         inpaint_pipeline.tokenizer = base_pipeline.tokenizer
         inpaint_pipeline.tokenizer_2 = base_pipeline.tokenizer_2
 
-        inpaint_pipeline.load_lora_weights(DETAIL_LORA_PATH, adapter_name="detail")
-        inpaint_pipeline.load_lora_weights(REALISM_LORA_PATH, adapter_name="realism")
-        inpaint_pipeline.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
+        # IMPORTANT: use different adapter names to avoid conflict with shared text encoders
+        inpaint_pipeline.load_lora_weights(DETAIL_LORA_PATH, adapter_name="detail_inpaint")
+        inpaint_pipeline.load_lora_weights(REALISM_LORA_PATH, adapter_name="realism_inpaint")
+        inpaint_pipeline.set_adapters(
+            ["detail_inpaint", "realism_inpaint"],
+            adapter_weights=[0.55, 0.65]
+        )
 
         inpaint_pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
             inpaint_pipeline.scheduler.config,
@@ -353,17 +357,14 @@ def generate_clothing_mask(image: Image.Image, dilate_px=12, feather_px=6) -> Im
     pred = upsampled.argmax(dim=1)[0].cpu().numpy()
 
     # Labels that correspond to clothing in mattmdjaga/segformer_b2_clothes
-    # 1: Hat, 4: Upper-clothes, 5: Skirt, 6: Pants, 7: Dress, 8: Belt, 9: shoe?, etc.
-    clothing_labels = {1, 4, 5, 6, 7, 8}          # expand if needed
+    clothing_labels = {1, 4, 5, 6, 7, 8}
     mask = np.isin(pred, list(clothing_labels)).astype(np.uint8) * 255
 
     mask_img = Image.fromarray(mask).convert("L")
 
-    # Dilate so we fully cover fabric edges
     if dilate_px > 0:
         mask_img = mask_img.filter(ImageFilter.MaxFilter(dilate_px * 2 + 1))
 
-    # Feather edges for clean blending
     if feather_px > 0:
         mask_img = mask_img.filter(ImageFilter.GaussianBlur(radius=feather_px))
 
@@ -480,13 +481,16 @@ def handler(job):
             mask = generate_clothing_mask(input_image, dilate_px=12, feather_px=6)
             mask = mask.resize((w, h), Image.Resampling.LANCZOS)
 
-            # Optional: still run face detection just for logging / future refine
+            # Optional: still run face detection just for logging
             cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
             faces = app.get(cv2_img)
             if len(faces) == 0:
                 print("⚠ No face detected – continuing with pure inpaint")
 
-            inpaint_pipeline.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
+            inpaint_pipeline.set_adapters(
+                ["detail_inpaint", "realism_inpaint"],
+                adapter_weights=[0.55, 0.65]
+            )
 
             runpod.serverless.progress_update(job, "GENERATING_INPAINT")
             result = inpaint_pipeline(
@@ -494,7 +498,7 @@ def handler(job):
                 negative_prompt=negative,
                 image=input_image,
                 mask_image=mask,
-                strength=0.92,                    # high is safe because mask protects everything else
+                strength=0.92,
                 guidance_scale=8.0,
                 num_inference_steps=36,
                 width=w,
