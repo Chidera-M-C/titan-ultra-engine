@@ -94,9 +94,14 @@ export const onRequestPost = async (context: any) => {
       BOT_TOKEN,
       chatId,
       `👋 Hey <b>${firstName}</b>!\n\n` +
-        `Upload a photo with an instruction (e.g. "make her nude", "doggy style") and send it.\n\n` +
-        `You've got <b>${FREE_STARS} free stars</b> (enough for 2 images).\n` +
-        `Each edit costs <b>${STARS_PER_EDIT} ⭐</b>.`
+      `Send me a photo with a short instruction and I’ll edit it for you.\n\n` +
+      `Examples:\n` +
+      `• "remove the background"\n` +
+      `• "change the outfit"\n` +
+      `• "make it more realistic"\n` +
+      `• "creative edit"\n\n` +
+      `You’ve got <b>${FREE_STARS} free stars</b> (enough for 2 edits).\n` +
+      `Each edit costs <b>${STARS_PER_EDIT} ⭐</b>.`
     );
     return new Response('OK');
   }
@@ -139,7 +144,8 @@ export const onRequestPost = async (context: any) => {
       await sendMessage(
         BOT_TOKEN,
         chatId,
-        `Please add an instruction as the caption — e.g. "doggy style" or "make her nude".`
+        `Please add a short instruction as the caption of your photo.\n\n` +
+        `Example: "remove the background" or "change the style"`
       );
       return new Response('OK');
     }
@@ -155,7 +161,8 @@ export const onRequestPost = async (context: any) => {
       await sendMessage(
         BOT_TOKEN,
         chatId,
-        `⚠️ You need at least <b>${STARS_PER_EDIT} stars</b> for one edit.\n\nUse /buy to top up.`,
+        `⚠️ You need at least <b>${STARS_PER_EDIT} stars</b> for one edit.\n\n` +
+        `Use /buy to top up.`,
         { reply_markup: creditMenu() }
       );
       return new Response('OK');
@@ -357,7 +364,11 @@ export const onRequestPost = async (context: any) => {
       await sendMessage(
         BOT_TOKEN,
         chatId,
-        `✅ <b>Payment confirmed!</b>\n\n📦 ${purchase.package_name}\n⭐ +${purchase.stars} stars\n💳 New balance: <b>${newBalance} stars</b>\n\nSend a photo with an instruction to continue!`
+        `✅ <b>Payment confirmed!</b>\n\n` +
+        `📦 ${purchase.package_name}\n` +
+        `⭐ +${purchase.stars} stars\n` +
+        `💳 New balance: <b>${newBalance} stars</b>\n\n` +
+        `Send a photo with an instruction to continue.`
       );
     }
 
