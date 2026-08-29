@@ -33,6 +33,13 @@ download_civitai(
     "Juggernaut XL"
 )
 
+# 1b. Inpainting variant (for non-explicit / undress mode)
+download_civitai(
+    "https://civitai.red/api/download/models/2574712?fileId=2462118",
+    "/workspace/juggernaut_xl_inpaint.safetensors",
+    "Juggernaut XL Inpainting"
+)
+
 hf_hub_download(
     repo_id="madebyollin/sdxl-vae-fp16-fix",
     filename="sdxl_vae.safetensors",
