@@ -214,7 +214,7 @@ def load_models():
             torch_dtype=torch.float16,
         )
 
-        # ---------- Dedicated Inpaint Pipeline (non-explicit) ----------
+        # ---------- Dedicated Inpaint Pipeline ----------
         print("Loading Juggernaut XL Inpaint pipeline...")
         inpaint_pipeline = StableDiffusionXLInpaintPipeline.from_single_file(
             JUGGERNAUT_INPAINT_PATH,
@@ -223,19 +223,19 @@ def load_models():
             variant="fp16"
         ).to("cuda")
 
-        # Share heavy components
+        # Share components
         inpaint_pipeline.vae = base_pipeline.vae
         inpaint_pipeline.text_encoder = base_pipeline.text_encoder
         inpaint_pipeline.text_encoder_2 = base_pipeline.text_encoder_2
         inpaint_pipeline.tokenizer = base_pipeline.tokenizer
         inpaint_pipeline.tokenizer_2 = base_pipeline.tokenizer_2
 
-        # Different adapter names
+        # Use different adapter names
         inpaint_pipeline.load_lora_weights(DETAIL_LORA_PATH, adapter_name="detail_inpaint")
         inpaint_pipeline.load_lora_weights(REALISM_LORA_PATH, adapter_name="realism_inpaint")
         inpaint_pipeline.set_adapters(
             ["detail_inpaint", "realism_inpaint"],
-            adapter_weights=[0.60, 0.65]          # balanced – avoids oily look
+            adapter_weights=[0.60, 0.65]
         )
 
         inpaint_pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
@@ -342,9 +342,9 @@ def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
 
 def generate_clothing_mask(image: Image.Image, dilate_px=13, feather_px=4) -> Image.Image:
     """
-    Balanced clothing mask with face/neck protection.
+    Balanced clothing mask with strict face + upper neck protection.
     """
-    # 1. Get clothing segmentation
+    # Clothing segmentation
     inputs = seg_processor(images=image, return_tensors="pt").to("cuda")
     with torch.no_grad():
         outputs = seg_model(**inputs)
@@ -359,7 +359,7 @@ def generate_clothing_mask(image: Image.Image, dilate_px=13, feather_px=4) -> Im
     mask = np.isin(pred, list(clothing_labels)).astype(np.uint8) * 255
     mask_img = Image.fromarray(mask).convert("L")
 
-    # 2. Protect face + upper neck using InsightFace
+    # === FACE + UPPER NECK PROTECTION ===
     cv2_img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
     faces = app.get(cv2_img)
     if len(faces) > 0:
@@ -367,16 +367,16 @@ def generate_clothing_mask(image: Image.Image, dilate_px=13, feather_px=4) -> Im
         face = faces[0]
         x1, y1, x2, y2 = map(int, face.bbox)
 
-        # Expand the protected zone downward a bit into the neck
+        # Expand protection zone downward into the upper neck
         h, w = image.size[1], image.size[0]
-        protect_y2 = min(h, y2 + int((y2 - y1) * 0.45))  # protect upper neck
-        protect_x1 = max(0, x1 - 20)
-        protect_x2 = min(w, x2 + 20)
+        protect_y2 = min(h, y2 + int((y2 - y1) * 0.55))
+        protect_x1 = max(0, x1 - 30)
+        protect_x2 = min(w, x2 + 30)
 
         draw = ImageDraw.Draw(mask_img)
-        draw.rectangle([protect_x1, y1 - 10, protect_x2, protect_y2], fill=0)  # force black = keep
+        draw.rectangle([protect_x1, max(0, y1 - 15), protect_x2, protect_y2], fill=0)
 
-    # 3. Dilate clothing areas (safer value)
+    # 3. Dilate clothing (safer value)
     if dilate_px > 0:
         mask_img = mask_img.filter(ImageFilter.MaxFilter(dilate_px * 2 + 1))
 
@@ -387,7 +387,7 @@ def generate_clothing_mask(image: Image.Image, dilate_px=13, feather_px=4) -> Im
     return mask_img
 
 def post_process(image):
-    image = image.filter(ImageFilter.UnsharpMask(radius=1.0, percent=80, threshold=3))
+    image = image.filter(ImageFilter.UnsharpMask(radius=1.1, percent=85, threshold=3))
     image = ImageEnhance.Contrast(image).enhance(1.04)
     image = ImageEnhance.Sharpness(image).enhance(1.06)
     return image
@@ -399,7 +399,7 @@ def handler(job):
         user_negative = input_data.get('negative_prompt', '')
         image_base64 = input_data.get('image')
 
-        # ---------- Defaults ----------
+        # Defaults
         raw_pose = float(input_data.get('pose_strength', input_data.get('poseStrength', 0.70)))
         pose_strength = max(0.12, min(0.75, 1.0 - raw_pose))
 
@@ -412,7 +412,6 @@ def handler(job):
         guidance_scale = 9.0
         num_steps = 40
 
-        # ---------- Explicit / Sexual mode ----------
         preset = get_explicit_preset(user_prompt)
         is_sexual = preset is not None
 
@@ -442,10 +441,8 @@ def handler(job):
 
         positive, negative = build_prompts(user_prompt, user_negative, is_sexual=is_sexual, preset=preset)
 
-        # ============================================================
-        # EXPLICIT PATH
-        # ============================================================
         if is_sexual:
+            # ===== EXPLICIT PATH (unchanged) =====
             cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
             faces = app.get(cv2_img)
             if len(faces) == 0:
@@ -487,10 +484,8 @@ def handler(job):
             )
             result = post_process(images[0])
 
-        # ============================================================
-        # NON-EXPLICIT PATH  (balanced)
-        # ============================================================
         else:
+            # ===== NON-EXPLICIT PATH =====
             runpod.serverless.progress_update(job, "GENERATING_CLOTHING_MASK")
             mask = generate_clothing_mask(input_image, dilate_px=13, feather_px=4)
             mask = mask.resize((w, h), Image.Resampling.LANCZOS)
@@ -506,8 +501,8 @@ def handler(job):
                 negative_prompt=negative,
                 image=input_image,
                 mask_image=mask,
-                strength=0.84,                # lower → cleaner, less oily
-                guidance_scale=6.0,           # sweet spot for Juggernaut inpaint
+                strength=0.84,
+                guidance_scale=6.0,
                 num_inference_steps=38,
                 width=w,
                 height=h,
@@ -515,7 +510,6 @@ def handler(job):
 
             result = post_process(result)
 
-        # ---------- Save & return ----------
         buffered = io.BytesIO()
         result.save(buffered, format="JPEG", quality=94, optimize=True, progressive=True)
         return {"image": f"data:image/jpeg;base64,{base64.b64encode(buffered.getvalue()).decode()}"}
