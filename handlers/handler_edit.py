@@ -14,7 +14,8 @@ from diffusers import (
     StableDiffusionXLControlNetImg2ImgPipeline,
     StableDiffusionXLInpaintPipeline,
     ControlNetModel,
-    EulerAncestralDiscreteScheduler,   # ← Euler a
+    EulerAncestralDiscreteScheduler,
+    DPMSolverMultistepScheduler,
     AutoencoderKL
 )
 from ip_adapter.ip_adapter_faceid import IPAdapterFaceIDPlusXL
@@ -197,9 +198,11 @@ def load_models():
         ).to("cuda")
         base_pipeline.unet = txt2img_pipe.unet
 
-        # ← Euler a for explicit path
-        base_pipeline.scheduler = EulerAncestralDiscreteScheduler.from_config(
-            base_pipeline.scheduler.config
+        # Explicit mode → DPM++ 2M Karras
+        base_pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
+            base_pipeline.scheduler.config,
+            use_karras_sigmas=True,
+            algorithm_type="dpmsolver++"
         )
 
         base_pipeline.enable_vae_slicing()
@@ -229,7 +232,7 @@ def load_models():
         inpaint_pipeline.tokenizer = base_pipeline.tokenizer
         inpaint_pipeline.tokenizer_2 = base_pipeline.tokenizer_2
 
-        # ← Euler a for non-explicit (inpaint) path
+        # Non-explicit mode → Euler a
         inpaint_pipeline.scheduler = EulerAncestralDiscreteScheduler.from_config(
             inpaint_pipeline.scheduler.config
         )
@@ -247,7 +250,9 @@ def load_models():
         openpose = OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
         canny_detector = CannyDetector()
 
-        print("✓ All pipelines initialized successfully (Euler a sampler)")
+        print("✓ All pipelines initialized successfully")
+        print("  → Explicit : DPM++ 2M Karras")
+        print("  → Non-explicit : Euler a")
 
 def get_dimensions(image, max_size=1536, min_size=512, multiple=64):
     w, h = image.size
@@ -328,7 +333,7 @@ def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
         )
     return positive, negative
 
-def generate_clothing_mask(image: Image.Image, dilate_px=20, feather_px=5) -> Image.Image:
+def generate_clothing_mask(image: Image.Image, dilate_px=32, feather_px=6) -> Image.Image:
     inputs = seg_processor(images=image, return_tensors="pt").to("cuda")
     with torch.no_grad():
         outputs = seg_model(**inputs)
@@ -341,6 +346,7 @@ def generate_clothing_mask(image: Image.Image, dilate_px=20, feather_px=5) -> Im
     mask = np.isin(pred, list(clothing_labels)).astype(np.uint8) * 255
     mask_img = Image.fromarray(mask).convert("L")
 
+    # Face + upper neck protection
     cv2_img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
     faces = app.get(cv2_img)
     if len(faces) > 0:
@@ -388,7 +394,7 @@ def handler(job):
         is_sexual = preset is not None
 
         if is_sexual:
-            print(f"→ Explicit mode activated – using preset: {preset['name']}")
+            print(f"→ Explicit mode activated – using preset: {preset['name']} | Sampler: DPM++ 2M Karras")
             pose_strength = 0.0
             canny_strength = 0.0
             strength = 0.89
@@ -396,10 +402,10 @@ def handler(job):
             face_scale = max(face_scale, 0.92)
             num_steps = 39
         else:
-            print("→ Non-explicit undress mode (pure inpaint + Euler a)")
-            strength = 0.88
-            guidance_scale = 7.0
-            num_steps = 30
+            print("→ Non-explicit undress mode | Sampler: Euler a")
+            strength = 0.92
+            guidance_scale = 7.2
+            num_steps = 38
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -416,7 +422,7 @@ def handler(job):
         positive, negative = build_prompts(user_prompt, user_negative, is_sexual=is_sexual, preset=preset)
 
         if is_sexual:
-            # ===== EXPLICIT PATH =====
+            # ===== EXPLICIT PATH (DPM++ 2M Karras) =====
             cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
             faces = app.get(cv2_img)
             if len(faces) == 0:
@@ -460,9 +466,9 @@ def handler(job):
             result = post_process(images[0])
 
         else:
-            # ===== NON-EXPLICIT PATH (Pure Inpaint + Euler a) =====
+            # ===== NON-EXPLICIT PATH (Euler a + stronger mask) =====
             runpod.serverless.progress_update(job, "GENERATING_CLOTHING_MASK")
-            mask = generate_clothing_mask(input_image, dilate_px=20, feather_px=5)
+            mask = generate_clothing_mask(input_image, dilate_px=32, feather_px=6)
             mask = mask.resize((w, h), Image.Resampling.LANCZOS)
 
             runpod.serverless.progress_update(job, "GENERATING_INPAINT")
@@ -471,9 +477,9 @@ def handler(job):
                 negative_prompt=negative,
                 image=input_image,
                 mask_image=mask,
-                strength=strength,
-                guidance_scale=guidance_scale,
-                num_inference_steps=num_steps,
+                strength=strength,              # 0.92
+                guidance_scale=guidance_scale,  # 7.2
+                num_inference_steps=num_steps,  # 38
                 width=w,
                 height=h,
             ).images[0]
