@@ -230,12 +230,12 @@ def load_models():
         inpaint_pipeline.tokenizer = base_pipeline.tokenizer
         inpaint_pipeline.tokenizer_2 = base_pipeline.tokenizer_2
 
-        # IMPORTANT: use different adapter names to avoid conflict with shared text encoders
+        # Different adapter names to avoid conflict
         inpaint_pipeline.load_lora_weights(DETAIL_LORA_PATH, adapter_name="detail_inpaint")
         inpaint_pipeline.load_lora_weights(REALISM_LORA_PATH, adapter_name="realism_inpaint")
         inpaint_pipeline.set_adapters(
             ["detail_inpaint", "realism_inpaint"],
-            adapter_weights=[0.55, 0.65]
+            adapter_weights=[0.70, 0.75]          # slightly stronger for better skin detail
         )
 
         inpaint_pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
@@ -340,11 +340,11 @@ def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
         )
     return positive, negative
 
-def generate_clothing_mask(image: Image.Image, dilate_px=12, feather_px=6) -> Image.Image:
+def generate_clothing_mask(image: Image.Image, dilate_px=20, feather_px=3) -> Image.Image:
     """
-    Automatic clothing mask using SegFormer B2 Clothes.
-    White = clothing (to be inpainted / removed)
-    Black = keep (face, hair, skin, background, hands...)
+    Stronger automatic clothing mask.
+    White = clothing (to be fully removed)
+    Black = keep
     """
     inputs = seg_processor(images=image, return_tensors="pt").to("cuda")
     with torch.no_grad():
@@ -356,24 +356,26 @@ def generate_clothing_mask(image: Image.Image, dilate_px=12, feather_px=6) -> Im
     )
     pred = upsampled.argmax(dim=1)[0].cpu().numpy()
 
-    # Labels that correspond to clothing in mattmdjaga/segformer_b2_clothes
-    clothing_labels = {1, 4, 5, 6, 7, 8}
+    # Broader clothing labels for better coverage (especially light/white fabrics)
+    clothing_labels = {1, 4, 5, 6, 7, 8, 9, 10, 11}
     mask = np.isin(pred, list(clothing_labels)).astype(np.uint8) * 255
 
     mask_img = Image.fromarray(mask).convert("L")
 
+    # Stronger dilation to fully cover straps, lace, edges
     if dilate_px > 0:
         mask_img = mask_img.filter(ImageFilter.MaxFilter(dilate_px * 2 + 1))
 
+    # Less feather = sharper mask edges → cleaner removal
     if feather_px > 0:
         mask_img = mask_img.filter(ImageFilter.GaussianBlur(radius=feather_px))
 
     return mask_img
 
 def post_process(image):
-    image = image.filter(ImageFilter.UnsharpMask(radius=1.0, percent=75, threshold=3))
-    image = ImageEnhance.Contrast(image).enhance(1.04)
-    image = ImageEnhance.Sharpness(image).enhance(1.05)
+    image = image.filter(ImageFilter.UnsharpMask(radius=1.2, percent=90, threshold=2))
+    image = ImageEnhance.Contrast(image).enhance(1.05)
+    image = ImageEnhance.Sharpness(image).enhance(1.08)
     return image
 
 def handler(job):
@@ -409,7 +411,7 @@ def handler(job):
             face_scale = max(face_scale, 0.92)
             num_steps = 44
         else:
-            print("→ Non-explicit undress mode (dedicated inpaint + auto clothing mask)")
+            print("→ Non-explicit undress mode (dedicated inpaint + strong auto mask)")
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -427,10 +429,9 @@ def handler(job):
         positive, negative = build_prompts(user_prompt, user_negative, is_sexual=is_sexual, preset=preset)
 
         # ============================================================
-        # EXPLICIT PATH  (unchanged logic)
+        # EXPLICIT PATH
         # ============================================================
         if is_sexual:
-            # Face embedding
             cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
             faces = app.get(cv2_img)
             if len(faces) == 0:
@@ -442,7 +443,6 @@ def handler(job):
             aligned_face_bgr = face_align.norm_crop(cv2_img, landmark=best_face.kps, image_size=224)
             face_image = Image.fromarray(cv2.cvtColor(aligned_face_bgr, cv2.COLOR_BGR2RGB))
 
-            # ControlNet maps
             runpod.serverless.progress_update(job, "EXTRACTING_POSE")
             pose_map = openpose(input_image, include_body=True, include_hand=True)
             pose_map = pose_map.resize((w, h))
@@ -474,14 +474,13 @@ def handler(job):
             result = post_process(images[0])
 
         # ============================================================
-        # NON-EXPLICIT PATH  (dedicated inpaint + auto mask)
+        # NON-EXPLICIT PATH  (stronger mask + tuned inpaint)
         # ============================================================
         else:
             runpod.serverless.progress_update(job, "GENERATING_CLOTHING_MASK")
-            mask = generate_clothing_mask(input_image, dilate_px=12, feather_px=6)
+            mask = generate_clothing_mask(input_image, dilate_px=20, feather_px=3)
             mask = mask.resize((w, h), Image.Resampling.LANCZOS)
 
-            # Optional: still run face detection just for logging
             cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
             faces = app.get(cv2_img)
             if len(faces) == 0:
@@ -489,7 +488,7 @@ def handler(job):
 
             inpaint_pipeline.set_adapters(
                 ["detail_inpaint", "realism_inpaint"],
-                adapter_weights=[0.55, 0.65]
+                adapter_weights=[0.70, 0.75]
             )
 
             runpod.serverless.progress_update(job, "GENERATING_INPAINT")
@@ -498,9 +497,9 @@ def handler(job):
                 negative_prompt=negative,
                 image=input_image,
                 mask_image=mask,
-                strength=0.92,
-                guidance_scale=8.0,
-                num_inference_steps=36,
+                strength=0.88,                # slightly lower for cleaner skin
+                guidance_scale=7.0,           # better for Juggernaut inpaint
+                num_inference_steps=40,
                 width=w,
                 height=h,
             ).images[0]
@@ -509,7 +508,7 @@ def handler(job):
 
         # ---------- Save & return ----------
         buffered = io.BytesIO()
-        result.save(buffered, format="JPEG", quality=93, optimize=True, progressive=True)
+        result.save(buffered, format="JPEG", quality=94, optimize=True, progressive=True)
         return {"image": f"data:image/jpeg;base64,{base64.b64encode(buffered.getvalue()).decode()}"}
 
     except Exception as e:
