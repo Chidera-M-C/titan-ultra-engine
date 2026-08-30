@@ -342,7 +342,10 @@ def generate_clothing_mask(image: Image.Image, dilate_px=32, feather_px=6) -> Im
         logits, size=image.size[::-1], mode="bilinear", align_corners=False
     )
     pred = upsampled.argmax(dim=1)[0].cpu().numpy()
-    clothing_labels = {1, 4, 5, 6, 7, 8, 9, 10}
+    clothing_labels = {
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,   # main garments
+        22, 29, 32, 34                           # tights, collar, sleeve, neckline (helps with straps/lace)
+    }
     mask = np.isin(pred, list(clothing_labels)).astype(np.uint8) * 255
     mask_img = Image.fromarray(mask).convert("L")
 
