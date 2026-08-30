@@ -180,7 +180,7 @@ def load_models():
             variant="fp16"
         ).to("cuda")
 
-        print("Loading LoRAs (Detail + Realism)...")
+        print("Loading LoRAs (Detail + Realism) for explicit path...")
         txt2img_pipe.load_lora_weights(DETAIL_LORA_PATH, adapter_name="detail")
         txt2img_pipe.load_lora_weights(REALISM_LORA_PATH, adapter_name="realism")
         txt2img_pipe.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
@@ -214,8 +214,8 @@ def load_models():
             torch_dtype=torch.float16,
         )
 
-        # ---------- Dedicated Inpaint Pipeline ----------
-        print("Loading Juggernaut XL Inpaint pipeline...")
+        # ---------- Dedicated Inpaint Pipeline (NO LoRAs) ----------
+        print("Loading Juggernaut XL Inpaint pipeline (no LoRAs)...")
         inpaint_pipeline = StableDiffusionXLInpaintPipeline.from_single_file(
             JUGGERNAUT_INPAINT_PATH,
             torch_dtype=torch.float16,
@@ -230,13 +230,7 @@ def load_models():
         inpaint_pipeline.tokenizer = base_pipeline.tokenizer
         inpaint_pipeline.tokenizer_2 = base_pipeline.tokenizer_2
 
-        # Use different adapter names
-        inpaint_pipeline.load_lora_weights(DETAIL_LORA_PATH, adapter_name="detail_inpaint")
-        inpaint_pipeline.load_lora_weights(REALISM_LORA_PATH, adapter_name="realism_inpaint")
-        inpaint_pipeline.set_adapters(
-            ["detail_inpaint", "realism_inpaint"],
-            adapter_weights=[0.60, 0.65]
-        )
+        # NOTE: No LoRAs loaded for inpaint pipeline (as requested)
 
         inpaint_pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
             inpaint_pipeline.scheduler.config,
@@ -349,12 +343,10 @@ def generate_clothing_mask(image: Image.Image, dilate_px=13, feather_px=4) -> Im
     with torch.no_grad():
         outputs = seg_model(**inputs)
         logits = outputs.logits
-
     upsampled = F.interpolate(
         logits, size=image.size[::-1], mode="bilinear", align_corners=False
     )
     pred = upsampled.argmax(dim=1)[0].cpu().numpy()
-
     clothing_labels = {1, 4, 5, 6, 7, 8, 9, 10}
     mask = np.isin(pred, list(clothing_labels)).astype(np.uint8) * 255
     mask_img = Image.fromarray(mask).convert("L")
@@ -366,21 +358,19 @@ def generate_clothing_mask(image: Image.Image, dilate_px=13, feather_px=4) -> Im
         faces = sorted(faces, key=lambda x: (x.bbox[2] - x.bbox[0]) * (x.bbox[3] - x.bbox[1]), reverse=True)
         face = faces[0]
         x1, y1, x2, y2 = map(int, face.bbox)
-
         # Expand protection zone downward into the upper neck
         h, w = image.size[1], image.size[0]
         protect_y2 = min(h, y2 + int((y2 - y1) * 0.55))
         protect_x1 = max(0, x1 - 30)
         protect_x2 = min(w, x2 + 30)
-
         draw = ImageDraw.Draw(mask_img)
         draw.rectangle([protect_x1, max(0, y1 - 15), protect_x2, protect_y2], fill=0)
 
-    # 3. Dilate clothing (safer value)
+    # Dilate clothing
     if dilate_px > 0:
         mask_img = mask_img.filter(ImageFilter.MaxFilter(dilate_px * 2 + 1))
 
-    # 4. Light feather
+    # Light feather
     if feather_px > 0:
         mask_img = mask_img.filter(ImageFilter.GaussianBlur(radius=feather_px))
 
@@ -399,13 +389,11 @@ def handler(job):
         user_negative = input_data.get('negative_prompt', '')
         image_base64 = input_data.get('image')
 
-        # Defaults
+        # Defaults (mainly used by explicit path)
         raw_pose = float(input_data.get('pose_strength', input_data.get('poseStrength', 0.70)))
         pose_strength = max(0.12, min(0.75, 1.0 - raw_pose))
-
         raw_structure = float(input_data.get('structure_strength', input_data.get('structureStrength', 0.55)))
         canny_strength = max(0.08, min(0.40, raw_structure * 0.45))
-
         face_scale = float(input_data.get('face_scale', 0.97))
         s_scale = float(input_data.get('s_scale', 1.05))
         strength = float(input_data.get('strength', 0.89))
@@ -424,14 +412,13 @@ def handler(job):
             face_scale = max(face_scale, 0.92)
             num_steps = 44
         else:
-            print("→ Non-explicit undress mode (balanced inpaint + face-protected mask)")
+            print("→ Non-explicit undress mode (inpaint, no LoRAs)")
 
         if not image_base64:
             return {"error": "No image provided"}
 
         image_data = base64.b64decode(image_base64.split(",")[1] if "," in image_base64 else image_base64)
         input_image = Image.open(io.BytesIO(image_data)).convert("RGB")
-
         input_image = ensure_min_file_size(input_image)
         orig_w, orig_h = input_image.size
         w, h = get_dimensions(input_image)
@@ -457,6 +444,7 @@ def handler(job):
             runpod.serverless.progress_update(job, "EXTRACTING_POSE")
             pose_map = openpose(input_image, include_body=True, include_hand=True)
             pose_map = pose_map.resize((w, h))
+
             runpod.serverless.progress_update(job, "EXTRACTING_EDGES")
             canny_map = canny_detector(input_image, low_threshold=100, high_threshold=200)
             canny_map = canny_map.resize((w, h))
@@ -485,15 +473,10 @@ def handler(job):
             result = post_process(images[0])
 
         else:
-            # ===== NON-EXPLICIT PATH =====
+            # ===== NON-EXPLICIT PATH (Inpaint, NO LoRAs) =====
             runpod.serverless.progress_update(job, "GENERATING_CLOTHING_MASK")
             mask = generate_clothing_mask(input_image, dilate_px=13, feather_px=4)
             mask = mask.resize((w, h), Image.Resampling.LANCZOS)
-
-            inpaint_pipeline.set_adapters(
-                ["detail_inpaint", "realism_inpaint"],
-                adapter_weights=[0.60, 0.65]
-            )
 
             runpod.serverless.progress_update(job, "GENERATING_INPAINT")
             result = inpaint_pipeline(
@@ -507,7 +490,6 @@ def handler(job):
                 width=w,
                 height=h,
             ).images[0]
-
             result = post_process(result)
 
         buffered = io.BytesIO()
