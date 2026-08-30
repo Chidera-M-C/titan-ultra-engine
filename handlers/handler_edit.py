@@ -406,7 +406,7 @@ def handler(job):
             num_steps = 39
         else:
             print("→ Non-explicit undress mode | Sampler: Euler a")
-            strength = 0.95
+            strength = 1.0
             guidance_scale = 7.2
             num_steps = 38
 
