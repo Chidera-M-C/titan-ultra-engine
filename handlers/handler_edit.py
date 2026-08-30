@@ -8,7 +8,7 @@ import runpod
 import cv2
 import numpy as np
 import io, base64
-from PIL import Image, ImageFilter, ImageEnhance, ImageOps
+from PIL import Image, ImageFilter, ImageEnhance, ImageOps, ImageDraw
 from diffusers import (
     StableDiffusionXLControlNetPipeline,
     StableDiffusionXLControlNetImg2ImgPipeline,
@@ -223,19 +223,19 @@ def load_models():
             variant="fp16"
         ).to("cuda")
 
-        # Share heavy components to save VRAM
+        # Share heavy components
         inpaint_pipeline.vae = base_pipeline.vae
         inpaint_pipeline.text_encoder = base_pipeline.text_encoder
         inpaint_pipeline.text_encoder_2 = base_pipeline.text_encoder_2
         inpaint_pipeline.tokenizer = base_pipeline.tokenizer
         inpaint_pipeline.tokenizer_2 = base_pipeline.tokenizer_2
 
-        # Different adapter names to avoid conflict
+        # Different adapter names
         inpaint_pipeline.load_lora_weights(DETAIL_LORA_PATH, adapter_name="detail_inpaint")
         inpaint_pipeline.load_lora_weights(REALISM_LORA_PATH, adapter_name="realism_inpaint")
         inpaint_pipeline.set_adapters(
             ["detail_inpaint", "realism_inpaint"],
-            adapter_weights=[0.70, 0.75]          # slightly stronger for better skin detail
+            adapter_weights=[0.60, 0.65]          # balanced – avoids oily look
         )
 
         inpaint_pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
@@ -340,12 +340,11 @@ def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
         )
     return positive, negative
 
-def generate_clothing_mask(image: Image.Image, dilate_px=20, feather_px=3) -> Image.Image:
+def generate_clothing_mask(image: Image.Image, dilate_px=13, feather_px=4) -> Image.Image:
     """
-    Stronger automatic clothing mask.
-    White = clothing (to be fully removed)
-    Black = keep
+    Balanced clothing mask with face/neck protection.
     """
+    # 1. Get clothing segmentation
     inputs = seg_processor(images=image, return_tensors="pt").to("cuda")
     with torch.no_grad():
         outputs = seg_model(**inputs)
@@ -356,26 +355,41 @@ def generate_clothing_mask(image: Image.Image, dilate_px=20, feather_px=3) -> Im
     )
     pred = upsampled.argmax(dim=1)[0].cpu().numpy()
 
-    # Broader clothing labels for better coverage (especially light/white fabrics)
-    clothing_labels = {1, 4, 5, 6, 7, 8, 9, 10, 11}
+    clothing_labels = {1, 4, 5, 6, 7, 8, 9, 10}
     mask = np.isin(pred, list(clothing_labels)).astype(np.uint8) * 255
-
     mask_img = Image.fromarray(mask).convert("L")
 
-    # Stronger dilation to fully cover straps, lace, edges
+    # 2. Protect face + upper neck using InsightFace
+    cv2_img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+    faces = app.get(cv2_img)
+    if len(faces) > 0:
+        faces = sorted(faces, key=lambda x: (x.bbox[2] - x.bbox[0]) * (x.bbox[3] - x.bbox[1]), reverse=True)
+        face = faces[0]
+        x1, y1, x2, y2 = map(int, face.bbox)
+
+        # Expand the protected zone downward a bit into the neck
+        h, w = image.size[1], image.size[0]
+        protect_y2 = min(h, y2 + int((y2 - y1) * 0.45))  # protect upper neck
+        protect_x1 = max(0, x1 - 20)
+        protect_x2 = min(w, x2 + 20)
+
+        draw = ImageDraw.Draw(mask_img)
+        draw.rectangle([protect_x1, y1 - 10, protect_x2, protect_y2], fill=0)  # force black = keep
+
+    # 3. Dilate clothing areas (safer value)
     if dilate_px > 0:
         mask_img = mask_img.filter(ImageFilter.MaxFilter(dilate_px * 2 + 1))
 
-    # Less feather = sharper mask edges → cleaner removal
+    # 4. Light feather
     if feather_px > 0:
         mask_img = mask_img.filter(ImageFilter.GaussianBlur(radius=feather_px))
 
     return mask_img
 
 def post_process(image):
-    image = image.filter(ImageFilter.UnsharpMask(radius=1.2, percent=90, threshold=2))
-    image = ImageEnhance.Contrast(image).enhance(1.05)
-    image = ImageEnhance.Sharpness(image).enhance(1.08)
+    image = image.filter(ImageFilter.UnsharpMask(radius=1.0, percent=80, threshold=3))
+    image = ImageEnhance.Contrast(image).enhance(1.04)
+    image = ImageEnhance.Sharpness(image).enhance(1.06)
     return image
 
 def handler(job):
@@ -411,7 +425,7 @@ def handler(job):
             face_scale = max(face_scale, 0.92)
             num_steps = 44
         else:
-            print("→ Non-explicit undress mode (dedicated inpaint + strong auto mask)")
+            print("→ Non-explicit undress mode (balanced inpaint + face-protected mask)")
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -474,21 +488,16 @@ def handler(job):
             result = post_process(images[0])
 
         # ============================================================
-        # NON-EXPLICIT PATH  (stronger mask + tuned inpaint)
+        # NON-EXPLICIT PATH  (balanced)
         # ============================================================
         else:
             runpod.serverless.progress_update(job, "GENERATING_CLOTHING_MASK")
-            mask = generate_clothing_mask(input_image, dilate_px=20, feather_px=3)
+            mask = generate_clothing_mask(input_image, dilate_px=13, feather_px=4)
             mask = mask.resize((w, h), Image.Resampling.LANCZOS)
-
-            cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
-            faces = app.get(cv2_img)
-            if len(faces) == 0:
-                print("⚠ No face detected – continuing with pure inpaint")
 
             inpaint_pipeline.set_adapters(
                 ["detail_inpaint", "realism_inpaint"],
-                adapter_weights=[0.70, 0.75]
+                adapter_weights=[0.60, 0.65]
             )
 
             runpod.serverless.progress_update(job, "GENERATING_INPAINT")
@@ -497,9 +506,9 @@ def handler(job):
                 negative_prompt=negative,
                 image=input_image,
                 mask_image=mask,
-                strength=0.88,                # slightly lower for cleaner skin
-                guidance_scale=7.0,           # better for Juggernaut inpaint
-                num_inference_steps=40,
+                strength=0.84,                # lower → cleaner, less oily
+                guidance_scale=6.0,           # sweet spot for Juggernaut inpaint
+                num_inference_steps=38,
                 width=w,
                 height=h,
             ).images[0]
