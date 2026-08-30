@@ -14,7 +14,7 @@ from diffusers import (
     StableDiffusionXLControlNetImg2ImgPipeline,
     StableDiffusionXLInpaintPipeline,
     ControlNetModel,
-    DPMSolverMultistepScheduler,
+    EulerAncestralDiscreteScheduler,   # ← Euler a
     AutoencoderKL
 )
 from ip_adapter.ip_adapter_faceid import IPAdapterFaceIDPlusXL
@@ -196,11 +196,12 @@ def load_models():
             scheduler=txt2img_pipe.scheduler,
         ).to("cuda")
         base_pipeline.unet = txt2img_pipe.unet
-        base_pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
-            base_pipeline.scheduler.config,
-            use_karras_sigmas=True,
-            algorithm_type="dpmsolver++"
+
+        # ← Euler a for explicit path
+        base_pipeline.scheduler = EulerAncestralDiscreteScheduler.from_config(
+            base_pipeline.scheduler.config
         )
+
         base_pipeline.enable_vae_slicing()
         base_pipeline.enable_vae_tiling()
         base_pipeline.enable_attention_slicing(slice_size="auto")
@@ -227,11 +228,12 @@ def load_models():
         inpaint_pipeline.text_encoder_2 = base_pipeline.text_encoder_2
         inpaint_pipeline.tokenizer = base_pipeline.tokenizer
         inpaint_pipeline.tokenizer_2 = base_pipeline.tokenizer_2
-        inpaint_pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
-            inpaint_pipeline.scheduler.config,
-            use_karras_sigmas=True,
-            algorithm_type="dpmsolver++"
+
+        # ← Euler a for non-explicit (inpaint) path
+        inpaint_pipeline.scheduler = EulerAncestralDiscreteScheduler.from_config(
+            inpaint_pipeline.scheduler.config
         )
+
         inpaint_pipeline.enable_vae_slicing()
         inpaint_pipeline.enable_vae_tiling()
         inpaint_pipeline.enable_attention_slicing(slice_size="auto")
@@ -245,7 +247,7 @@ def load_models():
         openpose = OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
         canny_detector = CannyDetector()
 
-        print("✓ All pipelines initialized successfully")
+        print("✓ All pipelines initialized successfully (Euler a sampler)")
 
 def get_dimensions(image, max_size=1536, min_size=512, multiple=64):
     w, h = image.size
@@ -394,11 +396,10 @@ def handler(job):
             face_scale = max(face_scale, 0.92)
             num_steps = 39
         else:
-            print("→ Non-explicit undress mode (pure inpaint)")
-            # Your current preferred settings
-            strength = 0.7
+            print("→ Non-explicit undress mode (pure inpaint + Euler a)")
+            strength = 0.88
             guidance_scale = 7.0
-            num_steps = 27
+            num_steps = 30
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -459,7 +460,7 @@ def handler(job):
             result = post_process(images[0])
 
         else:
-            # ===== NON-EXPLICIT PATH (Pure Inpaint - No Canny) =====
+            # ===== NON-EXPLICIT PATH (Pure Inpaint + Euler a) =====
             runpod.serverless.progress_update(job, "GENERATING_CLOTHING_MASK")
             mask = generate_clothing_mask(input_image, dilate_px=20, feather_px=5)
             mask = mask.resize((w, h), Image.Resampling.LANCZOS)
@@ -470,9 +471,9 @@ def handler(job):
                 negative_prompt=negative,
                 image=input_image,
                 mask_image=mask,
-                strength=strength,              # 0.87
-                guidance_scale=guidance_scale,  # 7.5
-                num_inference_steps=num_steps,  # 30
+                strength=strength,
+                guidance_scale=guidance_scale,
+                num_inference_steps=num_steps,
                 width=w,
                 height=h,
             ).images[0]
