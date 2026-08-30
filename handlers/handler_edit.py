@@ -214,7 +214,7 @@ def load_models():
             torch_dtype=torch.float16,
         )
 
-        # ---------- Dedicated Inpaint Pipeline (kept but no longer used for main undress) ----------
+        # ---------- Dedicated Inpaint Pipeline (NO LoRAs) ----------
         print("Loading Juggernaut XL Inpaint pipeline (no LoRAs)...")
         inpaint_pipeline = StableDiffusionXLInpaintPipeline.from_single_file(
             JUGGERNAUT_INPAINT_PATH,
@@ -394,10 +394,8 @@ def handler(job):
             face_scale = max(face_scale, 0.92)
             num_steps = 39
         else:
-            print("→ Non-explicit undress mode (ControlNet + light Canny for body shape)")
-            # Light Canny only – helps keep body shape
-            pose_strength = 0.0
-            canny_strength = 0.22          # light canny
+            print("→ Non-explicit undress mode (pure inpaint)")
+            # Your current preferred settings
             strength = 0.87
             guidance_scale = 7.5
             num_steps = 30
@@ -412,14 +410,9 @@ def handler(job):
         w, h = get_dimensions(input_image)
         input_image = input_image.resize((w, h), Image.Resampling.LANCZOS)
 
-        print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} | Sexual: {is_sexual} | Canny: {canny_strength:.2f}")
+        print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} | Sexual: {is_sexual}")
 
         positive, negative = build_prompts(user_prompt, user_negative, is_sexual=is_sexual, preset=preset)
-
-        # Generate ControlNet maps (needed for both paths now)
-        runpod.serverless.progress_update(job, "EXTRACTING_EDGES")
-        canny_map = canny_detector(input_image, low_threshold=100, high_threshold=200)
-        canny_map = canny_map.resize((w, h))
 
         if is_sexual:
             # ===== EXPLICIT PATH =====
@@ -437,6 +430,10 @@ def handler(job):
             runpod.serverless.progress_update(job, "EXTRACTING_POSE")
             pose_map = openpose(input_image, include_body=True, include_hand=True)
             pose_map = pose_map.resize((w, h))
+
+            runpod.serverless.progress_update(job, "EXTRACTING_EDGES")
+            canny_map = canny_detector(input_image, low_threshold=100, high_threshold=200)
+            canny_map = canny_map.resize((w, h))
 
             ip_model.pipe.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
 
@@ -462,25 +459,23 @@ def handler(job):
             result = post_process(images[0])
 
         else:
-            # ===== NON-EXPLICIT PATH (ControlNet Img2Img + light Canny) =====
-            runpod.serverless.progress_update(job, "GENERATING_EDIT")
+            # ===== NON-EXPLICIT PATH (Pure Inpaint - No Canny) =====
+            runpod.serverless.progress_update(job, "GENERATING_CLOTHING_MASK")
+            mask = generate_clothing_mask(input_image, dilate_px=20, feather_px=5)
+            mask = mask.resize((w, h), Image.Resampling.LANCZOS)
 
-            # Use base_pipeline with only Canny active
-            base_pipeline.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
-
-            result = base_pipeline(
+            runpod.serverless.progress_update(job, "GENERATING_INPAINT")
+            result = inpaint_pipeline(
                 prompt=positive,
                 negative_prompt=negative,
                 image=input_image,
-                control_image=[canny_map, canny_map],   # only canny (duplicated to match 2 controlnets)
-                strength=strength,
-                controlnet_conditioning_scale=[0.0, canny_strength],  # Pose=0, Canny=0.22
-                num_inference_steps=num_steps,
-                guidance_scale=guidance_scale,
+                mask_image=mask,
+                strength=strength,              # 0.87
+                guidance_scale=guidance_scale,  # 7.5
+                num_inference_steps=num_steps,  # 30
                 width=w,
                 height=h,
             ).images[0]
-
             result = post_process(result)
 
         buffered = io.BytesIO()
