@@ -242,8 +242,8 @@ def load_models():
         inpaint_pipeline.enable_attention_slicing(slice_size="auto")
 
         print("Loading clothing segmentation model (SegFormer)...")
-        seg_processor = SegformerImageProcessor.from_pretrained("mattmdjaga/segformer_b2_clothes")
-        seg_model = SegformerForSemanticSegmentation.from_pretrained("mattmdjaga/segformer_b2_clothes").to("cuda")
+        seg_processor = SegformerImageProcessor.from_pretrained("sayeed99/segformer-b3-fashion")
+        seg_model = SegformerForSemanticSegmentation.from_pretrained("sayeed99/segformer-b3-fashion").to("cuda")
         seg_model.eval()
 
         print("Loading detectors...")
@@ -403,7 +403,7 @@ def handler(job):
             num_steps = 39
         else:
             print("→ Non-explicit undress mode | Sampler: Euler a")
-            strength = 0.92
+            strength = 0.95
             guidance_scale = 7.2
             num_steps = 38
 
