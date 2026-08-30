@@ -398,7 +398,7 @@ def handler(job):
             # Light Canny only – helps keep body shape
             pose_strength = 0.0
             canny_strength = 0.22          # light canny
-            strength = 1.0
+            strength = 0.87
             guidance_scale = 7.5
             num_steps = 30
 
