@@ -116,7 +116,7 @@ EXPLICIT_PRESETS = [
     {
         "name": "masturbation",
         "tailored_keywords": [
-            "masturbation", "masturbating", "fingering", "touching herself",
+            "masturbation", "masturbating", "fingering", "touching herself", "masturbate",
             "rubbing clit", "solo play", "self pleasure", "fingers in pussy"
         ],
         "before": "lying on back legs spread, one hand fingers buried deep in her wet pussy, other hand squeezing and stimulating her breast, 1girl, ",
@@ -230,7 +230,7 @@ def load_models():
         inpaint_pipeline.tokenizer = base_pipeline.tokenizer
         inpaint_pipeline.tokenizer_2 = base_pipeline.tokenizer_2
 
-        # NOTE: No LoRAs loaded for inpaint pipeline (as requested)
+        # NOTE: No LoRAs loaded for inpaint pipeline
 
         inpaint_pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
             inpaint_pipeline.scheduler.config,
@@ -306,6 +306,7 @@ def get_explicit_preset(user_prompt: str):
     return None
 
 def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
+    # Stronger negative focused on clothes + oily/plastic skin
     negative = (
         "clothes, clothing, dress, shirt, pants, fabric, covered, dressed, "
         "different person, changed face, distorted face, deformed, bad anatomy, "
@@ -313,30 +314,28 @@ def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
         "blurry, low quality, jpeg artifacts, worst quality, ugly, watermark, text, "
         "cartoon, anime, illustration, painting, 3d render, cgi, "
         "plastic skin, doll-like, porcelain skin, smooth skin, airbrushed, "
-        "overly smooth, waxy, artificial, synthetic, glossy plastic, "
+        "overly smooth, waxy, artificial, synthetic, glossy, oily skin, shiny skin, "
         "oversharp, oversaturated, heavy makeup, perfect skin, flawless skin"
     )
     if user_negative:
         negative = f"{user_negative}, {negative}"
+
     if is_sexual and preset is not None:
         positive = f"{preset['before']}{user_prompt}{preset['after']}"
     else:
+        # Cleaned positive prompt for non-explicit (less oily)
         positive = (
-            f"{user_prompt}, (completely nude:1.4), (fully naked:1.35), (bare skin:1.3), "
-            f"Photorealistic raw photo, photorealistic, masterpiece, best quality, "
-            f"8k uhd, ultra detailed 8k, sharp focus, intricate details, "
-            f"ultra realistic, hyper realistic, "
-            f"soft cinematic lighting with warm highlights, soft natural lighting, "
-            f"flawless smooth velvet soft lifelike skin with natural pores and subtle sheen, "
-            f"flawless skin texture, natural skin texture, visible pores, subtle freckles, "
-            f"studio portrait, shallow depth of field, cinematic composition, "
-            f"high fashion editorial, perfect anatomy, realistic anatomy, film grain"
+            f"{user_prompt}, (completely nude:1.45), (fully naked:1.4), (bare skin:1.35), "
+            f"photorealistic raw photo, masterpiece, best quality, 8k, sharp focus, "
+            f"intricate details, ultra realistic, natural skin texture, visible pores, "
+            f"realistic skin, subtle skin imperfections, natural lighting, "
+            f"perfect anatomy, realistic anatomy"
         )
     return positive, negative
 
-def generate_clothing_mask(image: Image.Image, dilate_px=13, feather_px=4) -> Image.Image:
+def generate_clothing_mask(image: Image.Image, dilate_px=20, feather_px=5) -> Image.Image:
     """
-    Balanced clothing mask with strict face + upper neck protection.
+    Stronger clothing mask with face + upper neck protection.
     """
     # Clothing segmentation
     inputs = seg_processor(images=image, return_tensors="pt").to("cuda")
@@ -358,7 +357,6 @@ def generate_clothing_mask(image: Image.Image, dilate_px=13, feather_px=4) -> Im
         faces = sorted(faces, key=lambda x: (x.bbox[2] - x.bbox[0]) * (x.bbox[3] - x.bbox[1]), reverse=True)
         face = faces[0]
         x1, y1, x2, y2 = map(int, face.bbox)
-        # Expand protection zone downward into the upper neck
         h, w = image.size[1], image.size[0]
         protect_y2 = min(h, y2 + int((y2 - y1) * 0.55))
         protect_x1 = max(0, x1 - 30)
@@ -366,11 +364,11 @@ def generate_clothing_mask(image: Image.Image, dilate_px=13, feather_px=4) -> Im
         draw = ImageDraw.Draw(mask_img)
         draw.rectangle([protect_x1, max(0, y1 - 15), protect_x2, protect_y2], fill=0)
 
-    # Dilate clothing
+    # Stronger dilation
     if dilate_px > 0:
         mask_img = mask_img.filter(ImageFilter.MaxFilter(dilate_px * 2 + 1))
 
-    # Light feather
+    # Feather
     if feather_px > 0:
         mask_img = mask_img.filter(ImageFilter.GaussianBlur(radius=feather_px))
 
@@ -412,7 +410,7 @@ def handler(job):
             face_scale = max(face_scale, 0.92)
             num_steps = 44
         else:
-            print("→ Non-explicit undress mode (inpaint, no LoRAs)")
+            print("→ Non-explicit undress mode (stronger inpaint + cleaned prompt)")
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -473,9 +471,9 @@ def handler(job):
             result = post_process(images[0])
 
         else:
-            # ===== NON-EXPLICIT PATH (Inpaint, NO LoRAs) =====
+            # ===== NON-EXPLICIT PATH (Stronger Inpaint) =====
             runpod.serverless.progress_update(job, "GENERATING_CLOTHING_MASK")
-            mask = generate_clothing_mask(input_image, dilate_px=13, feather_px=4)
+            mask = generate_clothing_mask(input_image, dilate_px=20, feather_px=5)
             mask = mask.resize((w, h), Image.Resampling.LANCZOS)
 
             runpod.serverless.progress_update(job, "GENERATING_INPAINT")
@@ -484,9 +482,9 @@ def handler(job):
                 negative_prompt=negative,
                 image=input_image,
                 mask_image=mask,
-                strength=0.84,
-                guidance_scale=6.0,
-                num_inference_steps=38,
+                strength=0.92,              # stronger
+                guidance_scale=7.8,         # better prompt adherence
+                num_inference_steps=45,     # cleaner result
                 width=w,
                 height=h,
             ).images[0]
