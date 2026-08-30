@@ -163,7 +163,7 @@ export const onRequestPost = async (context: any) => {
       BOT_TOKEN,
       chatId,
       editedBase64,
-      `✅ Done! You have <b>${newStars} stars</b> left.`
+      `✅ Done!\nYou have ${newStars} ⭐ left.`
     );
 
     console.log('[callback] Success →', chatId);
