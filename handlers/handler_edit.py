@@ -396,9 +396,9 @@ def handler(job):
         else:
             print("→ Non-explicit undress mode (pure inpaint)")
             # Your current preferred settings
-            strength = 0.9
-            guidance_scale = 7.5
-            num_steps = 20
+            strength = 0.7
+            guidance_scale = 7.0
+            num_steps = 27
 
         if not image_base64:
             return {"error": "No image provided"}
