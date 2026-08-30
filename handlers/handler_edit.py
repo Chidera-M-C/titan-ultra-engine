@@ -214,7 +214,7 @@ def load_models():
             torch_dtype=torch.float16,
         )
 
-        # ---------- Dedicated Inpaint Pipeline (NO LoRAs) ----------
+        # ---------- Dedicated Inpaint Pipeline (kept but no longer used for main undress) ----------
         print("Loading Juggernaut XL Inpaint pipeline (no LoRAs)...")
         inpaint_pipeline = StableDiffusionXLInpaintPipeline.from_single_file(
             JUGGERNAUT_INPAINT_PATH,
@@ -222,16 +222,11 @@ def load_models():
             use_safetensors=True,
             variant="fp16"
         ).to("cuda")
-
-        # Share components
         inpaint_pipeline.vae = base_pipeline.vae
         inpaint_pipeline.text_encoder = base_pipeline.text_encoder
         inpaint_pipeline.text_encoder_2 = base_pipeline.text_encoder_2
         inpaint_pipeline.tokenizer = base_pipeline.tokenizer
         inpaint_pipeline.tokenizer_2 = base_pipeline.tokenizer_2
-
-        # NOTE: No LoRAs loaded for inpaint pipeline
-
         inpaint_pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
             inpaint_pipeline.scheduler.config,
             use_karras_sigmas=True,
@@ -306,7 +301,6 @@ def get_explicit_preset(user_prompt: str):
     return None
 
 def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
-    # Stronger negative focused on clothes + oily/plastic skin
     negative = (
         "clothes, clothing, dress, shirt, pants, fabric, covered, dressed, "
         "different person, changed face, distorted face, deformed, bad anatomy, "
@@ -323,7 +317,6 @@ def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
     if is_sexual and preset is not None:
         positive = f"{preset['before']}{user_prompt}{preset['after']}"
     else:
-        # Cleaned positive prompt for non-explicit (less oily)
         positive = (
             f"{user_prompt}, (completely nude:1.45), (fully naked:1.4), (bare skin:1.35), "
             f"photorealistic raw photo, masterpiece, best quality, 8k, sharp focus, "
@@ -334,10 +327,6 @@ def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
     return positive, negative
 
 def generate_clothing_mask(image: Image.Image, dilate_px=20, feather_px=5) -> Image.Image:
-    """
-    Stronger clothing mask with face + upper neck protection.
-    """
-    # Clothing segmentation
     inputs = seg_processor(images=image, return_tensors="pt").to("cuda")
     with torch.no_grad():
         outputs = seg_model(**inputs)
@@ -350,7 +339,6 @@ def generate_clothing_mask(image: Image.Image, dilate_px=20, feather_px=5) -> Im
     mask = np.isin(pred, list(clothing_labels)).astype(np.uint8) * 255
     mask_img = Image.fromarray(mask).convert("L")
 
-    # === FACE + UPPER NECK PROTECTION ===
     cv2_img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
     faces = app.get(cv2_img)
     if len(faces) > 0:
@@ -364,14 +352,10 @@ def generate_clothing_mask(image: Image.Image, dilate_px=20, feather_px=5) -> Im
         draw = ImageDraw.Draw(mask_img)
         draw.rectangle([protect_x1, max(0, y1 - 15), protect_x2, protect_y2], fill=0)
 
-    # Stronger dilation
     if dilate_px > 0:
         mask_img = mask_img.filter(ImageFilter.MaxFilter(dilate_px * 2 + 1))
-
-    # Feather
     if feather_px > 0:
         mask_img = mask_img.filter(ImageFilter.GaussianBlur(radius=feather_px))
-
     return mask_img
 
 def post_process(image):
@@ -387,7 +371,7 @@ def handler(job):
         user_negative = input_data.get('negative_prompt', '')
         image_base64 = input_data.get('image')
 
-        # Defaults (mainly used by explicit path)
+        # Defaults
         raw_pose = float(input_data.get('pose_strength', input_data.get('poseStrength', 0.70)))
         pose_strength = max(0.12, min(0.75, 1.0 - raw_pose))
         raw_structure = float(input_data.get('structure_strength', input_data.get('structureStrength', 0.55)))
@@ -395,8 +379,8 @@ def handler(job):
         face_scale = float(input_data.get('face_scale', 0.97))
         s_scale = float(input_data.get('s_scale', 1.05))
         strength = float(input_data.get('strength', 0.89))
-        guidance_scale = 9.0
-        num_steps = 40
+        guidance_scale = 8.0
+        num_steps = 35
 
         preset = get_explicit_preset(user_prompt)
         is_sexual = preset is not None
@@ -408,9 +392,15 @@ def handler(job):
             strength = 0.89
             guidance_scale = 8.5
             face_scale = max(face_scale, 0.92)
-            num_steps = 44
+            num_steps = 39
         else:
-            print("→ Non-explicit undress mode (stronger inpaint + cleaned prompt)")
+            print("→ Non-explicit undress mode (ControlNet + light Canny for body shape)")
+            # Light Canny only – helps keep body shape
+            pose_strength = 0.0
+            canny_strength = 0.22          # light canny
+            strength = 1.0
+            guidance_scale = 7.5
+            num_steps = 30
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -422,12 +412,17 @@ def handler(job):
         w, h = get_dimensions(input_image)
         input_image = input_image.resize((w, h), Image.Resampling.LANCZOS)
 
-        print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} | Sexual: {is_sexual}")
+        print(f"Original: {orig_w}x{orig_h} → Resized: {w}x{h} | Sexual: {is_sexual} | Canny: {canny_strength:.2f}")
 
         positive, negative = build_prompts(user_prompt, user_negative, is_sexual=is_sexual, preset=preset)
 
+        # Generate ControlNet maps (needed for both paths now)
+        runpod.serverless.progress_update(job, "EXTRACTING_EDGES")
+        canny_map = canny_detector(input_image, low_threshold=100, high_threshold=200)
+        canny_map = canny_map.resize((w, h))
+
         if is_sexual:
-            # ===== EXPLICIT PATH (unchanged) =====
+            # ===== EXPLICIT PATH =====
             cv2_img = cv2.cvtColor(np.array(input_image), cv2.COLOR_RGB2BGR)
             faces = app.get(cv2_img)
             if len(faces) == 0:
@@ -442,10 +437,6 @@ def handler(job):
             runpod.serverless.progress_update(job, "EXTRACTING_POSE")
             pose_map = openpose(input_image, include_body=True, include_hand=True)
             pose_map = pose_map.resize((w, h))
-
-            runpod.serverless.progress_update(job, "EXTRACTING_EDGES")
-            canny_map = canny_detector(input_image, low_threshold=100, high_threshold=200)
-            canny_map = canny_map.resize((w, h))
 
             ip_model.pipe.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
 
@@ -471,23 +462,25 @@ def handler(job):
             result = post_process(images[0])
 
         else:
-            # ===== NON-EXPLICIT PATH (Stronger Inpaint) =====
-            runpod.serverless.progress_update(job, "GENERATING_CLOTHING_MASK")
-            mask = generate_clothing_mask(input_image, dilate_px=20, feather_px=5)
-            mask = mask.resize((w, h), Image.Resampling.LANCZOS)
+            # ===== NON-EXPLICIT PATH (ControlNet Img2Img + light Canny) =====
+            runpod.serverless.progress_update(job, "GENERATING_EDIT")
 
-            runpod.serverless.progress_update(job, "GENERATING_INPAINT")
-            result = inpaint_pipeline(
+            # Use base_pipeline with only Canny active
+            base_pipeline.set_adapters(["detail", "realism"], adapter_weights=[0.55, 0.65])
+
+            result = base_pipeline(
                 prompt=positive,
                 negative_prompt=negative,
                 image=input_image,
-                mask_image=mask,
-                strength=0.92,              # stronger
-                guidance_scale=7.8,         # better prompt adherence
-                num_inference_steps=45,     # cleaner result
+                control_image=[canny_map, canny_map],   # only canny (duplicated to match 2 controlnets)
+                strength=strength,
+                controlnet_conditioning_scale=[0.0, canny_strength],  # Pose=0, Canny=0.22
+                num_inference_steps=num_steps,
+                guidance_scale=guidance_scale,
                 width=w,
                 height=h,
             ).images[0]
+
             result = post_process(result)
 
         buffered = io.BytesIO()
