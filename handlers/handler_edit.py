@@ -406,9 +406,9 @@ def handler(job):
             num_steps = 39
         else:
             print("→ Non-explicit undress mode | Sampler: Euler a")
-            strength = 1.0
+            strength = 9.3
             guidance_scale = 7.2
-            num_steps = 38
+            num_steps = 30
 
         if not image_base64:
             return {"error": "No image provided"}
