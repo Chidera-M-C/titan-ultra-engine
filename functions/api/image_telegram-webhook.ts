@@ -229,7 +229,7 @@ export const onRequestPost = async (context: any) => {
         throw new Error(`Failed to create edit record: ${insertError.message}`);
       }
 
-      await sendMessage(BOT_TOKEN, chatId, `🔄 Editing your photo... this usually takes 40–70 seconds.`);
+      await sendMessage(BOT_TOKEN, chatId, `🔄 Editing your photo... this usually takes 20–30 seconds.`);
 
       // Prepare base64 for RunPod
       let binary = '';
