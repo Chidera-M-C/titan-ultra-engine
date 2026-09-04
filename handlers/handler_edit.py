@@ -333,7 +333,7 @@ def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
         )
     return positive, negative
 
-def generate_clothing_mask(image: Image.Image, dilate_px=32, feather_px=6) -> Image.Image:
+def generate_clothing_mask(image: Image.Image, dilate_px=18, feather_px=5) -> Image.Image:
     inputs = seg_processor(images=image, return_tensors="pt").to("cuda")
     with torch.no_grad():
         outputs = seg_model(**inputs)
@@ -342,9 +342,11 @@ def generate_clothing_mask(image: Image.Image, dilate_px=32, feather_px=6) -> Im
         logits, size=image.size[::-1], mode="bilinear", align_corners=False
     )
     pred = upsampled.argmax(dim=1)[0].cpu().numpy()
+
+    # Correct labels for sayeed99/segformer-b3-fashion
     clothing_labels = {
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,   # main garments
-        22, 29, 32, 34                           # tights, collar, sleeve, neckline (helps with straps/lace)
+        22, 29, 32, 34                           # tights, collar, sleeve, neckline
     }
     mask = np.isin(pred, list(clothing_labels)).astype(np.uint8) * 255
     mask_img = Image.fromarray(mask).convert("L")
@@ -400,7 +402,7 @@ def handler(job):
             print(f"→ Explicit mode activated – using preset: {preset['name']} | Sampler: DPM++ 2M Karras")
             pose_strength = 0.0
             canny_strength = 0.0
-            strength = 0.89
+            strength = 0.90
             guidance_scale = 8.5
             face_scale = max(face_scale, 0.92)
             num_steps = 39
@@ -408,7 +410,7 @@ def handler(job):
             print("→ Non-explicit undress mode | Sampler: Euler a")
             strength = 0.85
             guidance_scale = 7.2
-            num_steps = 30
+            num_steps = 38
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -469,9 +471,9 @@ def handler(job):
             result = post_process(images[0])
 
         else:
-            # ===== NON-EXPLICIT PATH (Euler a + stronger mask) =====
+            # ===== NON-EXPLICIT PATH (safer settings to avoid painted look) =====
             runpod.serverless.progress_update(job, "GENERATING_CLOTHING_MASK")
-            mask = generate_clothing_mask(input_image, dilate_px=32, feather_px=6)
+            mask = generate_clothing_mask(input_image, dilate_px=18, feather_px=5)
             mask = mask.resize((w, h), Image.Resampling.LANCZOS)
 
             runpod.serverless.progress_update(job, "GENERATING_INPAINT")
@@ -480,7 +482,7 @@ def handler(job):
                 negative_prompt=negative,
                 image=input_image,
                 mask_image=mask,
-                strength=strength,              # 0.92
+                strength=strength,              # 0.80
                 guidance_scale=guidance_scale,  # 7.2
                 num_inference_steps=num_steps,  # 38
                 width=w,
