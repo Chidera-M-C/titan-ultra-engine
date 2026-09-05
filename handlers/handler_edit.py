@@ -36,6 +36,9 @@ CANNY_PATH = "/workspace/controlnet_canny_xl"
 IPADAPTER_PATH = "/workspace/ip-adapter-faceid-plusv2_sdxl.bin"
 IMAGE_ENCODER_PATH = "/workspace/image_encoder"
 
+# Skin-like color used to recolor clothing before inpainting (non-explicit only)
+SKIN_TONE_COLOR = (217, 166, 137)  # #D9A689
+
 base_pipeline = None
 ip_model = None
 inpaint_pipeline = None
@@ -252,7 +255,7 @@ def load_models():
 
         print("✓ All pipelines initialized successfully")
         print("  → Explicit : DPM++ 2M Karras")
-        print("  → Non-explicit : Euler a")
+        print("  → Non-explicit : Euler a + clothing recolor")
 
 def get_dimensions(image, max_size=1536, min_size=512, multiple=64):
     w, h = image.size
@@ -343,10 +346,9 @@ def generate_clothing_mask(image: Image.Image, dilate_px=18, feather_px=5) -> Im
     )
     pred = upsampled.argmax(dim=1)[0].cpu().numpy()
 
-    # Correct labels for sayeed99/segformer-b3-fashion
     clothing_labels = {
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,   # main garments
-        22, 29, 32, 34                           # tights, collar, sleeve, neckline
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+        22, 29, 32, 34
     }
     mask = np.isin(pred, list(clothing_labels)).astype(np.uint8) * 255
     mask_img = Image.fromarray(mask).convert("L")
@@ -370,6 +372,26 @@ def generate_clothing_mask(image: Image.Image, dilate_px=18, feather_px=5) -> Im
     if feather_px > 0:
         mask_img = mask_img.filter(ImageFilter.GaussianBlur(radius=feather_px))
     return mask_img
+
+def recolor_clothing(image: Image.Image, mask: Image.Image, color=SKIN_TONE_COLOR) -> Image.Image:
+    """
+    Recolor the clothing areas (white parts of the mask) to a skin-like color.
+    This makes high-contrast clothing much easier for the inpaint model to remove.
+    """
+    img_np = np.array(image).astype(np.float32)
+    mask_np = np.array(mask).astype(np.float32) / 255.0  # 0.0 ~ 1.0
+
+    # Expand mask to 3 channels
+    mask_3c = np.stack([mask_np] * 3, axis=-1)
+
+    # Create solid color image
+    color_img = np.zeros_like(img_np)
+    color_img[:, :] = color
+
+    # Blend: where mask is strong, use the skin color
+    recolored = img_np * (1.0 - mask_3c) + color_img * mask_3c
+
+    return Image.fromarray(np.clip(recolored, 0, 255).astype(np.uint8))
 
 def post_process(image):
     image = image.filter(ImageFilter.UnsharpMask(radius=1.1, percent=85, threshold=3))
@@ -407,10 +429,10 @@ def handler(job):
             face_scale = max(face_scale, 0.92)
             num_steps = 39
         else:
-            print("→ Non-explicit undress mode | Sampler: Euler a")
-            strength = 0.85
+            print("→ Non-explicit undress mode | Sampler: Euler a + clothing recolor to #D9A689")
+            strength = 0.88
             guidance_scale = 7.2
-            num_steps = 38
+            num_steps = 35
 
         if not image_base64:
             return {"error": "No image provided"}
@@ -471,20 +493,24 @@ def handler(job):
             result = post_process(images[0])
 
         else:
-            # ===== NON-EXPLICIT PATH (safer settings to avoid painted look) =====
+            # ===== NON-EXPLICIT PATH =====
             runpod.serverless.progress_update(job, "GENERATING_CLOTHING_MASK")
             mask = generate_clothing_mask(input_image, dilate_px=18, feather_px=5)
             mask = mask.resize((w, h), Image.Resampling.LANCZOS)
+
+            # Recolor clothing areas to skin-tone before inpainting
+            runpod.serverless.progress_update(job, "RECOLORING_CLOTHING")
+            recolored_image = recolor_clothing(input_image, mask, color=SKIN_TONE_COLOR)
 
             runpod.serverless.progress_update(job, "GENERATING_INPAINT")
             result = inpaint_pipeline(
                 prompt=positive,
                 negative_prompt=negative,
-                image=input_image,
+                image=recolored_image,          # ← use the recolored version
                 mask_image=mask,
-                strength=strength,              # 0.80
-                guidance_scale=guidance_scale,  # 7.2
-                num_inference_steps=num_steps,  # 38
+                strength=strength,
+                guidance_scale=guidance_scale,
+                num_inference_steps=num_steps,
                 width=w,
                 height=h,
             ).images[0]
