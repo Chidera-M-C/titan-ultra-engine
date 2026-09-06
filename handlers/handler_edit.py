@@ -333,7 +333,6 @@ def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
     return positive, negative
 
 def generate_raw_clothing_mask(image: Image.Image) -> np.ndarray:
-    """Generate raw binary clothing mask without dilation (for analysis)"""
     inputs = seg_processor(images=image, return_tensors="pt").to("cuda")
     with torch.no_grad():
         outputs = seg_model(**inputs)
@@ -352,38 +351,47 @@ def generate_raw_clothing_mask(image: Image.Image) -> np.ndarray:
 
 def analyze_clothing(mask_np: np.ndarray) -> dict:
     """
-    Analyze clothing mask to decide dilate and strength.
-    Returns: coverage ratio + whether thin structures exist
+    Improved clothing analysis:
+    - Better coverage calculation
+    - Much more reliable thin strap / lace detection
     """
     total_pixels = mask_np.size
     clothing_pixels = np.count_nonzero(mask_np)
     coverage = clothing_pixels / total_pixels
 
-    # Detect thin structures
-    # Skeletonize-like approach using morphological operations
     binary = (mask_np > 127).astype(np.uint8)
+
+    # Clean small noise
+    binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
+
+    # --- Improved Thin Structure Detection ---
+    # We look for long thin components using distance transform + skeleton-like analysis
+    dist = cv2.distanceTransform(binary, cv2.DIST_L2, 3)
     
-    # Remove small noise
-    binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
-    
-    # Find contours
-    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
+    # Thin areas = low distance from edge
+    thin_map = ((dist > 0) & (dist < 4.5)).astype(np.uint8) * 255
+
+    # Keep only reasonably long thin regions
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(thin_map, connectivity=8)
+
     thin_score = 0
-    for cnt in contours:
-        area = cv2.contourArea(cnt)
-        if area < 30:
+    for i in range(1, num_labels):
+        area = stats[i, cv2.CC_STAT_AREA]
+        width = stats[i, cv2.CC_STAT_WIDTH]
+        height = stats[i, cv2.CC_STAT_HEIGHT]
+
+        # Ignore tiny noise
+        if area < 40:
             continue
-        # Approximate perimeter
-        perimeter = cv2.arcLength(cnt, True)
-        if perimeter == 0:
-            continue
-        # Thinness ratio (higher = thinner)
-        thinness = (perimeter * perimeter) / (4 * np.pi * area + 1e-5)
-        if thinness > 8.0 and area < 2500:  # elongated thin shapes
+
+        # Prefer elongated shapes (straps are long and thin)
+        aspect = max(width, height) / (min(width, height) + 1e-5)
+        if aspect > 3.5 and area < 4000:
+            thin_score += 1
+        elif area < 900 and aspect > 2.2:
             thin_score += 1
 
-    has_thin_structures = thin_score >= 2
+    has_thin_structures = thin_score >= 1
 
     return {
         "coverage": coverage,
@@ -393,31 +401,30 @@ def analyze_clothing(mask_np: np.ndarray) -> dict:
 
 def decide_params(coverage: float, has_thin_structures: bool) -> tuple:
     """
-    Decide dilate_px and strength based on analysis.
-    Returns: (dilate_px, strength)
+    Updated thresholds + strength values
     """
     # Heavy clothing
-    if coverage > 0.32:
+    if coverage > 0.22:
         dilate = 25
-        strength = 0.89
+        strength = 0.90
         mode = "HEAVY"
-    # Thin straps / lace (even on light clothing)
+    # Thin straps / lace (priority over light/normal)
     elif has_thin_structures:
         dilate = 23
-        strength = 0.86          # strength stays normal
-        mode = "THIN_STRAPS"
-    # Medium clothing
-    elif coverage > 0.18:
-        dilate = 18
         strength = 0.86
+        mode = "THIN_STRAPS"
+    # Normal clothing
+    elif coverage > 0.12:
+        dilate = 18
+        strength = 0.87
         mode = "NORMAL"
     # Light clothing
     else:
         dilate = 16
-        strength = 0.85
+        strength = 0.86
         mode = "LIGHT"
 
-    print(f"→ Clothing analysis: coverage={coverage*100:.1f}% | thin_structures={has_thin_structures} → mode={mode} | dilate={dilate} | strength={strength}")
+    print(f"→ Clothing analysis: coverage={coverage*100:.1f}% | thin_structures={has_thin_structures} (score) → mode={mode} | dilate={dilate} | strength={strength}")
     return dilate, strength
 
 def generate_clothing_mask(image: Image.Image, dilate_px=18, feather_px=2) -> Image.Image:
