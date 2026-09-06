@@ -251,7 +251,7 @@ def load_models():
 
         print("✓ All pipelines initialized successfully")
         print("  → Explicit : DPM++ 2M Karras")
-        print("  → Non-explicit : Euler a + smart recolor + residual cleanup (fixed)")
+        print("  → Non-explicit : Euler a + smart skin recolor + dynamic mask/strength")
 
 def get_dimensions(image, max_size=1536, min_size=512, multiple=64):
     w, h = image.size
@@ -332,7 +332,8 @@ def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
         )
     return positive, negative
 
-def generate_clothing_mask(image: Image.Image, dilate_px=18, feather_px=2) -> Image.Image:
+def generate_raw_clothing_mask(image: Image.Image) -> np.ndarray:
+    """Generate raw binary clothing mask without dilation (for analysis)"""
     inputs = seg_processor(images=image, return_tensors="pt").to("cuda")
     with torch.no_grad():
         outputs = seg_model(**inputs)
@@ -347,8 +348,83 @@ def generate_clothing_mask(image: Image.Image, dilate_px=18, feather_px=2) -> Im
         22, 29, 32, 34
     }
     mask = np.isin(pred, list(clothing_labels)).astype(np.uint8) * 255
-    mask_img = Image.fromarray(mask).convert("L")
+    return mask
 
+def analyze_clothing(mask_np: np.ndarray) -> dict:
+    """
+    Analyze clothing mask to decide dilate and strength.
+    Returns: coverage ratio + whether thin structures exist
+    """
+    total_pixels = mask_np.size
+    clothing_pixels = np.count_nonzero(mask_np)
+    coverage = clothing_pixels / total_pixels
+
+    # Detect thin structures
+    # Skeletonize-like approach using morphological operations
+    binary = (mask_np > 127).astype(np.uint8)
+    
+    # Remove small noise
+    binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+    
+    # Find contours
+    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    thin_score = 0
+    for cnt in contours:
+        area = cv2.contourArea(cnt)
+        if area < 30:
+            continue
+        # Approximate perimeter
+        perimeter = cv2.arcLength(cnt, True)
+        if perimeter == 0:
+            continue
+        # Thinness ratio (higher = thinner)
+        thinness = (perimeter * perimeter) / (4 * np.pi * area + 1e-5)
+        if thinness > 8.0 and area < 2500:  # elongated thin shapes
+            thin_score += 1
+
+    has_thin_structures = thin_score >= 2
+
+    return {
+        "coverage": coverage,
+        "has_thin_structures": has_thin_structures,
+        "thin_score": thin_score
+    }
+
+def decide_params(coverage: float, has_thin_structures: bool) -> tuple:
+    """
+    Decide dilate_px and strength based on analysis.
+    Returns: (dilate_px, strength)
+    """
+    # Heavy clothing
+    if coverage > 0.32:
+        dilate = 25
+        strength = 0.89
+        mode = "HEAVY"
+    # Thin straps / lace (even on light clothing)
+    elif has_thin_structures:
+        dilate = 23
+        strength = 0.86          # strength stays normal
+        mode = "THIN_STRAPS"
+    # Medium clothing
+    elif coverage > 0.18:
+        dilate = 18
+        strength = 0.86
+        mode = "NORMAL"
+    # Light clothing
+    else:
+        dilate = 16
+        strength = 0.85
+        mode = "LIGHT"
+
+    print(f"→ Clothing analysis: coverage={coverage*100:.1f}% | thin_structures={has_thin_structures} → mode={mode} | dilate={dilate} | strength={strength}")
+    return dilate, strength
+
+def generate_clothing_mask(image: Image.Image, dilate_px=18, feather_px=2) -> Image.Image:
+    mask_np = generate_raw_clothing_mask(image)
+    mask_img = Image.fromarray(mask_np).convert("L")
+
+    # Face + upper neck protection
     cv2_img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
     faces = app.get(cv2_img)
     if len(faces) > 0:
@@ -449,38 +525,6 @@ def recolor_clothing(image: Image.Image, mask: Image.Image, color=None, blend_st
     recolored = img_np * (1.0 - mask_3c) + color_img * mask_3c
     return Image.fromarray(np.clip(recolored, 0, 255).astype(np.uint8))
 
-def detect_residual_mask(result_image: Image.Image, original_mask: Image.Image, skin_color: tuple, threshold: float = 55.0) -> Image.Image:
-    """
-    Detect leftover fabric ONLY inside the original clothing mask region.
-    This prevents the whole body from being marked as residual.
-    """
-    img_np = np.array(result_image).astype(np.float32)
-    skin = np.array(skin_color, dtype=np.float32)
-
-    # Color distance
-    diff = np.sqrt(np.sum((img_np - skin) ** 2, axis=2))
-
-    # Initial residual by color
-    residual = (diff > threshold).astype(np.uint8) * 255
-
-    # Restrict residual to the original clothing mask area (slightly expanded)
-    orig_mask_np = np.array(original_mask)
-    # Expand original mask a bit to catch edge leftovers
-    kernel = np.ones((7, 7), np.uint8)
-    expanded_mask = cv2.dilate(orig_mask_np, kernel, iterations=1)
-
-    # Keep residual only where original clothing was
-    residual = cv2.bitwise_and(residual, expanded_mask)
-
-    # Clean up small noise
-    residual = cv2.morphologyEx(residual, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
-    residual = cv2.morphologyEx(residual, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
-
-    # Small dilation to better cover thin straps
-    residual = cv2.dilate(residual, np.ones((3, 3), np.uint8), iterations=1)
-
-    return Image.fromarray(residual).convert("L")
-
 def post_process(image):
     image = image.filter(ImageFilter.UnsharpMask(radius=1.1, percent=85, threshold=3))
     image = ImageEnhance.Contrast(image).enhance(1.04)
@@ -516,8 +560,7 @@ def handler(job):
             face_scale = max(face_scale, 0.92)
             num_steps = 39
         else:
-            print("→ Non-explicit undress mode | Sampler: Euler a + smart recolor + residual cleanup")
-            strength = 0.86
+            print("→ Non-explicit undress mode | Sampler: Euler a + smart skin recolor + dynamic params")
             guidance_scale = 7.2
             num_steps = 36
 
@@ -581,8 +624,13 @@ def handler(job):
 
         else:
             # ===== NON-EXPLICIT PATH =====
+            runpod.serverless.progress_update(job, "ANALYZING_CLOTHING")
+            raw_mask = generate_raw_clothing_mask(input_image)
+            analysis = analyze_clothing(raw_mask)
+            dilate_px, strength = decide_params(analysis["coverage"], analysis["has_thin_structures"])
+
             runpod.serverless.progress_update(job, "GENERATING_CLOTHING_MASK")
-            mask = generate_clothing_mask(input_image, dilate_px=18, feather_px=2)
+            mask = generate_clothing_mask(input_image, dilate_px=dilate_px, feather_px=2)
             mask = mask.resize((w, h), Image.Resampling.LANCZOS)
 
             runpod.serverless.progress_update(job, "SAMPLING_SKIN_TONE")
@@ -590,7 +638,10 @@ def handler(job):
 
             runpod.serverless.progress_update(job, "RECOLORING_CLOTHING")
             recolored_image = recolor_clothing(
-                input_image, mask, color=skin_color, blend_strength=0.65
+                input_image,
+                mask,
+                color=skin_color,
+                blend_strength=0.65
             )
 
             runpod.serverless.progress_update(job, "GENERATING_INPAINT")
@@ -605,36 +656,6 @@ def handler(job):
                 width=w,
                 height=h,
             ).images[0]
-
-            # ---------- Residual Cleanup (only inside original mask) ----------
-            runpod.serverless.progress_update(job, "CHECKING_RESIDUAL")
-            residual_mask = detect_residual_mask(result, mask, skin_color, threshold=55.0)
-
-            residual_np = np.array(residual_mask)
-            residual_pixels = np.count_nonzero(residual_np)
-            residual_ratio = residual_pixels / residual_np.size
-
-            print(f"→ Residual fabric ratio: {residual_ratio*100:.3f}%  ({residual_pixels} pixels)")
-
-            # Only trigger if there are meaningful leftovers (very small threshold)
-            if residual_ratio > 0.0012:  # ~0.12% of image
-                print("→ Residual fabric detected – running light second inpaint pass")
-                runpod.serverless.progress_update(job, "CLEANING_RESIDUAL")
-
-                result = inpaint_pipeline(
-                    prompt=positive,
-                    negative_prompt=negative,
-                    image=result,
-                    mask_image=residual_mask,
-                    strength=0.45,
-                    guidance_scale=6.8,
-                    num_inference_steps=14,
-                    width=w,
-                    height=h,
-                ).images[0]
-            else:
-                print("→ No significant residual fabric – skipping second pass")
-
             result = post_process(result)
 
         buffered = io.BytesIO()
