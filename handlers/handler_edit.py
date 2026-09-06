@@ -36,7 +36,6 @@ CANNY_PATH = "/workspace/controlnet_canny_xl"
 IPADAPTER_PATH = "/workspace/ip-adapter-faceid-plusv2_sdxl.bin"
 IMAGE_ENCODER_PATH = "/workspace/image_encoder"
 
-# Fallback skin color if sampling fails
 DEFAULT_SKIN_TONE = (217, 166, 137)  # #D9A689
 
 base_pipeline = None
@@ -252,7 +251,7 @@ def load_models():
 
         print("✓ All pipelines initialized successfully")
         print("  → Explicit : DPM++ 2M Karras")
-        print("  → Non-explicit : Euler a + smart skin recolor")
+        print("  → Non-explicit : Euler a + smart skin recolor + dynamic mask/strength")
 
 def get_dimensions(image, max_size=1536, min_size=512, multiple=64):
     w, h = image.size
@@ -333,7 +332,7 @@ def build_prompts(user_prompt, user_negative='', is_sexual=False, preset=None):
         )
     return positive, negative
 
-def generate_clothing_mask(image: Image.Image, dilate_px=18, feather_px=2) -> Image.Image:
+def generate_raw_clothing_mask(image: Image.Image) -> np.ndarray:
     inputs = seg_processor(images=image, return_tensors="pt").to("cuda")
     with torch.no_grad():
         outputs = seg_model(**inputs)
@@ -348,7 +347,89 @@ def generate_clothing_mask(image: Image.Image, dilate_px=18, feather_px=2) -> Im
         22, 29, 32, 34
     }
     mask = np.isin(pred, list(clothing_labels)).astype(np.uint8) * 255
-    mask_img = Image.fromarray(mask).convert("L")
+    return mask
+
+def analyze_clothing(mask_np: np.ndarray) -> dict:
+    """
+    Improved clothing analysis:
+    - Better coverage calculation
+    - Much more reliable thin strap / lace detection
+    """
+    total_pixels = mask_np.size
+    clothing_pixels = np.count_nonzero(mask_np)
+    coverage = clothing_pixels / total_pixels
+
+    binary = (mask_np > 127).astype(np.uint8)
+
+    # Clean small noise
+    binary = cv2.morphologyEx(binary, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
+
+    # --- Improved Thin Structure Detection ---
+    # We look for long thin components using distance transform + skeleton-like analysis
+    dist = cv2.distanceTransform(binary, cv2.DIST_L2, 3)
+    
+    # Thin areas = low distance from edge
+    thin_map = ((dist > 0) & (dist < 4.5)).astype(np.uint8) * 255
+
+    # Keep only reasonably long thin regions
+    num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(thin_map, connectivity=8)
+
+    thin_score = 0
+    for i in range(1, num_labels):
+        area = stats[i, cv2.CC_STAT_AREA]
+        width = stats[i, cv2.CC_STAT_WIDTH]
+        height = stats[i, cv2.CC_STAT_HEIGHT]
+
+        # Ignore tiny noise
+        if area < 40:
+            continue
+
+        # Prefer elongated shapes (straps are long and thin)
+        aspect = max(width, height) / (min(width, height) + 1e-5)
+        if aspect > 3.5 and area < 4000:
+            thin_score += 1
+        elif area < 900 and aspect > 2.2:
+            thin_score += 1
+
+    has_thin_structures = thin_score >= 1
+
+    return {
+        "coverage": coverage,
+        "has_thin_structures": has_thin_structures,
+        "thin_score": thin_score
+    }
+
+def decide_params(coverage: float, has_thin_structures: bool) -> tuple:
+    """
+    Updated thresholds + strength values
+    """
+    # Heavy clothing
+    if coverage > 0.22:
+        dilate = 25
+        strength = 0.90
+        mode = "HEAVY"
+    # Thin straps / lace (priority over light/normal)
+    elif has_thin_structures:
+        dilate = 23
+        strength = 0.86
+        mode = "THIN_STRAPS"
+    # Normal clothing
+    elif coverage > 0.12:
+        dilate = 18
+        strength = 0.87
+        mode = "NORMAL"
+    # Light clothing
+    else:
+        dilate = 16
+        strength = 0.86
+        mode = "LIGHT"
+
+    print(f"→ Clothing analysis: coverage={coverage*100:.1f}% | thin_structures={has_thin_structures} (score) → mode={mode} | dilate={dilate} | strength={strength}")
+    return dilate, strength
+
+def generate_clothing_mask(image: Image.Image, dilate_px=18, feather_px=2) -> Image.Image:
+    mask_np = generate_raw_clothing_mask(image)
+    mask_img = Image.fromarray(mask_np).convert("L")
 
     # Face + upper neck protection
     cv2_img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
@@ -371,9 +452,7 @@ def generate_clothing_mask(image: Image.Image, dilate_px=18, feather_px=2) -> Im
     return mask_img
 
 def is_skin_pixel(pixel):
-    """Simple filter to keep only likely skin-colored pixels"""
     r, g, b = pixel
-    # Basic skin tone ranges (works for most skin types)
     if r < 60 or g < 40 or b < 20:
         return False
     if r < g or r < b:
@@ -383,32 +462,20 @@ def is_skin_pixel(pixel):
     return True
 
 def sample_skin_tone(image: Image.Image) -> tuple:
-    """
-    Robust multi-region skin tone sampling:
-    1. Face (cheeks)
-    2. Upper chest / collarbone
-    3. Arms / shoulders
-    4. Fallback to DEFAULT_SKIN_TONE
-    """
     img_np = np.array(image)
     h, w = img_np.shape[:2]
     cv2_img = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
-
     candidates = []
 
-    # --- 1. Try face ---
     faces = app.get(cv2_img)
     if len(faces) > 0:
         faces = sorted(faces, key=lambda x: (x.bbox[2] - x.bbox[0]) * (x.bbox[3] - x.bbox[1]), reverse=True)
         face = faces[0]
         x1, y1, x2, y2 = map(int, face.bbox)
-
-        # Sample from lower cheeks area
         cheek_y1 = y1 + int((y2 - y1) * 0.45)
         cheek_y2 = y1 + int((y2 - y1) * 0.75)
         cheek_x1 = x1 + int((x2 - x1) * 0.25)
         cheek_x2 = x1 + int((x2 - x1) * 0.75)
-
         region = img_np[cheek_y1:cheek_y2, cheek_x1:cheek_x2]
         if region.size > 0:
             pixels = region.reshape(-1, 3)
@@ -418,12 +485,10 @@ def sample_skin_tone(image: Image.Image) -> tuple:
                 candidates.append(avg)
                 print(f"→ Skin sampled from face: {avg.astype(int)}")
 
-    # --- 2. Try upper chest ---
     chest_y1 = int(h * 0.28)
     chest_y2 = int(h * 0.45)
     chest_x1 = int(w * 0.30)
     chest_x2 = int(w * 0.70)
-
     region = img_np[chest_y1:chest_y2, chest_x1:chest_x2]
     if region.size > 0:
         pixels = region.reshape(-1, 3)
@@ -433,14 +498,10 @@ def sample_skin_tone(image: Image.Image) -> tuple:
             candidates.append(avg)
             print(f"→ Skin sampled from chest: {avg.astype(int)}")
 
-    # --- 3. Try arms / shoulders ---
     arm_y1 = int(h * 0.20)
     arm_y2 = int(h * 0.50)
-    # Left arm area
     region_left = img_np[arm_y1:arm_y2, int(w*0.05):int(w*0.22)]
-    # Right arm area
     region_right = img_np[arm_y1:arm_y2, int(w*0.78):int(w*0.95)]
-
     for region in [region_left, region_right]:
         if region.size > 0:
             pixels = region.reshape(-1, 3)
@@ -452,7 +513,6 @@ def sample_skin_tone(image: Image.Image) -> tuple:
                 break
 
     if candidates:
-        # Average all good samples
         final = np.mean(candidates, axis=0)
         print(f"→ Final sampled skin tone: {final.astype(int)}")
         return tuple(final.astype(int))
@@ -461,23 +521,14 @@ def sample_skin_tone(image: Image.Image) -> tuple:
     return DEFAULT_SKIN_TONE
 
 def recolor_clothing(image: Image.Image, mask: Image.Image, color=None, blend_strength=0.65) -> Image.Image:
-    """
-    Semi-transparent recolor of clothing areas.
-    blend_strength: 0.0 = no change, 1.0 = full solid color
-    """
     if color is None:
         color = DEFAULT_SKIN_TONE
-
     img_np = np.array(image).astype(np.float32)
     mask_np = np.array(mask).astype(np.float32) / 255.0
-
-    # Apply blend strength
     mask_np = mask_np * blend_strength
     mask_3c = np.stack([mask_np] * 3, axis=-1)
-
     color_img = np.zeros_like(img_np)
     color_img[:, :] = color
-
     recolored = img_np * (1.0 - mask_3c) + color_img * mask_3c
     return Image.fromarray(np.clip(recolored, 0, 255).astype(np.uint8))
 
@@ -516,8 +567,7 @@ def handler(job):
             face_scale = max(face_scale, 0.92)
             num_steps = 39
         else:
-            print("→ Non-explicit undress mode | Sampler: Euler a + smart skin recolor")
-            strength = 0.86
+            print("→ Non-explicit undress mode | Sampler: Euler a + smart skin recolor + dynamic params")
             guidance_scale = 7.2
             num_steps = 36
 
@@ -581,20 +631,23 @@ def handler(job):
 
         else:
             # ===== NON-EXPLICIT PATH =====
+            runpod.serverless.progress_update(job, "ANALYZING_CLOTHING")
+            raw_mask = generate_raw_clothing_mask(input_image)
+            analysis = analyze_clothing(raw_mask)
+            dilate_px, strength = decide_params(analysis["coverage"], analysis["has_thin_structures"])
+
             runpod.serverless.progress_update(job, "GENERATING_CLOTHING_MASK")
-            mask = generate_clothing_mask(input_image, dilate_px=18, feather_px=2)
+            mask = generate_clothing_mask(input_image, dilate_px=dilate_px, feather_px=2)
             mask = mask.resize((w, h), Image.Resampling.LANCZOS)
 
-            # Sample real skin tone from the subject
             runpod.serverless.progress_update(job, "SAMPLING_SKIN_TONE")
             skin_color = sample_skin_tone(input_image)
 
-            # Semi-transparent recolor
             runpod.serverless.progress_update(job, "RECOLORING_CLOTHING")
             recolored_image = recolor_clothing(
-                input_image, 
-                mask, 
-                color=skin_color, 
+                input_image,
+                mask,
+                color=skin_color,
                 blend_strength=0.65
             )
 
