@@ -343,8 +343,10 @@ def generate_raw_clothing_mask(image: Image.Image) -> np.ndarray:
     pred = upsampled.argmax(dim=1)[0].cpu().numpy()
 
     clothing_labels = {
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-        22, 29, 32, 34
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+        16, 17, 18, 20, 21, 22, 23, 24, 25, 26,
+        28, 29, 30, 32, 34, 35, 36,
+        38, 39, 41, 42, 44, 45, 46
     }
     mask = np.isin(pred, list(clothing_labels)).astype(np.uint8) * 255
     return mask
