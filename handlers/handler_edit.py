@@ -251,7 +251,7 @@ def load_models():
 
         print("✓ All pipelines initialized successfully")
         print("  → Explicit : DPM++ 2M Karras")
-        print("  → Non-explicit : Euler a + smart recolor + residual cleanup")
+        print("  → Non-explicit : Euler a + smart recolor + residual cleanup (fixed)")
 
 def get_dimensions(image, max_size=1536, min_size=512, multiple=64):
     w, h = image.size
@@ -449,25 +449,34 @@ def recolor_clothing(image: Image.Image, mask: Image.Image, color=None, blend_st
     recolored = img_np * (1.0 - mask_3c) + color_img * mask_3c
     return Image.fromarray(np.clip(recolored, 0, 255).astype(np.uint8))
 
-def detect_residual_mask(image: Image.Image, skin_color: tuple, threshold: float = 38.0) -> Image.Image:
+def detect_residual_mask(result_image: Image.Image, original_mask: Image.Image, skin_color: tuple, threshold: float = 55.0) -> Image.Image:
     """
-    Detect leftover fabric remnants by color distance from sampled skin tone.
-    Returns a mask (L mode) of suspicious areas.
+    Detect leftover fabric ONLY inside the original clothing mask region.
+    This prevents the whole body from being marked as residual.
     """
-    img_np = np.array(image).astype(np.float32)
+    img_np = np.array(result_image).astype(np.float32)
     skin = np.array(skin_color, dtype=np.float32)
 
     # Color distance
     diff = np.sqrt(np.sum((img_np - skin) ** 2, axis=2))
 
-    # Threshold
+    # Initial residual by color
     residual = (diff > threshold).astype(np.uint8) * 255
 
-    # Clean up noise
+    # Restrict residual to the original clothing mask area (slightly expanded)
+    orig_mask_np = np.array(original_mask)
+    # Expand original mask a bit to catch edge leftovers
+    kernel = np.ones((7, 7), np.uint8)
+    expanded_mask = cv2.dilate(orig_mask_np, kernel, iterations=1)
+
+    # Keep residual only where original clothing was
+    residual = cv2.bitwise_and(residual, expanded_mask)
+
+    # Clean up small noise
     residual = cv2.morphologyEx(residual, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
     residual = cv2.morphologyEx(residual, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
 
-    # Slight dilation to catch thin straps better
+    # Small dilation to better cover thin straps
     residual = cv2.dilate(residual, np.ones((3, 3), np.uint8), iterations=1)
 
     return Image.fromarray(residual).convert("L")
@@ -597,28 +606,29 @@ def handler(job):
                 height=h,
             ).images[0]
 
-            # ---------- Residual Cleanup Pass ----------
+            # ---------- Residual Cleanup (only inside original mask) ----------
             runpod.serverless.progress_update(job, "CHECKING_RESIDUAL")
-            residual_mask = detect_residual_mask(result, skin_color, threshold=38.0)
+            residual_mask = detect_residual_mask(result, mask, skin_color, threshold=55.0)
 
             residual_np = np.array(residual_mask)
-            residual_ratio = np.count_nonzero(residual_np) / residual_np.size
+            residual_pixels = np.count_nonzero(residual_np)
+            residual_ratio = residual_pixels / residual_np.size
 
-            print(f"→ Residual fabric ratio: {residual_ratio*100:.2f}%")
+            print(f"→ Residual fabric ratio: {residual_ratio*100:.3f}%  ({residual_pixels} pixels)")
 
-            if residual_ratio > 0.0035:  # only if more than 0.35% of image still looks non-skin
+            # Only trigger if there are meaningful leftovers (very small threshold)
+            if residual_ratio > 0.0012:  # ~0.12% of image
                 print("→ Residual fabric detected – running light second inpaint pass")
                 runpod.serverless.progress_update(job, "CLEANING_RESIDUAL")
 
-                # Light second pass
                 result = inpaint_pipeline(
                     prompt=positive,
                     negative_prompt=negative,
                     image=result,
                     mask_image=residual_mask,
-                    strength=0.42,
-                    guidance_scale=6.5,
-                    num_inference_steps=15,
+                    strength=0.45,
+                    guidance_scale=6.8,
+                    num_inference_steps=14,
                     width=w,
                     height=h,
                 ).images[0]
