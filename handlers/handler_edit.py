@@ -344,7 +344,7 @@ def generate_clothing_mask(image: Image.Image, dilate_px=18, feather_px=2) -> Im
     pred = upsampled.argmax(dim=1)[0].cpu().numpy()
 
     # FASHN Human Parser clothing classes
-    # 3: top, 4: dress, 5: skirt, 6: pants, 7: belt, 10: scarf
+    # 3: top | 4: dress | 5: skirt | 6: pants | 7: belt | 10: scarf
     clothing_labels = {3, 4, 5, 6, 7, 10}
 
     mask = np.isin(pred, list(clothing_labels)).astype(np.uint8) * 255
@@ -443,7 +443,7 @@ def sample_skin_tone(image: Image.Image) -> tuple:
 
 def recolor_clothing(image: Image.Image, mask: Image.Image, color=None, blend_strength=0.65) -> Image.Image:
     if color is None:
-        color = DEFAULT reg_SKIN_TONE
+        color = DEFAULT_SKIN_TONE
     img_np = np.array(image).astype(np.float32)
     mask_np = np.array(mask).astype(np.float32) / 255.0
     mask_np = mask_np * blend_strength
