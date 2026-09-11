@@ -336,40 +336,59 @@ export const onRequestPost = async (context: any) => {
     const tgUserId = String(update.message.from.id);
     const purchaseId = update.message.successful_payment.invoice_payload;
 
+    // Get full purchase data including incentive fields
     const { data: purchase } = await supabase
       .from('telegram_purchases')
-      .select('stars, package_name')
+      .select('stars, package_name, incentive_offered, extra_stars, incentive_claimed')
       .eq('id', purchaseId)
       .maybeSingle();
 
     if (purchase) {
+      // Start with the stars they actually paid
+      let starsToAdd = purchase.stars;
+
+      // Add incentive stars only if offered and not yet claimed
+      if (purchase.incentive_offered && !purchase.incentive_claimed && purchase.extra_stars > 0) {
+        starsToAdd += purchase.extra_stars;
+      }
+
+      // Get current balance
       const { data: user } = await supabase
         .from('telegram_users')
         .select('stars')
         .eq('telegram_user_id', tgUserId)
         .maybeSingle();
 
-      const newBalance = (user?.stars || 0) + purchase.stars;
+      const newBalance = (user?.stars || 0) + starsToAdd;
 
+      // Update user balance
       await supabase
         .from('telegram_users')
         .update({ stars: newBalance })
         .eq('telegram_user_id', tgUserId);
 
+      // Mark as sold + claim the incentive
       await supabase
         .from('telegram_purchases')
-        .update({ status: 'sold' })
+        .update({
+          status: 'sold',
+          incentive_claimed: true,
+        })
         .eq('id', purchaseId);
 
-      await sendMessage(
-        BOT_TOKEN,
-        chatId,
-        `✅ <b>Payment confirmed!</b>\n\n` +
-        `📦 ${purchase.package_name}\n` +
-        `⭐ +${purchase.stars} stars\n` +
-        `💳 New balance: <b>${newBalance} stars</b>\n\n` +
-        `Send a photo with an instruction to continue.`
-      );
+      // Build confirmation message
+      let confirmMsg = `✅ <b>Payment confirmed!</b>\n\n` +
+                       `📦 ${purchase.package_name}\n` +
+                       `⭐ +${purchase.stars} stars`;
+
+      if (purchase.incentive_offered && purchase.extra_stars > 0) {
+        confirmMsg += `\n🎁 +${purchase.extra_stars} bonus stars (cart recovery incentive)`;
+      }
+
+      confirmMsg += `\n💳 New balance: <b>${newBalance} stars</b>\n\n` +
+                    `Send a photo with an instruction to continue.`;
+
+      await sendMessage(BOT_TOKEN, chatId, confirmMsg);
     }
 
     return new Response('OK');
