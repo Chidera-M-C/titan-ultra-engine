@@ -10,7 +10,7 @@ const PACKAGES: Record<string, { name: string; stars: number }> = {
 };
 
 const STARS_PER_EDIT = 8;
-const FREE_STARS = 16; // 2 free images
+const FREE_STARS = 8; // 1 free images
 
 const EDIT_HANDLER_URL = 'https://api.runpod.ai/v2/em5th9pvdrelyb/run';
 
@@ -100,7 +100,7 @@ export const onRequestPost = async (context: any) => {
       `• "change the outfit"\n` +
       `• "make it more realistic"\n` +
       `• "creative edit"\n\n` +
-      `You’ve got <b>${FREE_STARS} free stars</b> (enough for 2 edits).\n` +
+      `You’ve got <b>${FREE_STARS} free stars</b> (enough for 1 edits).\n` +
       `Each edit costs <b>${STARS_PER_EDIT} ⭐</b>.`
     );
     return new Response('OK');
