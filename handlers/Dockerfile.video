@@ -10,11 +10,8 @@ RUN apt-get update && apt-get install -y \
     ffmpeg libsm6 libxext6 git wget curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install ComfyUI – pin to a commit that works with PyTorch 2.4
-# (avoids the comfy_kitchen list[int] schema error)
-RUN git clone https://github.com/comfyanonymous/ComfyUI.git /comfyui && \
-    cd /comfyui && \
-    git checkout 4f0c1f8
+# Install ComfyUI – pin to a known-good release that works with PyTorch 2.4
+RUN git clone --branch v0.3.26 --depth 1 https://github.com/comfyanonymous/ComfyUI.git /comfyui
 WORKDIR /comfyui
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -39,7 +36,7 @@ RUN pip install --no-cache-dir \
 # Copy the dedicated download script
 COPY download_models_video.py /tmp/download_models_video.py
 
-# Run download script – keep full log on failure so we can see exactly which file failed
+# Run download script – keep full log on failure
 RUN HF_TOKEN=${HF_TOKEN} CIVITAI_TOKEN=${CIVITAI_TOKEN} \
     python -u /tmp/download_models_video.py || \
     (echo "===== DOWNLOAD FAILED =====" && \
