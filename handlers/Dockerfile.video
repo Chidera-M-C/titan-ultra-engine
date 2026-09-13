@@ -15,7 +15,7 @@ RUN git clone https://github.com/comfyanonymous/ComfyUI.git /comfyui
 WORKDIR /comfyui
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install custom nodes
+# Install custom nodes for Wan2.1
 RUN cd /comfyui/custom_nodes && \
     git clone https://github.com/kijai/ComfyUI-WanVideoWrapper.git && \
     cd ComfyUI-WanVideoWrapper && \
@@ -33,11 +33,18 @@ RUN pip install --no-cache-dir \
     Pillow==10.3.0 \
     "yarl==1.9.4"
 
-# Copy and run the dedicated download script
+# Copy the dedicated download script
 COPY download_models_video.py /tmp/download_models_video.py
+
+# Run download script – keep full log on failure so we can see exactly which file failed
 RUN HF_TOKEN=${HF_TOKEN} CIVITAI_TOKEN=${CIVITAI_TOKEN} \
-    python /tmp/download_models_video.py && \
-    rm /tmp/download_models_video.py
+    python -u /tmp/download_models_video.py || \
+    (echo "===== DOWNLOAD FAILED =====" && \
+     echo "Current model files:" && \
+     find /comfyui/models -type f -exec ls -lh {} \; && \
+     exit 1)
+
+RUN rm -f /tmp/download_models_video.py
 
 WORKDIR /app
 COPY handler_video.py .
