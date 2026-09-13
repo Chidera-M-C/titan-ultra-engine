@@ -10,11 +10,12 @@ RUN apt-get update && apt-get install -y \
     ffmpeg libsm6 libxext6 git wget curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install ComfyUI (latest) + force compatible comfy_kitchen
-RUN git clone https://github.com/comfyanonymous/ComfyUI.git /comfyui
+# Install a stable ComfyUI that works with Torch 2.4
+RUN git clone https://github.com/comfyanonymous/ComfyUI.git /comfyui && \
+    cd /comfyui && \
+    git checkout 5ac3b26
 WORKDIR /comfyui
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir "comfy-kitchen==0.2.20" --force-reinstall
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Install custom nodes for Wan2.1
 RUN cd /comfyui/custom_nodes && \
@@ -37,11 +38,10 @@ RUN pip install --no-cache-dir \
 # Copy the dedicated download script
 COPY download_models_video.py /tmp/download_models_video.py
 
-# Run download script – keep full log on failure
+# Run download script
 RUN HF_TOKEN=${HF_TOKEN} CIVITAI_TOKEN=${CIVITAI_TOKEN} \
     python -u /tmp/download_models_video.py || \
     (echo "===== DOWNLOAD FAILED =====" && \
-     echo "Current model files:" && \
      find /comfyui/models -type f -exec ls -lh {} \; && \
      exit 1)
 
