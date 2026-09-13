@@ -33,7 +33,8 @@ RUN pip install --no-cache-dir \
     runpod==1.6.2 \
     requests==2.31.0 \
     Pillow==10.3.0 \
-    "yarl==1.9.4"
+    "yarl==1.9.4" \
+    "transformers==4.46.3"          # ← add this
 
 # Copy the dedicated download script
 COPY download_models_video.py /tmp/download_models_video.py
