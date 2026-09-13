@@ -1,6 +1,7 @@
 """
 handler_video.py — ComfyUI + WanVideoWrapper I2V only.
 Models + LoRAs are baked into the Docker image (no network volume).
+Speed-optimized for ~40-60s generations.
 """
 
 import os
@@ -24,7 +25,7 @@ VAE_MODEL         = "wan_2.1_vae.safetensors"
 CLIP_VISION       = "clip_vision_h.safetensors"
 CLIP_TEXT_ENCODER = "open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors"
 
-# ── LoRA filenames (baked into /comfyui/models/loras/) ────────────────────
+# ── LoRA filenames ────────────────────────────────────────────────────────
 LORA_FILES = {
     "missionary":       "lora_missionary.safetensors",
     "doggy":            "lora_doggy.safetensors",
@@ -32,7 +33,7 @@ LORA_FILES = {
     "facial_cumshot":   "lora_facial_cumshot.safetensors",
 }
 
-# ── Explicit presets (same detection logic as image handler) ──────────────
+# ── Explicit presets ──────────────────────────────────────────────────────
 EXPLICIT_PRESETS = [
     {
         "name": "undress",
@@ -114,7 +115,6 @@ def get_explicit_preset(user_prompt: str):
             for preset in EXPLICIT_PRESETS:
                 if preset["name"] == group["default"]:
                     return preset
-    # Absolute default → missionary
     for preset in EXPLICIT_PRESETS:
         if preset["name"] == "missionary":
             return preset
@@ -150,8 +150,9 @@ def get_dimensions(aspect_ratio):
     }.get(aspect_ratio, (416, 736))
 
 def duration_to_frames(duration_sec):
-    frames = int(float(duration_sec) * 16)
-    return max(16, (frames // 8) * 8 + 1)
+    # Reduced from ×16 → ×12 for fewer frames / faster generation
+    frames = int(float(duration_sec) * 12)
+    return max(17, (frames // 8) * 8 + 1)
 
 def build_prompt(user_prompt, preset, character=None):
     char = ""
@@ -269,12 +270,12 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 35,
+                "steps": 12,              # ← reduced from 35
                 "cfg": guidance_scale,
                 "seed": 42424242,
-                "shift": 5.0,
+                "shift": 3.0,             # ← reduced from 5.0
                 "riflex_freq_index": 0,
-                "scheduler": "dpm++",
+                "scheduler": "unipc",     # ← faster than dpm++
                 "force_offload": True,
             }
         },
@@ -299,7 +300,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
             "class_type": "VHS_VideoCombine",
             "inputs": {
                 "images": ["decode", 0],
-                "frame_rate": 20,
+                "frame_rate": 16,         # matches the new frame calculation
                 "loop_count": 0,
                 "filename_prefix": "nudely",
                 "format": "video/h264-mp4",
@@ -328,7 +329,7 @@ def queue_workflow(workflow):
     r.raise_for_status()
     return r.json()["prompt_id"]
 
-def wait_for_result(prompt_id, timeout=600):
+def wait_for_result(prompt_id, timeout=900):
     start = time.time()
     while time.time() - start < timeout:
         try:
@@ -349,7 +350,7 @@ def wait_for_result(prompt_id, timeout=600):
                         raise RuntimeError(f"ComfyUI job failed: {status.get('messages')}")
         except requests.RequestException:
             pass
-        time.sleep(3)
+        time.sleep(2)
     raise RuntimeError(f"Timed out after {timeout}s")
 
 def fetch_video(filename, subfolder=""):
@@ -365,7 +366,7 @@ def handler(job):
         inp = job["input"]
         user_prompt   = inp.get("prompt", "")
         aspect_ratio  = inp.get("aspect_ratio", "9:16")
-        duration_sec  = float(inp.get("duration", 4))
+        duration_sec  = float(inp.get("duration", 3))   # default 3s now
         start_image   = inp.get("start_image", None)
         character     = inp.get("character", None)
 
@@ -379,7 +380,7 @@ def handler(job):
         num_frames     = duration_to_frames(duration_sec)
         positive       = build_prompt(user_prompt, preset, character)
         negative       = build_negative()
-        guidance_scale = 7.5
+        guidance_scale = 7.0
 
         runpod.serverless.progress_update(job, "UPLOADING_IMAGE")
         image_filename = upload_image(start_image)
@@ -396,6 +397,8 @@ def handler(job):
         prompt_id = queue_workflow(workflow)
         filename, subfolder = wait_for_result(prompt_id)
 
+        print(f"Video ready: {filename} (subfolder: {subfolder})")
+
         runpod.serverless.progress_update(job, "ENCODING_VIDEO")
         video_bytes = fetch_video(filename, subfolder)
         video_b64 = base64.b64encode(video_bytes).decode()
@@ -409,6 +412,5 @@ def handler(job):
 # ── Startup ───────────────────────────────────────────────────────────────
 print("Starting ComfyUI (models already in image)...")
 start_comfyui()
-
 print("Ready for jobs.")
 runpod.serverless.start({"handler": handler})
