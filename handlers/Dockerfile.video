@@ -10,10 +10,11 @@ RUN apt-get update && apt-get install -y \
     ffmpeg libsm6 libxext6 git wget curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install ComfyUI – pin to a known-good release that works with PyTorch 2.4
-RUN git clone --branch v0.3.26 --depth 1 https://github.com/comfyanonymous/ComfyUI.git /comfyui
+# Install ComfyUI (latest) + force compatible comfy_kitchen
+RUN git clone https://github.com/comfyanonymous/ComfyUI.git /comfyui
 WORKDIR /comfyui
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir "comfy-kitchen==0.2.20" --force-reinstall
 
 # Install custom nodes for Wan2.1
 RUN cd /comfyui/custom_nodes && \
