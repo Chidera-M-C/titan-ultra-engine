@@ -1,11 +1,10 @@
 """
-handler_video.py — ComfyUI + WanVideoWrapper video generation for RunPod serverless.
-Models live on the network volume at /runpod-volume — never downloaded at runtime.
+handler_video.py — ComfyUI + WanVideoWrapper I2V only.
+Models + LoRAs are baked into the Docker image (no network volume).
 """
 
 import os
 import io
-import json
 import time
 import base64
 import subprocess
@@ -18,143 +17,109 @@ from PIL import Image
 COMFYUI_DIR = "/comfyui"
 COMFYUI_URL = "http://127.0.0.1:8188"
 
-# ── Model file names (as ComfyUI sees them after symlinking) ──────────────
-T2V_MODEL    = "wan2.1_t2v_14B_fp8.safetensors"
-I2V_MODEL    = "wan2.1_i2v_480p_14B_fp8.safetensors"
-T5_ENCODER = "umt5_xxl_fp16.safetensors"
-VAE_MODEL    = "wan_2.1_vae.safetensors"
-CLIP_VISION  = "clip_vision_h.safetensors"
+# ── Model file names (inside the image) ───────────────────────────────────
+I2V_MODEL         = "wan2.1_i2v_480p_14B_fp8.safetensors"
+T5_ENCODER        = "umt5_xxl_fp16.safetensors"
+VAE_MODEL         = "wan_2.1_vae.safetensors"
+CLIP_VISION       = "clip_vision_h.safetensors"
 CLIP_TEXT_ENCODER = "open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors"
 
-# ── Volume paths ──────────────────────────────────────────────────────────
-VOL = "/runpod-volume"
-LORA_VOL_DIR = f"{VOL}/loras"
-CKPT_VOL_DIR = f"{VOL}/wan_checkpoints"
-
-# ── LoRA file names ───────────────────────────────────────────────────────
+# ── LoRA filenames (baked into /comfyui/models/loras/) ────────────────────
 LORA_FILES = {
-    'allinone_nsfw': "lora_allinone_nsfw.safetensors",
-    'posing_nude':   "lora_posing_nude.safetensors",
-    'sex_thrust':    "lora_sex_thrust.safetensors",
-    'blowjob':       "lora_blowjob.safetensors",
-    'cum_facial':    "lora_cum_facial.safetensors",
-    'cumshot_i2v':   "lora_cumshot_i2v.safetensors",
-    'doggy_pov': "lora_doggy_pov.safetensors",
+    "missionary":       "lora_missionary.safetensors",
+    "doggy":            "lora_doggy.safetensors",
+    "blowjob":          "lora_blowjob.safetensors",
+    "facial_cumshot":   "lora_facial_cumshot.safetensors",
 }
 
-# ── Style configs ─────────────────────────────────────────────────────────
-STYLE_CONFIGS = {
-    'female_nude_portrait': {
-        'loras': [('posing_nude', 0.85)],
-        'guidance_scale': 7.5,
-        'trigger': 'nude woman, elegant pose, natural lighting, bare skin',
+# ── Explicit presets (same detection logic as image handler) ──────────────
+EXPLICIT_PRESETS = [
+    {
+        "name": "undress",
+        "tailored_keywords": [
+            "undress", "remove clothes", "take off clothes", "strip", "naked", "nude",
+            "no clothes", "completely naked", "make her naked", "remove clothing"
+        ],
+        "lora_key": "missionary",
+        "strength": 0.82,
+        "before": "lying on her back, legs spread wide, knees bent up, slowly removing the last of her clothes, 1man thick hard cock already pressing against her entrance then thrusting deep into her pussy in missionary position, continuous hip movement, 1girl, ",
+        "after": ", dynamic motion, realistic thrusting rhythm, soft body bounce, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
-    'dressed_vs_naked': {
-        'loras': [('posing_nude', 0.80)],
-        'guidance_scale': 7.5,
-        'trigger': 'woman partially undressing, sensual reveal, contrast clothed and nude',
+    {
+        "name": "doggy",
+        "tailored_keywords": [
+            "doggy", "doggystyle", "doggy style", "from behind", "prone bone",
+            "bent over", "ass up", "on all fours", "rear entry"
+        ],
+        "lora_key": "doggy",
+        "strength": 0.80,
+        "before": "on all fours, ass up, back arched, looking over her shoulder, 1man thick hard cock slamming deep into her pussy from behind with strong rhythmic thrusting, hips bouncing, 1girl, ",
+        "after": ", dynamic rear view motion, realistic pounding rhythm, soft body jiggle, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
-    'missionary_style': {
-        'loras': [('allinone_nsfw', 0.09), ('sex_thrust', 0.70)],
-        'guidance_scale': 7.5,
-        'trigger': 'missionary sex, man on top, face to face, thrusting motion, explicit',
+    {
+        "name": "blowjob",
+        "tailored_keywords": [
+            "sucking", "blowjob", "blow job", "deepthroat", "deep throat",
+            "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"
+        ],
+        "lora_key": "blowjob",
+        "strength": 0.85,
+        "before": "kneeling, mouth wide open, eyes looking up, 1man thick hard cock sliding in and out of her mouth, deepthroat motion with saliva strings, head bobbing rhythmically, 1girl, ",
+        "after": ", dynamic close-up oral motion, realistic sucking and thrusting into mouth, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
+    {
+        "name": "missionary",
+        "tailored_keywords": [
+            "missionary", "missionary sex", "man on top", "on her back",
+            "legs spread", "facing each other"
+        ],
+        "lora_key": "missionary",
+        "strength": 0.82,
+        "before": "lying on her back, legs spread wide, knees pulled up, 1man thick hard cock pounding deep into her pussy from above with continuous powerful thrusting, bodies moving together, 1girl, ",
+        "after": ", dynamic high-angle motion, realistic deep thrusting rhythm, soft body bounce, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
+    },
+    {
+        "name": "facial_cumshot",
+        "tailored_keywords": [
+            "cumshot", "cum on face", "facial", "semen", "covered in cum",
+            "cum on tits", "facial cumshot", "cum across face"
+        ],
+        "lora_key": "facial_cumshot",
+        "strength": 0.85,
+        "before": "kneeling or lying back looking up, mouth open, 1man thick hard cock erupting thick white cum across her face and big tits, sticky ropes landing and dripping down her cheeks, lips and cleavage, continuous spurting motion, 1girl, ",
+        "after": ", dynamic facial cumshot motion, realistic cum splatter and dripping, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
+    },
+]
 
-    'doggy_style': {
-        'loras': [('doggy_pov', 0.75), ('allinone_nsfw', 0.80), ('sex_thrust', 0.50)],
-        'guidance_scale': 6.8,
-        'trigger': 'doggy style sex, pov, from behind, rear entry, thrusting motion, explicit',
+GLOBAL_FALLBACKS = [
+    {
+        "keywords": [
+            "being fucked", "getting fucked", "fucked hard", "pounded", "railed",
+            "fucked from behind", "having sex", "making love", "love making",
+            "sexing", "fucked", "fuck", "sex", "penetration", "thrusting"
+        ],
+        "default": "missionary"
     },
-    
-    'cowgirl_style': {
-        'loras': [('allinone_nsfw', 0.85)],
-        'guidance_scale': 7.5,
-        'trigger': 'cowgirl position, woman on top, riding motion, explicit',
-    },
-    'anal_sex': {
-        'loras': [('allinone_nsfw', 0.85), ('sex_thrust', 0.70)],
-        'guidance_scale': 7.5,
-        'trigger': 'anal sex, anal penetration, from behind, thrusting, explicit',
-    },
-    'oral_sex': {
-        'loras': [('blowjob', 0.85), ('cum_facial', 0.60)],
-        'guidance_scale': 7.5,
-        'trigger': 'oral sex, blowjob, deepthroat motion, explicit',
-    },
-    'threesome_sex': {
-        'loras': [('allinone_nsfw', 0.80)],
-        'guidance_scale': 8.0,
-        'trigger': 'threesome, group sex, three people, explicit',
-    },
-    'cum_on_face': {
-        'loras': [('cum_facial', 0.85), ('cumshot_i2v', 0.80)],
-        'guidance_scale': 7.0,
-        'trigger': 'cum on face, facial, explicit',
-    },
-    'lesbian_sex': {
-        'loras': [('allinone_nsfw', 0.80)],
-        'guidance_scale': 7.5,
-        'trigger': 'lesbian sex, two women, girl on girl, explicit',
-    },
-}
+]
 
 comfyui_process = None
 
-# ── Symlink models from volume into ComfyUI's model directories ───────────
-def setup_symlinks():
-    dirs = {
-        "diffusion_models": f"{COMFYUI_DIR}/models/diffusion_models",
-        "text_encoders":    f"{COMFYUI_DIR}/models/text_encoders",
-        "vae":              f"{COMFYUI_DIR}/models/vae",
-        "clip_vision":      f"{COMFYUI_DIR}/models/clip_vision",
-        "loras":            f"{COMFYUI_DIR}/models/loras",
-    }
-    for name, path in dirs.items():
-        os.makedirs(path, exist_ok=True)
+def get_explicit_preset(user_prompt: str):
+    prompt_lower = user_prompt.lower()
+    for preset in EXPLICIT_PRESETS:
+        if any(kw in prompt_lower for kw in preset["tailored_keywords"]):
+            return preset
+    for group in GLOBAL_FALLBACKS:
+        if any(kw in prompt_lower for kw in group["keywords"]):
+            for preset in EXPLICIT_PRESETS:
+                if preset["name"] == group["default"]:
+                    return preset
+    # Absolute default → missionary
+    for preset in EXPLICIT_PRESETS:
+        if preset["name"] == "missionary":
+            return preset
+    return EXPLICIT_PRESETS[0]
 
-    # Diffusion models
-    for filename in [T2V_MODEL, I2V_MODEL]:
-        src = f"{CKPT_VOL_DIR}/diffusion_models/{filename}"
-        dst = f"{dirs['diffusion_models']}/{filename}"
-        _symlink(src, dst)
-
-    # Text encoder
-    src = f"{CKPT_VOL_DIR}/text_encoders/{T5_ENCODER}"
-    dst = f"{dirs['text_encoders']}/{T5_ENCODER}"
-    _symlink(src, dst)
-
-    # VAE
-    src = f"{CKPT_VOL_DIR}/vae/{VAE_MODEL}"
-    dst = f"{dirs['vae']}/{VAE_MODEL}"
-    _symlink(src, dst)
-
-    # CLIP vision
-    src = f"{CKPT_VOL_DIR}/clip_vision/{CLIP_VISION}"
-    dst = f"{dirs['clip_vision']}/{CLIP_VISION}"
-    _symlink(src, dst)
-
-    src = f"{CKPT_VOL_DIR}/clip_vision/{CLIP_TEXT_ENCODER}"
-    dst = f"{dirs['clip_vision']}/{CLIP_TEXT_ENCODER}"
-    _symlink(src, dst)
-
-    # LoRAs
-    for key, filename in LORA_FILES.items():
-        src = f"{LORA_VOL_DIR}/{filename}"
-        dst = f"{dirs['loras']}/{filename}"
-        _symlink(src, dst)
-
-    print("Symlinks ready.")
-
-def _symlink(src, dst):
-    if os.path.exists(dst):
-        return
-    if os.path.exists(src):
-        os.symlink(src, dst)
-        print(f"  Linked: {os.path.basename(src)}")
-    else:
-        print(f"  WARNING: Not found on volume: {src}")
-
-# ── Start ComfyUI ─────────────────────────────────────────────────────────
 def start_comfyui():
     global comfyui_process
     print("Starting ComfyUI...")
@@ -175,7 +140,6 @@ def start_comfyui():
         time.sleep(2)
     raise RuntimeError("ComfyUI failed to start within 300s")
 
-# ── Helpers ───────────────────────────────────────────────────────────────
 def get_dimensions(aspect_ratio):
     return {
         '1:1':  (512, 512),
@@ -189,19 +153,16 @@ def duration_to_frames(duration_sec):
     frames = int(float(duration_sec) * 16)
     return max(16, (frames // 8) * 8 + 1)
 
-def build_prompt(user_prompt, style_id, character=None):
-    cfg = STYLE_CONFIGS.get(style_id, {})
-    trigger = cfg.get('trigger', '')
-    char = ''
+def build_prompt(user_prompt, preset, character=None):
+    char = ""
     if character:
         char = f"{character.get('name','')}, {character.get('race','')} woman, {character.get('body_type','').replace('_',' ')}, "
-    return f"{char}{user_prompt}, {trigger}, photorealistic, masterpiece, best quality, cinematic, smooth motion, fluid movement, natural lighting"
+    return f"{char}{preset['before']}{user_prompt}{preset['after']}"
 
 def build_negative():
     return "static, frozen, no motion, watermark, text, logo, blurry, low quality, bad anatomy, deformed, ugly, jumpcut, flicker, distorted"
 
 def upload_image(base64_or_url):
-    """Upload image to ComfyUI input folder, return filename."""
     if base64_or_url.startswith("http"):
         r = requests.get(base64_or_url, timeout=30)
         r.raise_for_status()
@@ -226,124 +187,7 @@ def upload_image(base64_or_url):
     r.raise_for_status()
     return r.json()["name"]
 
-# ── Workflow builders ─────────────────────────────────────────────────────
-def build_t2v_workflow(prompt, negative, width, height, num_frames, guidance_scale, lora_list):
-    """
-    T2V workflow using WanVideoWrapper nodes:
-    LoadWanVideoT5TextEncoder → WanVideoTextEncode
-    WanVideoModelLoader (+ optional WanVideoLoraSelect)
-    WanVideoVAELoader
-    WanVideoSampler → WanVideoDecode → VHS_VideoCombine
-    """
-    p = {
-        # T5 text encoder
-        "t5": {
-            "class_type": "LoadWanVideoT5TextEncoder",
-            "inputs": {
-                "model_name": T5_ENCODER,
-                "precision": "fp16",
-            }
-        },
-        # Text encode
-        "text": {
-            "class_type": "WanVideoTextEncode",
-            "inputs": {
-                "t5": ["t5", 0],
-                "positive_prompt": prompt,
-                "negative_prompt": negative,
-                "force_offload": True,
-            }
-        },
-        # VAE loader
-        "vae": {
-            "class_type": "WanVideoVAELoader",
-            "inputs": {
-                "model_name": VAE_MODEL,
-                "precision": "bf16",
-            }
-        },
-        # Main model
-        "model": {
-            "class_type": "WanVideoModelLoader",
-            "inputs": {
-                "model": T2V_MODEL,           # or I2V_MODEL
-                "base_precision": "bf16",     # use a valid value from the accepted list
-                "quantization": "fp8_e4m3fn", # move fp8 here where it now belongs
-                "load_device": "main_device",
-            }
-        },
-        # Sampler
-        "sampler": {
-            "class_type": "WanVideoSampler",
-            "inputs": {
-                "model": ["model", 0],
-                "text_embeds": ["text", 0],
-                "vae": ["vae", 0],
-                "width": width,
-                "height": height,
-                "num_frames": num_frames,
-                "steps": 20,
-                "cfg": guidance_scale,
-                "seed": 42,
-                "shift": 3.0,         # ADD THIS
-                "riflex_freq_index": 0,  # ADD THIS
-                "scheduler": "unipc",
-                "force_offload": True,
-            }
-        },
-        # Decode
-        "decode": {
-            "class_type": "WanVideoDecode",
-            "inputs": {
-                "vae": ["vae", 0],
-                "samples": ["sampler", 0],
-                "enable_vae_tiling": True,
-                "tile_sample_min_height": 272,
-                "tile_sample_min_width": 272,
-                "tile_overlap_factor_height": 0.2,
-                "tile_overlap_factor_width": 0.2,
-                "auto_tile_size": True,
-            }
-        },
-        # Export video
-        "export": {
-            "class_type": "VHS_VideoCombine",
-            "inputs": {
-                "images": ["decode", 0],
-                "frame_rate": 16,
-                "loop_count": 0,
-                "filename_prefix": "nudely",
-                "format": "video/h264-mp4",
-                "save_output": True,
-                "pingpong": False,
-            }
-        }
-    }
-
-    # Inject LoRAs — chain WanVideoLoraSelect nodes before model
-    if lora_list:
-        prev = None  # ← start empty, not from model
-        for i, (lora_key, scale) in enumerate(lora_list):
-            filename = LORA_FILES.get(lora_key)
-            if not filename:
-                continue
-            nid = f"lora_{i}"
-            inputs = {"lora": filename, "strength": scale}
-            if prev is not None:
-                inputs["prev_lora"] = prev  # only chain after first one
-            p[nid] = {"class_type": "WanVideoLoraSelect", "inputs": inputs}
-            prev = [nid, 0]
-        p["model"]["inputs"]["lora"] = prev
-    return {"prompt": p}
-
-
-def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_scale, lora_list, image_filename):
-    """
-    I2V workflow — same as T2V but adds:
-    LoadWanVideoClipTextEncoder → WanVideoClipVisionEncode (for CLIP features)
-    WanVideoImageToVideoEncode (for VAE image latent)
-    Both feed into WanVideoSampler via image_embeds
-    """
+def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_scale, lora_key, lora_strength, image_filename):
     p = {
         "t5": {
             "class_type": "LoadWanVideoT5TextEncoder",
@@ -381,20 +225,18 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "image": image_filename,
             }
         },
-        # CLIP vision encode for I2V
         "clip_encode": {
             "class_type": "WanVideoClipVisionEncode",
             "inputs": {
                 "clip_vision": ["clip_loader", 0],
-                "image_1": ["load_image", 0],   # changed: image → image_1
+                "image_1": ["load_image", 0],
                 "strength_1": 1.0,
-                "strength_2": 1.0,        # add this
-                "force_offload": True,    # add this
-                "crop": "center",         # add this
-                "combine_embeds": "average",  # add this
+                "strength_2": 1.0,
+                "force_offload": True,
+                "crop": "center",
+                "combine_embeds": "average",
             }
         },
-        # VAE image encode for I2V conditioning
         "img_encode": {
             "class_type": "WanVideoImageToVideoEncode",
             "inputs": {
@@ -412,13 +254,12 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
         "model": {
             "class_type": "WanVideoModelLoader",
             "inputs": {
-                "model": I2V_MODEL,           # or I2V_MODEL
-                "base_precision": "bf16",     # use a valid value from the accepted list
-                "quantization": "fp8_e4m3fn", # move fp8 here where it now belongs
+                "model": I2V_MODEL,
+                "base_precision": "bf16",
+                "quantization": "fp8_e4m3fn",
                 "load_device": "main_device",
             }
         },
-       
         "sampler": {
             "class_type": "WanVideoSampler",
             "inputs": {
@@ -428,14 +269,14 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 35,              # Give DPM++ 30 steps to properly compute the physics loop
+                "steps": 35,
                 "cfg": guidance_scale,
                 "seed": 42424242,
-                "shift": 5.0,             # Balanced value for motion tracking 
-                "riflex_freq_index": 0,   # Activates RIFLEX context tracking to prevent frame melting
-                "scheduler": "dpm++",     # CHANGED from unipc/euler to the complex geometry solver
-                "force_offload": True,     
-             }
+                "shift": 5.0,
+                "riflex_freq_index": 0,
+                "scheduler": "dpm++",
+                "force_offload": True,
+            }
         },
         "decode": {
             "class_type": "WanVideoDecode",
@@ -468,23 +309,20 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
         }
     }
 
-    if lora_list:
-        prev = None  # ← start empty, not from model
-        for i, (lora_key, scale) in enumerate(lora_list):
-            filename = LORA_FILES.get(lora_key)
-            if not filename:
-                continue
-            nid = f"lora_{i}"
-            inputs = {"lora": filename, "strength": scale}
-            if prev is not None:
-                inputs["prev_lora"] = prev  # only chain after first one
-            p[nid] = {"class_type": "WanVideoLoraSelect", "inputs": inputs}
-            prev = [nid, 0]
-        p["model"]["inputs"]["lora"] = prev
+    # Single LoRA
+    filename = LORA_FILES.get(lora_key)
+    if filename:
+        p["lora_0"] = {
+            "class_type": "WanVideoLoraSelect",
+            "inputs": {
+                "lora": filename,
+                "strength": lora_strength,
+            }
+        }
+        p["model"]["inputs"]["lora"] = ["lora_0", 0]
 
     return {"prompt": p}
 
-# ── ComfyUI API ───────────────────────────────────────────────────────────
 def queue_workflow(workflow):
     r = requests.post(f"{COMFYUI_URL}/prompt", json=workflow, timeout=30)
     r.raise_for_status()
@@ -522,40 +360,37 @@ def fetch_video(filename, subfolder=""):
     r.raise_for_status()
     return r.content
 
-# ── RunPod handler ────────────────────────────────────────────────────────
 def handler(job):
     try:
         inp = job["input"]
-        generation_type = inp.get("type", "text_to_video")
-        style_id        = inp.get("style", "female_nude_portrait")
-        user_prompt     = inp.get("prompt", "")
-        aspect_ratio    = inp.get("aspect_ratio", "9:16")
-        duration_sec    = float(inp.get("duration", 4))
-        start_image     = inp.get("start_image", None)
-        character       = inp.get("character", None)
+        user_prompt   = inp.get("prompt", "")
+        aspect_ratio  = inp.get("aspect_ratio", "9:16")
+        duration_sec  = float(inp.get("duration", 4))
+        start_image   = inp.get("start_image", None)
+        character     = inp.get("character", None)
 
-        style_cfg      = STYLE_CONFIGS.get(style_id, STYLE_CONFIGS["female_nude_portrait"])
+        if not start_image:
+            return {"error": "start_image is required for image-to-video"}
+
+        preset = get_explicit_preset(user_prompt)
+        print(f"→ Style selected: {preset['name']} (LoRA: {preset['lora_key']})")
+
         width, height  = get_dimensions(aspect_ratio)
         num_frames     = duration_to_frames(duration_sec)
-        positive       = build_prompt(user_prompt, style_id, character)
+        positive       = build_prompt(user_prompt, preset, character)
         negative       = build_negative()
-        lora_list      = style_cfg["loras"]
-        guidance_scale = style_cfg["guidance_scale"]
+        guidance_scale = 7.5
+
+        runpod.serverless.progress_update(job, "UPLOADING_IMAGE")
+        image_filename = upload_image(start_image)
 
         runpod.serverless.progress_update(job, "BUILDING_WORKFLOW")
-
-        if generation_type == "image_to_video" and start_image:
-            runpod.serverless.progress_update(job, "UPLOADING_IMAGE")
-            image_filename = upload_image(start_image)
-            workflow = build_i2v_workflow(
-                positive, negative, width, height,
-                num_frames, guidance_scale, lora_list, image_filename
-            )
-        else:
-            workflow = build_t2v_workflow(
-                positive, negative, width, height,
-                num_frames, guidance_scale, lora_list
-            )
+        workflow = build_i2v_workflow(
+            positive, negative, width, height,
+            num_frames, guidance_scale,
+            preset["lora_key"], preset["strength"],
+            image_filename
+        )
 
         runpod.serverless.progress_update(job, "GENERATING_VIDEO")
         prompt_id = queue_workflow(workflow)
@@ -572,18 +407,8 @@ def handler(job):
         return {"error": str(e), "traceback": traceback.format_exc()}
 
 # ── Startup ───────────────────────────────────────────────────────────────
-print("Setting up symlinks...")
-setup_symlinks()
-
-print("Starting ComfyUI...")
+print("Starting ComfyUI (models already in image)...")
 start_comfyui()
-
-import subprocess
-result = subprocess.run(
-    ["find", "/", "-name", "nodes_wan*", "-type", "f"],
-    capture_output=True, text=True, timeout=30
-)
-print("WAN NODES:", result.stdout)
 
 print("Ready for jobs.")
 runpod.serverless.start({"handler": handler})
