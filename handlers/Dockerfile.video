@@ -1,5 +1,7 @@
-
 FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
+
+ARG HF_TOKEN=""
+ARG CIVITAI_TOKEN=""
 
 WORKDIR /app
 
@@ -13,29 +15,31 @@ RUN git clone https://github.com/comfyanonymous/ComfyUI.git /comfyui
 WORKDIR /comfyui
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install ComfyUI custom nodes for Wan2.1 video
+# Install custom nodes
 RUN cd /comfyui/custom_nodes && \
     git clone https://github.com/kijai/ComfyUI-WanVideoWrapper.git && \
     cd ComfyUI-WanVideoWrapper && \
     pip install --no-cache-dir -r requirements.txt || true
 
-# Install VideoHelperSuite for VHS_VideoCombine node
 RUN cd /comfyui/custom_nodes && \
     git clone https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git && \
     cd ComfyUI-VideoHelperSuite && \
     pip install --no-cache-dir -r requirements.txt || true
 
-# Install runpod + other handler deps
+# Handler dependencies
 RUN pip install --no-cache-dir \
     runpod==1.6.2 \
     requests==2.31.0 \
-    Pillow==10.3.0
+    Pillow==10.3.0 \
+    "yarl==1.9.4"
 
-RUN pip install --no-cache-dir "yarl==1.9.4"
+# Copy and run the dedicated download script
+COPY download_models_video.py /tmp/download_models_video.py
+RUN HF_TOKEN=${HF_TOKEN} CIVITAI_TOKEN=${CIVITAI_TOKEN} \
+    python /tmp/download_models_video.py && \
+    rm /tmp/download_models_video.py
 
 WORKDIR /app
-
-# Copy handler only — models live on the network volume
 COPY handler_video.py .
 
 CMD ["python", "-u", "handler_video.py"]
