@@ -270,12 +270,12 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 12,              # ← reduced from 35
+                "steps": 18,              # ← reduced from 35
                 "cfg": guidance_scale,
                 "seed": 42424242,
-                "shift": 3.0,             # ← reduced from 5.0
+                "shift": 3.5,             # ← reduced from 5.0
                 "riflex_freq_index": 0,
-                "scheduler": "unipc",     # ← faster than dpm++
+                "scheduler": "dpm++",     # ← faster than dpm++
                 "force_offload": True,
             }
         },
