@@ -1,6 +1,6 @@
 """
 download_models_video.py
-Downloads the exact models + LoRAs needed for the pure I2V Docker image.
+Downloads the exact models + LoRAs needed for the pure I2V Docker image (Wan 2.2).
 Called during Docker build.
 """
 
@@ -12,30 +12,36 @@ import time
 HF_TOKEN = os.environ.get("HF_TOKEN", "")
 CIVITAI_TOKEN = os.environ.get("CIVITAI_TOKEN", "")
 
-DIFFUSION_DIR   = "/comfyui/models/diffusion_models"
+DIFFUSION_DIR    = "/comfyui/models/diffusion_models"
 TEXT_ENCODER_DIR = "/comfyui/models/text_encoders"
-VAE_DIR         = "/comfyui/models/vae"
-CLIP_VISION_DIR = "/comfyui/models/clip_vision"
-LORAS_DIR       = "/comfyui/models/loras"
+VAE_DIR          = "/comfyui/models/vae"
+CLIP_VISION_DIR  = "/comfyui/models/clip_vision"
+LORAS_DIR        = "/comfyui/models/loras"
 
 for d in [DIFFUSION_DIR, TEXT_ENCODER_DIR, VAE_DIR, CLIP_VISION_DIR, LORAS_DIR]:
     os.makedirs(d, exist_ok=True)
 
-# ── Core models ───────────────────────────────────────────────────────────
+# ── Core models (Wan 2.2) ─────────────────────────────────────────────────
 MODELS = [
-    # Diffusion (fp8 scaled – rename to the name the handler expects)
+    # High noise
     (
-        "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/diffusion_models/wan2.1_i2v_480p_14B_fp8_scaled.safetensors",
-        f"{DIFFUSION_DIR}/wan2.1_i2v_480p_14B_fp8.safetensors",
-        "I2V 14B fp8"
+        "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
+        f"{DIFFUSION_DIR}/wan2.2_i2v_high_noise_14B_fp8.safetensors",
+        "I2V High Noise 14B"
     ),
-    # Text encoder
+    # Low noise
+    (
+        "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_low_noise_14B_fp8_scaled.safetensors",
+        f"{DIFFUSION_DIR}/wan2.2_i2v_low_noise_14B_fp8.safetensors",
+        "I2V Low Noise 14B"
+    ),
+    # Text encoder (still compatible)
     (
         "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp16.safetensors",
         f"{TEXT_ENCODER_DIR}/umt5_xxl_fp16.safetensors",
         "UMT5 XXL fp16"
     ),
-    # VAE
+    # VAE (still used by 14B models)
     (
         "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors",
         f"{VAE_DIR}/wan_2.1_vae.safetensors",
@@ -49,18 +55,25 @@ MODELS = [
     ),
 ]
 
-# OpenCLIP has a different location in some repos – try multiple fallbacks
+# OpenCLIP fallbacks
 OPENCLIP_CANDIDATES = [
     "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors",
     "https://huggingface.co/laion/CLIP-ViT-H-14-laion2B-s32B-b79K/resolve/main/open_clip_pytorch_model.bin",
-    "https://huggingface.co/openai/clip-vit-large-patch14/resolve/main/pytorch_model.bin",
 ]
 
+# Style LoRAs (keep current ones for now – you can swap to Blink later)
 LORAS = [
     ("https://civitaiarchive.com/api/download/models/2496698", f"{LORAS_DIR}/lora_missionary.safetensors", "LoRA: Missionary / Undress"),
     ("https://civitaiarchive.com/api/download/models/2513548", f"{LORAS_DIR}/lora_doggy.safetensors", "LoRA: Doggy"),
     ("https://civitaiarchive.com/api/download/models/2446660", f"{LORAS_DIR}/lora_blowjob.safetensors", "LoRA: Blowjob"),
     ("https://civitaiarchive.com/api/download/models/2508339", f"{LORAS_DIR}/lora_facial_cumshot.safetensors", "LoRA: Facial Cumshot"),
+
+    # Lightning / Distilled LoRA for speed (4-8 steps)
+    (
+        "https://huggingface.co/lightx2v/Wan2.1-Distill-Loras/resolve/main/wan2.1_i2v_lora_rank64_lightx2v_4step.safetensors",
+        f"{LORAS_DIR}/lora_lightning_4step.safetensors",
+        "LoRA: Lightning 4-step"
+    ),
 ]
 
 def download(url, path, label, retries=4):
@@ -121,7 +134,7 @@ def download_openclip():
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("Nudely Video – Model Download (Docker build)")
+    print("Nudely Video – Model Download (Wan 2.2 + Lightning)")
     print("=" * 60)
 
     failed = []
@@ -135,7 +148,7 @@ if __name__ == "__main__":
     if not download_openclip():
         failed.append("OpenCLIP")
 
-    print("\n=== Style LoRAs ===")
+    print("\n=== Style + Lightning LoRAs ===")
     for url, path, label in LORAS:
         if not download(url, path, label):
             failed.append(label)
