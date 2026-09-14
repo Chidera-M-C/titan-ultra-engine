@@ -1,6 +1,7 @@
 """
 handler_video.py — ComfyUI + WanVideoWrapper I2V (Wan 2.2 + Lightning)
 Models + LoRAs are baked into the Docker image.
+Default duration = 6 seconds.
 """
 
 import os
@@ -32,7 +33,7 @@ LORA_FILES = {
 }
 LIGHTNING_LORA = "lora_lightning_4step.safetensors"
 
-# ── Explicit presets (unchanged) ──────────────────────────────────────────
+# ── Explicit presets ──────────────────────────────────────────────────────
 EXPLICIT_PRESETS = [
     {
         "name": "undress",
@@ -149,6 +150,7 @@ def get_dimensions(aspect_ratio):
     }.get(aspect_ratio, (416, 736))
 
 def duration_to_frames(duration_sec):
+    # 6 seconds default → ~72 frames (still efficient with Lightning)
     frames = int(float(duration_sec) * 12)
     return max(17, (frames // 8) * 8 + 1)
 
@@ -159,7 +161,7 @@ def build_prompt(user_prompt, preset, character=None):
     return f"{char}{preset['before']}{user_prompt}{preset['after']}"
 
 def build_negative():
-    return "static, frozen, no motion, watermark, text, logo, blurry, low quality, bad anatomy, deformed, ugly, jumpcut, flicker, distorted"
+    return "static, frozen, no motion, watermark, text, logo, blurry, low quality, bad anatomy, deformed, ugly, jumpcut, flicker, distorted, pixelated, yellow tint, oversaturated"
 
 def upload_image(base64_or_url):
     if base64_or_url.startswith("http"):
@@ -187,9 +189,6 @@ def upload_image(base64_or_url):
     return r.json()["name"]
 
 def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_scale, lora_key, lora_strength, image_filename):
-    """
-    Wan 2.2 dual-model workflow + Lightning LoRA for speed.
-    """
     p = {
         "t5": {
             "class_type": "LoadWanVideoT5TextEncoder",
@@ -253,7 +252,6 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "noise_aug_strength": 0.0,
             }
         },
-        # High noise model
         "model_high": {
             "class_type": "WanVideoModelLoader",
             "inputs": {
@@ -263,7 +261,6 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "load_device": "main_device",
             }
         },
-        # Low noise model
         "model_low": {
             "class_type": "WanVideoModelLoader",
             "inputs": {
@@ -276,14 +273,14 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
         "sampler": {
             "class_type": "WanVideoSampler",
             "inputs": {
-                "model": ["model_high", 0],          # start with high noise
+                "model": ["model_high", 0],
                 "text_embeds": ["text", 0],
                 "image_embeds": ["img_encode", 0],
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 6,                          # Lightning target
-                "cfg": 1.0,                          # Lightning expects low CFG
+                "steps": 8,                    # safer with correct Lightning
+                "cfg": 1.5,
                 "seed": 42424242,
                 "shift": 5.0,
                 "riflex_freq_index": 0,
@@ -312,7 +309,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
             "class_type": "VHS_VideoCombine",
             "inputs": {
                 "images": ["decode", 0],
-                "frame_rate": 16,
+                "frame_rate": 12,              # matches ×12 frame calc for 6s
                 "loop_count": 0,
                 "filename_prefix": "nudely",
                 "format": "video/h264-mp4",
@@ -322,12 +319,12 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
         }
     }
 
-    # Lightning LoRA (speed)
+    # Lightning LoRA
     p["lora_lightning"] = {
         "class_type": "WanVideoLoraSelect",
         "inputs": {
             "lora": LIGHTNING_LORA,
-            "strength": 1.2,
+            "strength": 1.0,                  # reduced from 1.2
         }
     }
 
@@ -392,7 +389,7 @@ def handler(job):
         inp = job["input"]
         user_prompt   = inp.get("prompt", "")
         aspect_ratio  = inp.get("aspect_ratio", "9:16")
-        duration_sec  = float(inp.get("duration", 3))
+        duration_sec  = float(inp.get("duration", 6))   # ← default now 6 seconds
         start_image   = inp.get("start_image", None)
         character     = inp.get("character", None)
 
@@ -406,7 +403,7 @@ def handler(job):
         num_frames     = duration_to_frames(duration_sec)
         positive       = build_prompt(user_prompt, preset, character)
         negative       = build_negative()
-        guidance_scale = 1.0          # Lightning prefers low CFG
+        guidance_scale = 1.5
 
         runpod.serverless.progress_update(job, "UPLOADING_IMAGE")
         image_filename = upload_image(start_image)
