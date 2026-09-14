@@ -41,7 +41,7 @@ EXPLICIT_PRESETS = [
             "no clothes", "completely naked", "make her naked", "remove clothing"
         ],
         "lora_key": "missionary",
-        "strength": 0.82,
+        "strength": 0.75,
         "before": "lying on her back, legs spread wide, knees bent up, slowly removing the last of her clothes, 1man thick hard cock already pressing against her entrance then thrusting deep into her pussy in missionary position, continuous hip movement, 1girl, ",
         "after": ", dynamic motion, realistic thrusting rhythm, soft body bounce, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
@@ -52,7 +52,7 @@ EXPLICIT_PRESETS = [
             "bent over", "ass up", "on all fours", "rear entry"
         ],
         "lora_key": "doggy",
-        "strength": 0.80,
+        "strength": 0.77,
         "before": "on all fours, ass up, back arched, looking over her shoulder, 1man thick hard cock slamming deep into her pussy from behind with strong rhythmic thrusting, hips bouncing, 1girl, ",
         "after": ", dynamic rear view motion, realistic pounding rhythm, soft body jiggle, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
@@ -63,7 +63,7 @@ EXPLICIT_PRESETS = [
             "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"
         ],
         "lora_key": "blowjob",
-        "strength": 0.85,
+        "strength": 0.75,
         "before": "kneeling, mouth wide open, eyes looking up, 1man thick hard cock sliding in and out of her mouth, deepthroat motion with saliva strings, head bobbing rhythmically, 1girl, ",
         "after": ", dynamic close-up oral motion, realistic sucking and thrusting into mouth, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
@@ -74,7 +74,7 @@ EXPLICIT_PRESETS = [
             "legs spread", "facing each other"
         ],
         "lora_key": "missionary",
-        "strength": 0.82,
+        "strength": 0.75,
         "before": "lying on her back, legs spread wide, knees pulled up, 1man thick hard cock pounding deep into her pussy from above with continuous powerful thrusting, bodies moving together, 1girl, ",
         "after": ", dynamic high-angle motion, realistic deep thrusting rhythm, soft body bounce, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
@@ -85,7 +85,7 @@ EXPLICIT_PRESETS = [
             "cum on tits", "facial cumshot", "cum across face"
         ],
         "lora_key": "facial_cumshot",
-        "strength": 0.85,
+        "strength": 0.75,
         "before": "kneeling or lying back looking up, mouth open, 1man thick hard cock erupting thick white cum across her face and big tits, sticky ropes landing and dripping down her cheeks, lips and cleavage, continuous spurting motion, 1girl, ",
         "after": ", dynamic facial cumshot motion, realistic cum splatter and dripping, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
@@ -277,8 +277,8 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 8,
-                "cfg": 1.5,
+                "steps": 6,
+                "cfg": 1.0,
                 "seed": 42424242,
                 "shift": 5.0,
                 "riflex_freq_index": 0,
@@ -322,14 +322,14 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
         "class_type": "WanVideoLoraSelect",
         "inputs": {
             "lora": "lora_lightning_high.safetensors",
-            "strength": 1.0,
+            "strength": 0.8,
         }
     }
     p["lora_lightning_low"] = {
         "class_type": "WanVideoLoraSelect",
         "inputs": {
             "lora": "lora_lightning_low.safetensors",
-            "strength": 1.0,
+            "strength": 0.8,
         }
     }
 
