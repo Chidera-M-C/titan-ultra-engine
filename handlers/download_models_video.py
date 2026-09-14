@@ -1,6 +1,6 @@
 """
 download_models_video.py
-Downloads the exact models + LoRAs needed for the pure I2V Docker image (Wan 2.2).
+Downloads the exact models + LoRAs needed for the pure I2V Docker image (Wan 2.2 + Lightning).
 Called during Docker build.
 """
 
@@ -35,13 +35,13 @@ MODELS = [
         f"{DIFFUSION_DIR}/wan2.2_i2v_low_noise_14B_fp8.safetensors",
         "I2V Low Noise 14B"
     ),
-    # Text encoder (still compatible)
+    # Text encoder
     (
         "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp16.safetensors",
         f"{TEXT_ENCODER_DIR}/umt5_xxl_fp16.safetensors",
         "UMT5 XXL fp16"
     ),
-    # VAE (still used by 14B models)
+    # VAE
     (
         "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors",
         f"{VAE_DIR}/wan_2.1_vae.safetensors",
@@ -55,24 +55,23 @@ MODELS = [
     ),
 ]
 
-# OpenCLIP fallbacks
+# Fixed OpenCLIP – use the known working Kijai file
 OPENCLIP_CANDIDATES = [
-    "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors",
-    "https://huggingface.co/laion/CLIP-ViT-H-14-laion2B-s32B-b79K/resolve/main/open_clip_pytorch_model.bin",
+    "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors",
 ]
 
-# Style LoRAs (keep current ones for now – you can swap to Blink later)
+# Style LoRAs + proper Wan 2.2 Lightning
 LORAS = [
     ("https://civitaiarchive.com/api/download/models/2496698", f"{LORAS_DIR}/lora_missionary.safetensors", "LoRA: Missionary / Undress"),
     ("https://civitaiarchive.com/api/download/models/2513548", f"{LORAS_DIR}/lora_doggy.safetensors", "LoRA: Doggy"),
     ("https://civitaiarchive.com/api/download/models/2446660", f"{LORAS_DIR}/lora_blowjob.safetensors", "LoRA: Blowjob"),
     ("https://civitaiarchive.com/api/download/models/2508339", f"{LORAS_DIR}/lora_facial_cumshot.safetensors", "LoRA: Facial Cumshot"),
 
-    # Lightning / Distilled LoRA for speed (4-8 steps)
+    # Proper Wan 2.2 Lightning / Distilled LoRA (4-8 step)
     (
-        "https://huggingface.co/lightx2v/Wan2.1-Distill-Loras/resolve/main/wan2.1_i2v_lora_rank64_lightx2v_4step.safetensors",
+        "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Lightx2v/lightx2v_I2V_14B_480p_cfg_step_distill_rank128_bf16.safetensors",
         f"{LORAS_DIR}/lora_lightning_4step.safetensors",
-        "LoRA: Lightning 4-step"
+        "LoRA: Lightning 4-step (Wan 2.2 compatible)"
     ),
 ]
 
@@ -144,7 +143,7 @@ if __name__ == "__main__":
         if not download(url, path, label):
             failed.append(label)
 
-    print("\n=== OpenCLIP (with fallbacks) ===")
+    print("\n=== OpenCLIP ===")
     if not download_openclip():
         failed.append("OpenCLIP")
 
