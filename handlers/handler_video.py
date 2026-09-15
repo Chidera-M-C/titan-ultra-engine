@@ -276,7 +276,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "seed": 42424242,
                 "shift": 5.0,
                 "riflex_freq_index": 0,
-                "scheduler": "uni_pc",         # ← Fixed backend syntax string validation
+                "scheduler": "unipc",         # ← Fixed backend syntax string validation
                 "force_offload": True,
             }
         },
