@@ -282,7 +282,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "seed": 42424242,
                 "shift": 5.0,
                 "riflex_freq_index": 0,
-                "scheduler": "simple",
+                "scheduler": "unipc",
                 "force_offload": True,
             }
         },
