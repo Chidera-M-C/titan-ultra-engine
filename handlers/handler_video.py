@@ -35,7 +35,7 @@ EXPLICIT_PRESETS = [
         "name": "undress",
         "tailored_keywords": ["undress", "remove clothes", "take off clothes", "strip", "naked", "nude", "no clothes", "completely naked", "make her naked", "remove clothing"],
         "lora_key": "missionary",
-        "strength": 0.60,
+        "strength": 0.75,
         "before": "lying on her back, legs spread wide, knees bent up, slowly removing the last of her clothes, 1man thick hard cock already pressing against her entrance then thrusting deep into her pussy in missionary position, continuous hip movement, 1girl, ",
         "after": ", dynamic motion, realistic thrusting rhythm, soft body bounce, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
@@ -43,7 +43,7 @@ EXPLICIT_PRESETS = [
         "name": "doggy",
         "tailored_keywords": ["doggy", "doggystyle", "doggy style", "from behind", "prone bone", "bent over", "ass up", "on all fours", "rear entry"],
         "lora_key": "doggy",
-        "strength": 0.60,
+        "strength": 0.75,
         "before": "on all fours, ass up, back arched, looking over her shoulder, 1man thick hard cock slamming deep into her pussy from behind with strong rhythmic thrusting, hips bouncing, 1girl, ",
         "after": ", dynamic rear view motion, realistic pounding rhythm, soft body jiggle, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
@@ -51,7 +51,7 @@ EXPLICIT_PRESETS = [
         "name": "blowjob",
         "tailored_keywords": ["sucking", "blowjob", "blow job", "deepthroat", "deep throat", "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"],
         "lora_key": "blowjob",
-        "strength": 0.60,
+        "strength": 0.75,
         "before": "kneeling, mouth wide open, eyes looking up, 1man thick hard cock sliding in and out of her mouth, deepthroat motion with saliva strings, head bobbing rhythmically, 1girl, ",
         "after": ", dynamic close-up oral motion, realistic sucking and thrusting into mouth, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
@@ -59,7 +59,7 @@ EXPLICIT_PRESETS = [
         "name": "missionary",
         "tailored_keywords": ["missionary", "missionary sex", "man on top", "on her back", "legs spread", "facing each other"],
         "lora_key": "missionary",
-        "strength": 0.60,
+        "strength": 0.75,
         "before": "lying on her back, legs spread wide, knees pulled up, 1man thick hard cock pounding deep into her pussy from above with continuous powerful thrusting, bodies moving together, 1girl, ",
         "after": ", dynamic high-angle motion, realistic deep thrusting rhythm, soft body bounce, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
@@ -67,7 +67,7 @@ EXPLICIT_PRESETS = [
         "name": "facial_cumshot",
         "tailored_keywords": ["cumshot", "cum on face", "facial", "semen", "covered in cum", "cum on tits", "facial cumshot", "cum across face"],
         "lora_key": "facial_cumshot",
-        "strength": 0.60,
+        "strength": 0.75,
         "before": "kneeling or lying back looking up, mouth open, 1man thick hard cock erupting thick white cum across her face and big tits, sticky ropes landing and dripping down her cheeks, lips and cleavage, continuous spurting motion, 1girl, ",
         "after": ", dynamic facial cumshot motion, realistic cum splatter and dripping, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
@@ -247,7 +247,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 3,               # first half
+                "steps": 4,               # first half
                 "cfg": 1.0,
                 "seed": 42424242,
                 "shift": 5.0,
@@ -267,7 +267,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 3,               # second half
+                "steps": 4,               # second half
                 "cfg": 1.0,
                 "seed": 42424242,
                 "shift": 5.0,
