@@ -1,6 +1,6 @@
 """
 handler_video.py — ComfyUI + WanVideoWrapper I2V (Wan 2.2 + Dual Lightning)
-Models + LoRAs are baked into the Docker image.
+Attempts high → low dual-pass sampling.
 Default duration = 6 seconds.
 """
 
@@ -17,14 +17,12 @@ from PIL import Image
 COMFYUI_DIR = "/comfyui"
 COMFYUI_URL = "http://127.0.0.1:8188"
 
-# ── Model file names ──────────────────────────────────────────────────────
 I2V_HIGH          = "wan2.2_i2v_high_noise_14B_fp8.safetensors"
 I2V_LOW           = "wan2.2_i2v_low_noise_14B_fp8.safetensors"
 T5_ENCODER        = "umt5_xxl_fp16.safetensors"
 VAE_MODEL         = "wan_2.1_vae.safetensors"
 CLIP_TEXT_ENCODER = "open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors"
 
-# ── LoRA filenames ────────────────────────────────────────────────────────
 LORA_FILES = {
     "missionary":       "lora_missionary.safetensors",
     "doggy":            "lora_doggy.safetensors",
@@ -32,14 +30,10 @@ LORA_FILES = {
     "facial_cumshot":   "lora_facial_cumshot.safetensors",
 }
 
-# ── Explicit presets ──────────────────────────────────────────────────────
 EXPLICIT_PRESETS = [
     {
         "name": "undress",
-        "tailored_keywords": [
-            "undress", "remove clothes", "take off clothes", "strip", "naked", "nude",
-            "no clothes", "completely naked", "make her naked", "remove clothing"
-        ],
+        "tailored_keywords": ["undress", "remove clothes", "take off clothes", "strip", "naked", "nude", "no clothes", "completely naked", "make her naked", "remove clothing"],
         "lora_key": "missionary",
         "strength": 0.60,
         "before": "lying on her back, legs spread wide, knees bent up, slowly removing the last of her clothes, 1man thick hard cock already pressing against her entrance then thrusting deep into her pussy in missionary position, continuous hip movement, 1girl, ",
@@ -47,10 +41,7 @@ EXPLICIT_PRESETS = [
     },
     {
         "name": "doggy",
-        "tailored_keywords": [
-            "doggy", "doggystyle", "doggy style", "from behind", "prone bone",
-            "bent over", "ass up", "on all fours", "rear entry"
-        ],
+        "tailored_keywords": ["doggy", "doggystyle", "doggy style", "from behind", "prone bone", "bent over", "ass up", "on all fours", "rear entry"],
         "lora_key": "doggy",
         "strength": 0.60,
         "before": "on all fours, ass up, back arched, looking over her shoulder, 1man thick hard cock slamming deep into her pussy from behind with strong rhythmic thrusting, hips bouncing, 1girl, ",
@@ -58,10 +49,7 @@ EXPLICIT_PRESETS = [
     },
     {
         "name": "blowjob",
-        "tailored_keywords": [
-            "sucking", "blowjob", "blow job", "deepthroat", "deep throat",
-            "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"
-        ],
+        "tailored_keywords": ["sucking", "blowjob", "blow job", "deepthroat", "deep throat", "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"],
         "lora_key": "blowjob",
         "strength": 0.60,
         "before": "kneeling, mouth wide open, eyes looking up, 1man thick hard cock sliding in and out of her mouth, deepthroat motion with saliva strings, head bobbing rhythmically, 1girl, ",
@@ -69,10 +57,7 @@ EXPLICIT_PRESETS = [
     },
     {
         "name": "missionary",
-        "tailored_keywords": [
-            "missionary", "missionary sex", "man on top", "on her back",
-            "legs spread", "facing each other"
-        ],
+        "tailored_keywords": ["missionary", "missionary sex", "man on top", "on her back", "legs spread", "facing each other"],
         "lora_key": "missionary",
         "strength": 0.60,
         "before": "lying on her back, legs spread wide, knees pulled up, 1man thick hard cock pounding deep into her pussy from above with continuous powerful thrusting, bodies moving together, 1girl, ",
@@ -80,10 +65,7 @@ EXPLICIT_PRESETS = [
     },
     {
         "name": "facial_cumshot",
-        "tailored_keywords": [
-            "cumshot", "cum on face", "facial", "semen", "covered in cum",
-            "cum on tits", "facial cumshot", "cum across face"
-        ],
+        "tailored_keywords": ["cumshot", "cum on face", "facial", "semen", "covered in cum", "cum on tits", "facial cumshot", "cum across face"],
         "lora_key": "facial_cumshot",
         "strength": 0.60,
         "before": "kneeling or lying back looking up, mouth open, 1man thick hard cock erupting thick white cum across her face and big tits, sticky ropes landing and dripping down her cheeks, lips and cleavage, continuous spurting motion, 1girl, ",
@@ -93,11 +75,7 @@ EXPLICIT_PRESETS = [
 
 GLOBAL_FALLBACKS = [
     {
-        "keywords": [
-            "being fucked", "getting fucked", "fucked hard", "pounded", "railed",
-            "fucked from behind", "having sex", "making love", "love making",
-            "sexing", "fucked", "fuck", "sex", "penetration", "thrusting"
-        ],
+        "keywords": ["being fucked", "getting fucked", "fucked hard", "pounded", "railed", "fucked from behind", "having sex", "making love", "love making", "sexing", "fucked", "fuck", "sex", "penetration", "thrusting"],
         "default": "missionary"
     },
 ]
@@ -187,13 +165,11 @@ def upload_image(base64_or_url):
     return r.json()["name"]
 
 def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_scale, lora_key, lora_strength, image_filename):
+    # Dual Lightning
     p = {
         "t5": {
             "class_type": "LoadWanVideoT5TextEncoder",
-            "inputs": {
-                "model_name": T5_ENCODER,
-                "precision": "bf16",
-            }
+            "inputs": {"model_name": T5_ENCODER, "precision": "bf16"}
         },
         "text": {
             "class_type": "WanVideoTextEncode",
@@ -206,23 +182,15 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
         },
         "vae": {
             "class_type": "WanVideoVAELoader",
-            "inputs": {
-                "model_name": VAE_MODEL,
-                "precision": "bf16",
-            }
+            "inputs": {"model_name": VAE_MODEL, "precision": "bf16"}
         },
         "clip_loader": {
             "class_type": "LoadWanVideoClipTextEncoder",
-            "inputs": {
-                "model_name": CLIP_TEXT_ENCODER,
-                "precision": "bf16",
-            }
+            "inputs": {"model_name": CLIP_TEXT_ENCODER, "precision": "bf16"}
         },
         "load_image": {
             "class_type": "LoadImage",
-            "inputs": {
-                "image": image_filename,
-            }
+            "inputs": {"image": image_filename}
         },
         "clip_encode": {
             "class_type": "WanVideoClipVisionEncode",
@@ -268,7 +236,9 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "load_device": "main_device",
             }
         },
-        "sampler": {
+
+        # Stage 1 – High noise (first half of steps)
+        "sampler_high": {
             "class_type": "WanVideoSampler",
             "inputs": {
                 "model": ["model_high", 0],
@@ -277,7 +247,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 6,
+                "steps": 3,               # first half
                 "cfg": 1.0,
                 "seed": 42424242,
                 "shift": 5.0,
@@ -286,11 +256,32 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "force_offload": True,
             }
         },
+
+        # Stage 2 – Low noise (second half)
+        "sampler_low": {
+            "class_type": "WanVideoSampler",
+            "inputs": {
+                "model": ["model_low", 0],
+                "text_embeds": ["text", 0],
+                "image_embeds": ["img_encode", 0],
+                "width": width,
+                "height": height,
+                "num_frames": num_frames,
+                "steps": 3,               # second half
+                "cfg": 1.0,
+                "seed": 42424242,
+                "shift": 5.0,
+                "riflex_freq_index": 0,
+                "scheduler": "unipc",
+                "force_offload": True,
+            }
+        },
+
         "decode": {
             "class_type": "WanVideoDecode",
             "inputs": {
                 "vae": ["vae", 0],
-                "samples": ["sampler", 0],
+                "samples": ["sampler_low", 0],   # final output from low stage
                 "enable_vae_tiling": True,
                 "tile_sample_min_height": 272,
                 "tile_sample_min_width": 272,
@@ -317,23 +308,16 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
         }
     }
 
-    # Dual Lightning LoRAs
+    # Dual Lightning
     p["lora_lightning_high"] = {
         "class_type": "WanVideoLoraSelect",
-        "inputs": {
-            "lora": "lora_lightning_high.safetensors",
-            "strength": 0.70,
-        }
+        "inputs": {"lora": "lora_lightning_high.safetensors", "strength": 0.70}
     }
     p["lora_lightning_low"] = {
         "class_type": "WanVideoLoraSelect",
-        "inputs": {
-            "lora": "lora_lightning_low.safetensors",
-            "strength": 0.70,
-        }
+        "inputs": {"lora": "lora_lightning_low.safetensors", "strength": 0.70}
     }
 
-    # Style LoRA stacked on top of Lightning
     style_filename = LORA_FILES.get(lora_key)
     if style_filename:
         p["lora_style_high"] = {
@@ -416,7 +400,6 @@ def handler(job):
         num_frames     = duration_to_frames(duration_sec)
         positive       = build_prompt(user_prompt, preset, character)
         negative       = build_negative()
-        guidance_scale = 1.0
 
         runpod.serverless.progress_update(job, "UPLOADING_IMAGE")
         image_filename = upload_image(start_image)
@@ -424,7 +407,7 @@ def handler(job):
         runpod.serverless.progress_update(job, "BUILDING_WORKFLOW")
         workflow = build_i2v_workflow(
             positive, negative, width, height,
-            num_frames, guidance_scale,
+            num_frames, 1.0,
             preset["lora_key"], preset["strength"],
             image_filename
         )
