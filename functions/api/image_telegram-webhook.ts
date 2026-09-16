@@ -155,7 +155,7 @@ export const onRequestPost = async (context: any) => {
         BOT_TOKEN,
         chatId,
         `Please add a short instruction as the caption of your photo.\n\n` +
-        `Example: "make her doggy style" or "remove clothes"`
+        `Example: "make her pose in style" or "change clothes"`
       );
       return new Response('OK');
     }
@@ -212,9 +212,7 @@ export const onRequestPost = async (context: any) => {
       await sendMessage(
         BOT_TOKEN,
         chatId,
-        `What do you want to create?\n\n` +
-        `🖼 <b>Image</b> — ${STARS_IMAGE} ⭐\n` +
-        `🎬 <b>Video</b> — ${STARS_VIDEO} ⭐`,
+        `How do you want it?`,
         { reply_markup: choiceMenu() }
       );
     } catch (err: any) {
