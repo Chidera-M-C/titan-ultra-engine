@@ -22,6 +22,7 @@ for d in [DIFFUSION_DIR, TEXT_ENCODER_DIR, VAE_DIR, CLIP_VISION_DIR, LORAS_DIR]:
     os.makedirs(d, exist_ok=True)
 
 # ── Core models (Wan 2.2) ─────────────────────────────────────────────────
+# ── Core models (Wan 2.2) ─────────────────────────────────────────────────
 MODELS = [
     (
         "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
