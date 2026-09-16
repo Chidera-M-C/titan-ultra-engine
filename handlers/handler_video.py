@@ -81,6 +81,7 @@ def get_explicit_preset(user_prompt: str):
         if any(kw in prompt_lower for kw in preset["tailored_keywords"]):
             return preset
     # fallback to missionary
+    # fallback to missionary
     for preset in EXPLICIT_PRESETS:
         if preset["name"] == "missionary":
             return preset
