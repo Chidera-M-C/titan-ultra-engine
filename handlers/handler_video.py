@@ -253,7 +253,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "seed": 42424242,
                 "shift": 8.0,
                 "riflex_freq_index": 0,
-                "scheduler": "unipc",
+                "scheduler": "euler",
                 "force_offload": True,
             }
         },
@@ -273,7 +273,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "seed": 42424242,
                 "shift": 8.0,
                 "riflex_freq_index": 0,
-                "scheduler": "euler/beta",
+                "scheduler": "euler",
                 "force_offload": True,
             }
         },
