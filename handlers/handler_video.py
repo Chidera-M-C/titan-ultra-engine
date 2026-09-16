@@ -36,7 +36,7 @@ EXPLICIT_PRESETS = [
         "name": "undress",
         "tailored_keywords": ["undress", "remove clothes", "take off clothes", "strip", "naked", "nude", "no clothes", "completely naked", "make her naked", "remove clothing"],
         "lora_key": "undress",
-        "strength": 0.90,
+        "strength": 0.60,
         "before": "The clothing suddenly disappears, revealing her naked body. The woman is now nude, and she poses sexily,",
         "after": ", photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
@@ -251,7 +251,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "steps": 3,               # first half
                 "cfg": 1.0,
                 "seed": 42424242,
-                "shift": 3.0,
+                "shift": 8.0,
                 "riflex_freq_index": 0,
                 "scheduler": "unipc",
                 "force_offload": True,
@@ -271,9 +271,9 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "steps": 5,               # second half
                 "cfg": 1.0,
                 "seed": 42424242,
-                "shift": 3.0,
+                "shift": 8.0,
                 "riflex_freq_index": 0,
-                "scheduler": "unipc",
+                "scheduler": "euler/beta",
                 "force_offload": True,
             }
         },
