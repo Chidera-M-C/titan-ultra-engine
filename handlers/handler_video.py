@@ -37,7 +37,7 @@ EXPLICIT_PRESETS = [
         "tailored_keywords": ["undress", "remove clothes", "take off clothes", "strip", "naked", "nude", "no clothes", "completely naked", "make her naked", "remove clothing"],
         "lora_key": "undress",
         "strength": 0.90,
-        "before": "The clothing suddenly disappears, revealing her naked body. The woman is now nude, and she poses sexily.",
+        "before": "The same woman starts to take off her clothes, cut to the next scene where the same woman is completely naked and posing nude, the scene then cuts to the same woman opening her legs to reveal her genitals with her vagina exposed,",
         "after": ", dynamic motion, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
     {
@@ -61,7 +61,7 @@ EXPLICIT_PRESETS = [
         "tailored_keywords": ["missionary", "missionary sex", "man on top", "on her back", "legs spread", "facing each other"],
         "lora_key": "missionary",
         "strength": 0.90,
-        "before": "lying on her back, legs spread wide, knees pulled up, 1man thick hard cock pounding deep into her pussy from above with continuous powerful thrusting, bodies moving together, 1girl, ",
+        "before": "Immediately cut to a new scene where the exact same person is now completely naked and lying on their back, and she moves her head forward slightly. The scene is a top-down view showing the same woman completely nude, with their legs in an open position, with her vagina visible. At the bottom of the frame a man can be partially seen, as the man takes his penis with his hand and inserts his penis into the woman's vagina, pushing his body towards her. He then moves back and forward, as he pushes his penis into the woman's vagina repeatedly. The angle is from the point of view of the man at the bottom of the frame, ",
         "after": ", dynamic high-angle motion, realistic deep thrusting rhythm, soft body bounce, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
     {
