@@ -1,7 +1,8 @@
 """
 handler_video.py — ComfyUI + WanVideoWrapper I2V (Wan 2.2 + Dual Lightning)
-Attempts high → low dual-pass sampling.
-Default duration = 6 seconds.
+Only 3 styles: doggy, missionary, facial_cumshot
+Dynamic resolution from reference image
+Default duration = 6 seconds
 """
 
 import os
@@ -25,59 +26,50 @@ CLIP_TEXT_ENCODER = "open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safeten
 
 LORA_FILES = {
     "missionary":       "lora_missionary.safetensors",
-    "undress":          "lora_undress.safetensors",
     "doggy":            "lora_doggy.safetensors",
-    "blowjob":          "lora_blowjob.safetensors",
     "facial_cumshot":   "lora_facial_cumshot.safetensors",
 }
 
 EXPLICIT_PRESETS = [
     {
-        "name": "undress",
-        "tailored_keywords": ["undress", "remove clothes", "take off clothes", "strip", "naked", "nude", "no clothes", "completely naked", "make her naked", "remove clothing"],
-        "lora_key": "undress",
-        "strength": 0.60,
-        "before": "The clothing suddenly disappears, revealing her naked body. The woman is now nude, and she poses sexily,",
-        "after": ", photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
-    },
-    {
         "name": "doggy",
-        "tailored_keywords": ["doggy", "doggystyle", "doggy style", "from behind", "prone bone", "bent over", "ass up", "on all fours", "rear entry"],
+        "tailored_keywords": [
+            "doggy", "doggystyle", "doggy style", "from behind", "doggie", "prone bone",
+            "bent over", "ass up", "on all fours", "rear entry", "behind"
+        ],
         "lora_key": "doggy",
-        "strength": 0.85,
+        "strength": 0.78,
         "before": "The video begins with a shot of a woman. The video then jumpcuts to the same woman now having sex in doggystyle position. She is positioned kneeling in the same location the video is shot from behind as she looks back at the camera with an open mouth expression. He penetrates her vagina from behind. Her legs are close together with the man kneeling behind her over her legs. The man has a wide stance. she looks at the camera throughout the video. ",
         "after": ", realistic pounding rhythm, soft body jiggle, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture, natural motion blur"
     },
     {
-        "name": "blowjob",
-        "tailored_keywords": ["sucking", "blowjob", "blow job", "deepthroat", "deep throat", "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"],
-        "lora_key": "blowjob",
-        "strength": 0.85,
-        "before": "A woman looking at the camera. The video then jumpcuts to the same woman giving a blowjob to a man standing in the same location, looking up as she performs the blowjob on the man, she is kneeling in front of him, she is holding his penis with both hands. she looks at the camera the entire time. she shoves the penis deep in her mouth. ",
-        "after": ", photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
-    },
-    {
         "name": "missionary",
-        "tailored_keywords": ["missionary", "missionary sex", "man on top", "on her back", "legs spread", "facing each other"],
+        "tailored_keywords": [
+            "missionary", "missionary sex", "man on top", "on her back",
+            "legs spread", "facing each other",
+            # undress group
+            "undress", "remove clothes", "take off clothes", "strip", "naked", "nude",
+            "no clothes", "completely naked", "make her naked", "remove clothing",
+            # general sex fallbacks
+            "being fucked", "getting fucked", "fucked hard", "pounded", "railed",
+            "having sex", "making love", "love making", "sexing", "fucked", "fuck",
+            "sex", "penetration", "thrusting"
+        ],
         "lora_key": "missionary",
-        "strength": 0.90,
+        "strength": 0.80,
         "before": "Immediately cut to a new scene where the exact same person is now completely naked and lying on their back, and she moves her head forward slightly. The scene is a top-down view showing the same woman completely nude, with their legs in an open position, with her vagina visible. At the bottom of the frame a man can be partially seen, as the man takes his penis with his hand and inserts his penis into the woman's vagina, pushing his body towards her. He then moves back and forward, as he pushes his penis into the woman's vagina repeatedly. The angle is from the point of view of the man at the bottom of the frame, ",
         "after": ", realistic deep thrusting rhythm, soft body bounce, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
     {
         "name": "facial_cumshot",
-        "tailored_keywords": ["cumshot", "cum on face", "facial", "semen", "covered in cum", "cum on tits", "facial cumshot", "cum across face"],
+        "tailored_keywords": [
+            "cumshot", "cum on face", "facial", "semen", "covered in cum", "cum",
+            "cum on tits", "facial cumshot", "cum across face", "cum on her face"
+        ],
         "lora_key": "facial_cumshot",
-        "strength": 0.85,
+        "strength": 0.78,
         "before": "The video begins with a close-up of a woman. The video then jumpcuts to the same woman now receiving a facial from a man's penis. She is kneeling on the floor looking up with a open mouth. The cum shoots all over her face. The man's hand holds his erect penis masturbating his penis and shooting the thick white cum directly onto her face, forehead, eyes, cheek and mouth. The thick white cum slowly drips down her face onto her body. An explosion of thick white cum blasts her face. she looks directly at the camera throughout the video, ",
         "after": ", realistic cum splatter and dripping, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
-    },
-]
-
-GLOBAL_FALLBACKS = [
-    {
-        "keywords": ["being fucked", "getting fucked", "fucked hard", "pounded", "railed", "fucked from behind", "having sex", "making love", "love making", "sexing", "fucked", "fuck", "sex", "penetration", "thrusting"],
-        "default": "missionary"
     },
 ]
 
@@ -88,11 +80,7 @@ def get_explicit_preset(user_prompt: str):
     for preset in EXPLICIT_PRESETS:
         if any(kw in prompt_lower for kw in preset["tailored_keywords"]):
             return preset
-    for group in GLOBAL_FALLBACKS:
-        if any(kw in prompt_lower for kw in group["keywords"]):
-            for preset in EXPLICIT_PRESETS:
-                if preset["name"] == group["default"]:
-                    return preset
+    # fallback to missionary
     for preset in EXPLICIT_PRESETS:
         if preset["name"] == "missionary":
             return preset
@@ -118,15 +106,6 @@ def start_comfyui():
         time.sleep(2)
     raise RuntimeError("ComfyUI failed to start within 300s")
 
-def get_dimensions(aspect_ratio):
-    return {
-        '1:1':  (512, 512),
-        '4:5':  (480, 624),
-        '5:4':  (624, 480),
-        '9:16': (416, 736),
-        '16:9': (736, 416),
-    }.get(aspect_ratio, (416, 736))
-
 def duration_to_frames(duration_sec):
     frames = int(float(duration_sec) * 12)
     return max(17, (frames // 8) * 8 + 1)
@@ -138,7 +117,25 @@ def build_prompt(user_prompt, preset, character=None):
     return f"{char}{preset['before']}{user_prompt}{preset['after']}"
 
 def build_negative():
-    return "static, frozen, no motion, watermark, text, logo, blurry, low quality, bad anatomy, deformed, ugly, jumpcut, flicker, distorted, pixelated, yellow tint, oversaturated"
+    return "static, frozen, no motion, watermark, text, logo, blurry, low quality, bad anatomy, deformed, ugly, jumpcut, flicker, distorted, pixelated, yellow tint, oversaturated, melting, gummy, fused"
+
+def get_image_dimensions(img_bytes):
+    """Return width, height rounded to multiple of 16, capped for safety."""
+    img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+    w, h = img.size
+
+    # Round to nearest multiple of 16
+    w = max(16, (w // 16) * 16)
+    h = max(16, (h // 16) * 16)
+
+    # Safety cap (prevent OOM on very large images)
+    max_dim = 768
+    if w > max_dim or h > max_dim:
+        scale = max_dim / max(w, h)
+        w = max(16, int(w * scale) // 16 * 16)
+        h = max(16, int(h * scale) // 16 * 16)
+
+    return w, h
 
 def upload_image(base64_or_url):
     if base64_or_url.startswith("http"):
@@ -153,6 +150,9 @@ def upload_image(base64_or_url):
             data += "=" * pad
         img_bytes = base64.b64decode(data)
 
+    # Get real dimensions from the image
+    width, height = get_image_dimensions(img_bytes)
+
     img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -163,10 +163,9 @@ def upload_image(base64_or_url):
         data={"overwrite": "true"},
     )
     r.raise_for_status()
-    return r.json()["name"]
+    return r.json()["name"], width, height
 
-def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_scale, lora_key, lora_strength, image_filename):
-    # Dual Lightning
+def build_i2v_workflow(prompt, negative, width, height, num_frames, lora_key, lora_strength, image_filename):
     p = {
         "t5": {
             "class_type": "LoadWanVideoT5TextEncoder",
@@ -215,7 +214,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "num_frames": num_frames,
                 "force_offload": True,
                 "start_latent_strength": 1.0,
-                "end_latent_strength": 1.0,
+                "end_latent_strength": 0.3,
                 "noise_aug_strength": 0.0,
             }
         },
@@ -238,7 +237,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
             }
         },
 
-        # Stage 1 – High noise (first half of steps)
+        # Stage 1 – High noise
         "sampler_high": {
             "class_type": "WanVideoSampler",
             "inputs": {
@@ -248,17 +247,17 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 3,               # first half
+                "steps": 4,
                 "cfg": 1.0,
                 "seed": 42424242,
-                "shift": 8.0,
+                "shift": 5.0,
                 "riflex_freq_index": 0,
-                "scheduler": "euler",
+                "scheduler": "unipc",
                 "force_offload": True,
             }
         },
 
-        # Stage 2 – Low noise (second half)
+        # Stage 2 – Low noise
         "sampler_low": {
             "class_type": "WanVideoSampler",
             "inputs": {
@@ -268,12 +267,12 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 5,               # second half
+                "steps": 6,
                 "cfg": 1.0,
                 "seed": 42424242,
-                "shift": 8.0,
+                "shift": 5.0,
                 "riflex_freq_index": 0,
-                "scheduler": "euler",
+                "scheduler": "unipc",
                 "force_offload": True,
             }
         },
@@ -282,7 +281,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, guidance_sca
             "class_type": "WanVideoDecode",
             "inputs": {
                 "vae": ["vae", 0],
-                "samples": ["sampler_low", 0],   # final output from low stage
+                "samples": ["sampler_low", 0],
                 "enable_vae_tiling": True,
                 "tile_sample_min_height": 272,
                 "tile_sample_min_width": 272,
@@ -386,7 +385,6 @@ def handler(job):
     try:
         inp = job["input"]
         user_prompt   = inp.get("prompt", "")
-        aspect_ratio  = inp.get("aspect_ratio", "9:16")
         duration_sec  = float(inp.get("duration", 6))
         start_image   = inp.get("start_image", None)
         character     = inp.get("character", None)
@@ -397,18 +395,18 @@ def handler(job):
         preset = get_explicit_preset(user_prompt)
         print(f"→ Style selected: {preset['name']} (LoRA: {preset['lora_key']})")
 
-        width, height  = get_dimensions(aspect_ratio)
-        num_frames     = duration_to_frames(duration_sec)
-        positive       = build_prompt(user_prompt, preset, character)
-        negative       = build_negative()
-
         runpod.serverless.progress_update(job, "UPLOADING_IMAGE")
-        image_filename = upload_image(start_image)
+        image_filename, width, height = upload_image(start_image)
+        print(f"→ Using reference dimensions: {width}x{height}")
+
+        num_frames = duration_to_frames(duration_sec)
+        positive   = build_prompt(user_prompt, preset, character)
+        negative   = build_negative()
 
         runpod.serverless.progress_update(job, "BUILDING_WORKFLOW")
         workflow = build_i2v_workflow(
             positive, negative, width, height,
-            num_frames, 1.0,
+            num_frames,
             preset["lora_key"], preset["strength"],
             image_filename
         )
@@ -429,7 +427,7 @@ def handler(job):
         import traceback
         return {"error": str(e), "traceback": traceback.format_exc()}
 
-print("Starting ComfyUI (Wan 2.2 + Dual Lightning)...")
+print("Starting ComfyUI (Wan 2.2 + Dual Lightning – 3 styles)...")
 start_comfyui()
 print("Ready for jobs.")
 runpod.serverless.start({"handler": handler})
