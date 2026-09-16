@@ -45,7 +45,7 @@ EXPLICIT_PRESETS = [
         "tailored_keywords": ["doggy", "doggystyle", "doggy style", "from behind", "prone bone", "bent over", "ass up", "on all fours", "rear entry"],
         "lora_key": "doggy",
         "strength": 0.90,
-        "before": "on all fours, ass up, back arched, looking over her shoulder, 1man thick hard cock slamming deep into her pussy from behind with strong rhythmic thrusting, hips bouncing, 1girl, ",
+        "before": "A man appears and inserts his penis into her pussy, ",
         "after": ", dynamic rear view motion, realistic pounding rhythm, soft body jiggle, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
     {
@@ -53,8 +53,8 @@ EXPLICIT_PRESETS = [
         "tailored_keywords": ["sucking", "blowjob", "blow job", "deepthroat", "deep throat", "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"],
         "lora_key": "blowjob",
         "strength": 0.90,
-        "before": "kneeling, mouth wide open, eyes looking up, 1man thick hard cock sliding in and out of her mouth, deepthroat motion with saliva strings, head bobbing rhythmically, 1girl, ",
-        "after": ", dynamic close-up oral motion, realistic sucking and thrusting into mouth, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
+        "before": "A man appears and she sucks his penis ",
+        "after": ", dynamic close-up oral motion, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
     {
         "name": "missionary",
