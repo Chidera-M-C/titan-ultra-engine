@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 const PACKAGES: Record<string, { name: string; stars: number }> = {
+  pack8:    { name: '8 Stars',    stars: 8 },
   pack80:   { name: '80 Stars',   stars: 80 },
   pack300:  { name: '300 Stars',  stars: 300 },
   pack550:  { name: '550 Stars',  stars: 550 },
@@ -40,11 +41,12 @@ async function answerPreCheckout(token: string, id: string, ok: boolean, errorMe
 function creditMenu() {
   return {
     inline_keyboard: [
-      [{ text: '80 ⭐ — $1', callback_data: 'buy_pack80' }],
-      [{ text: '300 ⭐ — $3.75', callback_data: 'buy_pack300' }],
-      [{ text: '550 ⭐ — $6.70', callback_data: 'buy_pack550' }],
-      [{ text: '2,400 ⭐ — $30', callback_data: 'buy_pack2400' }],
-      [{ text: '4,500 ⭐ — $56.25', callback_data: 'buy_pack4500' }],
+      [{ text: '8 ⭐ — $0.10 (1 img)', callback_data: 'buy_pack8' }],
+      [{ text: '80 ⭐ — $1 (10 img / 5 vid)', callback_data: 'buy_pack80' }],
+      [{ text: '300 ⭐ — $3.75 (37 img / 18 vid)', callback_data: 'buy_pack300' }],
+      [{ text: '550 ⭐ — $6.70 (68 img / 34 vid)', callback_data: 'buy_pack550' }],
+      [{ text: '2,400 ⭐ — $30 (300 img / 150 vid)', callback_data: 'buy_pack2400' }],
+      [{ text: '4,500 ⭐ — $56.25 (562 img / 281 vid)', callback_data: 'buy_pack4500' }],
     ],
   };
 }
