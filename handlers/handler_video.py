@@ -44,7 +44,7 @@ EXPLICIT_PRESETS = [
         "name": "doggy",
         "tailored_keywords": ["doggy", "doggystyle", "doggy style", "from behind", "prone bone", "bent over", "ass up", "on all fours", "rear entry"],
         "lora_key": "doggy",
-        "strength": 0.90,
+        "strength": 0.85,
         "before": "The video begins with a shot of a woman. The video then jumpcuts to the same woman now having sex in doggystyle position. She is positioned kneeling in the same location the video is shot from behind as she looks back at the camera with an open mouth expression. He penetrates her vagina from behind. Her legs are close together with the man kneeling behind her over her legs. The man has a wide stance. she looks at the camera throughout the video. ",
         "after": ", realistic pounding rhythm, soft body jiggle, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture, natural motion blur"
     },
@@ -52,7 +52,7 @@ EXPLICIT_PRESETS = [
         "name": "blowjob",
         "tailored_keywords": ["sucking", "blowjob", "blow job", "deepthroat", "deep throat", "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"],
         "lora_key": "blowjob",
-        "strength": 0.90,
+        "strength": 0.85,
         "before": "A woman looking at the camera. The video then jumpcuts to the same woman giving a blowjob to a man standing in the same location, looking up as she performs the blowjob on the man, she is kneeling in front of him, she is holding his penis with both hands. she looks at the camera the entire time. she shoves the penis deep in her mouth. ",
         "after": ", photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
@@ -68,7 +68,7 @@ EXPLICIT_PRESETS = [
         "name": "facial_cumshot",
         "tailored_keywords": ["cumshot", "cum on face", "facial", "semen", "covered in cum", "cum on tits", "facial cumshot", "cum across face"],
         "lora_key": "facial_cumshot",
-        "strength": 0.90,
+        "strength": 0.85,
         "before": "The video begins with a close-up of a woman. The video then jumpcuts to the same woman now receiving a facial from a man's penis. She is kneeling on the floor looking up with a open mouth. The cum shoots all over her face. The man's hand holds his erect penis masturbating his penis and shooting the thick white cum directly onto her face, forehead, eyes, cheek and mouth. The thick white cum slowly drips down her face onto her body. An explosion of thick white cum blasts her face. she looks directly at the camera throughout the video, ",
         "after": ", realistic cum splatter and dripping, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
