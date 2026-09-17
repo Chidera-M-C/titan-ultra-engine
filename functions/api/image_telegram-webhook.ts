@@ -1,12 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
 const PACKAGES: Record<string, { name: string; stars: number }> = {
-  pack8:    { name: '8 Stars',    stars: 8 },
-  pack80:   { name: '80 Stars',   stars: 80 },
-  pack300:  { name: '300 Stars',  stars: 300 },
-  pack550:  { name: '550 Stars',  stars: 550 },
-  pack2400: { name: '2400 Stars', stars: 2400 },
-  pack4500: { name: '4500 Stars', stars: 4500 },
+  pack8:    { name: '1 Image',           stars: 8 },
+  pack80:   { name: '10 Img / 5 vid',    stars: 80 },
+  pack300:  { name: '37 Img / 18 vid',   stars: 300 },
+  pack550:  { name: '68 Img / 34 vid',   stars: 550 },
+  pack2400: { name: '300 Img / 150 vid', stars: 2400 },
+  pack4500: { name: '562 Img / 281 vid', stars: 4500 },
 };
 
 const STARS_IMAGE = 8;
@@ -415,7 +415,7 @@ export const onRequestPost = async (context: any) => {
 
     const { data: purchase } = await supabase
       .from('telegram_purchases')
-      .select('stars, package_name, incentive_offered, extra_stars, incentive_claimed')
+      .select('stars, package_name, incentive_offered, extra_stars, extra_images, extra_videos, incentive_claimed')
       .eq('id', purchaseId)
       .maybeSingle();
 
@@ -453,7 +453,20 @@ export const onRequestPost = async (context: any) => {
         `⭐ +${purchase.stars} stars`;
 
       if (purchase.incentive_offered && purchase.extra_stars > 0) {
-        confirmMsg += `\n🎁 +${purchase.extra_stars} bonus stars`;
+        const extraImages = purchase.extra_images || 0;
+        const extraVideos = purchase.extra_videos || 0;
+        const bonusParts: string[] = [];
+
+        if (extraVideos > 0) {
+          bonusParts.push(`${extraVideos} extra video${extraVideos !== 1 ? 's' : ''}`);
+        }
+        if (extraImages > 0) {
+          bonusParts.push(`${extraImages} extra image${extraImages !== 1 ? 's' : ''}`);
+        }
+
+        confirmMsg += bonusParts.length > 0
+          ? `\n🎁 ${bonusParts.join(' + ')} bonus`
+          : `\n🎁 +${purchase.extra_stars} bonus stars`;
       }
 
       confirmMsg +=
