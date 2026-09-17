@@ -80,6 +80,7 @@ def get_explicit_preset(user_prompt: str):
     for preset in EXPLICIT_PRESETS:
         if any(kw in prompt_lower for kw in preset["tailored_keywords"]):
             return preset
+
     # fallback to missionary
     for preset in EXPLICIT_PRESETS:
         if preset["name"] == "missionary":
@@ -124,6 +125,7 @@ def get_image_dimensions(img_bytes):
     img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
     w, h = img.size
 
+    # Round to nearest multiple of 16
     # Round to nearest multiple of 16
     w = max(16, (w // 16) * 16)
     h = max(16, (h // 16) * 16)
