@@ -325,13 +325,13 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, preset, imag
             }
         },
 
-        # Stage 2 – Low noise (continues from high stage)
+        # Stage 2 – Low noise
         "sampler_low": {
             "class_type": "WanVideoSampler",
             "inputs": {
                 "model": ["model_low", 0],
                 "text_embeds": ["text", 0],
-                "image_embeds": ["sampler_high", 0],
+                "image_embeds": ["img_encode", 0],          # ← fixed (both use img_encode)
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
