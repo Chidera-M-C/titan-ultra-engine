@@ -58,10 +58,12 @@ OPENCLIP_CANDIDATES = [
 # Style LoRAs + proper dual Wan 2.2 Lightning LoRAs
 LORAS = [
     ("https://civitai.red/api/download/models/2391828?fileId=2282070", f"{LORAS_DIR}/lora_undress.safetensors", "LoRA: Undress"),
+    ("https://civitai.red/api/download/models/1694292?fileId=1594957", f"{LORAS_DIR}/lora_masturbate.safetensors", "LoRA: Masturbate"),
     ("https://civitai.red/api/download/models/2245426?fileId=2137648", f"{LORAS_DIR}/lora_missionary.safetensors", "LoRA: Missionary"),
     ("https://civitaiarchive.com/api/download/models/2513563", f"{LORAS_DIR}/lora_doggy.safetensors", "LoRA: Doggy"),
     ("https://civitaiarchive.com/api/download/models/2446660", f"{LORAS_DIR}/lora_blowjob.safetensors", "LoRA: Blowjob"),
     ("https://civitaiarchive.com/api/download/models/2508356", f"{LORAS_DIR}/lora_facial_cumshot.safetensors", "LoRA: Facial Cumshot"),
+    
 
     # Proper dual Lightning for Wan 2.2
     (
