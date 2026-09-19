@@ -2,7 +2,7 @@
 handler_video.py — ComfyUI + WanVideoWrapper I2V (Wan 2.2 + Dual Lightning)
 6 styles: doggy, missionary, facial_cumshot, undress, masturbate, blowjob
 Dynamic resolution from reference image
-Per-style scheduler support
+Per-style scheduler + steps + shift + end_latent_strength
 Default duration = 6 seconds
 """
 
@@ -44,6 +44,10 @@ EXPLICIT_PRESETS = [
         "lora_key": "doggy",
         "strength": 0.78,
         "scheduler": "unipc",
+        "steps_high": 4,
+        "steps_low": 6,
+        "shift": 5.0,
+        "end_latent_strength": 0.3,
         "before": "The video a begins with a woman. The video then jumpcuts to a man having sex with the same woman in pronebone position where a man is seen penetrating her from behind. The man's hands are placed firmly on crest of the womans back. The man's penis is seen entering the woman from behind. The woman's hands lay on the bed at her side. The woman looks directly at the camera the entire time. Her head is in the bottom left of frame, ",
         "after": ", powerful deep thrusting, realistic body movement, soft skin jiggle, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture, natural motion blur"
     },
@@ -59,6 +63,10 @@ EXPLICIT_PRESETS = [
         "lora_key": "missionary",
         "strength": 0.78,
         "scheduler": "unipc",
+        "steps_high": 4,
+        "steps_low": 6,
+        "shift": 5.0,
+        "end_latent_strength": 0.3,
         "before": "The woman is lying on her back with legs spread open. A man is on top of her in missionary position, thrusting his thick hard cock deep into her pussy with strong, continuous hip movement. Deep in-and-out penetration with clear visible motion. Her body rocks and bounces with every thrust. She looks up at him with pleasure. Detailed genitals, no melting or fusion. ",
         "after": ", strong deep thrusting rhythm, realistic body bounce, soft skin movement, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
@@ -71,6 +79,10 @@ EXPLICIT_PRESETS = [
         "lora_key": "facial_cumshot",
         "strength": 0.74,
         "scheduler": "unipc",
+        "steps_high": 4,
+        "steps_low": 6,
+        "shift": 5.0,
+        "end_latent_strength": 0.3,
         "before": "The woman is kneeling and looking up. A man stands in front of her stroking his hard cock. Thick white cum erupts from his cock and shoots across her face, forehead, eyes, cheeks and open mouth in multiple ropes. Cum drips down her face onto her body. She keeps looking toward the camera with an open mouth expression while receiving the facial. ",
         "after": ", realistic cum splatter and dripping, continuous spurting motion, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
@@ -83,6 +95,10 @@ EXPLICIT_PRESETS = [
         "lora_key": "undress",
         "strength": 0.78,
         "scheduler": "euler",
+        "steps_high": 4,
+        "steps_low": 6,
+        "shift": 5.0,
+        "end_latent_strength": 0.3,
         "before": "The video begins with a woman. The video then jumpcuts to same woman standing fully nude. The camera remains static throughout the scene. She looks at the camera the entire time, ",
         "after": ", photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture"
     },
@@ -95,6 +111,10 @@ EXPLICIT_PRESETS = [
         "lora_key": "masturbate",
         "strength": 0.80,
         "scheduler": "unipc",
+        "steps_high": 4,
+        "steps_low": 6,
+        "shift": 5.0,
+        "end_latent_strength": 0.3,
         "before": "The video begins with a woman. The video then jumpcuts to the same woman masturbating while lying down on her back. The camera is positioned at a low angle between her legs. She is nude and uses her right hand to vigorously rub her clitoris. Her mouth is open and her expression indicates pleasure. She looks directly at the camera the entire time, ",
         "after": ", realistic finger movement, soft body reactions, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture, natural motion blur"
     },
@@ -107,6 +127,10 @@ EXPLICIT_PRESETS = [
         "lora_key": "blowjob",
         "strength": 0.85,
         "scheduler": "unipc",
+        "steps_high": 4,
+        "steps_low": 6,
+        "shift": 5.0,
+        "end_latent_strength": 0.3,
         "before": "The video begins with woman. The video then jumpcuts to a man aggressively facefucking the same woman with his erect penis while he is standing up and she is kneeling infront of him. The woman looks directly up at the camera while the man holds onto the back of her head with his right hand pulling her towards him controlling her head movement, ",
         "after": ", gentle realistic sucking motion, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
@@ -201,7 +225,15 @@ def upload_image(base64_or_url):
     r.raise_for_status()
     return r.json()["name"], width, height
 
-def build_i2v_workflow(prompt, negative, width, height, num_frames, lora_key, lora_strength, scheduler, image_filename):
+def build_i2v_workflow(prompt, negative, width, height, num_frames, preset, image_filename):
+    lora_key = preset["lora_key"]
+    lora_strength = preset["strength"]
+    scheduler = preset["scheduler"]
+    steps_high = preset.get("steps_high", 4)
+    steps_low = preset.get("steps_low", 6)
+    shift = preset.get("shift", 5.0)
+    end_latent_strength = preset.get("end_latent_strength", 0.3)
+
     p = {
         "t5": {
             "class_type": "LoadWanVideoT5TextEncoder",
@@ -250,7 +282,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, lora_key, lo
                 "num_frames": num_frames,
                 "force_offload": True,
                 "start_latent_strength": 1.0,
-                "end_latent_strength": 0.3,
+                "end_latent_strength": end_latent_strength,
                 "noise_aug_strength": 0.0,
             }
         },
@@ -283,30 +315,30 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, lora_key, lo
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 4,
+                "steps": steps_high,
                 "cfg": 1.0,
                 "seed": 42424242,
-                "shift": 5.0,
+                "shift": shift,
                 "riflex_freq_index": 0,
                 "scheduler": scheduler,
                 "force_offload": True,
             }
         },
 
-        # Stage 2 – Low noise
+        # Stage 2 – Low noise (continues from high stage)
         "sampler_low": {
             "class_type": "WanVideoSampler",
             "inputs": {
                 "model": ["model_low", 0],
                 "text_embeds": ["text", 0],
-                "image_embeds": ["img_encode", 0],
+                "image_embeds": ["sampler_high", 0],   # ← proper handoff
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 6,
+                "steps": steps_low,
                 "cfg": 1.0,
                 "seed": 42424242,
-                "shift": 5.0,
+                "shift": shift,
                 "riflex_freq_index": 0,
                 "scheduler": scheduler,
                 "force_offload": True,
@@ -442,10 +474,7 @@ def handler(job):
         runpod.serverless.progress_update(job, "BUILDING_WORKFLOW")
         workflow = build_i2v_workflow(
             positive, negative, width, height,
-            num_frames,
-            preset["lora_key"], preset["strength"],
-            preset["scheduler"],
-            image_filename
+            num_frames, preset, image_filename
         )
 
         runpod.serverless.progress_update(job, "GENERATING_VIDEO")
