@@ -44,7 +44,7 @@ EXPLICIT_PRESETS = [
         "lora_key": "doggy",
         "strength": 0.68,
         "scheduler": "unipc",
-        "before": "The woman is on all fours. A man is behind her and inserts his hard cock deep into her pussy. He thrusts in and out with strong rhythmic hip movement. Clear separation between cock and pussy, detailed genitals, no melting or fusion. Her body moves naturally with each thrust. She occasionally glances back over her shoulder. ",
+        "before": "Immediately cut to the same woman on all fours. A man is behind her and inserts his hard cock deep into her pussy. He thrusts in and out with strong rhythmic hip movement. Clear separation between cock and pussy, detailed genitals, no melting or fusion. Her body moves naturally with each thrust. She occasionally glances back over her shoulder. ",
         "after": ", powerful deep thrusting, realistic body movement, soft skin jiggle, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture, natural motion blur"
     },
     {
@@ -81,7 +81,7 @@ EXPLICIT_PRESETS = [
             "no clothes", "completely naked", "make her naked", "remove clothing", "strip her"
         ],
         "lora_key": "undress",
-        "strength": 0.98,
+        "strength": 0.50,
         "scheduler": "euler",
         "before": "The woman slowly removes her clothes until she is completely naked. She pulls off each piece of clothing one by one, revealing her bare body. Soft natural movement as the clothes come off. ",
         "after": ", smooth clothing removal, realistic body movement, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture"
@@ -95,13 +95,13 @@ EXPLICIT_PRESETS = [
         "lora_key": "masturbate",
         "strength": 0.88,
         "scheduler": "unipc",
-        "before": "A nude woman. She inserts two fingers into her pussy. She masturbates by sliding her fingers in and out of her pussy. Soft pleasured expression and realistic body reactions. Detailed fingers and pussy. ",
+        "before": "Immediately cut to the same woman naked, inserts two fingers into her pussy. She masturbates by sliding her fingers in and out of her pussy. Soft pleasured expression and realistic body reactions. Detailed fingers and pussy. ",
         "after": ", realistic finger movement, soft body reactions, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture, natural motion blur"
     },
     {
         "name": "blowjob",
         "tailored_keywords": [
-            "sucking", "blowjob", "blow job", "deepthroat", "deep throat", "suck",
+            "sucking", "blowjob", "blow job", "deepthroat", "deep throat", "suck", "chock on",
             "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"
         ],
         "lora_key": "blowjob",
