@@ -42,10 +42,10 @@ EXPLICIT_PRESETS = [
             "prone bone", "bent over", "ass up", "on all fours", "rear entry", "behind"
         ],
         "lora_key": "doggy",
-        "strength": 0.75,
+        "strength": 0.68,
         "scheduler": "unipc",
-        "before": "The woman is on all fours. A man is behind her, penetrating her pussy deeply from behind in doggystyle. His hips move back and forth with strong, realistic thrusting rhythm. Her body reacts naturally with soft bounce. She occasionally looks back over her shoulder toward the camera with a pleasured expression, then looks forward again. Clear separation between cock and pussy, detailed genitals, no melting. ",
-        "after": ", powerful rhythmic thrusting, realistic body movement, soft skin jiggle, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture, natural motion blur"
+        "before": "The woman is on all fours. A man is behind her and inserts his hard cock deep into her pussy. He thrusts in and out with strong rhythmic hip movement. Clear separation between cock and pussy, detailed genitals, no melting or fusion. Her body moves naturally with each thrust. She occasionally glances back over her shoulder. ",
+        "after": ", powerful deep thrusting, realistic body movement, soft skin jiggle, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture, natural motion blur"
     },
     {
         "name": "missionary",
@@ -69,7 +69,7 @@ EXPLICIT_PRESETS = [
             "cum on tits", "facial cumshot", "cum across face", "cum on her face"
         ],
         "lora_key": "facial_cumshot",
-        "strength": 0.75,
+        "strength": 0.74,
         "scheduler": "unipc",
         "before": "The woman is kneeling and looking up. A man stands in front of her stroking his hard cock. Thick white cum erupts from his cock and shoots across her face, forehead, eyes, cheeks and open mouth in multiple ropes. Cum drips down her face onto her body. She keeps looking toward the camera with an open mouth expression while receiving the facial. ",
         "after": ", realistic cum splatter and dripping, continuous spurting motion, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
@@ -81,10 +81,10 @@ EXPLICIT_PRESETS = [
             "no clothes", "completely naked", "make her naked", "remove clothing", "strip her"
         ],
         "lora_key": "undress",
-        "strength": 0.72,
+        "strength": 0.98,
         "scheduler": "euler",
-        "before": "The woman slowly removes her clothes, revealing her naked body. Clothing is pulled off piece by piece until she is fully nude. She moves naturally while undressing, showing her body. Soft realistic motion as the last pieces of clothing come off. ",
-        "after": ", smooth clothing removal, realistic body movement, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
+        "before": "The woman slowly removes her clothes until she is completely naked. She pulls off each piece of clothing one by one, revealing her bare body. Soft natural movement as the clothes come off. ",
+        "after": ", smooth clothing removal, realistic body movement, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture"
     },
     {
         "name": "masturbate",
@@ -93,22 +93,22 @@ EXPLICIT_PRESETS = [
             "play with herself", "self pleasure", "fingering herself"
         ],
         "lora_key": "masturbate",
-        "strength": 0.75,
+        "strength": 0.88,
         "scheduler": "unipc",
-        "before": "The woman is alone, touching herself. She rubs her pussy with her fingers in slow to moderate rhythm, legs slightly open. Her fingers slides in and out her pussy. Soft pleasured expression and realistic body reactions. Detailed fingers and pussy, no melting. ",
-        "after": ", realistic hand movement, soft body reactions, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture, natural motion blur"
+        "before": "A nude woman. She inserts two fingers into her pussy. She masturbates by sliding her fingers in and out of her pussy. Soft pleasured expression and realistic body reactions. Detailed fingers and pussy. ",
+        "after": ", realistic finger movement, soft body reactions, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture, natural motion blur"
     },
     {
         "name": "blowjob",
         "tailored_keywords": [
-            "sucking", "blowjob", "blow job", "deepthroat", "deep throat",
+            "sucking", "blowjob", "blow job", "deepthroat", "deep throat", "suck",
             "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"
         ],
         "lora_key": "blowjob",
-        "strength": 0.75,
+        "strength": 0.62,
         "scheduler": "unipc",
-        "before": "The woman is on her knees giving a blowjob. She holds the man's cock with her hands and takes it into her mouth, moving her head back and forth. She occasionally looks up toward the camera while sucking. Clear separation between cock and lips, detailed oral action, saliva visible, no melting. ",
-        "after": ", realistic sucking motion, soft head movement, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
+        "before": "The woman is on her knees giving a blowjob. She gently holds the man's cock and takes it into her mouth, moving her head slowly back and forth. Soft realistic oral motion. Clear separation between cock and lips, no deformation. She occasionally looks up. ",
+        "after": ", gentle realistic sucking motion, soft head movement, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
 ]
 
@@ -156,7 +156,7 @@ def build_prompt(user_prompt, preset, character=None):
     return f"{char}{preset['before']}{user_prompt}{preset['after']}"
 
 def build_negative():
-    return "static, frozen, no motion, watermark, text, logo, blurry, low quality, bad anatomy, deformed, ugly, jumpcut, flicker, distorted, pixelated, yellow tint, oversaturated, melting, gummy, fused, fused genitals, cock melting into pussy, twisted neck, broken neck, unnatural head turn"
+    return "static, frozen, no motion, watermark, text, logo, blurry, low quality, bad anatomy, deformed, ugly, flicker, distorted, pixelated, yellow tint, oversaturated, melting, gummy, fused, fused genitals, cock melting into pussy, twisted neck, broken neck, unnatural head turn, deformed penis, melted cock"
 
 def get_image_dimensions(img_bytes):
     """Return width, height rounded to multiple of 16, capped for safety."""
