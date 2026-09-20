@@ -22,7 +22,6 @@ for d in [DIFFUSION_DIR, TEXT_ENCODER_DIR, VAE_DIR, CLIP_VISION_DIR, LORAS_DIR]:
     os.makedirs(d, exist_ok=True)
 
 # ── Core models (Wan 2.2) ─────────────────────────────────────────────────
-# ── Core models (Wan 2.2) ─────────────────────────────────────────────────
 MODELS = [
     (
         "https://huggingface.co/Comfy-Org/Wan_2.2_ComfyUI_Repackaged/resolve/main/split_files/diffusion_models/wan2.2_i2v_high_noise_14B_fp8_scaled.safetensors",
@@ -55,30 +54,62 @@ OPENCLIP_CANDIDATES = [
     "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors",
 ]
 
-# Style LoRAs + proper dual Wan 2.2 Lightning LoRAs
+# Style LoRAs (HIGH + LOW pairs) + Dual Lightning
 LORAS = [
-    ("https://huggingface.co/chidera1568/clothlessly/resolve/main/Blink_Nude_High.safetensors", f"{LORAS_DIR}/lora_undress.safetensors", "LoRA: Undress"),
-    ("https://huggingface.co/chidera1568/clothlessly/resolve/main/iGoon_Blink_Fingering_HIGH.safetensors", f"{LORAS_DIR}/lora_masturbate.safetensors", "LoRA: Masturbate"),
-    ("https://civitai.red/api/download/models/2245426?fileId=2137648", f"{LORAS_DIR}/lora_missionary.safetensors", "LoRA: Missionary"),
-    ("https://huggingface.co/Aisha-AI-Official/wan2.2-rough-sex-doggy-style/resolve/main/rough_sex_doggy_000000170_high_noise.safetensors", f"{LORAS_DIR}/lora_doggy.safetensors", "LoRA: Doggy"),
-    ("https://huggingface.co/onamissiononamission/Blink-Blowjob-I2V-I2V-v1.0/resolve/main/iGOON_Blink_Blowjob_I2V_HIGH(1).safetensors", f"{LORAS_DIR}/lora_blowjob.safetensors", "LoRA: Blowjob"),
-    ("https://civitaiarchive.com/api/download/models/2508356", f"{LORAS_DIR}/lora_facial_cumshot.safetensors", "LoRA: Facial Cumshot"),
-    
+    # ── Undress ──
+    ("https://huggingface.co/onamissiononamission/iGoon_Blink_Nude_Posing_I2V/resolve/main/iGoon_Blink_Nude_Posing_I2V_HIGH.safetensors",
+     f"{LORAS_DIR}/lora_undress_high.safetensors", "LoRA: Undress HIGH"),
+    ("https://huggingface.co/onamissiononamission/iGoon_Blink_Nude_Posing_I2V/resolve/main/iGoon_Blink_Nude_Posing_I2V_LOW.safetensors",
+     f"{LORAS_DIR}/lora_undress_low.safetensors", "LoRA: Undress LOW"),
 
-    # Proper dual Lightning for Wan 2.2
+    # ── Masturbate ──
+    ("https://huggingface.co/chidera1568/clothlessly/resolve/main/iGoon_Blink_Fingering_HIGH.safetensors",
+     f"{LORAS_DIR}/lora_masturbate_high.safetensors", "LoRA: Masturbate HIGH"),
+    ("https://huggingface.co/chidera1568/clothlessly/resolve/main/iGoon_Blink_Fingering_LOW.safetensors",
+     f"{LORAS_DIR}/lora_masturbate_low.safetensors", "LoRA: Masturbate LOW"),
+
+    # ── Missionary ──
+    ("https://civitaiarchive.com/api/download/models/2496698",
+     f"{LORAS_DIR}/lora_missionary_high.safetensors", "LoRA: Missionary HIGH"),
+    ("https://civitaiarchive.com/api/download/models/2496740",
+     f"{LORAS_DIR}/lora_missionary_low.safetensors", "LoRA: Missionary LOW"),
+
+    # ── Doggy ──
+    ("https://civitaiarchive.com/api/download/models/2513548",
+     f"{LORAS_DIR}/lora_doggy_high.safetensors", "LoRA: Doggy HIGH"),
+    ("https://civitaiarchive.com/api/download/models/2513563",
+     f"{LORAS_DIR}/lora_doggy_low.safetensors", "LoRA: Doggy LOW"),
+
+    # ── Blowjob ──
+    ("https://huggingface.co/onamissiononamission/Blink-Blowjob-I2V-I2V-v1.0/resolve/main/iGOON_Blink_Blowjob_I2V_HIGH(1).safetensors",
+     f"{LORAS_DIR}/lora_blowjob_high.safetensors", "LoRA: Blowjob HIGH"),
+    ("https://huggingface.co/onamissiononamission/Blink-Blowjob-I2V-I2V-v1.0/resolve/main/iGOON_Blink_Blowjob_I2V_LOW(1).safetensors",
+     f"{LORAS_DIR}/lora_blowjob_low.safetensors", "LoRA: Blowjob LOW"),
+
+    # ── Facial Cumshot ──
+    ("https://civitaiarchive.com/api/download/models/2508339",
+     f"{LORAS_DIR}/lora_facial_cumshot_high.safetensors", "LoRA: Facial Cumshot HIGH"),
+    ("https://civitaiarchive.com/api/download/models/2508356",
+     f"{LORAS_DIR}/lora_facial_cumshot_low.safetensors", "LoRA: Facial Cumshot LOW"),
+
+    # ── Dual Lightning (already correct) ──
     (
         "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/LoRAs/Wan22_Lightx2v/Wan_2_2_I2V_A14B_HIGH_lightx2v_4step_lora_260412_rank_64_fp16.safetensors",
         f"{LORAS_DIR}/lora_lightning_high.safetensors",
-        "LoRA: Lightning HIGH (Wan 2.2)"
+        "LoRA: Lightning HIGH"
     ),
     (
         "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/LoRAs/Wan22_Lightx2v/Wan_2_2_I2V_A14B_LOW_lightx2v_4step_lora_260412_rank_64_fp16.safetensors",
         f"{LORAS_DIR}/lora_lightning_low.safetensors",
-        "LoRA: Lightning LOW (Wan 2.2)"
+        "LoRA: Lightning LOW"
     ),
 ]
 
 def download(url, path, label, retries=4):
+    if "PLACEHOLDER" in url:
+        print(f"  ⚠ Skipping placeholder: {label}")
+        return True
+
     if os.path.exists(path) and os.path.getsize(path) > 1024 * 1024:
         size_gb = os.path.getsize(path) / (1024 ** 3)
         print(f"  ✓ {label} already exists ({size_gb:.2f} GB) – skipping")
