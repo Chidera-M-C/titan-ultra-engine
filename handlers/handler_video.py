@@ -42,12 +42,12 @@ EXPLICIT_PRESETS = [
             "prone bone", "bent over", "ass up", "on all fours", "rear entry", "behind"
         ],
         "lora_key": "doggy",
-        "strength": 0.65,
+        "strength": 0.85,
         "scheduler": "unipc",
-        "steps_high": 5,
-        "steps_low": 7,
+        "steps_high": 4,
+        "steps_low": 4,
         "shift": 5.0,
-        "end_latent_strength": 0.60,
+        "end_latent_strength": 0.30,
         "before": "The video a begins with a woman. The video then jumpcuts to a man having sex with the same woman in pronebone position where a man is seen penetrating her from behind. The man's hands are placed firmly on crest of the womans back. The man's penis is seen entering the woman from behind. The woman's hands lay on the bed at her side. The woman looks directly at the camera the entire time. Her head is in the bottom left of frame, ",
         "after": ", powerful deep thrusting, realistic body movement, soft skin jiggle, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture, natural motion blur"
     },
@@ -61,13 +61,13 @@ EXPLICIT_PRESETS = [
             "sex", "penetration", "thrusting"
         ],
         "lora_key": "missionary",
-        "strength": 0.78,
+        "strength": 0.80,
         "scheduler": "unipc",
         "steps_high": 4,
         "steps_low": 6,
         "shift": 5.0,
         "end_latent_strength": 0.3,
-        "before": "The woman is lying on her back with legs spread open. A man is on top of her in missionary position, thrusting his thick hard cock deep into her pussy with strong, continuous hip movement. Deep in-and-out penetration with clear visible motion. Her body rocks and bounces with every thrust. She looks up at him with pleasure. Detailed genitals, no melting or fusion. ",
+        "before": "Immediately cut to a new scene where the exact same person is now completely naked and lying on their back, and she moves her head forward slightly. The scene is a top-down view showing the same woman completely nude, with their legs in an open position, with her vagina visible. At the bottom of the frame a man can be partially seen, as the man takes his penis with his hand and inserts his penis into the woman's vagina, pushing his body towards her. He then moves back and forward, as he pushes his penis into the woman's vagina repeatedly. The angle is from the point of view of the man at the bottom of the frame, ",
         "after": ", strong deep thrusting rhythm, realistic body bounce, soft skin movement, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
     {
@@ -77,7 +77,7 @@ EXPLICIT_PRESETS = [
             "cum on tits", "facial cumshot", "cum across face", "cum on her face"
         ],
         "lora_key": "facial_cumshot",
-        "strength": 0.74,
+        "strength": 0.80,
         "scheduler": "unipc",
         "steps_high": 4,
         "steps_low": 6,
@@ -89,16 +89,16 @@ EXPLICIT_PRESETS = [
     {
         "name": "undress",
         "tailored_keywords": [
-            "undress", "remove clothes", "take off clothes", "strip", "naked", "nude", "desnuda",
+            "undress", "remove clothes", "take off clothes", "strip", "naked", "nude", "desnuda", "remove her",
             "no clothes", "completely naked", "make her naked", "remove clothing", "strip her"
         ],
         "lora_key": "undress",
-        "strength": 0.65,
+        "strength": 0.90,
         "scheduler": "euler",
         "steps_high": 5,
         "steps_low": 7,
         "shift": 5.0,
-        "end_latent_strength": 0.70,
+        "end_latent_strength": 0.30,
         "before": "The video begins with a woman. The video then jumpcuts to same woman standing fully nude. The camera remains static throughout the scene. She looks at the camera the entire time, ",
         "after": ", photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture"
     },
@@ -109,12 +109,12 @@ EXPLICIT_PRESETS = [
             "play with herself", "self pleasure", "fingering herself"
         ],
         "lora_key": "masturbate",
-        "strength": 0.70,
+        "strength": 0.90,
         "scheduler": "unipc",
         "steps_high": 5,
         "steps_low": 7,
         "shift": 5.0,
-        "end_latent_strength": 0.60,
+        "end_latent_strength": 0.30,
         "before": "The video begins with a woman. The video then jumpcuts to the same woman masturbating while lying down on her back. The camera is positioned at a low angle between her legs. She is nude and uses her right hand to vigorously rub her clitoris. Her mouth is open and her expression indicates pleasure. She looks directly at the camera the entire time, ",
         "after": ", realistic finger movement, soft body reactions, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture, natural motion blur"
     },
@@ -125,13 +125,13 @@ EXPLICIT_PRESETS = [
             "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"
         ],
         "lora_key": "blowjob",
-        "strength": 0.60,
+        "strength": 0.90,
         "scheduler": "unipc",
         "steps_high": 5,
         "steps_low": 7,
         "shift": 5.0,
-        "end_latent_strength": 0.60,
-        "before": "The video begins with woman. The video then jumpcuts to a man aggressively facefucking the same woman with his erect penis while he is standing up and she is kneeling infront of him. The woman looks directly up at the camera while the man holds onto the back of her head with his right hand pulling her towards him controlling her head movement, ",
+        "end_latent_strength": 0.30,
+        "before": "A woman looking at the camera. The video then jumpcuts to the same woman giving a blowjob to a black man standing in the same location, looking up as she performs the blowjob on the black man, she is kneeling in front of him, she is holding his penis with both hands. she looks at the camera the entire time. she shoves the penis deep in her mouth, ",
         "after": ", gentle realistic sucking motion, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
 ]
