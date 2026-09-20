@@ -1,8 +1,8 @@
 """
 handler_video.py — ComfyUI + WanVideoWrapper I2V (Wan 2.2 + Dual Lightning)
 6 styles: doggy, missionary, facial_cumshot, undress, masturbate, blowjob
+Proper HIGH + LOW LoRA pairs for every style
 Dynamic resolution from reference image
-Per-style scheduler + steps + shift + end_latent_strength
 Default duration = 6 seconds
 """
 
@@ -26,13 +26,32 @@ T5_ENCODER        = "umt5_xxl_fp16.safetensors"
 VAE_MODEL         = "wan_2.1_vae.safetensors"
 CLIP_TEXT_ENCODER = "open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors"
 
+# Every style now has proper HIGH + LOW pair
 LORA_FILES = {
-    "missionary":       "lora_missionary.safetensors",
-    "doggy":            "lora_doggy.safetensors",
-    "facial_cumshot":   "lora_facial_cumshot.safetensors",
-    "undress":          "lora_undress.safetensors",
-    "masturbate":       "lora_masturbate.safetensors",
-    "blowjob":          "lora_blowjob.safetensors",
+    "missionary": {
+        "high": "lora_missionary_high.safetensors",
+        "low":  "lora_missionary_low.safetensors",
+    },
+    "doggy": {
+        "high": "lora_doggy_high.safetensors",
+        "low":  "lora_doggy_low.safetensors",
+    },
+    "facial_cumshot": {
+        "high": "lora_facial_cumshot_high.safetensors",
+        "low":  "lora_facial_cumshot_low.safetensors",
+    },
+    "undress": {
+        "high": "lora_undress_high.safetensors",
+        "low":  "lora_undress_low.safetensors",
+    },
+    "masturbate": {
+        "high": "lora_masturbate_high.safetensors",
+        "low":  "lora_masturbate_low.safetensors",
+    },
+    "blowjob": {
+        "high": "lora_blowjob_high.safetensors",
+        "low":  "lora_blowjob_low.safetensors",
+    },
 }
 
 EXPLICIT_PRESETS = [
@@ -46,7 +65,7 @@ EXPLICIT_PRESETS = [
         "strength": 0.85,
         "scheduler": "unipc",
         "steps_high": 4,
-        "steps_low": 8,
+        "steps_low": 4,
         "shift": 5.0,
         "end_latent_strength": 0.30,
         "before": "The video a begins with a woman. The video then jumpcuts to a man having sex with the same woman in pronebone position where a man is seen penetrating her from behind. The man's hands are placed firmly on crest of the womans back. The man's penis is seen entering the woman from behind. The woman's hands lay on the bed at her side. The woman looks directly at the camera the entire time. Her head is in the bottom left of frame, ",
@@ -64,11 +83,11 @@ EXPLICIT_PRESETS = [
         "lora_key": "missionary",
         "strength": 0.80,
         "scheduler": "unipc",
-        "steps_high": 4,
-        "steps_low": 8,
-        "shift": 5.0,
+        "steps_high": 3,
+        "steps_low": 5,
+        "shift": 2.0,
         "end_latent_strength": 0.3,
-        "before": "Immediately cut to a new scene where the exact same person is now completely naked and lying on their back, and she moves her head forward slightly. The scene is a top-down view showing the same woman completely nude, with their legs in an open position, with her vagina visible. At the bottom of the frame a man can be partially seen, as the man takes his penis with his hand and inserts his penis into the woman's vagina, pushing his body towards her. He then moves back and forward, as he pushes his penis into the woman's vagina repeatedly. The angle is from the point of view of the man at the bottom of the frame, ",
+        "before": "The video begins with a close-up of a woman. The video then jumpcuts to the same woman now having sex in missionary position. She is lying on her back on a bed with a patterned bed spread and pillow with her legs spread with her knees to her chest. A man's large penis is visible entering her vagina from below. The man is positioned kneeling between her legs infront of her thrusting his penis into her vagina. Throughout the scene, she appears to be experiencing pleasure, often with her mouth open or eyes closed as she lies back. Her hands hold onto her thighs spreading her legs, ",
         "after": ", strong deep thrusting rhythm, realistic body bounce, soft skin movement, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
     {
@@ -80,11 +99,11 @@ EXPLICIT_PRESETS = [
         "lora_key": "facial_cumshot",
         "strength": 0.80,
         "scheduler": "unipc",
-        "steps_high": 4,
-        "steps_low": 8,
-        "shift": 5.0,
+        "steps_high": 3,
+        "steps_low": 5,
+        "shift": 3.0,
         "end_latent_strength": 0.3,
-        "before": "The woman is kneeling and looking up. A man stands in front of her stroking his hard cock. Thick white cum erupts from his cock and shoots across her face, forehead, eyes, cheeks and open mouth in multiple ropes. Cum drips down her face onto her body. She keeps looking toward the camera with an open mouth expression while receiving the facial. ",
+        "before": "The video begins with a close-up of a woman. The video then jumpcuts to the same woman now receiving a facial from a man's penis. She is kneeling on the floor looking up with a open mouth. The cum shoots all over her face. The man's hand holds his erect penis masturbating his penis and shooting the thick white cum directly onto her face, forehead, eyes, cheek and mouth. The thick white cum slowly drips down her face onto her body. An explosion of thick white cum blasts her face. she looks directly at the camera throughout the video, ",
         "after": ", realistic cum splatter and dripping, continuous spurting motion, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
     {
@@ -97,7 +116,7 @@ EXPLICIT_PRESETS = [
         "strength": 0.90,
         "scheduler": "euler",
         "steps_high": 5,
-        "steps_low": 9,
+        "steps_low": 6,
         "shift": 5.0,
         "end_latent_strength": 0.30,
         "before": "The video begins with a woman. The video then jumpcuts to same woman standing fully nude. The camera remains static throughout the scene. She looks at the camera the entire time, ",
@@ -112,9 +131,9 @@ EXPLICIT_PRESETS = [
         "lora_key": "masturbate",
         "strength": 0.90,
         "scheduler": "unipc",
-        "steps_high": 5,
-        "steps_low": 9,
-        "shift": 5.0,
+        "steps_high": 3,
+        "steps_low": 5,
+        "shift": 3.0,
         "end_latent_strength": 0.30,
         "before": "The video begins with a woman. The video then jumpcuts to the same woman masturbating while lying down on her back. The camera is positioned at a low angle between her legs. She is nude and uses her right hand to vigorously rub her clitoris. Her mouth is open and her expression indicates pleasure. She looks directly at the camera the entire time, ",
         "after": ", realistic finger movement, soft body reactions, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture, natural motion blur"
@@ -129,7 +148,7 @@ EXPLICIT_PRESETS = [
         "strength": 0.90,
         "scheduler": "unipc",
         "steps_high": 5,
-        "steps_low": 9,
+        "steps_low": 6,
         "shift": 5.0,
         "end_latent_strength": 0.30,
         "before": "A woman looking at the camera. The video then jumpcuts to the same woman giving a blowjob to a black man standing in the same location, looking up as she performs the blowjob on the black man, she is kneeling in front of him, she is holding his penis with both hands. she looks at the camera the entire time. she shoves the penis deep in her mouth, ",
@@ -231,7 +250,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, preset, imag
     lora_strength = preset["strength"]
     scheduler = preset["scheduler"]
     steps_high = preset.get("steps_high", 4)
-    steps_low = preset.get("steps_low", 8)
+    steps_low = preset.get("steps_low", 6)
     shift = preset.get("shift", 5.0)
     end_latent_strength = preset.get("end_latent_strength", 0.3)
 
@@ -380,7 +399,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, preset, imag
         }
     }
 
-    # Dual Lightning – adjusted strengths
+    # Dual Lightning
     p["lora_lightning_high"] = {
         "class_type": "WanVideoLoraSelect",
         "inputs": {"lora": "lora_lightning_high.safetensors", "strength": 1.0}
@@ -390,12 +409,13 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, preset, imag
         "inputs": {"lora": "lora_lightning_low.safetensors", "strength": 0.75}
     }
 
-    style_filename = LORA_FILES.get(lora_key)
-    if style_filename:
+    # Proper HIGH / LOW style LoRA application
+    style = LORA_FILES.get(lora_key)
+    if style:
         p["lora_style_high"] = {
             "class_type": "WanVideoLoraSelect",
             "inputs": {
-                "lora": style_filename,
+                "lora": style["high"],
                 "strength": lora_strength,
                 "prev_lora": ["lora_lightning_high", 0],
             }
@@ -403,7 +423,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, preset, imag
         p["lora_style_low"] = {
             "class_type": "WanVideoLoraSelect",
             "inputs": {
-                "lora": style_filename,
+                "lora": style["low"],
                 "strength": lora_strength,
                 "prev_lora": ["lora_lightning_low", 0],
             }
@@ -497,7 +517,7 @@ def handler(job):
         import traceback
         return {"error": str(e), "traceback": traceback.format_exc()}
 
-print("Starting ComfyUI (Wan 2.2 + Dual Lightning – 6 styles)...")
+print("Starting ComfyUI (Wan 2.2 + Dual Lightning – 6 styles + HIGH/LOW pairs)...")
 start_comfyui()
 print("Ready for jobs.")
 runpod.serverless.start({"handler": handler})
