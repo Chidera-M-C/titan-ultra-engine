@@ -14,6 +14,7 @@ import subprocess
 import uuid
 import requests
 import runpod
+import random
 from PIL import Image
 
 COMFYUI_DIR = "/comfyui"
@@ -45,7 +46,7 @@ EXPLICIT_PRESETS = [
         "strength": 0.85,
         "scheduler": "unipc",
         "steps_high": 4,
-        "steps_low": 4,
+        "steps_low": 8,
         "shift": 5.0,
         "end_latent_strength": 0.30,
         "before": "The video a begins with a woman. The video then jumpcuts to a man having sex with the same woman in pronebone position where a man is seen penetrating her from behind. The man's hands are placed firmly on crest of the womans back. The man's penis is seen entering the woman from behind. The woman's hands lay on the bed at her side. The woman looks directly at the camera the entire time. Her head is in the bottom left of frame, ",
@@ -64,7 +65,7 @@ EXPLICIT_PRESETS = [
         "strength": 0.80,
         "scheduler": "unipc",
         "steps_high": 4,
-        "steps_low": 6,
+        "steps_low": 8,
         "shift": 5.0,
         "end_latent_strength": 0.3,
         "before": "Immediately cut to a new scene where the exact same person is now completely naked and lying on their back, and she moves her head forward slightly. The scene is a top-down view showing the same woman completely nude, with their legs in an open position, with her vagina visible. At the bottom of the frame a man can be partially seen, as the man takes his penis with his hand and inserts his penis into the woman's vagina, pushing his body towards her. He then moves back and forward, as he pushes his penis into the woman's vagina repeatedly. The angle is from the point of view of the man at the bottom of the frame, ",
@@ -80,7 +81,7 @@ EXPLICIT_PRESETS = [
         "strength": 0.80,
         "scheduler": "unipc",
         "steps_high": 4,
-        "steps_low": 6,
+        "steps_low": 8,
         "shift": 5.0,
         "end_latent_strength": 0.3,
         "before": "The woman is kneeling and looking up. A man stands in front of her stroking his hard cock. Thick white cum erupts from his cock and shoots across her face, forehead, eyes, cheeks and open mouth in multiple ropes. Cum drips down her face onto her body. She keeps looking toward the camera with an open mouth expression while receiving the facial. ",
@@ -96,7 +97,7 @@ EXPLICIT_PRESETS = [
         "strength": 0.90,
         "scheduler": "euler",
         "steps_high": 5,
-        "steps_low": 7,
+        "steps_low": 9,
         "shift": 5.0,
         "end_latent_strength": 0.30,
         "before": "The video begins with a woman. The video then jumpcuts to same woman standing fully nude. The camera remains static throughout the scene. She looks at the camera the entire time, ",
@@ -112,7 +113,7 @@ EXPLICIT_PRESETS = [
         "strength": 0.90,
         "scheduler": "unipc",
         "steps_high": 5,
-        "steps_low": 7,
+        "steps_low": 9,
         "shift": 5.0,
         "end_latent_strength": 0.30,
         "before": "The video begins with a woman. The video then jumpcuts to the same woman masturbating while lying down on her back. The camera is positioned at a low angle between her legs. She is nude and uses her right hand to vigorously rub her clitoris. Her mouth is open and her expression indicates pleasure. She looks directly at the camera the entire time, ",
@@ -128,7 +129,7 @@ EXPLICIT_PRESETS = [
         "strength": 0.90,
         "scheduler": "unipc",
         "steps_high": 5,
-        "steps_low": 7,
+        "steps_low": 9,
         "shift": 5.0,
         "end_latent_strength": 0.30,
         "before": "A woman looking at the camera. The video then jumpcuts to the same woman giving a blowjob to a black man standing in the same location, looking up as she performs the blowjob on the black man, she is kneeling in front of him, she is holding his penis with both hands. she looks at the camera the entire time. she shoves the penis deep in her mouth, ",
@@ -230,9 +231,12 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, preset, imag
     lora_strength = preset["strength"]
     scheduler = preset["scheduler"]
     steps_high = preset.get("steps_high", 4)
-    steps_low = preset.get("steps_low", 6)
+    steps_low = preset.get("steps_low", 8)
     shift = preset.get("shift", 5.0)
     end_latent_strength = preset.get("end_latent_strength", 0.3)
+
+    # Randomized seed every run
+    seed = random.randint(0, 2**32 - 1)
 
     p = {
         "t5": {
@@ -317,7 +321,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, preset, imag
                 "num_frames": num_frames,
                 "steps": steps_high,
                 "cfg": 1.0,
-                "seed": 42424242,
+                "seed": seed,
                 "shift": shift,
                 "riflex_freq_index": 0,
                 "scheduler": scheduler,
@@ -331,13 +335,13 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, preset, imag
             "inputs": {
                 "model": ["model_low", 0],
                 "text_embeds": ["text", 0],
-                "image_embeds": ["img_encode", 0],          # ← fixed (both use img_encode)
+                "image_embeds": ["img_encode", 0],
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
                 "steps": steps_low,
                 "cfg": 1.0,
-                "seed": 42424242,
+                "seed": seed,
                 "shift": shift,
                 "riflex_freq_index": 0,
                 "scheduler": scheduler,
@@ -376,14 +380,14 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, preset, imag
         }
     }
 
-    # Dual Lightning
+    # Dual Lightning – adjusted strengths
     p["lora_lightning_high"] = {
         "class_type": "WanVideoLoraSelect",
-        "inputs": {"lora": "lora_lightning_high.safetensors", "strength": 0.70}
+        "inputs": {"lora": "lora_lightning_high.safetensors", "strength": 1.0}
     }
     p["lora_lightning_low"] = {
         "class_type": "WanVideoLoraSelect",
-        "inputs": {"lora": "lora_lightning_low.safetensors", "strength": 0.70}
+        "inputs": {"lora": "lora_lightning_low.safetensors", "strength": 0.75}
     }
 
     style_filename = LORA_FILES.get(lora_key)
