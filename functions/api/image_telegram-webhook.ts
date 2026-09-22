@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { t, getUserLanguage } from '../utils/i18n';
 
 const PACKAGES: Record<string, { name: string; stars: number }> = {
   pack8:    { name: '1 Image',           stars: 8 },
@@ -38,6 +39,28 @@ async function answerPreCheckout(token: string, id: string, ok: boolean, errorMe
   });
 }
 
+function languageMenu() {
+  return {
+    inline_keyboard: [
+      [
+        { text: '🇸🇦 العربية', callback_data: 'lang_ar' },
+        { text: '🇮🇳 हिन्दी', callback_data: 'lang_hi' },
+      ],
+      [
+        { text: '🇵🇰 اردو', callback_data: 'lang_ur' },
+        { text: '🇧🇩 বাংলা', callback_data: 'lang_bn' },
+      ],
+      [
+        { text: '🇷🇺 Русский', callback_data: 'lang_ru' },
+        { text: '🇪🇸 Español', callback_data: 'lang_es' },
+      ],
+      [
+        { text: '🇬🇧 English', callback_data: 'lang_en' },
+      ],
+    ],
+  };
+}
+
 function creditMenu() {
   return {
     inline_keyboard: [
@@ -51,12 +74,12 @@ function creditMenu() {
   };
 }
 
-function choiceMenu() {
+function choiceMenu(lang: string) {
   return {
     inline_keyboard: [
       [
-        { text: `🖼 Image — ${STARS_IMAGE} ⭐`, callback_data: 'choose_image' },
-        { text: `🎬 Video — ${STARS_VIDEO} ⭐`, callback_data: 'choose_video' },
+        { text: t('image_btn', lang, { cost: STARS_IMAGE }), callback_data: 'choose_image' },
+        { text: t('video_btn', lang, { cost: STARS_VIDEO }), callback_data: 'choose_video' },
       ],
     ],
   };
@@ -90,7 +113,7 @@ export const onRequestPost = async (context: any) => {
 
     const { data: existing } = await supabase
       .from('telegram_users')
-      .select('id, stars')
+      .select('id, stars, language')
       .eq('telegram_user_id', tgUserId)
       .maybeSingle();
 
@@ -100,19 +123,65 @@ export const onRequestPost = async (context: any) => {
         telegram_username: tgUsername,
         first_name: firstName,
         stars: FREE_STARS,
+        language: null, // force language selection
       });
     }
+
+    // If user has no language yet → show language menu
+    if (!existing?.language) {
+      await sendMessage(
+        BOT_TOKEN,
+        chatId,
+        t('choose_language', 'en'), // fallback to English for selection screen
+        { reply_markup: languageMenu() }
+      );
+      return new Response('OK');
+    }
+
+    // User already has language → send welcome
+    const lang = existing.language;
+    await sendMessage(
+      BOT_TOKEN,
+      chatId,
+      t('welcome', lang, {
+        name: firstName,
+        img: STARS_IMAGE,
+        vid: STARS_VIDEO,
+        free: FREE_STARS,
+      })
+    );
+    return new Response('OK');
+  }
+
+  // ── Language selection ───────────────────────────────────────────────────
+  if (update.callback_query?.data?.startsWith('lang_')) {
+    const lang = update.callback_query.data.replace('lang_', '');
+    const tgUserId = String(update.callback_query.from.id);
+    const chatId = update.callback_query.message.chat.id;
+    const firstName = update.callback_query.from.first_name || 'there';
+
+    await supabase
+      .from('telegram_users')
+      .update({ language: lang })
+      .eq('telegram_user_id', tgUserId);
+
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ callback_query_id: update.callback_query.id }),
+    });
 
     await sendMessage(
       BOT_TOKEN,
       chatId,
-      `👋 Hey <b>${firstName}</b>!\n\n` +
-      `Send me a photo with a short instruction.\n\n` +
-      `I’ll ask if you want an <b>Image</b> or a <b>Video</b>.\n\n` +
-      `🖼 Image = ${STARS_IMAGE} ⭐\n` +
-      `🎬 Video = ${STARS_VIDEO} ⭐\n\n` +
-      `You’ve got <b>${FREE_STARS} free stars</b>.`
+      t('welcome', lang, {
+        name: firstName,
+        img: STARS_IMAGE,
+        vid: STARS_VIDEO,
+        free: FREE_STARS,
+      })
     );
+
     return new Response('OK');
   }
 
@@ -120,6 +189,7 @@ export const onRequestPost = async (context: any) => {
   if (update.message?.text === '/credits' || update.message?.text === '/stars') {
     const chatId = update.message.chat.id;
     const tgUserId = String(update.message.from.id);
+    const lang = await getUserLanguage(supabase, tgUserId);
 
     const { data: user } = await supabase
       .from('telegram_users')
@@ -130,14 +200,15 @@ export const onRequestPost = async (context: any) => {
     await sendMessage(
       BOT_TOKEN,
       chatId,
-      `⭐ You have <b>${user?.stars ?? 0} stars</b> left.\n\nUse /buy to top up.`
+      t('credits', lang, { stars: user?.stars ?? 0 })
     );
     return new Response('OK');
   }
 
   // ── /buy ─────────────────────────────────────────────────────────────────
   if (update.message?.text === '/buy') {
-    await sendMessage(BOT_TOKEN, update.message.chat.id, `Pick a package:`, {
+    const lang = await getUserLanguage(supabase, String(update.message.from.id));
+    await sendMessage(BOT_TOKEN, update.message.chat.id, t('pick_package', lang), {
       reply_markup: creditMenu(),
     });
     return new Response('OK');
@@ -149,14 +220,10 @@ export const onRequestPost = async (context: any) => {
     const tgUserId = String(update.message.from.id);
     const caption = update.message.caption || '';
     const updateId = update.update_id;
+    const lang = await getUserLanguage(supabase, tgUserId);
 
     if (!caption) {
-      await sendMessage(
-        BOT_TOKEN,
-        chatId,
-        `Please add a short instruction as the caption of your photo.\n\n` +
-        `Example: "make her pose in style" or "change clothes"`
-      );
+      await sendMessage(BOT_TOKEN, chatId, t('need_caption', lang));
       return new Response('OK');
     }
 
@@ -197,7 +264,6 @@ export const onRequestPost = async (context: any) => {
         .getPublicUrl(refFileName);
       const referenceImageUrl = publicUrlData.publicUrl;
 
-      // Create pending record
       await supabase.from('image_edits').insert({
         telegram_user_id: tgUserId,
         instruction: caption,
@@ -212,16 +278,12 @@ export const onRequestPost = async (context: any) => {
       await sendMessage(
         BOT_TOKEN,
         chatId,
-        `How do you want it?`,
-        { reply_markup: choiceMenu() }
+        t('how_do_you_want', lang),
+        { reply_markup: choiceMenu(lang) }
       );
     } catch (err: any) {
       console.error('[bot] photo handling failed:', err);
-      await sendMessage(
-        BOT_TOKEN,
-        chatId,
-        `❌ Something went wrong. Please try again.`
-      );
+      await sendMessage(BOT_TOKEN, chatId, t('error_generic', lang));
     }
 
     return new Response('OK');
@@ -235,6 +297,7 @@ export const onRequestPost = async (context: any) => {
     const isVideo = query.data === 'choose_video';
     const cost = isVideo ? STARS_VIDEO : STARS_IMAGE;
     const jobType = isVideo ? 'video' : 'image';
+    const lang = await getUserLanguage(supabase, tgUserId);
 
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
       method: 'POST',
@@ -242,7 +305,6 @@ export const onRequestPost = async (context: any) => {
       body: JSON.stringify({ callback_query_id: query.id }),
     });
 
-    // Check balance
     const { data: user } = await supabase
       .from('telegram_users')
       .select('stars')
@@ -253,18 +315,16 @@ export const onRequestPost = async (context: any) => {
       await sendMessage(
         BOT_TOKEN,
         chatId,
-        `⚠️ Not enough stars.\n\n` +
-        `You need:\n` +
-        `• ${STARS_IMAGE} ⭐ for an Image\n` +
-        `• ${STARS_VIDEO} ⭐ for a Video\n\n` +
-        `You currently have <b>${user?.stars ?? 0} ⭐</b>.\n\n` +
-        `Use /buy to top up.`,
+        t('not_enough', lang, {
+          img: STARS_IMAGE,
+          vid: STARS_VIDEO,
+          balance: user?.stars ?? 0,
+        }),
         { reply_markup: creditMenu() }
       );
       return new Response('OK');
     }
 
-    // Find the latest awaiting_choice job for this user
     const { data: pending } = await supabase
       .from('image_edits')
       .select('*')
@@ -275,7 +335,7 @@ export const onRequestPost = async (context: any) => {
       .maybeSingle();
 
     if (!pending) {
-      await sendMessage(BOT_TOKEN, chatId, `No pending photo found. Please send a new photo.`);
+      await sendMessage(BOT_TOKEN, chatId, t('no_pending', lang));
       return new Response('OK');
     }
 
@@ -283,12 +343,9 @@ export const onRequestPost = async (context: any) => {
       await sendMessage(
         BOT_TOKEN,
         chatId,
-        isVideo
-          ? `🎬 Generating your video... this usually takes 60–90 seconds.`
-          : `🖼 Editing your photo... this usually takes 20–30 seconds.`
+        isVideo ? t('generating_video', lang) : t('generating_image', lang)
       );
 
-      // Prepare base64
       const imgRes = await fetch(pending.reference_image);
       const imgBuffer = await imgRes.arrayBuffer();
       const bytes = new Uint8Array(imgBuffer);
@@ -348,11 +405,7 @@ export const onRequestPost = async (context: any) => {
         .eq('id', pending.id);
     } catch (err: any) {
       console.error('[bot] job start failed:', err);
-      await sendMessage(
-        BOT_TOKEN,
-        chatId,
-        `❌ Something went wrong starting the job. You haven't been charged — please try again.`
-      );
+      await sendMessage(BOT_TOKEN, chatId, t('error_job', lang));
     }
 
     return new Response('OK');
@@ -365,6 +418,7 @@ export const onRequestPost = async (context: any) => {
     const tgUserId = String(query.from.id);
     const packageId = query.data.replace('buy_', '');
     const pkg = PACKAGES[packageId];
+    const lang = await getUserLanguage(supabase, tgUserId);
 
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
       method: 'POST',
@@ -391,7 +445,7 @@ export const onRequestPost = async (context: any) => {
       body: JSON.stringify({
         chat_id: chatId,
         title: pkg.name,
-        description: `Top up your stars for images & videos.`,
+        description: t('invoice_description', lang),
         payload: purchase?.id,
         currency: 'XTR',
         prices: [{ label: pkg.name, amount: pkg.stars }],
@@ -412,6 +466,7 @@ export const onRequestPost = async (context: any) => {
     const chatId = update.message.chat.id;
     const tgUserId = String(update.message.from.id);
     const purchaseId = update.message.successful_payment.invoice_payload;
+    const lang = await getUserLanguage(supabase, tgUserId);
 
     const { data: purchase } = await supabase
       .from('telegram_purchases')
@@ -447,31 +502,27 @@ export const onRequestPost = async (context: any) => {
         })
         .eq('id', purchaseId);
 
-      let confirmMsg =
-        `✅ <b>Payment confirmed!</b>\n\n` +
-        `📦 ${purchase.package_name}\n` +
-        `⭐ +${purchase.stars} stars`;
+      let confirmMsg = t('payment_success', lang, {
+        package: purchase.package_name,
+        stars: purchase.stars,
+      });
 
       if (purchase.incentive_offered && purchase.extra_stars > 0) {
         const extraImages = purchase.extra_images || 0;
         const extraVideos = purchase.extra_videos || 0;
         const bonusParts: string[] = [];
 
-        if (extraVideos > 0) {
-          bonusParts.push(`${extraVideos} extra video${extraVideos !== 1 ? 's' : ''}`);
-        }
-        if (extraImages > 0) {
-          bonusParts.push(`${extraImages} extra image${extraImages !== 1 ? 's' : ''}`);
-        }
+        if (extraVideos > 0) bonusParts.push(`${extraVideos} extra video${extraVideos !== 1 ? 's' : ''}`);
+        if (extraImages > 0) bonusParts.push(`${extraImages} extra image${extraImages !== 1 ? 's' : ''}`);
 
-        confirmMsg += bonusParts.length > 0
-          ? `\n🎁 ${bonusParts.join(' + ')} bonus`
-          : `\n🎁 +${purchase.extra_stars} bonus stars`;
+        const bonusText = bonusParts.length > 0
+          ? bonusParts.join(' + ')
+          : `+${purchase.extra_stars} bonus stars`;
+
+        confirmMsg += t('payment_bonus', lang, { bonus: bonusText });
       }
 
-      confirmMsg +=
-        `\n💳 New balance: <b>${newBalance} stars</b>\n\n` +
-        `Send a photo with an instruction to continue.`;
+      confirmMsg += t('payment_balance', lang, { balance: newBalance });
 
       await sendMessage(BOT_TOKEN, chatId, confirmMsg);
     }
