@@ -168,12 +168,12 @@ async function getUserLanguage(supabase: any, telegramUserId: string) {
 // ====================== END TRANSLATIONS ======================
 
 const PACKAGES: Record<string, { name: string; stars: number }> = {
-  pack8:    { name: '1 Image',           stars: 8 },
-  pack80:   { name: '10 Img / 5 vid',    stars: 80 },
-  pack300:  { name: '37 Img / 18 vid',   stars: 300 },
-  pack550:  { name: '68 Img / 34 vid',   stars: 550 },
-  pack2400: { name: '300 Img / 150 vid', stars: 2400 },
-  pack4500: { name: '562 Img / 281 vid', stars: 4500 },
+  pack8:    { name: '1 Image 🖼',           stars: 8 },
+  pack80:   { name: '10 Img 🖼 / 5 vid 🎬',    stars: 80 },
+  pack300:  { name: '37 Img 🖼 / 18 vid 🎬',   stars: 300 },
+  pack550:  { name: '68 Img 🖼 / 34 vid 🎬',   stars: 550 },
+  pack2400: { name: '300 Img 🖼 / 150 vid 🎬', stars: 2400 },
+  pack4500: { name: '562 Img 🖼 / 281 vid 🎬', stars: 4500 },
 };
 
 const STARS_IMAGE = 8;
