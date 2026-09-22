@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { t, getUserLanguage } from '../utils/i18n';
+import { t, getUserLanguage } from './i18n';
 
 const PACKAGES: Record<string, { name: string; stars: number }> = {
   pack8:    { name: '1 Image',           stars: 8 },
