@@ -168,12 +168,12 @@ async function getUserLanguage(supabase: any, telegramUserId: string) {
 // ====================== END TRANSLATIONS ======================
 
 const PACKAGES: Record<string, { name: string; stars: number }> = {
-  pack8:    { name: '1 Image 🖼',           stars: 8 },
-  pack80:   { name: '10 Img 🖼 / 5 vid 🎬',    stars: 80 },
-  pack300:  { name: '37 Img 🖼 / 18 vid 🎬',   stars: 300 },
-  pack550:  { name: '68 Img 🖼 / 34 vid 🎬',   stars: 550 },
-  pack2400: { name: '300 Img 🖼 / 150 vid 🎬', stars: 2400 },
-  pack4500: { name: '562 Img 🖼 / 281 vid 🎬', stars: 4500 },
+  pack8:    { name: '1 Image',           stars: 8 },
+  pack80:   { name: '10 Img / 5 vid',    stars: 80 },
+  pack300:  { name: '37 Img / 18 vid',   stars: 300 },
+  pack550:  { name: '68 Img / 34 vid',   stars: 550 },
+  pack2400: { name: '300 Img / 150 vid', stars: 2400 },
+  pack4500: { name: '562 Img / 281 vid', stars: 4500 },
 };
 
 const STARS_IMAGE = 8;
@@ -230,12 +230,12 @@ function languageMenu() {
 function creditMenu() {
   return {
     inline_keyboard: [
-      [{ text: '8 ⭐ — $0.10 (1 img)', callback_data: 'buy_pack8' }],
-      [{ text: '80 ⭐ — $1 (10 img / 5 vid)', callback_data: 'buy_pack80' }],
-      [{ text: '300 ⭐ — $3.75 (37 img / 18 vid)', callback_data: 'buy_pack300' }],
-      [{ text: '550 ⭐ — $6.70 (68 img / 34 vid)', callback_data: 'buy_pack550' }],
-      [{ text: '2,400 ⭐ — $30 (300 img / 150 vid)', callback_data: 'buy_pack2400' }],
-      [{ text: '4,500 ⭐ — $56.25 (562 img / 281 vid)', callback_data: 'buy_pack4500' }],
+      [{ text: '8 ⭐ — $0.10 (1 img 🖼)', callback_data: 'buy_pack8' }],
+      [{ text: '80 ⭐ — $1 (10 img 🖼 / 5 vid 🎬)', callback_data: 'buy_pack80' }],
+      [{ text: '300 ⭐ — $3.75 (37 img 🖼 / 18 vid 🎬)', callback_data: 'buy_pack300' }],
+      [{ text: '550 ⭐ — $6.70 (68 img 🖼 / 34 vid 🎬)', callback_data: 'buy_pack550' }],
+      [{ text: '2,400 ⭐ — $30 (300 img 🖼 / 150 vid 🎬)', callback_data: 'buy_pack2400' }],
+      [{ text: '4,500 ⭐ — $56.25 (562 img 🖼 / 281 vid 🎬)', callback_data: 'buy_pack4500' }],
     ],
   };
 }
@@ -571,6 +571,7 @@ export const onRequestPost = async (context: any) => {
         package_name: pkg.name,
         stars: pkg.stars,
         status: 'pending',
+        language: lang,          // ← Add this line
       })
       .select('id')
       .single();
@@ -606,7 +607,7 @@ export const onRequestPost = async (context: any) => {
 
     const { data: purchase } = await supabase
       .from('telegram_purchases')
-      .select('stars, package_name, incentive_offered, extra_stars, extra_images, extra_videos, incentive_claimed')
+      .select('stars, package_name, incentive_offered, extra_stars, extra_images, extra_videos, incentive_claimed, language')
       .eq('id', purchaseId)
       .maybeSingle();
 
