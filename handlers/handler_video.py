@@ -1,6 +1,7 @@
 """
 handler_video.py — ComfyUI + WanVideoWrapper I2V (Wan 2.2 + Dual Lightning)
-Only 3 styles: doggy, missionary, facial_cumshot
+6 styles: doggy, missionary, facial_cumshot, undress, masturbate, blowjob
+Proper HIGH + LOW LoRA pairs for every style
 Dynamic resolution from reference image
 Default duration = 6 seconds
 """
@@ -13,6 +14,7 @@ import subprocess
 import uuid
 import requests
 import runpod
+import random
 from PIL import Image
 
 COMFYUI_DIR = "/comfyui"
@@ -24,41 +26,69 @@ T5_ENCODER        = "umt5_xxl_fp16.safetensors"
 VAE_MODEL         = "wan_2.1_vae.safetensors"
 CLIP_TEXT_ENCODER = "open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors"
 
+# Every style now has proper HIGH + LOW pair
 LORA_FILES = {
-    "missionary":       "lora_missionary.safetensors",
-    "doggy":            "lora_doggy.safetensors",
-    "facial_cumshot":   "lora_facial_cumshot.safetensors",
+    "missionary": {
+        "high": "lora_missionary_high.safetensors",
+        "low":  "lora_missionary_low.safetensors",
+    },
+    "doggy": {
+        "high": "lora_doggy_high.safetensors",
+        "low":  "lora_doggy_low.safetensors",
+    },
+    "facial_cumshot": {
+        "high": "lora_facial_cumshot_high.safetensors",
+        "low":  "lora_facial_cumshot_low.safetensors",
+    },
+    "undress": {
+        "high": "lora_undress_high.safetensors",
+        "low":  "lora_undress_low.safetensors",
+    },
+    "masturbate": {
+        "high": "lora_masturbate_high.safetensors",
+        "low":  "lora_masturbate_low.safetensors",
+    },
+    "blowjob": {
+        "high": "lora_blowjob_high.safetensors",
+        "low":  "lora_blowjob_low.safetensors",
+    },
 }
 
 EXPLICIT_PRESETS = [
     {
         "name": "doggy",
         "tailored_keywords": [
-            "doggy", "doggystyle", "doggy style", "from behind", "doggie", "prone bone",
-            "bent over", "ass up", "on all fours", "rear entry", "behind"
+            "doggy", "doggystyle", "doggy style", "from behind", "doggie",
+            "prone bone", "bent over", "ass up", "on all fours", "rear entry", "behind"
         ],
         "lora_key": "doggy",
-        "strength": 0.78,
-        "before": "The video begins with a shot of a woman. The video then jumpcuts to the same woman now having sex in doggystyle position. She is positioned kneeling in the same location the video is shot from behind as she looks back at the camera with an open mouth expression. He penetrates her vagina from behind. Her legs are close together with the man kneeling behind her over her legs. The man has a wide stance. she looks at the camera throughout the video. ",
-        "after": ", realistic pounding rhythm, soft body jiggle, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture, natural motion blur"
+        "strength": 0.90,
+        "scheduler": "unipc",
+        "steps_high": 3,
+        "steps_low": 5,
+        "shift": 2.0,
+        "end_latent_strength": 0.30,
+        "before": "The video begins with a shot of a woman. The video then jumpcuts to the same woman now having sex in doggystyle position. She is positioned kneeling in the same location the video is shot from behind as she looks back at the camera with an open mouth expression. He penetrates her vagina from behind. Her legs are close together with the man kneeling behind her over her legs. The man has a wide stance, ",
+        "after": ", powerful deep thrusting, realistic body movement, soft skin jiggle, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture, natural motion blur"
     },
     {
         "name": "missionary",
         "tailored_keywords": [
             "missionary", "missionary sex", "man on top", "on her back",
             "legs spread", "facing each other",
-            # undress group
-            "undress", "remove clothes", "take off clothes", "strip", "naked", "nude",
-            "no clothes", "completely naked", "make her naked", "remove clothing",
-            # general sex fallbacks
             "being fucked", "getting fucked", "fucked hard", "pounded", "railed",
-            "having sex", "making love", "love making", "sexing", "fucked", "fuck",
+            "having sex", "making love", "sexing", "fucked", "fuck",
             "sex", "penetration", "thrusting"
         ],
         "lora_key": "missionary",
-        "strength": 0.80,
-        "before": "Immediately cut to a new scene where the exact same person is now completely naked and lying on their back, and she moves her head forward slightly. The scene is a top-down view showing the same woman completely nude, with their legs in an open position, with her vagina visible. At the bottom of the frame a man can be partially seen, as the man takes his penis with his hand and inserts his penis into the woman's vagina, pushing his body towards her. He then moves back and forward, as he pushes his penis into the woman's vagina repeatedly. The angle is from the point of view of the man at the bottom of the frame, ",
-        "after": ", realistic deep thrusting rhythm, soft body bounce, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
+        "strength": 0.90,
+        "scheduler": "unipc",
+        "steps_high": 3,
+        "steps_low": 5,
+        "shift": 2.0,
+        "end_latent_strength": 0.3,
+        "before": "The video begins with a close-up of a woman. The video then jumpcuts to the same woman now having sex in missionary position. She is lying on her back on a bed with a patterned bed spread and pillow with her legs spread with her knees to her chest. A man's large penis is visible entering her vagina from below. The man is positioned kneeling between her legs infront of her thrusting his penis into her vagina. Throughout the scene, she appears to be experiencing pleasure, often with her mouth open or eyes closed as she lies back. Her hands hold onto her thighs spreading her legs, ",
+        "after": ", strong deep thrusting rhythm, realistic body bounce, soft skin movement, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
     {
         "name": "facial_cumshot",
@@ -67,9 +97,62 @@ EXPLICIT_PRESETS = [
             "cum on tits", "facial cumshot", "cum across face", "cum on her face"
         ],
         "lora_key": "facial_cumshot",
-        "strength": 0.78,
+        "strength": 0.90,
+        "scheduler": "unipc",
+        "steps_high": 3,
+        "steps_low": 5,
+        "shift": 3.0,
+        "end_latent_strength": 0.3,
         "before": "The video begins with a close-up of a woman. The video then jumpcuts to the same woman now receiving a facial from a man's penis. She is kneeling on the floor looking up with a open mouth. The cum shoots all over her face. The man's hand holds his erect penis masturbating his penis and shooting the thick white cum directly onto her face, forehead, eyes, cheek and mouth. The thick white cum slowly drips down her face onto her body. An explosion of thick white cum blasts her face. she looks directly at the camera throughout the video, ",
-        "after": ", realistic cum splatter and dripping, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
+        "after": ", realistic cum splatter and dripping, continuous spurting motion, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
+    },
+    {
+        "name": "undress",
+        "tailored_keywords": [
+            "undress", "remove clothes", "take off clothes", "strip", "naked", "nude", "desnuda", "remove her",
+            "no clothes", "completely naked", "make her naked", "remove clothing", "strip her"
+        ],
+        "lora_key": "undress",
+        "strength": 0.90,
+        "scheduler": "euler",
+        "steps_high": 3,
+        "steps_low": 5,
+        "shift": 3.0,
+        "end_latent_strength": 0.30,
+        "before": "The video begins with a woman. The video then jumpcuts to same woman standing fully nude. The camera remains static throughout the scene. She looks at the camera the entire time, ",
+        "after": ", photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture"
+    },
+    {
+        "name": "masturbate",
+        "tailored_keywords": [
+            "masturbate", "masturbation", "touch herself", "finger herself", "rub her pussy", "fingering", "finger",
+            "play with herself", "self pleasure", "fingering herself"
+        ],
+        "lora_key": "masturbate",
+        "strength": 0.90,
+        "scheduler": "unipc",
+        "steps_high": 3,
+        "steps_low": 5,
+        "shift": 3.0,
+        "end_latent_strength": 0.30,
+        "before": "The video begins with a woman. The video then jumpcuts to the same woman masturbating while lying down on her back. The camera is positioned at a low angle between her legs. She is nude and uses her right hand to vigorously rub her clitoris. Her mouth is open and her expression indicates pleasure. She looks directly at the camera the entire time, ",
+        "after": ", realistic finger movement, soft body reactions, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, smooth realistic skin texture, natural motion blur"
+    },
+    {
+        "name": "blowjob",
+        "tailored_keywords": [
+            "sucking", "blowjob", "blow job", "deepthroat", "deep throat", "suck", "chock on",
+            "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"
+        ],
+        "lora_key": "blowjob",
+        "strength": 0.90,
+        "scheduler": "unipc",
+        "steps_high": 3,
+        "steps_low": 5,
+        "shift": 2.0,
+        "end_latent_strength": 0.30,
+        "before": "A woman looking at the camera. The video then jumpcuts to the same woman giving a blowjob to one man standing in the same location, looking up as she performs the blowjob on the black man, she is kneeling in front of him, she is holding his penis with both hands. she looks at the camera the entire time. she shoves the penis deep in her mouth, ",
+        "after": ", gentle realistic sucking motion, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
 ]
 
@@ -80,7 +163,6 @@ def get_explicit_preset(user_prompt: str):
     for preset in EXPLICIT_PRESETS:
         if any(kw in prompt_lower for kw in preset["tailored_keywords"]):
             return preset
-
     # fallback to missionary
     for preset in EXPLICIT_PRESETS:
         if preset["name"] == "missionary":
@@ -118,19 +200,16 @@ def build_prompt(user_prompt, preset, character=None):
     return f"{char}{preset['before']}{user_prompt}{preset['after']}"
 
 def build_negative():
-    return "static, frozen, no motion, watermark, text, logo, blurry, low quality, bad anatomy, deformed, ugly, jumpcut, flicker, distorted, pixelated, yellow tint, oversaturated, melting, gummy, fused"
+    return "static, frozen, no motion, watermark, text, logo, blurry, low quality, bad anatomy, deformed, ugly, flicker, distorted, pixelated, yellow tint, oversaturated, melting, gummy, fused, fused genitals, cock melting into pussy, twisted neck, broken neck, unnatural head turn, deformed penis, melted cock"
 
 def get_image_dimensions(img_bytes):
     """Return width, height rounded to multiple of 16, capped for safety."""
     img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
     w, h = img.size
 
-    # Round to nearest multiple of 16
-    # Round to nearest multiple of 16
     w = max(16, (w // 16) * 16)
     h = max(16, (h // 16) * 16)
 
-    # Safety cap (prevent OOM on very large images)
     max_dim = 768
     if w > max_dim or h > max_dim:
         scale = max_dim / max(w, h)
@@ -152,7 +231,6 @@ def upload_image(base64_or_url):
             data += "=" * pad
         img_bytes = base64.b64decode(data)
 
-    # Get real dimensions from the image
     width, height = get_image_dimensions(img_bytes)
 
     img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
@@ -167,7 +245,18 @@ def upload_image(base64_or_url):
     r.raise_for_status()
     return r.json()["name"], width, height
 
-def build_i2v_workflow(prompt, negative, width, height, num_frames, lora_key, lora_strength, image_filename):
+def build_i2v_workflow(prompt, negative, width, height, num_frames, preset, image_filename):
+    lora_key = preset["lora_key"]
+    lora_strength = preset["strength"]
+    scheduler = preset["scheduler"]
+    steps_high = preset.get("steps_high", 4)
+    steps_low = preset.get("steps_low", 6)
+    shift = preset.get("shift", 5.0)
+    end_latent_strength = preset.get("end_latent_strength", 0.3)
+
+    # Randomized seed every run
+    seed = random.randint(0, 2**32 - 1)
+
     p = {
         "t5": {
             "class_type": "LoadWanVideoT5TextEncoder",
@@ -216,7 +305,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, lora_key, lo
                 "num_frames": num_frames,
                 "force_offload": True,
                 "start_latent_strength": 1.0,
-                "end_latent_strength": 0.3,
+                "end_latent_strength": end_latent_strength,
                 "noise_aug_strength": 0.0,
             }
         },
@@ -249,12 +338,12 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, lora_key, lo
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 4,
+                "steps": steps_high,
                 "cfg": 1.0,
-                "seed": 42424242,
-                "shift": 5.0,
+                "seed": seed,
+                "shift": shift,
                 "riflex_freq_index": 0,
-                "scheduler": "unipc",
+                "scheduler": scheduler,
                 "force_offload": True,
             }
         },
@@ -269,12 +358,12 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, lora_key, lo
                 "width": width,
                 "height": height,
                 "num_frames": num_frames,
-                "steps": 6,
+                "steps": steps_low,
                 "cfg": 1.0,
-                "seed": 42424242,
-                "shift": 5.0,
+                "seed": seed,
+                "shift": shift,
                 "riflex_freq_index": 0,
-                "scheduler": "unipc",
+                "scheduler": scheduler,
                 "force_offload": True,
             }
         },
@@ -313,19 +402,20 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, lora_key, lo
     # Dual Lightning
     p["lora_lightning_high"] = {
         "class_type": "WanVideoLoraSelect",
-        "inputs": {"lora": "lora_lightning_high.safetensors", "strength": 0.70}
+        "inputs": {"lora": "lora_lightning_high.safetensors", "strength": 1.0}
     }
     p["lora_lightning_low"] = {
         "class_type": "WanVideoLoraSelect",
-        "inputs": {"lora": "lora_lightning_low.safetensors", "strength": 0.70}
+        "inputs": {"lora": "lora_lightning_low.safetensors", "strength": 0.75}
     }
 
-    style_filename = LORA_FILES.get(lora_key)
-    if style_filename:
+    # Proper HIGH / LOW style LoRA application
+    style = LORA_FILES.get(lora_key)
+    if style:
         p["lora_style_high"] = {
             "class_type": "WanVideoLoraSelect",
             "inputs": {
-                "lora": style_filename,
+                "lora": style["high"],
                 "strength": lora_strength,
                 "prev_lora": ["lora_lightning_high", 0],
             }
@@ -333,7 +423,7 @@ def build_i2v_workflow(prompt, negative, width, height, num_frames, lora_key, lo
         p["lora_style_low"] = {
             "class_type": "WanVideoLoraSelect",
             "inputs": {
-                "lora": style_filename,
+                "lora": style["low"],
                 "strength": lora_strength,
                 "prev_lora": ["lora_lightning_low", 0],
             }
@@ -395,7 +485,7 @@ def handler(job):
             return {"error": "start_image is required for image-to-video"}
 
         preset = get_explicit_preset(user_prompt)
-        print(f"→ Style selected: {preset['name']} (LoRA: {preset['lora_key']})")
+        print(f"→ Style selected: {preset['name']} (LoRA: {preset['lora_key']}, scheduler: {preset['scheduler']})")
 
         runpod.serverless.progress_update(job, "UPLOADING_IMAGE")
         image_filename, width, height = upload_image(start_image)
@@ -408,9 +498,7 @@ def handler(job):
         runpod.serverless.progress_update(job, "BUILDING_WORKFLOW")
         workflow = build_i2v_workflow(
             positive, negative, width, height,
-            num_frames,
-            preset["lora_key"], preset["strength"],
-            image_filename
+            num_frames, preset, image_filename
         )
 
         runpod.serverless.progress_update(job, "GENERATING_VIDEO")
@@ -429,7 +517,7 @@ def handler(job):
         import traceback
         return {"error": str(e), "traceback": traceback.format_exc()}
 
-print("Starting ComfyUI (Wan 2.2 + Dual Lightning – 3 styles)...")
+print("Starting ComfyUI (Wan 2.2 + Dual Lightning – 6 styles + HIGH/LOW pairs)...")
 start_comfyui()
 print("Ready for jobs.")
 runpod.serverless.start({"handler": handler})
