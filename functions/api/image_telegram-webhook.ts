@@ -128,6 +128,7 @@ export const onRequestPost = async (context: any) => {
     }
 
     // Force language selection if not set
+    // Force language selection if not set
     if (!existing?.language) {
       await sendMessage(
         BOT_TOKEN,
