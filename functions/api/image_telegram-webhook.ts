@@ -41,6 +41,106 @@ const translations: any = {
     payment_bonus: "\n🎁 {{bonus}}",
     payment_balance: "\n💳 الرصيد الجديد: <b>{{balance}} نجمة</b>\n\nأرسل صورة مع تعليمات للمتابعة.",
     invoice_description: "اشحن رصيدك من النجوم للصور والفيديوهات.",
+  },
+  hi: {
+    choose_language: "कृपया अपनी भाषा चुनें:",
+    welcome: "👋 नमस्ते <b>{{name}}</b>!\n\nमुझे एक फोटो भेजें और संक्षिप्त निर्देश लिखें।\n\nमैं पूछूंगा कि आपको <b>इमेज</b> चाहिए या <b>वीडियो</b>।\n\n🖼 इमेज = {{img}} ⭐\n🎬 वीडियो = {{vid}} ⭐\n\nआपके पास <b>{{free}} मुफ्त स्टार्स</b> हैं।",
+    credits: "⭐ आपके पास <b>{{stars}} स्टार्स</b> बचे हैं।\n\nटॉप-अप के लिए /buy का उपयोग करें।",
+    pick_package: "पैकेज चुनें:",
+    need_caption: "कृपया फोटो के कैप्शन में छोटा निर्देश लिखें।\n\nउदाहरण: \"उसे स्टाइलिश पोज़ में बनाओ\" या \"कपड़े बदलो\"",
+    how_do_you_want: "आप कैसे चाहेंगे?",
+    image_btn: "🖼 इमेज — {{cost}} ⭐",
+    video_btn: "🎬 वीडियो — {{cost}} ⭐",
+    not_enough: "⚠️ पर्याप्त स्टार्स नहीं हैं।\n\nआपको चाहिए:\n• इमेज के लिए {{img}} ⭐\n• वीडियो के लिए {{vid}} ⭐\n\nवर्तमान बैलेंस: <b>{{balance}} ⭐</b>\n\nटॉप-अप के लिए /buy करें।",
+    no_pending: "कोई लंबित फोटो नहीं मिली। कृपया नई फोटो भेजें।",
+    generating_image: "🖼 आपकी फोटो एडिट हो रही है... आमतौर पर 20–30 सेकंड लगते हैं।",
+    generating_video: "🎬 आपका वीडियो बन रहा है... आमतौर पर 60–90 सेकंड लगते हैं।",
+    error_generic: "❌ कुछ गलत हो गया। कृपया फिर से कोशिश करें।",
+    error_job: "❌ जॉब शुरू करने में समस्या हुई। आपसे कोई स्टार नहीं कटे — कृपया फिर कोशिश करें।",
+    payment_success: "✅ <b>भुगतान सफल!</b>\n\n📦 {{package}}\n⭐ +{{stars}} स्टार्स",
+    payment_bonus: "\n🎁 {{bonus}}",
+    payment_balance: "\n💳 नया बैलेंस: <b>{{balance}} स्टार्स</b>\n\nजारी रखने के लिए फोटो + निर्देश भेजें।",
+    invoice_description: "इमेज और वीडियो के लिए स्टार्स टॉप-अप करें।",
+  },
+  ur: {
+    choose_language: "براہ کرم اپنی زبان منتخب کریں:",
+    welcome: "👋 السلام علیکم <b>{{name}}</b>!\n\nمجھے ایک تصویر بھیجیں اور مختصر ہدایت لکھیں۔\n\nمیں پوچھوں گا کہ آپ <b>تصویر</b> چاہتے ہیں یا <b>ویڈیو</b>۔\n\n🖼 تصویر = {{img}} ⭐\n🎬 ویڈیو = {{vid}} ⭐\n\nآپ کے پاس <b>{{free}} مفت ستارے</b> ہیں۔",
+    credits: "⭐ آپ کے پاس <b>{{stars}} ستارے</b> باقی ہیں۔\n\nٹاپ اپ کے لیے /buy استعمال کریں۔",
+    pick_package: "پیکج منتخب کریں:",
+    need_caption: "براہ کرم تصویر کے کیپشن میں مختصر ہدایت لکھیں۔\n\nمثال: \"اسے اسٹائلش پوز میں بناؤ\" یا \"کپڑے تبدیل کرو\"",
+    how_do_you_want: "آپ کیسے چاہتے ہیں؟",
+    image_btn: "🖼 تصویر — {{cost}} ⭐",
+    video_btn: "🎬 ویڈیو — {{cost}} ⭐",
+    not_enough: "⚠️ کافی ستارے نہیں ہیں۔\n\nآپ کو چاہیے:\n• تصویر کے لیے {{img}} ⭐\n• ویڈیو کے لیے {{vid}} ⭐\n\nموجودہ بیلنس: <b>{{balance}} ⭐</b>\n\nٹاپ اپ کے لیے /buy کریں۔",
+    no_pending: "کوئی زیر التوا تصویر نہیں ملی۔ براہ کرم نئی تصویر بھیجیں۔",
+    generating_image: "🖼 آپ کی تصویر ایڈٹ ہو رہی ہے... عام طور پر 20–30 سیکنڈ لگتے ہیں۔",
+    generating_video: "🎬 آپ کی ویڈیو بن رہی ہے... عام طور پر 60–90 سیکنڈ لگتے ہیں۔",
+    error_generic: "❌ کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔",
+    error_job: "❌ جاب شروع کرنے میں مسئلہ پیش آیا۔ آپ سے کوئی ستارہ نہیں کاٹا گیا — دوبارہ کوشش کریں۔",
+    payment_success: "✅ <b>ادائیگی کامیاب!</b>\n\n📦 {{package}}\n⭐ +{{stars}} ستارے",
+    payment_bonus: "\n🎁 {{bonus}}",
+    payment_balance: "\n💳 نیا بیلنس: <b>{{balance}} ستارے</b>\n\nجاری رکھنے کے لیے تصویر + ہدایت بھیجیں۔",
+    invoice_description: "تصاویر اور ویڈیوز کے لیے ستارے ٹاپ اپ کریں۔",
+  },
+  bn: {
+    choose_language: "অনুগ্রহ করে আপনার ভাষা নির্বাচন করুন:",
+    welcome: "👋 হ্যালো <b>{{name}}</b>!\n\nআমাকে একটি ছবি পাঠান এবং সংক্ষিপ্ত নির্দেশ লিখুন।\n\nআমি জিজ্ঞাসা করব আপনি <b>ইমেজ</b> চান নাকি <b>ভিডিও</b>।\n\n🖼 ইমেজ = {{img}} ⭐\n🎬 ভিডিও = {{vid}} ⭐\n\nআপনার কাছে <b>{{free}}টি ফ্রি স্টার</b> আছে।",
+    credits: "⭐ আপনার কাছে <b>{{stars}} স্টার</b> বাকি আছে।\n\nটপ-আপ করতে /buy ব্যবহার করুন।",
+    pick_package: "প্যাকেজ বেছে নিন:",
+    need_caption: "অনুগ্রহ করে ছবির ক্যাপশনে সংক্ষিপ্ত নির্দেশ লিখুন।\n\nউদাহরণ: \"তাকে স্টাইলিশ পোজে রাখো\" বা \"জামাকাপড় পরিবর্তন করো\"",
+    how_do_you_want: "আপনি কীভাবে চান?",
+    image_btn: "🖼 ইমেজ — {{cost}} ⭐",
+    video_btn: "🎬 ভিডিও — {{cost}} ⭐",
+    not_enough: "⚠️ পর্যাপ্ত স্টার নেই।\n\nআপনার দরকার:\n• ইমেজের জন্য {{img}} ⭐\n• ভিডিওর জন্য {{vid}} ⭐\n\nবর্তমান ব্যালেন্স: <b>{{balance}} ⭐</b>\n\nটপ-আপ করতে /buy করুন।",
+    no_pending: "কোনো অপেক্ষমাণ ছবি পাওয়া যায়নি। অনুগ্রহ করে নতুন ছবি পাঠান।",
+    generating_image: "🖼 আপনার ছবি এডিট করা হচ্ছে... সাধারণত ২০–৩০ সেকেন্ড লাগে।",
+    generating_video: "🎬 আপনার ভিডিও তৈরি হচ্ছে... সাধারণত ৬০–৯০ সেকেন্ড লাগে।",
+    error_generic: "❌ কিছু ভুল হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    error_job: "❌ জব শুরু করতে সমস্যা হয়েছে। আপনার কোনো স্টার কাটা হয়নি — আবার চেষ্টা করুন।",
+    payment_success: "✅ <b>পেমেন্ট সফল!</b>\n\n📦 {{package}}\n⭐ +{{stars}} স্টার",
+    payment_bonus: "\n🎁 {{bonus}}",
+    payment_balance: "\n💳 নতুন ব্যালেন্স: <b>{{balance}} স্টার</b>\n\nচালিয়ে যেতে ছবি + নির্দেশ পাঠান।",
+    invoice_description: "ইমেজ ও ভিডিওর জন্য স্টার টপ-আপ করুন।",
+  },
+  ru: {
+    choose_language: "Пожалуйста, выберите язык:",
+    welcome: "👋 Привет, <b>{{name}}</b>!\n\nПришли мне фото с коротким описанием.\n\nЯ спрошу, хочешь ли ты <b>Изображение</b> или <b>Видео</b>.\n\n🖼 Изображение = {{img}} ⭐\n🎬 Видео = {{vid}} ⭐\n\nУ тебя есть <b>{{free}} бесплатных звёзд</b>.",
+    credits: "⭐ У тебя осталось <b>{{stars}} звёзд</b>.\n\nИспользуй /buy для пополнения.",
+    pick_package: "Выбери пакет:",
+    need_caption: "Пожалуйста, добавь короткое описание в подпись к фото.\n\nПример: \"сделай её в стильной позе\" или \"измени одежду\"",
+    how_do_you_want: "Как ты хочешь?",
+    image_btn: "🖼 Изображение — {{cost}} ⭐",
+    video_btn: "🎬 Видео — {{cost}} ⭐",
+    not_enough: "⚠️ Недостаточно звёзд.\n\nТебе нужно:\n• {{img}} ⭐ за изображение\n• {{vid}} ⭐ за видео\n\nТекущий баланс: <b>{{balance}} ⭐</b>\n\nИспользуй /buy для пополнения.",
+    no_pending: "Ожидающее фото не найдено. Пожалуйста, отправь новое фото.",
+    generating_image: "🖼 Редактирую твоё фото... обычно занимает 20–30 секунд.",
+    generating_video: "🎬 Создаю видео... обычно занимает 60–90 секунд.",
+    error_generic: "❌ Что-то пошло не так. Попробуй ещё раз.",
+    error_job: "❌ Ошибка при запуске задачи. Звёзды не списаны — попробуй снова.",
+    payment_success: "✅ <b>Оплата подтверждена!</b>\n\n📦 {{package}}\n⭐ +{{stars}} звёзд",
+    payment_bonus: "\n🎁 {{bonus}}",
+    payment_balance: "\n💳 Новый баланс: <b>{{balance}} звёзд</b>\n\nОтправь фото с описанием, чтобы продолжить.",
+    invoice_description: "Пополни звёзды для изображений и видео.",
+  },
+  es: {
+    choose_language: "Por favor elige tu idioma:",
+    welcome: "👋 ¡Hola <b>{{name}}</b>!\n\nEnvíame una foto con una instrucción corta.\n\nTe preguntaré si quieres una <b>Imagen</b> o un <b>Video</b>.\n\n🖼 Imagen = {{img}} ⭐\n🎬 Video = {{vid}} ⭐\n\nTienes <b>{{free}} estrellas gratis</b>.",
+    credits: "⭐ Te quedan <b>{{stars}} estrellas</b>.\n\nUsa /buy para recargar.",
+    pick_package: "Elige un paquete:",
+    need_caption: "Por favor agrega una instrucción corta como descripción de la foto.\n\nEjemplo: \"hazla posar con estilo\" o \"cambia la ropa\"",
+    how_do_you_want: "¿Cómo lo quieres?",
+    image_btn: "🖼 Imagen — {{cost}} ⭐",
+    video_btn: "🎬 Video — {{cost}} ⭐",
+    not_enough: "⚠️ No tienes suficientes estrellas.\n\nNecesitas:\n• {{img}} ⭐ para una Imagen\n• {{vid}} ⭐ para un Video\n\nSaldo actual: <b>{{balance}} ⭐</b>\n\nUsa /buy para recargar.",
+    no_pending: "No se encontró ninguna foto pendiente. Por favor envía una nueva foto.",
+    generating_image: "🖼 Editando tu foto... normalmente tarda 20–30 segundos.",
+    generating_video: "🎬 Generando tu video... normalmente tarda 60–90 segundos.",
+    error_generic: "❌ Algo salió mal. Por favor intenta de nuevo.",
+    error_job: "❌ Error al iniciar el trabajo. No se te cobraron estrellas — intenta de nuevo.",
+    payment_success: "✅ <b>¡Pago confirmado!</b>\n\n📦 {{package}}\n⭐ +{{stars}} estrellas",
+    payment_bonus: "\n🎁 {{bonus}}",
+    payment_balance: "\n💳 Nuevo saldo: <b>{{balance}} estrellas</b>\n\nEnvía una foto con una instrucción para continuar.",
+    invoice_description: "Recarga estrellas para imágenes y videos.",
   }
 };
 
@@ -110,6 +210,17 @@ function languageMenu() {
     inline_keyboard: [
       [
         { text: '🇸🇦 العربية', callback_data: 'lang_ar' },
+        { text: '🇮🇳 हिन्दी', callback_data: 'lang_hi' },
+      ],
+      [
+        { text: '🇵🇰 اردو', callback_data: 'lang_ur' },
+        { text: '🇧🇩 বাংলা', callback_data: 'lang_bn' },
+      ],
+      [
+        { text: '🇷🇺 Русский', callback_data: 'lang_ru' },
+        { text: '🇪🇸 Español', callback_data: 'lang_es' },
+      ],
+      [
         { text: '🇬🇧 English', callback_data: 'lang_en' },
       ],
     ],
@@ -119,12 +230,12 @@ function languageMenu() {
 function creditMenu() {
   return {
     inline_keyboard: [
-      [{ text: '8 ⭐ — $0.10 (1 img)', callback_data: 'buy_pack8' }],
-      [{ text: '80 ⭐ — $1 (10 img / 5 vid)', callback_data: 'buy_pack80' }],
-      [{ text: '300 ⭐ — $3.75 (37 img / 18 vid)', callback_data: 'buy_pack300' }],
-      [{ text: '550 ⭐ — $6.70 (68 img / 34 vid)', callback_data: 'buy_pack550' }],
-      [{ text: '2,400 ⭐ — $30 (300 img / 150 vid)', callback_data: 'buy_pack2400' }],
-      [{ text: '4,500 ⭐ — $56.25 (562 img / 281 vid)', callback_data: 'buy_pack4500' }],
+      [{ text: '8 ⭐ — $0.10 (1 img 🖼)', callback_data: 'buy_pack8' }],
+      [{ text: '80 ⭐ — $1 (10 img 🖼 / 5 vid 🎬)', callback_data: 'buy_pack80' }],
+      [{ text: '300 ⭐ — $3.75 (37 img 🖼 / 18 vid 🎬)', callback_data: 'buy_pack300' }],
+      [{ text: '550 ⭐ — $6.70 (68 img 🖼 / 34 vid 🎬)', callback_data: 'buy_pack550' }],
+      [{ text: '2,400 ⭐ — $30 (300 img 🖼 / 150 vid 🎬)', callback_data: 'buy_pack2400' }],
+      [{ text: '4,500 ⭐ — $56.25 (562 img 🖼 / 281 vid 🎬)', callback_data: 'buy_pack4500' }],
     ],
   };
 }
@@ -223,16 +334,22 @@ export const onRequestPost = async (context: any) => {
       .update({ language: lang })
       .eq('telegram_user_id', tgUserId);
 
-    const confirmText = lang === 'ar'
-      ? '✅ تم تغيير اللغة بنجاح إلى العربية'
-      : '✅ Language successfully changed to English';
+    const confirmTexts: any = {
+      ar: '✅ تم تغيير اللغة بنجاح إلى العربية',
+      hi: '✅ भाषा सफलतापूर्वक हिन्दी में बदल दी गई',
+      ur: '✅ زبان کامیابی سے اردو میں تبدیل ہو گئی',
+      bn: '✅ ভাষা সফলভাবে বাংলায় পরিবর্তন করা হয়েছে',
+      ru: '✅ Язык успешно изменён на Русский',
+      es: '✅ Idioma cambiado exitosamente a Español',
+      en: '✅ Language successfully changed to English',
+    };
 
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         callback_query_id: update.callback_query.id,
-        text: confirmText,
+        text: confirmTexts[lang] || confirmTexts.en,
         show_alert: true,
       }),
     });
@@ -454,6 +571,7 @@ export const onRequestPost = async (context: any) => {
         package_name: pkg.name,
         stars: pkg.stars,
         status: 'pending',
+        language: lang,          // ← Add this line
       })
       .select('id')
       .single();
@@ -489,7 +607,7 @@ export const onRequestPost = async (context: any) => {
 
     const { data: purchase } = await supabase
       .from('telegram_purchases')
-      .select('stars, package_name, incentive_offered, extra_stars, extra_images, extra_videos, incentive_claimed')
+      .select('stars, package_name, incentive_offered, extra_stars, extra_images, extra_videos, incentive_claimed, language')
       .eq('id', purchaseId)
       .maybeSingle();
 
