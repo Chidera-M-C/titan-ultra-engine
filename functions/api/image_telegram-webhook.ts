@@ -105,7 +105,7 @@ export const onRequestPost = async (context: any) => {
   }
 
   // ── /start ───────────────────────────────────────────────────────────────
-  if (update.message?.text === '/start') {
+  if (update.message?.text === '/strt') {
     const chatId = update.message.chat.id;
     const tgUserId = String(update.message.from.id);
     const tgUsername = update.message.from?.username || '';
