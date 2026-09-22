@@ -65,6 +65,34 @@ async function getUserLanguage(supabase: any, telegramUserId: string) {
     return 'en';
   }
 }
+
+async function setBotCommands(token: string, lang: string) {
+  const commandsByLang: Record<string, any[]> = {
+    en: [
+      { command: 'start', description: 'Start the bot & get free credits' },
+      { command: 'language', description: 'Change language' },
+      { command: 'credits', description: 'Check your credit balance' },
+      { command: 'buy', description: 'Buy more credits' },
+    ],
+    ar: [
+      { command: 'start', description: 'ابدأ البوت واحصل على نجوم مجانية' },
+      { command: 'language', description: 'تغيير اللغة' },
+      { command: 'credits', description: 'عرض رصيد النجوم' },
+      { command: 'buy', description: 'شراء المزيد من النجوم' },
+    ],
+  };
+
+  const commands = commandsByLang[lang] || commandsByLang.en;
+
+  await fetch(`https://api.telegram.org/bot${token}/setMyCommands`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      commands,
+      language_code: lang === 'en' ? undefined : lang,
+    }),
+  });
+}
 // ====================== END TRANSLATIONS ======================
 
 const PACKAGES: Record<string, { name: string; stars: number }> = {
@@ -190,6 +218,8 @@ export const onRequestPost = async (context: any) => {
     }
 
     const lang = existing.language;
+    await setBotCommands(BOT_TOKEN, lang);
+
     await sendMessage(BOT_TOKEN, chatId, t('welcome', lang, {
       name: firstName,
       img: STARS_IMAGE,
@@ -222,6 +252,9 @@ export const onRequestPost = async (context: any) => {
       .from('telegram_users')
       .update({ language: lang })
       .eq('telegram_user_id', tgUserId);
+
+    // Update the command menu for this language
+    await setBotCommands(BOT_TOKEN, lang);
 
     const confirmText = lang === 'ar'
       ? '✅ تم تغيير اللغة بنجاح إلى العربية'
