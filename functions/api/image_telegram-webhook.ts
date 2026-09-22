@@ -123,22 +123,21 @@ export const onRequestPost = async (context: any) => {
         telegram_username: tgUsername,
         first_name: firstName,
         stars: FREE_STARS,
-        language: null, // force language selection
+        language: null,
       });
     }
 
-    // If user has no language yet → show language menu
+    // Force language selection if not set
     if (!existing?.language) {
       await sendMessage(
         BOT_TOKEN,
         chatId,
-        t('choose_language', 'en'), // fallback to English for selection screen
+        t('choose_language', 'en'),
         { reply_markup: languageMenu() }
       );
       return new Response('OK');
     }
 
-    // User already has language → send welcome
     const lang = existing.language;
     await sendMessage(
       BOT_TOKEN,
@@ -153,6 +152,21 @@ export const onRequestPost = async (context: any) => {
     return new Response('OK');
   }
 
+  // ── /language ────────────────────────────────────────────────────────────
+  if (update.message?.text === '/language') {
+    const chatId = update.message.chat.id;
+    const tgUserId = String(update.message.from.id);
+    const lang = await getUserLanguage(supabase, tgUserId);
+
+    await sendMessage(
+      BOT_TOKEN,
+      chatId,
+      t('choose_language', lang),
+      { reply_markup: languageMenu() }
+    );
+    return new Response('OK');
+  }
+
   // ── Language selection ───────────────────────────────────────────────────
   if (update.callback_query?.data?.startsWith('lang_')) {
     const lang = update.callback_query.data.replace('lang_', '');
@@ -160,17 +174,34 @@ export const onRequestPost = async (context: any) => {
     const chatId = update.callback_query.message.chat.id;
     const firstName = update.callback_query.from.first_name || 'there';
 
+    // Save language
     await supabase
       .from('telegram_users')
       .update({ language: lang })
       .eq('telegram_user_id', tgUserId);
 
+    // Confirmation messages per language
+    const confirmTexts: Record<string, string> = {
+      ar: '✅ تم تغيير اللغة بنجاح إلى العربية',
+      hi: '✅ भाषा सफलतापूर्वक हिन्दी में बदल दी गई',
+      ur: '✅ زبان کامیابی سے اردو میں تبدیل ہو گئی',
+      bn: '✅ ভাষা সফলভাবে বাংলায় পরিবর্তন করা হয়েছে',
+      ru: '✅ Язык успешно изменён на Русский',
+      es: '✅ Idioma cambiado exitosamente a Español',
+      en: '✅ Language successfully changed to English',
+    };
+
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ callback_query_id: update.callback_query.id }),
+      body: JSON.stringify({
+        callback_query_id: update.callback_query.id,
+        text: confirmTexts[lang] || confirmTexts.en,
+        show_alert: true,
+      }),
     });
 
+    // Send welcome in the new language
     await sendMessage(
       BOT_TOKEN,
       chatId,
@@ -227,7 +258,6 @@ export const onRequestPost = async (context: any) => {
       return new Response('OK');
     }
 
-    // Deduplication
     const { data: alreadyProcessed } = await supabase
       .from('image_edits')
       .select('id')
