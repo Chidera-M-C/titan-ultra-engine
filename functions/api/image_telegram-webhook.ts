@@ -329,10 +329,18 @@ export const onRequestPost = async (context: any) => {
     const chatId = update.callback_query.message.chat.id;
     const firstName = update.callback_query.from.first_name || 'there';
 
+    // Update user language
     await supabase
       .from('telegram_users')
       .update({ language: lang })
       .eq('telegram_user_id', tgUserId);
+    
+    // Also update all pending purchases of this user
+    await supabase
+      .from('telegram_purchases')
+      .update({ language: lang })
+      .eq('telegram_user_id', tgUserId)
+      .eq('status', 'pending');
 
     const confirmTexts: any = {
       ar: '✅ تم تغيير اللغة بنجاح إلى العربية',
