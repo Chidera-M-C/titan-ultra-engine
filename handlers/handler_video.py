@@ -4,6 +4,7 @@ handler_video.py — ComfyUI + WanVideoWrapper I2V (Wan 2.2 + Dual Lightning)
 Proper HIGH + LOW LoRA pairs for every style
 Dynamic resolution from reference image
 Default duration = 6 seconds
+Multi-language keyword support (EN + ES + AR + HI + UR + BN + RU + PT)
 """
 
 import os
@@ -58,8 +59,30 @@ EXPLICIT_PRESETS = [
     {
         "name": "doggy",
         "tailored_keywords": [
+            # English
             "doggy", "doggystyle", "doggy style", "from behind", "doggie",
-            "prone bone", "bent over", "ass up", "on all fours", "rear entry", "behind"
+            "prone bone", "bent over", "ass up", "on all fours", "rear entry", "behind",
+            # Spanish
+            "perrito", "estilo perrito", "doggy", "de perrito", "por detrás", "de espaldas",
+            "inclinada", "culo arriba", "a cuatro patas", "entrada trasera", "detrás",
+            # Arabic
+            "كلب", "دوغي", "دوغي ستايل", "من الخلف", "من الوراء", "على أربع",
+            "منحنية", "الطيز لفوق", "دخول من الخلف", "خلف",
+            # Hindi
+            "डॉगी", "डॉगीस्टाइल", "डॉगी स्टाइल", "पीछे से", "डॉगी",
+            "प्रोन बोन", "झुकी हुई", "गांड ऊपर", "चारों पर", "पीछे से प्रवेश", "पीछे",
+            # Urdu
+            "ڈوگی", "ڈوگی اسٹائل", "ڈوگی سٹائل", "پیچھے سے", "ڈوگی",
+            "جھکی ہوئی", "گانڈ اوپر", "چاروں پر", "پیچھے سے دخول", "پیچھے",
+            # Bengali
+            "ডগি", "ডগিস্টাইল", "ডগি স্টাইল", "পিছন থেকে", "ডগি",
+            "ঝুঁকে", "পাছা উপরে", "চার পায়ে", "পিছন থেকে প্রবেশ", "পিছনে",
+            # Russian
+            "догги", "доггистайл", "догги стайл", "сзади", "догги",
+            "на четвереньках", "нагнутая", "попа вверх", "вход сзади", "сзади",
+            # Portuguese
+            "cachorrinho", "estilo cachorrinho", "doggy", "de quatro", "por trás",
+            "curvada", "bunda pra cima", "de four", "entrada traseira", "atrás"
         ],
         "lora_key": "doggy",
         "strength": 0.90,
@@ -74,11 +97,53 @@ EXPLICIT_PRESETS = [
     {
         "name": "missionary",
         "tailored_keywords": [
+            # English
             "missionary", "missionary sex", "man on top", "on her back",
             "legs spread", "facing each other",
             "being fucked", "getting fucked", "fucked hard", "pounded", "railed",
             "having sex", "making love", "sexing", "fucked", "fuck",
-            "sex", "penetration", "thrusting"
+            "sex", "penetration", "thrusting",
+            # Spanish
+            "misionero", "sexo misionero", "hombre encima", "acostada de espalda",
+            "piernas abiertas", "cara a cara",
+            "siendo follada", "follada", "follada duro", "martillada", "cogida",
+            "teniendo sexo", "haciendo el amor", "follando", "follada", "follar",
+            "sexo", "penetración", "embestidas",
+            # Arabic
+            "التبشيرية", "جنس تبشيري", "الرجل فوق", "على ظهرها",
+            "الأرجل مفتوحة", "وجها لوجه",
+            "بتنتك", "بتنتك جامد", "متناكه", "متناكه جامد",
+            "بيعملوا جنس", "بيعملوا حب", "جنس", "نيك", "تغلغل", "طعن",
+            # Hindi
+            "मिशनरी", "मिशनरी सेक्स", "मर्द ऊपर", "पीठ के बल",
+            "पैर फैलाए", "आमने सामने",
+            "चोदा जा रहा", "चोदा", "जोर से चोदा", "कूटा", "रेल किया",
+            "सेक्स कर रहे", "प्यार कर रहे", "सेक्सिंग", "चोदा", "चोद",
+            "सेक्स", "पेनिट्रेशन", "धक्का",
+            # Urdu
+            "مشنری", "مشنری سیکس", "مرد اوپر", "پیٹھ کے بل",
+            "ٹانگیں پھیلا کر", "آمنے سامنے",
+            "چودا جا رہا", "چودا", "زور سے چودا", "کوٹا", "ریل کیا",
+            "سیکس کر رہے", "پیار کر رہے", "سیکسنگ", "چودا", "چود",
+            "سیکس", "دخول", "دھکا",
+            # Bengali
+            "মিশনারি", "মিশনারি সেক্স", "পুরুষ উপরে", "পিঠের উপর",
+            "পা ছড়িয়ে", "মুখোমুখি",
+            "চোদা হচ্ছে", "চোদা", "জোরে চোদা", "পেটানো", "রেল করা",
+            "সেক্স করছে", "ভালোবাসা করছে", "সেক্সিং", "চোদা", "চোদ",
+            "সেক্স", "প্রবেশ", "ঠেলা",
+            # Russian
+            "миссионерская", "миссионерский секс", "мужчина сверху", "на спине",
+            "ноги раздвинуты", "лицом к лицу",
+            "ебут", "трахают", "жестко ебут", "долбят", "рельсят",
+            "занимаются сексом", "занимаются любовью", "секс", "ебут", "ебать",
+            "секс", "проникновение", "толчки",
+            # Portuguese
+            "missionário", "sexo missionário", "homem por cima", "de barriga pra cima",
+            "pernas abertas", "cara a cara",
+            "sendo fodida", "fodida", "fodida forte", "metida", "arrombada",
+            "fazendo sexo", "fazendo amor", "transando", "fodida", "foder",
+            "sexo", "penetração", "estocadas"
         ],
         "lora_key": "missionary",
         "strength": 0.90,
@@ -93,8 +158,30 @@ EXPLICIT_PRESETS = [
     {
         "name": "facial_cumshot",
         "tailored_keywords": [
+            # English
             "cumshot", "cum on face", "facial", "semen", "covered in cum", "cum",
-            "cum on tits", "facial cumshot", "cum across face", "cum on her face"
+            "cum on tits", "facial cumshot", "cum across face", "cum on her face",
+            # Spanish
+            "corrida", "leche en la cara", "facial", "semen", "cubierta de leche", "leche",
+            "leche en las tetas", "corrida facial", "leche en toda la cara", "leche en su cara",
+            # Arabic
+            "قذف", "مني على الوجه", "فشيال", "مني", "مغطاة بالمني", "مني",
+            "مني على الصدر", "قذف على الوجه", "مني على وشها", "مني على وجهها",
+            # Hindi
+            "कमशॉट", "चेहरे पर पानी", "फेसियल", "वीर्य", "वीर्य से ढकी", "पानी",
+            "स्तनों पर पानी", "फेसियल कमशॉट", "चेहरे पर वीर्य", "उसके चेहरे पर पानी",
+            # Urdu
+            "کم شاٹ", "چہرے پر پانی", "فیسियल", "منی", "منی سے ڈھکی", "پانی",
+            "چھاتیوں پر پانی", "فیسियल کم شاٹ", "چہرے پر منی", "اس کے چہرے پر پانی",
+            # Bengali
+            "কামশট", "মুখে বীর্য", "ফেসিয়াল", "বীর্য", "বীর্যে ঢাকা", " Cum",
+            "বুকে বীর্য", "ফেসিয়াল কামশট", "মুখে বীর্য", "তার মুখে বীর্য",
+            # Russian
+            "камшот", "кончил на лицо", "фейшал", "сперма", "в сперме", "кончил",
+            "сперма на сиськи", "фейшал камшот", "сперма на лице", "кончил ей на лицо",
+            # Portuguese
+            "gozada", "porra na cara", "facial", "sêmen", "coberta de porra", "porra",
+            "porra nos peitos", "gozada facial", "porra no rosto", "porra na cara dela"
         ],
         "lora_key": "facial_cumshot",
         "strength": 0.90,
@@ -103,14 +190,36 @@ EXPLICIT_PRESETS = [
         "steps_low": 5,
         "shift": 3.0,
         "end_latent_strength": 0.3,
-        "before": "The video begins with a close-up of a woman. The video then jumpcuts to the same woman now receiving a facial from a man's penis. She is kneeling on the floor looking up with a open mouth. The cum shoots all over her face. The man's hand holds his erect penis masturbating his penis and shooting the thick white cum directly onto her face, forehead, eyes, cheek and mouth. The thick white cum slowly drips down her face onto her body. An explosion of thick white cum blasts her face. she looks directly at the camera throughout the video, ",
+        "before": "f4c3spl4sh, the scenes starts with the camera zooming out revealing a cinematic scene with a woman in the frame with a man entering from the right side, only his lower body is visible, side view of his hips, thighs and legs, with a gigantic erected penis with testicles. She starts recieving a cumshot on her face from the penis. The stream of semen is directed towards her mouth. The force of the ejaculation is strong, and the trajectory of the semen is aimed directly at her open mouth. The quantity of semen is substantial, covering a significant portion of her face and neck area. The woman's eyes are open, and her mouth is slightly open as she receives the semen. The camera is positioned close to the woman's face and chest, capturing the moment of male ejaculation directly onto her face and chest. The semen is seen forcefully erupting from the penis and landing on her skin, creating a visible pool of semen on her chest, ",
         "after": ", realistic cum splatter and dripping, continuous spurting motion, photorealistic video, best quality, 8k, sharp focus, intricate details, ultra realistic, flawless anatomy, cinematic lighting, warm highlights, deep shadows, smooth realistic skin texture, natural motion blur"
     },
     {
         "name": "undress",
         "tailored_keywords": [
+            # English
             "undress", "remove clothes", "take off clothes", "strip", "naked", "nude", "desnuda", "remove her",
-            "no clothes", "completely naked", "make her naked", "remove clothing", "strip her"
+            "no clothes", "completely naked", "make her naked", "remove clothing", "strip her",
+            # Spanish
+            "desnud", "quitar la ropa", "quitarle la ropa", "desvestir", "desnuda", "nuda", "desnuda", "quítales",
+            "sin ropa", "completamente desnuda", "házla desnuda", "quitar la ropa", "desvístela",
+            # Arabic
+            "عرّي", "شيل الهدوم", "اخلعي الهدوم", "تعري", "عريانة", "عارية", "عرّيها",
+            "من غير هدوم", "عريانة تماما", "خليها عريانة", "شيل الملابس", "عرّيها",
+            # Hindi
+            "कपड़े उतारो", "कपड़े हटाओ", "कपड़े निकालो", "स्ट्रिप", "नंगा", "नग्न", "नंगी", "हटाओ",
+            "बिना कपड़ों के", "पूरी नंगी", "उसे नंगा करो", "कपड़े हटाओ", "स्ट्रिप करो",
+            # Urdu
+            "کپڑے اتارو", "کپڑے ہٹاؤ", "کپڑے نکالو", "سٹریپ", "ننگا", "ننگا", "ننگی", "ہٹاؤ",
+            "بغیر کپڑوں کے", "پوری ننگی", "اسے ننگا کرو", "کپڑے ہٹاؤ", "سٹریپ کرو",
+            # Bengali
+            "জামাকাপড় খোলো", "কাপড় খুলে ফেলো", "কাপড় সরাও", "স্ট্রিপ", "নগ্ন", "নগ্ন", "নগ্না", "সরাও",
+            "কাপড় ছাড়া", "সম্পূর্ণ নগ্ন", "তাকে নগ্ন করো", "কাপড় খোলো", "স্ট্রিপ করো",
+            # Russian
+            "раздень", "сними одежду", "сними вещи", "раздеть", "голая", "обнаженная", "голая", "сними с неё",
+            "без одежды", "полностью голая", "сделай её голой", "сними одежду", "раздень её",
+            # Portuguese
+            "tira a roupa", "remove a roupa", "tira as roupas", "despir", "nua", "pelada", "nua", "tira dela",
+            "sem roupa", "completamente nua", "deixa ela nua", "remove a roupa", "despir ela"
         ],
         "lora_key": "undress",
         "strength": 0.90,
@@ -125,8 +234,30 @@ EXPLICIT_PRESETS = [
     {
         "name": "masturbate",
         "tailored_keywords": [
+            # English
             "masturbate", "masturbation", "touch herself", "finger herself", "rub her pussy", "fingering", "finger",
-            "play with herself", "self pleasure", "fingering herself"
+            "play with herself", "self pleasure", "fingering herself",
+            # Spanish
+            "masturbarse", "masturbación", "tocarse", "meterse los dedos", "frotarse el coño", "dedos", "dedo",
+            "jugar consigo misma", "placerse", "dedos en ella",
+            # Arabic
+            "تستمني", "استمناء", "تتحسس نفسها", "تحط صوابعها", "تفرك كسها", "صوابع", "صباع",
+            "تلعب بنفسها", "متعة ذاتية", "صوابعها في كسها",
+            # Hindi
+            "हस्तमैथुन", "हस्तमैथुन", "खुद को छूना", "उंगली करना", "चूत रगड़ना", "उंगली", "उंगली",
+            "खुद से खेलना", "स्वयं आनंद", "उंगली करना",
+            # Urdu
+            "مشت زنی", "مشت زنی", "اپنے آپ کو چھونا", "انگلی کرنا", "چوت رگڑنا", "انگلی", "انگلی",
+            "اپنے ساتھ کھیلنا", "خود لذت", "انگلی کرنا",
+            # Bengali
+            "হস্তমৈথুন", "হস্তমৈথুন", "নিজেকে স্পর্শ", "আঙুল করা", "চোদা ঘষা", "আঙুল", "আঙুল",
+            "নিজের সাথে খেলা", "স্ব-সুখ", "আঙুল করা",
+            # Russian
+            "мастурбирует", "мастурбация", "трогает себя", "пальчиками", "трёт киску", "пальцы", "палец",
+            "играет с собой", "самоудовлетворение", "пальчики в киске",
+            # Portuguese
+            "se masturbar", "masturbação", "se tocar", "meter o dedo", "esfregar a buceta", "dedo", "dedos",
+            "brincar consigo mesma", "auto prazer", "dedando ela"
         ],
         "lora_key": "masturbate",
         "strength": 0.90,
@@ -141,8 +272,30 @@ EXPLICIT_PRESETS = [
     {
         "name": "blowjob",
         "tailored_keywords": [
+            # English
             "sucking", "blowjob", "blow job", "deepthroat", "deep throat", "suck", "chock on",
-            "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio"
+            "facefuck", "face fuck", "oral", "cocksucking", "throat fuck", "irrumatio",
+            # Spanish
+            "chupando", "mamada", "blowjob", "deepthroat", "garganta profunda", "chupar", "ahogarse",
+            "facefuck", "follar la cara", "oral", "chupar la polla", "follar la garganta", "irrumatio",
+            # Arabic
+            "بتمص", "مص", "بلو جوب", "ديب ثروت", "بلع الزب", "تمص", "بتشرق",
+            "نيك الوجه", "نيك الوش", "فموي", "مص الزب", "نيك الحلق",
+            # Hindi
+            "चूसना", "ब्लो जॉब", "ब्लो जॉब", "डीप थ्रोट", "गला तक", "चूसो", "घुट",
+            "फेस फक", "चेहरा चोदो", "ओरल", "लंड चूसना", "गला चोदो",
+            # Urdu
+            "چوسنا", "بلو جاب", "بلو جاب", "ڈیپ تھروٹ", "گلا تک", "چوسو", "گلا گھٹنا",
+            "فیس فک", "چہرہ چودو", "اورل", "لنڈ چوسنا", "گلا چودو",
+            # Bengali
+            "চুষছে", "ব্লোজব", "ব্লো জব", "ডিপ থ্রোট", "গলা পর্যন্ত", "চুষো", "গলায় আটকানো",
+            "ফেস ফাক", "মুখ চোদা", "ওরাল", "লন্ড চোষা", "গলা চোদা",
+            # Russian
+            "сосёт", "минет", "блуджоб", "диптроут", "глубокий минет", "сосать", "давится",
+            "фейсфак", "в лицо", "оральный", "сосет хуй", "в горло",
+            # Portuguese
+            "chupando", "boquete", "blowjob", "deepthroat", "garganta profunda", "chupar", "engasgar",
+            "facefuck", "foder a cara", "oral", "chupar o pau", "foder a garganta"
         ],
         "lora_key": "blowjob",
         "strength": 0.90,
@@ -517,7 +670,7 @@ def handler(job):
         import traceback
         return {"error": str(e), "traceback": traceback.format_exc()}
 
-print("Starting ComfyUI (Wan 2.2 + Dual Lightning – 6 styles + HIGH/LOW pairs)...")
+print("Starting ComfyUI (Wan 2.2 + Dual Lightning – 6 styles + HIGH/LOW pairs + Multi-language)...")
 start_comfyui()
 print("Ready for jobs.")
 runpod.serverless.start({"handler": handler})
