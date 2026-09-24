@@ -57,39 +57,39 @@ OPENCLIP_CANDIDATES = [
 # Style LoRAs (HIGH + LOW pairs) + Dual Lightning
 LORAS = [
     # ── Undress ──
-    ("https://huggingface.co/onamissiononamission/iGoon_Blink_Nude_Posing_I2V/resolve/main/iGoon_Blink_Nude_Posing_I2V_HIGH.safetensors",
+    ("https://huggingface.co/buckets/chidera1568/nudely-models/resolve/undress-style/iGoon_Blink_Nude_Posing_I2V_HIGH.safetensors?download=true",
      f"{LORAS_DIR}/lora_undress_high.safetensors", "LoRA: Undress HIGH"),
-    ("https://huggingface.co/onamissiononamission/iGoon_Blink_Nude_Posing_I2V/resolve/main/iGoon_Blink_Nude_Posing_I2V_LOW.safetensors",
+    ("https://huggingface.co/buckets/chidera1568/nudely-models/resolve/undress-style/iGoon_Blink_Nude_Posing_I2V_LOW.safetensors?download=true",
      f"{LORAS_DIR}/lora_undress_low.safetensors", "LoRA: Undress LOW"),
 
     # ── Masturbate ──
-    ("https://huggingface.co/chidera1568/clothlessly/resolve/main/iGoon_Blink_Fingering_HIGH.safetensors",
+    ("https://huggingface.co/buckets/chidera1568/nudely-models/resolve/masturbate-style/iGoon_Blink_Fingering_HIGH.safetensors?download=true",
      f"{LORAS_DIR}/lora_masturbate_high.safetensors", "LoRA: Masturbate HIGH"),
-    ("https://huggingface.co/chidera1568/clothlessly/resolve/main/iGoon_Blink_Fingering_LOW.safetensors",
+    ("https://huggingface.co/buckets/chidera1568/nudely-models/resolve/masturbate-style/iGoon_Blink_Fingering_LOW.safetensors?download=true",
      f"{LORAS_DIR}/lora_masturbate_low.safetensors", "LoRA: Masturbate LOW"),
 
     # ── Missionary ──
-    ("https://civitaiarchive.com/api/download/models/2496698",
+    ("https://huggingface.co/buckets/chidera1568/nudely-models/resolve/missionary-style/iGoon_Blink_Missionary_I2V_HIGH%2520v2.safetensors?download=true",
      f"{LORAS_DIR}/lora_missionary_high.safetensors", "LoRA: Missionary HIGH"),
-    ("https://civitaiarchive.com/api/download/models/2496740",
+    ("https://huggingface.co/buckets/chidera1568/nudely-models/resolve/missionary-style/iGoon%2520-%2520Blink_Missionary_I2V_LOW%2520v2.safetensors?download=true",
      f"{LORAS_DIR}/lora_missionary_low.safetensors", "LoRA: Missionary LOW"),
 
     # ── Doggy ──
-    ("https://civitaiarchive.com/api/download/models/2513548",
+    ("https://huggingface.co/buckets/chidera1568/nudely-models/resolve/doggy-style/iGoon%2520-%2520Blink_Back_Doggystyle_HIGH.safetensors?download=true",
      f"{LORAS_DIR}/lora_doggy_high.safetensors", "LoRA: Doggy HIGH"),
-    ("https://civitaiarchive.com/api/download/models/2513563",
+    ("https://huggingface.co/buckets/chidera1568/nudely-models/resolve/doggy-style/iGoon%2520-%2520Blink_Back_Doggystyle_LOW.safetensors?download=true",
      f"{LORAS_DIR}/lora_doggy_low.safetensors", "LoRA: Doggy LOW"),
 
     # ── Blowjob ──
-    ("https://huggingface.co/onamissiononamission/Blink-Blowjob-I2V-I2V-v1.0/resolve/main/iGOON_Blink_Blowjob_I2V_HIGH(1).safetensors",
+    ("https://huggingface.co/buckets/chidera1568/nudely-models/resolve/blowjob-style/iGOON_Blink_Blowjob_I2V_HIGH%25281%2529.safetensors?download=true",
      f"{LORAS_DIR}/lora_blowjob_high.safetensors", "LoRA: Blowjob HIGH"),
-    ("https://huggingface.co/onamissiononamission/Blink-Blowjob-I2V-I2V-v1.0/resolve/main/iGOON_Blink_Blowjob_I2V_LOW(1).safetensors",
+    ("https://huggingface.co/buckets/chidera1568/nudely-models/resolve/blowjob-style/iGOON_Blink_Blowjob_I2V_LOW%25281%2529.safetensors?download=true",
      f"{LORAS_DIR}/lora_blowjob_low.safetensors", "LoRA: Blowjob LOW"),
 
     # ── Facial Cumshot ──
-    ("https://civitaiarchive.com/api/download/models/2508339",
+    ("https://huggingface.co/buckets/chidera1568/nudely-models/resolve/facialcumshot-style/wan22-f4c3spl4sh-100epoc-high-k3nk.safetensors?download=true",
      f"{LORAS_DIR}/lora_facial_cumshot_high.safetensors", "LoRA: Facial Cumshot HIGH"),
-    ("https://civitaiarchive.com/api/download/models/2508356",
+    ("https://huggingface.co/buckets/chidera1568/nudely-models/resolve/facialcumshot-style/wan22-f4c3spl4sh-154epoc-low-k3nk.safetensors?download=true",
      f"{LORAS_DIR}/lora_facial_cumshot_low.safetensors", "LoRA: Facial Cumshot LOW"),
 
     # ── Dual Lightning (already correct) ──
