@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-// ====================== TRANSLATION ======================
+// ====================== TRANSLATIONS ======================
 const translations: any = {
   en: {
     choose_language: "Please choose your language:",
@@ -153,10 +153,10 @@ function t(key: string, lang: string = 'en', vars: Record<string, any> = {}) {
   return text;
 }
 
-async function getUserLanguage(supabase: any, telegramUserId: string) {
+async function getUserLanguage(supabase: any, telegramUserId: string, userTable: string = 'telegram_users') {
   try {
     const { data } = await supabase
-      .from('telegram_users')
+      .from(userTable)
       .select('language')
       .eq('telegram_user_id', telegramUserId)
       .maybeSingle();
@@ -262,14 +262,11 @@ export const onRequestPost = async (context: any) => {
 
   // ── ROUTING & AUTHENTICATION ─────────────────────────────────────────────
   
-  // BRANCH A: Legacy Bot Routing (Your original single bot)
   if (env.TELEGRAM_WEBHOOK_SECRET && secretHeader === env.TELEGRAM_WEBHOOK_SECRET) {
     isLegacyBot = true;
     BOT_TOKEN = env.IMAGE_TELEGRAM_BOT_TOKEN;
     supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
-  } 
-  // BRANCH B: Dynamic Bot Fleet Routing (Manager created bots)
-  else {
+  } else {
     const fleetSupabaseUrl = env.SHARED_SUPABASE_URL || env.VITE_SUPABASE_URL;
     const fleetServiceKey = env.SHARED_SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -287,8 +284,17 @@ export const onRequestPost = async (context: any) => {
 
     botRecord = data;
     BOT_TOKEN = data.bot_token;
-    supabase = fleetSupabase; // Direct all user & job queries to the new database
+    supabase = fleetSupabase;
   }
+
+  // Dynamic table mapping according to active Supabase instance
+  const TABLES = {
+    USERS: 'telegram_users',
+    JOBS: isLegacyBot ? 'image_edits' : 'jobs',
+    PURCHASES: isLegacyBot ? 'telegram_purchases' : 'star_purchases',
+  };
+
+  const botmanagerId = isLegacyBot ? null : botRecord?.botmanager_id;
 
   let update: any;
   try {
@@ -305,18 +311,19 @@ export const onRequestPost = async (context: any) => {
     const firstName = update.message.from?.first_name || 'there';
 
     const { data: existing } = await supabase
-      .from('telegram_users')
+      .from(TABLES.USERS)
       .select('id, stars, language')
       .eq('telegram_user_id', tgUserId)
       .maybeSingle();
 
     if (!existing) {
-      await supabase.from('telegram_users').insert({
+      await supabase.from(TABLES.USERS).insert({
         telegram_user_id: tgUserId,
         telegram_username: tgUsername,
         first_name: firstName,
         stars: FREE_STARS,
         language: null,
+        ...(botmanagerId ? { botmanager_id: botmanagerId } : {}),
       });
     }
 
@@ -341,7 +348,7 @@ export const onRequestPost = async (context: any) => {
   if (update.message?.text === '/language') {
     const chatId = update.message.chat.id;
     const tgUserId = String(update.message.from.id);
-    const lang = await getUserLanguage(supabase, tgUserId);
+    const lang = await getUserLanguage(supabase, tgUserId, TABLES.USERS);
 
     await sendMessage(BOT_TOKEN, chatId, t('choose_language', lang), {
       reply_markup: languageMenu(),
@@ -356,15 +363,13 @@ export const onRequestPost = async (context: any) => {
     const chatId = update.callback_query.message.chat.id;
     const firstName = update.callback_query.from.first_name || 'there';
 
-    // Update user language
     await supabase
-      .from('telegram_users')
+      .from(TABLES.USERS)
       .update({ language: lang })
       .eq('telegram_user_id', tgUserId);
     
-    // Also update all pending purchases of this user
     await supabase
-      .from('telegram_purchases')
+      .from(TABLES.PURCHASES)
       .update({ language: lang })
       .eq('telegram_user_id', tgUserId)
       .eq('status', 'pending');
@@ -403,10 +408,10 @@ export const onRequestPost = async (context: any) => {
   if (update.message?.text === '/credits' || update.message?.text === '/stars') {
     const chatId = update.message.chat.id;
     const tgUserId = String(update.message.from.id);
-    const lang = await getUserLanguage(supabase, tgUserId);
+    const lang = await getUserLanguage(supabase, tgUserId, TABLES.USERS);
 
     const { data: user } = await supabase
-      .from('telegram_users')
+      .from(TABLES.USERS)
       .select('stars')
       .eq('telegram_user_id', tgUserId)
       .maybeSingle();
@@ -417,7 +422,7 @@ export const onRequestPost = async (context: any) => {
 
   // ── /buy ─────────────────────────────────────────────────────────────────
   if (update.message?.text === '/buy') {
-    const lang = await getUserLanguage(supabase, String(update.message.from.id));
+    const lang = await getUserLanguage(supabase, String(update.message.from.id), TABLES.USERS);
     await sendMessage(BOT_TOKEN, update.message.chat.id, t('pick_package', lang), {
       reply_markup: creditMenu(),
     });
@@ -430,7 +435,7 @@ export const onRequestPost = async (context: any) => {
     const tgUserId = String(update.message.from.id);
     const caption = update.message.caption || '';
     const updateId = update.update_id;
-    const lang = await getUserLanguage(supabase, tgUserId);
+    const lang = await getUserLanguage(supabase, tgUserId, TABLES.USERS);
 
     if (!caption) {
       await sendMessage(BOT_TOKEN, chatId, t('need_caption', lang));
@@ -438,7 +443,7 @@ export const onRequestPost = async (context: any) => {
     }
 
     const { data: alreadyProcessed } = await supabase
-      .from('image_edits')
+      .from(TABLES.JOBS)
       .select('id')
       .eq('telegram_update_id', updateId)
       .maybeSingle();
@@ -463,7 +468,7 @@ export const onRequestPost = async (context: any) => {
 
       const { data: publicUrlData } = supabase.storage.from('bot-edits').getPublicUrl(refFileName);
 
-      await supabase.from('image_edits').insert({
+      await supabase.from(TABLES.JOBS).insert({
         telegram_user_id: tgUserId,
         instruction: caption,
         user_prompt: caption,
@@ -472,6 +477,7 @@ export const onRequestPost = async (context: any) => {
         telegram_update_id: updateId,
         telegram_chat_id: String(chatId),
         job_type: null,
+        ...(botmanagerId ? { botmanager_id: botmanagerId } : {}),
       });
 
       await sendMessage(BOT_TOKEN, chatId, t('how_do_you_want', lang), {
@@ -493,7 +499,7 @@ export const onRequestPost = async (context: any) => {
     const isVideo = query.data === 'choose_video';
     const cost = isVideo ? STARS_VIDEO : STARS_IMAGE;
     const jobType = isVideo ? 'video' : 'image';
-    const lang = await getUserLanguage(supabase, tgUserId);
+    const lang = await getUserLanguage(supabase, tgUserId, TABLES.USERS);
 
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
       method: 'POST',
@@ -501,7 +507,6 @@ export const onRequestPost = async (context: any) => {
       body: JSON.stringify({ callback_query_id: query.id }),
     });
 
-    // Check Manager Bot Star Balance (if Dynamic Bot)
     if (!isLegacyBot && botRecord) {
       if (botRecord.bot_star_balance < cost) {
         await sendMessage(
@@ -514,7 +519,7 @@ export const onRequestPost = async (context: any) => {
     }
 
     const { data: user } = await supabase
-      .from('telegram_users')
+      .from(TABLES.USERS)
       .select('stars')
       .eq('telegram_user_id', tgUserId)
       .maybeSingle();
@@ -529,7 +534,7 @@ export const onRequestPost = async (context: any) => {
     }
 
     const { data: pending } = await supabase
-      .from('image_edits')
+      .from(TABLES.JOBS)
       .select('*')
       .eq('telegram_user_id', tgUserId)
       .eq('status', 'awaiting_choice')
@@ -577,7 +582,6 @@ export const onRequestPost = async (context: any) => {
 
       const job = await editRes.json();
 
-      // Deduct stars from Manager's Bot allocated balance (if dynamic)
       if (!isLegacyBot && botRecord) {
         await supabase
           .from('managers_bots')
@@ -590,7 +594,7 @@ export const onRequestPost = async (context: any) => {
       }
 
       await supabase
-        .from('image_edits')
+        .from(TABLES.JOBS)
         .update({
           status: 'processing',
           job_type: jobType,
@@ -613,7 +617,7 @@ export const onRequestPost = async (context: any) => {
     const tgUserId = String(query.from.id);
     const packageId = query.data.replace('buy_', '');
     const pkg = PACKAGES[packageId];
-    const lang = await getUserLanguage(supabase, tgUserId);
+    const lang = await getUserLanguage(supabase, tgUserId, TABLES.USERS);
 
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
       method: 'POST',
@@ -624,13 +628,14 @@ export const onRequestPost = async (context: any) => {
     if (!pkg) return new Response('OK');
 
     const { data: purchase } = await supabase
-      .from('telegram_purchases')
+      .from(TABLES.PURCHASES)
       .insert({
         telegram_user_id: tgUserId,
         package_name: pkg.name,
         stars: pkg.stars,
         status: 'pending',
         language: lang,
+        ...(botmanagerId ? { botmanager_id: botmanagerId } : {}),
       })
       .select('id')
       .single();
@@ -662,10 +667,10 @@ export const onRequestPost = async (context: any) => {
     const chatId = update.message.chat.id;
     const tgUserId = String(update.message.from.id);
     const purchaseId = update.message.successful_payment.invoice_payload;
-    const lang = await getUserLanguage(supabase, tgUserId);
+    const lang = await getUserLanguage(supabase, tgUserId, TABLES.USERS);
 
     const { data: purchase } = await supabase
-      .from('telegram_purchases')
+      .from(TABLES.PURCHASES)
       .select('stars, package_name, incentive_offered, extra_stars, extra_images, extra_videos, incentive_claimed, language')
       .eq('id', purchaseId)
       .maybeSingle();
@@ -678,7 +683,7 @@ export const onRequestPost = async (context: any) => {
       }
 
       const { data: user } = await supabase
-        .from('telegram_users')
+        .from(TABLES.USERS)
         .select('stars')
         .eq('telegram_user_id', tgUserId)
         .maybeSingle();
@@ -686,12 +691,12 @@ export const onRequestPost = async (context: any) => {
       const newBalance = (user?.stars || 0) + starsToAdd;
 
       await supabase
-        .from('telegram_users')
+        .from(TABLES.USERS)
         .update({ stars: newBalance })
         .eq('telegram_user_id', tgUserId);
 
       await supabase
-        .from('telegram_purchases')
+        .from(TABLES.PURCHASES)
         .update({ status: 'sold', incentive_claimed: true })
         .eq('id', purchaseId);
 
