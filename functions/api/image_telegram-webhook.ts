@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-// ====================== TRANSLATIONS ======================
+// ====================== TRANSLATION ======================
 const translations: any = {
   en: {
     choose_language: "Please choose your language:",
@@ -71,7 +71,7 @@ const translations: any = {
     how_do_you_want: "آپ کیسے چاہتے ہیں؟",
     image_btn: "🖼 تصویر — {{cost}} ⭐",
     video_btn: "🎬 ویڈیو — {{cost}} ⭐",
-    not_enough: "⚠️ کافی ستارے نہیں ہیں۔\n\nآپ کو چاہیے:\n• تصویر کے لیے {{img}} ⭐\n• ویڈیو کے لیے {{vid}} ⭐\n\nموجودہ بیلنس: <b>{{balance}} ⭐</b>\n\nٹاپ اپ کے لیے /buy کریں۔",
+    not_enough: "⚠️ کافی ستارے نہیں ہیں۔\n\nآپ کو چاہیے:\n• تصویر کے لیے {{img}} ⭐\n• ویڈیو کے لیے {{vid}} ⭐\n\nموجودہ بیلنس: <b>{{balance}} ستارے</b>\n\nٹاپ اپ کے لیے /buy کریں۔",
     no_pending: "کوئی زیر التوا تصویر نہیں ملی۔ براہ کرم نئی تصویر بھیجیں۔",
     generating_image: "🖼 آپ کی تصویر ایڈٹ ہو رہی ہے... عام طور پر 20–30 سیکنڈ لگتے ہیں۔",
     generating_video: "🎬 آپ کی ویڈیو بن رہی ہے... عام طور پر 60–90 سیکنڈ لگتے ہیں۔",
@@ -253,15 +253,42 @@ function choiceMenu(lang: string) {
 
 export const onRequestPost = async (context: any) => {
   const env = context.env;
-  const BOT_TOKEN = env.IMAGE_TELEGRAM_BOT_TOKEN;
-  const WEBHOOK_SECRET = env.TELEGRAM_WEBHOOK_SECRET;
   const secretHeader = context.request.headers.get('X-Telegram-Bot-Api-Secret-Token');
 
-  if (WEBHOOK_SECRET && secretHeader !== WEBHOOK_SECRET) {
-    return new Response('Unauthorized', { status: 401 });
-  }
+  let BOT_TOKEN: string = '';
+  let supabase: any = null;
+  let botRecord: any = null;
+  let isLegacyBot = false;
 
-  const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+  // ── ROUTING & AUTHENTICATION ─────────────────────────────────────────────
+  
+  // BRANCH A: Legacy Bot Routing (Your original single bot)
+  if (env.TELEGRAM_WEBHOOK_SECRET && secretHeader === env.TELEGRAM_WEBHOOK_SECRET) {
+    isLegacyBot = true;
+    BOT_TOKEN = env.IMAGE_TELEGRAM_BOT_TOKEN;
+    supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+  } 
+  // BRANCH B: Dynamic Bot Fleet Routing (Manager created bots)
+  else {
+    const fleetSupabaseUrl = env.SHARED_SUPABASE_URL || env.VITE_SUPABASE_URL;
+    const fleetServiceKey = env.SHARED_SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const fleetSupabase = createClient(fleetSupabaseUrl, fleetServiceKey);
+
+    const { data, error } = await fleetSupabase
+      .from('managers_bots')
+      .select('*')
+      .eq('webhook_secret', secretHeader)
+      .single();
+
+    if (error || !data) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+
+    botRecord = data;
+    BOT_TOKEN = data.bot_token;
+    supabase = fleetSupabase; // Direct all user & job queries to the new database
+  }
 
   let update: any;
   try {
@@ -474,6 +501,18 @@ export const onRequestPost = async (context: any) => {
       body: JSON.stringify({ callback_query_id: query.id }),
     });
 
+    // Check Manager Bot Star Balance (if Dynamic Bot)
+    if (!isLegacyBot && botRecord) {
+      if (botRecord.bot_star_balance < cost) {
+        await sendMessage(
+          BOT_TOKEN,
+          chatId,
+          "⚠️ This bot is currently out of Star Credits. Please contact the bot owner to top up!"
+        );
+        return new Response('OK');
+      }
+    }
+
     const { data: user } = await supabase
       .from('telegram_users')
       .select('stars')
@@ -538,6 +577,18 @@ export const onRequestPost = async (context: any) => {
 
       const job = await editRes.json();
 
+      // Deduct stars from Manager's Bot allocated balance (if dynamic)
+      if (!isLegacyBot && botRecord) {
+        await supabase
+          .from('managers_bots')
+          .update({
+            bot_star_balance: botRecord.bot_star_balance - cost,
+            star_spent: (botRecord.star_spent || 0) + cost,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', botRecord.id);
+      }
+
       await supabase
         .from('image_edits')
         .update({
@@ -579,7 +630,7 @@ export const onRequestPost = async (context: any) => {
         package_name: pkg.name,
         stars: pkg.stars,
         status: 'pending',
-        language: lang,          // ← Add this line
+        language: lang,
       })
       .select('id')
       .single();
