@@ -12,6 +12,7 @@ const translations: any = {
     image_btn: "🖼 Image — {{cost}} ⭐",
     video_btn: "🎬 Video — {{cost}} ⭐",
     not_enough: "⚠️ Not enough stars.\n\nYou need:\n• {{img}} ⭐ for an Image\n• {{vid}} ⭐ for a Video\n\nYou currently have <b>{{balance}} ⭐</b>.\n\nUse /buy to top up.",
+    bot_no_reserve: "⚠️ <b>Service Temporarily Paused</b>\n\nThis bot currently does not have enough reserve stars to process AI generations.\n\n• <b>User:</b> Please contact the bot owner/admin.\n• <b>Bot Manager:</b> Please add reserve stars to this bot's <b>Assigned Stars Budget</b> in your dashboard.",
     no_pending: "No pending photo found. Please send a new photo.",
     generating_image: "🖼 Editing your photo... this usually takes 20–30 seconds.",
     generating_video: "🎬 Generating your video... this usually takes 60–90 seconds.",
@@ -32,6 +33,7 @@ const translations: any = {
     image_btn: "🖼 صورة — {{cost}} ⭐",
     video_btn: "🎬 فيديو — {{cost}} ⭐",
     not_enough: "⚠️ ليس لديك نجوم كافية.\n\nتحتاج:\n• {{img}} ⭐ للصورة\n• {{vid}} ⭐ للفيديو\n\nرصيدك الحالي: <b>{{balance}} ⭐</b>\n\nاستخدم /buy لإضافة رصيد.",
+    bot_no_reserve: "⚠️ <b>الخدمة متوقفة مؤقتاً</b>\n\nلا يمتلك هذا البوت رصيد نجوم احتياطي كافٍ لإنشاء الصور والفيديوهات.\n\n• <b>المستخدم:</b> يرجى التواصل مع مالك البوت.\n• <b>مدير البوت:</b> يرجى إضافة نجوم إلى ميزانية البوت المخصصة من لوحة التحكم.",
     no_pending: "لم يتم العثور على صورة قيد الانتظار. يرجى إرسال صورة جديدة.",
     generating_image: "🖼 جاري تعديل صورتك... عادة ما يستغرق 20–30 ثانية.",
     generating_video: "🎬 جاري إنشاء الفيديو... عادة ما يستغرق 60–90 ثانية.",
@@ -52,6 +54,7 @@ const translations: any = {
     image_btn: "🖼 इमेज — {{cost}} ⭐",
     video_btn: "🎬 वीडियो — {{cost}} ⭐",
     not_enough: "⚠️ पर्याप्त स्टार्स नहीं हैं।\n\nआपको चाहिए:\n• इमेज के लिए {{img}} ⭐\n• वीडियो के लिए {{vid}} ⭐\n\nवर्तमान बैलेंस: <b>{{balance}} ⭐</b>\n\nटॉप-अप के लिए /buy करें।",
+    bot_no_reserve: "⚠️ <b>सेवा अस्थायी रूप से निलंबित</b>\n\nइस बॉट के पास जनरेशन के लिए पर्याप्त रिजर्व स्टार्स नहीं हैं।\n\n• <b>उपयोगकर्ता:</b> कृपया बॉट के मालिक से संपर्क करें।\n• <b>बॉट मैनेजर:</b> कृपया अपने डैशबोर्ड से इस बॉट के बजट में स्टार्स जोड़ें।",
     no_pending: "कोई लंबित फोटो नहीं मिली। कृपया नई फोटो भेजें।",
     generating_image: "🖼 आपकी फोटो एडिट हो रही है... आमतौर पर 20–30 सेकंड लगते हैं।",
     generating_video: "🎬 आपका वीडियो बन रहा है... आमतौर पर 60–90 सेकंड लगते हैं।",
@@ -72,6 +75,7 @@ const translations: any = {
     image_btn: "🖼 تصویر — {{cost}} ⭐",
     video_btn: "🎬 ویڈیو — {{cost}} ⭐",
     not_enough: "⚠️ کافی ستارے نہیں ہیں۔\n\nآپ کو چاہیے:\n• تصویر کے لیے {{img}} ⭐\n• ویڈیو کے لیے {{vid}} ⭐\n\nموجودہ بیلنس: <b>{{balance}} ستارے</b>\n\nٹاپ اپ کے لیے /buy کریں۔",
+    bot_no_reserve: "⚠️ <b>سروس عارضی طور پر معطل ہے</b>\n\nاس بوٹ کے پاس جنریشنز کے لیے کافی ریزرو ستارے موجود نہیں ہیں۔\n\n• <b>صارف:</b> براہ کرم بوٹ کے مالک سے رابطہ کریں۔\n• <b>بوٹ مینیجر:</b> براہ کرم اپنے ڈیش بورڈ سے اس بوٹ کے بجٹ میں ریزرو ستارے شامل کریں۔",
     no_pending: "کوئی زیر التوا تصویر نہیں ملی۔ براہ کرم نئی تصویر بھیجیں۔",
     generating_image: "🖼 آپ کی تصویر ایڈٹ ہو رہی ہے... عام طور پر 20–30 سیکنڈ لگتے ہیں۔",
     generating_video: "🎬 آپ کی ویڈیو بن رہی ہے... عام طور پر 60–90 سیکنڈ لگتے ہیں۔",
@@ -92,6 +96,7 @@ const translations: any = {
     image_btn: "🖼 ইমেজ — {{cost}} ⭐",
     video_btn: "🎬 ভিডিও — {{cost}} ⭐",
     not_enough: "⚠️ পর্যাপ্ত স্টার নেই।\n\nআপনার দরকার:\n• ইমেজের জন্য {{img}} ⭐\n• ভিডিওর জন্য {{vid}} ⭐\n\nবর্তমান ব্যালেন্স: <b>{{balance}} ⭐</b>\n\nটপ-আপ করতে /buy করুন।",
+    bot_no_reserve: "⚠️ <b>পরিষেবা সাময়িকভাবে বন্ধ</b>\n\nএই বোটের কাছে জেনারেশনের জন্য পর্যাপ্ত রিজার্ভ স্টার নেই।\n\n• <b>ব্যবহারকারী:</b> অনুগ্রহ করে বোটের মালিকের সাথে যোগাযোগ করুন।\n• <b>বোট ম্যানেজার:</b> অনুগ্রহ করে ড্যাশবোর্ড থেকে বোটের বাজেটে স্টার যুক্ত করুন।",
     no_pending: "কোনো অপেক্ষমাণ ছবি পাওয়া যায়নি। অনুগ্রহ করে নতুন ছবি পাঠান।",
     generating_image: "🖼 আপনার ছবি এডিট করা হচ্ছে... সাধারণত ২০–৩০ সেকেন্ড লাগে।",
     generating_video: "🎬 আপনার ভিডিও তৈরি হচ্ছে... সাধারণত ৬০–৯০ সেকেন্ড লাগে।",
@@ -112,6 +117,7 @@ const translations: any = {
     image_btn: "🖼 Изображение — {{cost}} ⭐",
     video_btn: "🎬 Видео — {{cost}} ⭐",
     not_enough: "⚠️ Недостаточно звёзд.\n\nТебе нужно:\n• {{img}} ⭐ за изображение\n• {{vid}} ⭐ за видео\n\nТекущий баланс: <b>{{balance}} ⭐</b>\n\nИспользуй /buy для пополнения.",
+    bot_no_reserve: "⚠️ <b>Сервис временно приостановлен</b>\n\nУ этого бота недостаточно резервных звёзд для генерации.\n\n• <b>Пользователь:</b> Свяжитесь с владельцем бота.\n• <b>Менеджер бота:</b> Пополните баланс звёзд бота в панели управления.",
     no_pending: "Ожидающее фото не найдено. Пожалуйста, отправь новое фото.",
     generating_image: "🖼 Редактирую твоё фото... обычно занимает 20–30 секунд.",
     generating_video: "🎬 Создаю видео... обычно занимает 60–90 секунд.",
@@ -132,6 +138,7 @@ const translations: any = {
     image_btn: "🖼 Imagen — {{cost}} ⭐",
     video_btn: "🎬 Video — {{cost}} ⭐",
     not_enough: "⚠️ No tienes suficientes estrellas.\n\nNecesitas:\n• {{img}} ⭐ para una Imagen\n• {{vid}} ⭐ para un Video\n\nSaldo actual: <b>{{balance}} ⭐</b>\n\nUsa /buy para recargar.",
+    bot_no_reserve: "⚠️ <b>Servicio pausado temporalmente</b>\n\nEste bot no tiene suficientes estrellas de reserva para procesar generaciones.\n\n• <b>Usuario:</b> Por favor contacta al dueño del bot.\n• <b>Manager del bot:</b> Recarga el presupuesto de estrellas en tu panel.",
     no_pending: "No se encontró ninguna foto pendiente. Por favor envía una nueva foto.",
     generating_image: "🖼 Editando tu foto... normalmente tarda 20–30 segundos.",
     generating_video: "🎬 Generando tu video... normalmente tarda 60–90 segundos.",
@@ -176,8 +183,9 @@ const PACKAGES: Record<string, { name: string; stars: number }> = {
   pack4500: { name: '562 Img / 281 vid', stars: 4500 },
 };
 
-const STARS_IMAGE = 8;
-const STARS_VIDEO = 16;
+// Base Wholesale Costs (COGS)
+const BASE_IMAGE_COST = 8;
+const BASE_VIDEO_COST = 16;
 const FREE_STARS = 8;
 
 const IMAGE_HANDLER_URL = 'https://api.runpod.ai/v2/em5th9pvdrelyb/run';
@@ -240,12 +248,12 @@ function creditMenu() {
   };
 }
 
-function choiceMenu(lang: string) {
+function choiceMenu(lang: string, imgCost: number, vidCost: number) {
   return {
     inline_keyboard: [
       [
-        { text: t('image_btn', lang, { cost: STARS_IMAGE }), callback_data: 'choose_image' },
-        { text: t('video_btn', lang, { cost: STARS_VIDEO }), callback_data: 'choose_video' },
+        { text: t('image_btn', lang, { cost: imgCost }), callback_data: 'choose_image' },
+        { text: t('video_btn', lang, { cost: vidCost }), callback_data: 'choose_video' },
       ],
     ],
   };
@@ -287,6 +295,10 @@ export const onRequestPost = async (context: any) => {
     supabase = fleetSupabase;
   }
 
+  // Dynamic cost resolution according to bot settings
+  const retailImageCost = !isLegacyBot && botRecord ? (Number(botRecord.image_cost) || 1) : BASE_IMAGE_COST;
+  const retailVideoCost = !isLegacyBot && botRecord ? (Number(botRecord.video_cost) || 5) : BASE_VIDEO_COST;
+
   // Dynamic table mapping according to active Supabase instance
   const TABLES = {
     USERS: 'telegram_users',
@@ -294,7 +306,7 @@ export const onRequestPost = async (context: any) => {
     PURCHASES: isLegacyBot ? 'telegram_purchases' : 'star_purchases',
   };
 
-  const botmanagerId = isLegacyBot ? null : botRecord?.botmanager_id;
+  const botmanagerId = isLegacyBot ? null : botRecord?.user_id || botRecord?.botmanager_id;
 
   let update: any;
   try {
@@ -337,8 +349,8 @@ export const onRequestPost = async (context: any) => {
     const lang = existing.language;
     await sendMessage(BOT_TOKEN, chatId, t('welcome', lang, {
       name: firstName,
-      img: STARS_IMAGE,
-      vid: STARS_VIDEO,
+      img: retailImageCost,
+      vid: retailVideoCost,
       free: FREE_STARS,
     }));
     return new Response('OK');
@@ -396,8 +408,8 @@ export const onRequestPost = async (context: any) => {
 
     await sendMessage(BOT_TOKEN, chatId, t('welcome', lang, {
       name: firstName,
-      img: STARS_IMAGE,
-      vid: STARS_VIDEO,
+      img: retailImageCost,
+      vid: retailVideoCost,
       free: FREE_STARS,
     }));
 
@@ -477,11 +489,12 @@ export const onRequestPost = async (context: any) => {
         telegram_update_id: updateId,
         telegram_chat_id: String(chatId),
         job_type: null,
+        ...(botRecord?.id ? { bot_id: botRecord.id } : {}),
         ...(botmanagerId ? { botmanager_id: botmanagerId } : {}),
       });
 
       await sendMessage(BOT_TOKEN, chatId, t('how_do_you_want', lang), {
-        reply_markup: choiceMenu(lang),
+        reply_markup: choiceMenu(lang, retailImageCost, retailVideoCost),
       });
     } catch (err: any) {
       console.error('[bot] photo error:', err);
@@ -497,7 +510,9 @@ export const onRequestPost = async (context: any) => {
     const chatId = query.message.chat.id;
     const tgUserId = String(query.from.id);
     const isVideo = query.data === 'choose_video';
-    const cost = isVideo ? STARS_VIDEO : STARS_IMAGE;
+    
+    const retailCost = isVideo ? retailVideoCost : retailImageCost;
+    const backendCost = isVideo ? BASE_VIDEO_COST : BASE_IMAGE_COST;
     const jobType = isVideo ? 'video' : 'image';
     const lang = await getUserLanguage(supabase, tgUserId, TABLES.USERS);
 
@@ -507,32 +522,32 @@ export const onRequestPost = async (context: any) => {
       body: JSON.stringify({ callback_query_id: query.id }),
     });
 
+    // 1. Check Bot Manager's Reserve Balance
     if (!isLegacyBot && botRecord) {
-      if (botRecord.bot_star_balance < cost) {
-        await sendMessage(
-          BOT_TOKEN,
-          chatId,
-          "⚠️ This bot is currently out of Star Credits. Please contact the bot owner to top up!"
-        );
+      const reserveBalance = Number(botRecord.bot_star_balance || 0);
+      if (reserveBalance < backendCost) {
+        await sendMessage(BOT_TOKEN, chatId, t('bot_no_reserve', lang));
         return new Response('OK');
       }
     }
 
+    // 2. Check End-User Star Balance
     const { data: user } = await supabase
       .from(TABLES.USERS)
       .select('stars')
       .eq('telegram_user_id', tgUserId)
       .maybeSingle();
 
-    if (!user || user.stars < cost) {
+    if (!user || user.stars < retailCost) {
       await sendMessage(BOT_TOKEN, chatId, t('not_enough', lang, {
-        img: STARS_IMAGE,
-        vid: STARS_VIDEO,
+        img: retailImageCost,
+        vid: retailVideoCost,
         balance: user?.stars ?? 0,
       }), { reply_markup: creditMenu() });
       return new Response('OK');
     }
 
+    // 3. Retrieve Pending Job
     const { data: pending } = await supabase
       .from(TABLES.JOBS)
       .select('*')
@@ -545,6 +560,25 @@ export const onRequestPost = async (context: any) => {
     if (!pending) {
       await sendMessage(BOT_TOKEN, chatId, t('no_pending', lang));
       return new Response('OK');
+    }
+
+    // 4. Pre-deduct Retail Cost from User & Backend Cost from Bot Reserve
+    const userPreviousStars = user.stars;
+    const botPreviousReserve = botRecord ? Number(botRecord.bot_star_balance || 0) : 0;
+
+    await supabase
+      .from(TABLES.USERS)
+      .update({ stars: userPreviousStars - retailCost })
+      .eq('telegram_user_id', tgUserId);
+
+    if (!isLegacyBot && botRecord) {
+      await supabase
+        .from('managers_bots')
+        .update({
+          bot_star_balance: botPreviousReserve - backendCost,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', botRecord.id);
     }
 
     try {
@@ -582,28 +616,33 @@ export const onRequestPost = async (context: any) => {
 
       const job = await editRes.json();
 
-      if (!isLegacyBot && botRecord) {
-        await supabase
-          .from('managers_bots')
-          .update({
-            bot_star_balance: botRecord.bot_star_balance - cost,
-            star_spent: (botRecord.star_spent || 0) + cost,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', botRecord.id);
-      }
-
       await supabase
         .from(TABLES.JOBS)
         .update({
           status: 'processing',
           job_type: jobType,
           runpod_job_id: job.id,
-          credits_charged: cost,
+          credits_charged: retailCost,
+          backend_cost: backendCost,
+          bot_id: botRecord?.id || null,
         })
         .eq('id', pending.id);
     } catch (err: any) {
-      console.error('[bot] job start failed:', err);
+      console.error('[bot] job start failed, rolling back:', err);
+
+      // Rollback pre-deductions on error
+      await supabase
+        .from(TABLES.USERS)
+        .update({ stars: userPreviousStars })
+        .eq('telegram_user_id', tgUserId);
+
+      if (!isLegacyBot && botRecord) {
+        await supabase
+          .from('managers_bots')
+          .update({ bot_star_balance: botPreviousReserve })
+          .eq('id', botRecord.id);
+      }
+
       await sendMessage(BOT_TOKEN, chatId, t('error_job', lang));
     }
 
@@ -640,7 +679,7 @@ export const onRequestPost = async (context: any) => {
       .select('id')
       .single();
 
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendInvoice`, {
+    await fetch(`https://api.telegram.org/sendInvoice`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
