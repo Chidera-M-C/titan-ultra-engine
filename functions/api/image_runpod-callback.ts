@@ -1,57 +1,63 @@
 import { createClient } from '@supabase/supabase-js';
 
-const STARS_IMAGE = 8;
-const STARS_VIDEO = 16;
-
-async function sendPhoto(token: string, chatId: number | string, photoBase64: string, caption?: string) {
-  const form = new FormData();
-  form.append('chat_id', String(chatId));
-  if (caption) form.append('caption', caption);
-
-  const byteCharacters = atob(photoBase64);
-  const byteArrays = [];
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteArrays.push(byteCharacters.charCodeAt(i));
+// ====================== TRANSLATIONS ======================
+const translations: any = {
+  en: {
+    job_completed: "✨ Your {{type}} is ready!",
+    job_failed: "❌ Generation failed. Your {{cost}} stars have been refunded to your balance.",
+  },
+  ar: {
+    job_completed: "✨ {{type}} الخاص بك جاهز!",
+    job_failed: "❌ فشلت عملية الإنشاء. تم إرجاع {{cost}} نجوم إلى رصيدك.",
+  },
+  hi: {
+    job_completed: "✨ आपका {{type}} तैयार है!",
+    job_failed: "❌ जनरेशन विफल रहा। आपके {{cost}} स्टार्स आपके बैलेंस में वापस कर दिए गए हैं।",
+  },
+  ur: {
+    job_completed: "✨ آپ کا {{type}} تیار ہے!",
+    job_failed: "❌ جنریشن ناکام ہوگئی۔ آپ کے {{cost}} ستارے آپ کے بیلنس میں واپس کر دیے گئے ہیں۔",
+  },
+  bn: {
+    job_completed: "✨ আপনার {{type}} তৈরি!",
+    job_failed: "❌ জেনারেশন ব্যর্থ হয়েছে। আপনার {{cost}} স্টার ব্যালেন্সে ফেরত দেওয়া হয়েছে।",
+  },
+  ru: {
+    job_completed: "✨ Ваш {{type}} готов!",
+    job_failed: "❌ Ошибка генерации. Ваши {{cost}} звёзд возвращены на баланс.",
+  },
+  es: {
+    job_completed: "✨ ¡Tu {{type}} está listo!",
+    job_failed: "❌ Error en la generación. Se te han reembolsado {{cost}} estrellas a tu saldo.",
   }
-  const blob = new Blob([new Uint8Array(byteArrays)], { type: 'image/jpeg' });
-  form.append('photo', blob, 'edited.jpg');
+};
 
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-    method: 'POST',
-    body: form,
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Telegram sendPhoto failed ${res.status}: ${text}`);
+function t(key: string, lang: string = 'en', vars: Record<string, any> = {}) {
+  const dict = translations[lang] || translations.en;
+  let text = dict[key] || translations.en[key] || key;
+  for (const [k, v] of Object.entries(vars)) {
+    text = text.replaceAll(`{{${k}}}`, String(v));
   }
+  return text;
 }
 
-async function sendVideo(token: string, chatId: number | string, videoBase64: string, caption?: string) {
-  const form = new FormData();
-  form.append('chat_id', String(chatId));
-  if (caption) form.append('caption', caption);
+async function sendTelegramMedia(token: string, chatId: string, mediaUrl: string, isVideo: boolean, caption: string) {
+  const endpoint = isVideo ? 'sendVideo' : 'sendPhoto';
+  const paramName = isVideo ? 'video' : 'photo';
 
-  const byteCharacters = atob(videoBase64);
-  const byteArrays = [];
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteArrays.push(byteCharacters.charCodeAt(i));
-  }
-  const blob = new Blob([new Uint8Array(byteArrays)], { type: 'video/mp4' });
-  form.append('video', blob, 'result.mp4');
-
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendVideo`, {
+  await fetch(`https://api.telegram.org/bot${token}/${endpoint}`, {
     method: 'POST',
-    body: form,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      [paramName]: mediaUrl,
+      caption,
+      parse_mode: 'HTML',
+    }),
   });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Telegram sendVideo failed ${res.status}: ${text}`);
-  }
 }
 
-async function sendMessage(token: string, chatId: number | string, text: string) {
+async function sendMessage(token: string, chatId: string, text: string) {
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -61,174 +67,151 @@ async function sendMessage(token: string, chatId: number | string, text: string)
 
 export const onRequestPost = async (context: any) => {
   const env = context.env;
-  const BOT_TOKEN = env.IMAGE_TELEGRAM_BOT_TOKEN;
-  const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
-
-  let body: any;
+  
+  let payload: any;
   try {
-    body = await context.request.json();
-  } catch (e) {
-    console.error('[callback] Failed to parse JSON body', e);
+    payload = await context.request.json();
+  } catch {
     return new Response('Bad Request', { status: 400 });
   }
 
-  const jobId = body.id;
-  const status = body.status;
+  const runpodJobId = payload.id;
+  const status = payload.status; // "COMPLETED" | "FAILED"
+  const output = payload.output;
 
-  console.log('[callback] job:', jobId, 'status:', status);
-
-  if (status !== 'COMPLETED' && status !== 'FAILED') {
-    return new Response('OK');
+  if (!runpodJobId) {
+    return new Response('Missing Job ID', { status: 400 });
   }
 
-  if (!jobId) return new Response('OK');
+  const supabaseUrl = env.SHARED_SUPABASE_URL || env.VITE_SUPABASE_URL;
+  const serviceKey = env.SHARED_SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabase = createClient(supabaseUrl, serviceKey);
 
-  const { data: edit, error: findError } = await supabase
-    .from('image_edits')
-    .select('id, telegram_user_id, telegram_chat_id, status, job_type, credits_charged')
-    .eq('runpod_job_id', jobId)
+  // 1. Locate Job in Supabase
+  let jobTable = 'jobs';
+  let { data: job, error: jobErr } = await supabase
+    .from('jobs')
+    .select('*')
+    .eq('runpod_job_id', runpodJobId)
     .maybeSingle();
 
-  if (findError || !edit) {
-    console.error('[callback] Edit not found for job', jobId);
-    return new Response('OK');
-  }
-
-  if (edit.status === 'done') {
-    return new Response('OK');
-  }
-
-  const chatId = edit.telegram_chat_id;
-  const tgUserId = edit.telegram_user_id;
-  const isVideo = edit.job_type === 'video';
-  const cost = edit.credits_charged || (isVideo ? STARS_VIDEO : STARS_IMAGE);
-
-  if (!chatId) return new Response('OK');
-
-  try {
-    if (status === 'FAILED' || body.error) {
-      throw new Error(body.error || 'RunPod job failed');
-    }
-
-    // ── Extract result ────────────────────────────────────────────────────
-    let resultBase64: string | null = null;
-
-    if (isVideo) {
-      // Video handler returns { video: "data:video/mp4;base64,..." }
-      resultBase64 =
-        body.output?.video ||
-        body.output?.videos?.[0] ||
-        (typeof body.output === 'string' ? body.output : null) ||
-        body.video ||
-        null;
-    } else {
-      // Image handler
-      resultBase64 =
-        body.output?.image ||
-        body.output?.images?.[0] ||
-        (Array.isArray(body.output) ? body.output[0]?.image || body.output[0] : null) ||
-        body.image ||
-        body.result?.image ||
-        null;
-
-      if (!resultBase64 && typeof body.output === 'string' && body.output.length > 500) {
-        resultBase64 = body.output;
-      }
-    }
-
-    if (!resultBase64) {
-      throw new Error(isVideo ? 'No video found in RunPod output' : 'No image found in RunPod output');
-    }
-
-    // Strip data URL prefix if present
-    if (resultBase64.startsWith('data:')) {
-      resultBase64 = resultBase64.split(',')[1];
-    }
-
-    // ── Upload to storage (optional but good for history) ─────────────────
-    const byteCharacters = atob(resultBase64);
-    const byteArrays = new Uint8Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteArrays[i] = byteCharacters.charCodeAt(i);
-    }
-
-    const contentType = isVideo ? 'video/mp4' : 'image/jpeg';
-    const ext = isVideo ? 'mp4' : 'jpg';
-    const blob = new Blob([byteArrays], { type: contentType });
-    const fileName = `edited/${edit.id}-${Date.now()}.${ext}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('bot-edits')
-      .upload(fileName, blob, {
-        contentType,
-        upsert: true,
-      });
-
-    if (uploadError) {
-      console.warn('[callback] Storage upload failed:', uploadError.message);
-      // Continue anyway – we still send the result to the user
-    }
-
-    const { data: publicUrlData } = supabase.storage
-      .from('bot-edits')
-      .getPublicUrl(fileName);
-    const resultUrl = publicUrlData.publicUrl;
-
-    // ── Deduct stars ──────────────────────────────────────────────────────
-    const { data: user } = await supabase
-      .from('telegram_users')
-      .select('stars')
-      .eq('telegram_user_id', tgUserId)
+  if (!job) {
+    jobTable = 'image_edits';
+    const { data: legacyJob } = await supabase
+      .from('image_edits')
+      .select('*')
+      .eq('runpod_job_id', runpodJobId)
       .maybeSingle();
+    job = legacyJob;
+  }
 
-    const newStars = Math.max(0, (user?.stars ?? 0) - cost);
+  if (!job) {
+    return new Response('Job Not Found', { status: 404 });
+  }
 
-    if (user) {
-      await supabase
-        .from('telegram_users')
-        .update({ stars: newStars })
-        .eq('telegram_user_id', tgUserId);
+  // Prevent duplicate webhook processing
+  if (job.status === 'completed' || job.status === 'failed') {
+    return new Response('OK (Already Processed)', { status: 200 });
+  }
+
+  // 2. Resolve Associated Manager Bot & User Details
+  let botRecord: any = null;
+  if (job.bot_id) {
+    const { data: b } = await supabase
+      .from('managers_bots')
+      .select('*')
+      .eq('id', job.bot_id)
+      .maybeSingle();
+    botRecord = b;
+  }
+
+  const BOT_TOKEN = botRecord?.bot_token || env.IMAGE_TELEGRAM_BOT_TOKEN;
+
+  const { data: user } = await supabase
+    .from('telegram_users')
+    .select('stars, language')
+    .eq('telegram_user_id', job.telegram_user_id)
+    .maybeSingle();
+
+  const lang = user?.language || 'en';
+  const isVideo = job.job_type === 'video';
+  const retailCost = job.credits_charged || (isVideo ? 5 : 1);
+  const backendCost = job.backend_cost || (isVideo ? 16 : 8);
+
+  // 3. Handle Successful Output
+  if (status === 'COMPLETED' && output) {
+    let mediaUrl = '';
+    if (typeof output === 'string') {
+      mediaUrl = output;
+    } else if (Array.isArray(output) && output.length > 0) {
+      mediaUrl = typeof output[0] === 'string' ? output[0] : (output[0].image || output[0].video || output[0].url);
+    } else if (typeof output === 'object') {
+      mediaUrl = output.video || output.image || output.url || output.result || '';
     }
 
-    // ── Update record ─────────────────────────────────────────────────────
-    await supabase
-      .from('image_edits')
-      .update({
-        status: 'done',
-        completed_at: new Date().toISOString(),
-        edited_image: resultUrl,
-        credits_charged: cost,
-      })
-      .eq('id', edit.id);
-
-    // ── Send result to user ───────────────────────────────────────────────
-    const caption = `✅ Done!\nYou have ${newStars} ⭐ left.`;
-
-    if (isVideo) {
-      await sendVideo(BOT_TOKEN, chatId, resultBase64, caption);
-    } else {
-      await sendPhoto(BOT_TOKEN, chatId, resultBase64, caption);
-    }
-
-    console.log(`[callback] Success (${isVideo ? 'video' : 'image'}) →`, chatId);
-  } catch (err: any) {
-    console.error('[callback] FAILED:', err?.message || err);
-
-    await supabase
-      .from('image_edits')
-      .update({ status: 'failed' })
-      .eq('id', edit.id);
-
-    try {
-      await sendMessage(
+    if (mediaUrl) {
+      // Send result to user via Telegram
+      await sendTelegramMedia(
         BOT_TOKEN,
-        chatId,
-        `❌ Something went wrong. You haven't been charged — please try again.`
+        job.telegram_chat_id,
+        mediaUrl,
+        isVideo,
+        t('job_completed', lang, { type: isVideo ? 'Video' : 'Image' })
       );
-    } catch (e) {
-      console.error('[callback] Failed to send error message', e);
+
+      // Update Job status
+      await supabase
+        .from(jobTable)
+        .update({ status: 'completed', result_url: mediaUrl })
+        .eq('id', job.id);
+
+      // Finalize Financial Accounting on Bot Record
+      if (botRecord) {
+        await supabase
+          .from('managers_bots')
+          .update({
+            star_earned: (Number(botRecord.star_earned) || 0) + retailCost,
+            star_spent: (Number(botRecord.star_spent) || 0) + backendCost,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', botRecord.id);
+      }
+
+      return new Response('OK', { status: 200 });
     }
   }
 
-  return new Response('OK');
+  // 4. Handle Failure & Refund Flow
+  await supabase
+    .from(jobTable)
+    .update({ status: 'failed' })
+    .eq('id', job.id);
+
+  // Refund Retail Cost to End-User
+  if (user) {
+    await supabase
+      .from('telegram_users')
+      .update({ stars: (user.stars || 0) + retailCost })
+      .eq('telegram_user_id', job.telegram_user_id);
+  }
+
+  // Refund Backend Cost to Bot Reserve Balance
+  if (botRecord) {
+    await supabase
+      .from('managers_bots')
+      .update({
+        bot_star_balance: (Number(botRecord.bot_star_balance) || 0) + backendCost,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', botRecord.id);
+  }
+
+  // Notify User of Refund
+  await sendMessage(
+    BOT_TOKEN,
+    job.telegram_chat_id,
+    t('job_failed', lang, { cost: retailCost })
+  );
+
+  return new Response('OK (Failed Job Refunded)', { status: 200 });
 };
