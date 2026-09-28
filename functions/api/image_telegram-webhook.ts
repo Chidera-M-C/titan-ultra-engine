@@ -183,7 +183,6 @@ const PACKAGES: Record<string, { name: string; stars: number }> = {
   pack4500: { name: '562 Img / 281 vid', stars: 4500 },
 };
 
-// Base Wholesale Costs (COGS)
 const BASE_IMAGE_COST = 8;
 const BASE_VIDEO_COST = 16;
 const FREE_STARS = 8;
@@ -293,7 +292,6 @@ export const onRequestPost = async (context: any) => {
     supabase = fleetSupabase;
   }
 
-  // Dynamic cost & onboarding star resolution according to bot settings
   const retailImageCost = !isLegacyBot && botRecord ? (Number(botRecord.image_cost) || 1) : BASE_IMAGE_COST;
   const retailVideoCost = !isLegacyBot && botRecord ? (Number(botRecord.video_cost) || 5) : BASE_VIDEO_COST;
   const starterStars =
@@ -301,7 +299,6 @@ export const onRequestPost = async (context: any) => {
       ? Number(botRecord.starter_stars)
       : FREE_STARS;
 
-  // Dynamic table mapping according to active Supabase instance
   const TABLES = {
     USERS: 'telegram_users',
     JOBS: isLegacyBot ? 'image_edits' : 'jobs',
@@ -571,7 +568,7 @@ export const onRequestPost = async (context: any) => {
       return new Response('OK');
     }
 
-    // 4. Pre-deduct Retail Cost from User & Deduct Backend Cost from Bot Reserve
+    // 4. Pre-deduct
     const userPreviousStars = user.stars;
     const botPreviousReserve = botRecord ? Number(botRecord.bot_star_balance || 0) : 0;
     const botPreviousSpent = botRecord ? Number(botRecord.star_spent || 0) : 0;
@@ -631,8 +628,7 @@ export const onRequestPost = async (context: any) => {
         throw new Error('RunPod response missing job.id: ' + JSON.stringify(job));
       }
 
-      // Legacy table (image_edits) does NOT have backend_cost / bot_id
-      // Fleet table (jobs) does
+      // Legacy (image_edits) has no backend_cost / bot_id — fleet (jobs) does
       const updatePayload: any = {
         status: 'processing',
         job_type: jobType,
@@ -670,8 +666,9 @@ export const onRequestPost = async (context: any) => {
         table: TABLES.JOBS,
         isLegacyBot,
       });
+    } catch (err: any) {
+      console.error('[bot] job start failed, rolling back:', err?.message || err);
 
-      // Rollback pre-deductions on error
       await supabase
         .from(TABLES.USERS)
         .update({ stars: userPreviousStars })
@@ -741,8 +738,7 @@ export const onRequestPost = async (context: any) => {
 
   // ── Pre-checkout Query ───────────────────────────────────────────────────
   if (update.pre_checkout_query) {
-    const queryId = update.pre_checkout_query.id;
-    await answerPreCheckout(BOT_TOKEN, queryId, true);
+    await answerPreCheckout(BOT_TOKEN, update.pre_checkout_query.id, true);
     return new Response('OK');
   }
 
