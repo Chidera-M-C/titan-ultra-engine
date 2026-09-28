@@ -121,7 +121,7 @@ export const onRequestPost = async (context: any) => {
   }
 
   const runpodJobId = payload.id;
-  const status = payload.status; // "COMPLETED" | "FAILED"
+  const status = payload.status; // "COMPLETED" | "FAILED" | others
   const output = payload.output;
 
   if (!runpodJobId) {
@@ -137,14 +137,11 @@ export const onRequestPost = async (context: any) => {
   });
 
   // ── Dual-project lookup ────────────────────────────────────────────────
-  // 1) New / fleet project  → table "jobs"
-  // 2) Old / legacy project → table "image_edits"
   let job: any = null;
   let jobTable = 'jobs';
   let supabase: any = null;
   let isLegacy = false;
 
-  // Try fleet (SHARED) first
   if (env.SHARED_SUPABASE_URL && env.SHARED_SUPABASE_SERVICE_ROLE_KEY) {
     const fleet = createClient(
       env.SHARED_SUPABASE_URL,
@@ -172,7 +169,6 @@ export const onRequestPost = async (context: any) => {
     console.warn('[callback] SHARED env vars missing — skipping fleet lookup');
   }
 
-  // Fallback to legacy (VITE) if not found
   if (!job && env.VITE_SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY) {
     const legacy = createClient(
       env.VITE_SUPABASE_URL,
@@ -213,13 +209,15 @@ export const onRequestPost = async (context: any) => {
     bot_id: job.bot_id || null,
   });
 
-  // Prevent duplicate webhook processing
-  if (
-    job.status === 'completed' ||
-    job.status === 'done' ||
-    job.status === 'failed'
-  ) {
+  // Only skip true successes — allow retry when status is "failed" / "processing"
+  if (job.status === 'completed' || job.status === 'done') {
     return new Response('OK (Already Processed)', { status: 200 });
+  }
+
+  // Ignore intermediate RunPod statuses
+  if (status !== 'COMPLETED' && status !== 'FAILED') {
+    console.log('[callback] ignoring intermediate status', status);
+    return new Response('OK (ignored intermediate status)', { status: 200 });
   }
 
   // ── Resolve bot + user ─────────────────────────────────────────────────
@@ -268,13 +266,18 @@ export const onRequestPost = async (context: any) => {
         '';
     }
 
-    if (mediaUrl && typeof mediaUrl === 'string') {
+    if (!mediaUrl || typeof mediaUrl !== 'string') {
+      console.error('[callback] COMPLETED but no mediaUrl extracted', {
+        outputType: typeof output,
+        outputKeys: output && typeof output === 'object' ? Object.keys(output) : null,
+      });
+      // fall through to refund
+    } else {
       const alreadyUrl = isHttpUrl(mediaUrl);
       let resultUrl: string | null = alreadyUrl ? mediaUrl : null;
       let delivered = false;
 
       try {
-        // Upload base64 results to storage for a permanent URL
         if (!alreadyUrl) {
           const bytes = base64ToBytes(stripDataPrefix(mediaUrl));
           const contentType = isVideo ? 'video/mp4' : 'image/jpeg';
@@ -298,7 +301,6 @@ export const onRequestPost = async (context: any) => {
           }
         }
 
-        // Deliver to Telegram
         await sendTelegramMedia(
           BOT_TOKEN,
           String(job.telegram_chat_id),
@@ -312,7 +314,6 @@ export const onRequestPost = async (context: any) => {
       }
 
       if (delivered) {
-        // Update job row
         const jobUpdate =
           jobTable === 'image_edits'
             ? {
@@ -327,8 +328,7 @@ export const onRequestPost = async (context: any) => {
 
         await supabase.from(jobTable).update(jobUpdate).eq('id', job.id);
 
-        // Fleet accounting: only add star_earned.
-        // star_spent + bot_star_balance were already updated when the job started.
+        // Fleet: only add star_earned (bot_star_balance / star_spent already updated at job start)
         if (botRecord) {
           await supabase
             .from('managers_bots')
@@ -339,19 +339,30 @@ export const onRequestPost = async (context: any) => {
             .eq('id', botRecord.id);
         }
 
+        console.log('[callback] delivered OK', { jobId: job.id, isVideo });
         return new Response('OK', { status: 200 });
       }
-      // Delivery failed → fall through to refund
+      // delivery failed → fall through to refund
     }
   }
 
   // ── FAILURE / refund path ──────────────────────────────────────────────
+  // Only refund on RunPod FAILED, or COMPLETED that we could not deliver
+  if (status !== 'FAILED' && status !== 'COMPLETED') {
+    return new Response('OK (ignored)', { status: 200 });
+  }
+
+  // Avoid double-refund if we already refunded this job
+  if (job.status === 'failed') {
+    console.log('[callback] already failed — skipping duplicate refund', job.id);
+    return new Response('OK (already failed)', { status: 200 });
+  }
+
   await supabase
     .from(jobTable)
     .update({ status: 'failed' })
     .eq('id', job.id);
 
-  // Refund retail cost to the end-user
   if (user) {
     await supabase
       .from('telegram_users')
@@ -359,7 +370,6 @@ export const onRequestPost = async (context: any) => {
       .eq('telegram_user_id', job.telegram_user_id);
   }
 
-  // Refund backend cost to bot reserve + reverse star_spent
   if (botRecord) {
     await supabase
       .from('managers_bots')
@@ -371,7 +381,6 @@ export const onRequestPost = async (context: any) => {
       .eq('id', botRecord.id);
   }
 
-  // Notify user
   try {
     await sendMessage(
       BOT_TOKEN,
@@ -382,5 +391,6 @@ export const onRequestPost = async (context: any) => {
     console.error('[callback] Failed to send refund message', e);
   }
 
+  console.log('[callback] refunded', { jobId: job.id, retailCost });
   return new Response('OK (Failed Job Refunded)', { status: 200 });
 };
