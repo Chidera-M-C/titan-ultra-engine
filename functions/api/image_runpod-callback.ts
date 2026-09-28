@@ -128,6 +128,14 @@ export const onRequestPost = async (context: any) => {
     return new Response('Missing Job ID', { status: 400 });
   }
 
+  console.log('[callback] incoming', {
+    runpodJobId,
+    status,
+    hasOutput: !!output,
+    hasShared: !!(env.SHARED_SUPABASE_URL && env.SHARED_SUPABASE_SERVICE_ROLE_KEY),
+    hasVite: !!(env.VITE_SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY),
+  });
+
   // ── Dual-project lookup ────────────────────────────────────────────────
   // 1) New / fleet project  → table "jobs"
   // 2) Old / legacy project → table "image_edits"
@@ -142,11 +150,17 @@ export const onRequestPost = async (context: any) => {
       env.SHARED_SUPABASE_URL,
       env.SHARED_SUPABASE_SERVICE_ROLE_KEY
     );
-    const { data } = await fleet
+    const { data, error } = await fleet
       .from('jobs')
       .select('*')
       .eq('runpod_job_id', runpodJobId)
       .maybeSingle();
+
+    console.log('[callback] fleet lookup', {
+      found: !!data,
+      error: error?.message || null,
+      runpodJobId,
+    });
 
     if (data) {
       job = data;
@@ -154,6 +168,8 @@ export const onRequestPost = async (context: any) => {
       jobTable = 'jobs';
       isLegacy = false;
     }
+  } else {
+    console.warn('[callback] SHARED env vars missing — skipping fleet lookup');
   }
 
   // Fallback to legacy (VITE) if not found
@@ -162,11 +178,17 @@ export const onRequestPost = async (context: any) => {
       env.VITE_SUPABASE_URL,
       env.SUPABASE_SERVICE_ROLE_KEY
     );
-    const { data } = await legacy
+    const { data, error } = await legacy
       .from('image_edits')
       .select('*')
       .eq('runpod_job_id', runpodJobId)
       .maybeSingle();
+
+    console.log('[callback] legacy lookup', {
+      found: !!data,
+      error: error?.message || null,
+      runpodJobId,
+    });
 
     if (data) {
       job = data;
@@ -174,12 +196,22 @@ export const onRequestPost = async (context: any) => {
       jobTable = 'image_edits';
       isLegacy = true;
     }
+  } else if (!job) {
+    console.warn('[callback] VITE env vars missing — skipping legacy lookup');
   }
 
   if (!job || !supabase) {
     console.error('[callback] Job not found in either project', runpodJobId);
     return new Response('Job Not Found', { status: 404 });
   }
+
+  console.log('[callback] job found', {
+    table: jobTable,
+    isLegacy,
+    jobId: job.id,
+    status: job.status,
+    bot_id: job.bot_id || null,
+  });
 
   // Prevent duplicate webhook processing
   if (
