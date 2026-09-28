@@ -87,9 +87,9 @@ LORAS = [
      f"{LORAS_DIR}/lora_blowjob_low.safetensors", "LoRA: Blowjob LOW"),
 
     # ── Facial Cumshot ──
-    ("https://huggingface.co/buckets/chidera1568/nudely-models/resolve/facialcumshot-style/wan22-f4c3spl4sh-100epoc-high-k3nk.safetensors?download=true",
+    ("https://huggingface.co/buckets/chidera1568/nudely-models/resolve/facialcumshot-style/iGoon%2520-%2520Blink_Facial_I2V_HIGH.safetensors?download=true",
      f"{LORAS_DIR}/lora_facial_cumshot_high.safetensors", "LoRA: Facial Cumshot HIGH"),
-    ("https://huggingface.co/buckets/chidera1568/nudely-models/resolve/facialcumshot-style/wan22-f4c3spl4sh-154epoc-low-k3nk.safetensors?download=true",
+    ("https://huggingface.co/buckets/chidera1568/nudely-models/resolve/facialcumshot-style/iGoon%2520-%2520Blink_Facial_I2V_LOW.safetensors?download=true",
      f"{LORAS_DIR}/lora_facial_cumshot_low.safetensors", "LoRA: Facial Cumshot LOW"),
 
     # ── Dual Lightning (already correct) ──
