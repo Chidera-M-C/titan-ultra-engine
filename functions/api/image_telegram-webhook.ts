@@ -175,7 +175,7 @@ async function getUserLanguage(supabase: any, telegramUserId: string, userTable:
 // ====================== END TRANSLATIONS ======================
 
 const PACKAGES: Record<string, { name: string; stars: number }> = {
-  pack8:    { name: '1 Image',           stars: 8 },
+  pack8:    { name: '1 Image',            stars: 8 },
   pack80:   { name: '10 Img / 5 vid',    stars: 80 },
   pack300:  { name: '37 Img / 18 vid',   stars: 300 },
   pack550:  { name: '68 Img / 34 vid',   stars: 550 },
@@ -295,9 +295,12 @@ export const onRequestPost = async (context: any) => {
     supabase = fleetSupabase;
   }
 
-  // Dynamic cost resolution according to bot settings
+  // Dynamic cost & onboarding star resolution according to bot settings
   const retailImageCost = !isLegacyBot && botRecord ? (Number(botRecord.image_cost) || 1) : BASE_IMAGE_COST;
   const retailVideoCost = !isLegacyBot && botRecord ? (Number(botRecord.video_cost) || 5) : BASE_VIDEO_COST;
+  const starterStars = !isLegacyBot && botRecord && botRecord.starter_stars !== undefined && botRecord.starter_stars !== null 
+    ? Number(botRecord.starter_stars) 
+    : FREE_STARS;
 
   // Dynamic table mapping according to active Supabase instance
   const TABLES = {
@@ -324,7 +327,7 @@ export const onRequestPost = async (context: any) => {
 
     const { data: existing } = await supabase
       .from(TABLES.USERS)
-      .select('id, stars, language')
+      .select('id, stars, language, starter_stars_claimed')
       .eq('telegram_user_id', tgUserId)
       .maybeSingle();
 
@@ -333,10 +336,20 @@ export const onRequestPost = async (context: any) => {
         telegram_user_id: tgUserId,
         telegram_username: tgUsername,
         first_name: firstName,
-        stars: FREE_STARS,
+        stars: starterStars,
+        starter_stars_claimed: true,
         language: null,
         ...(botmanagerId ? { botmanager_id: botmanagerId } : {}),
       });
+    } else if (!existing.starter_stars_claimed) {
+      // Award starter stars if returning user hasn't claimed them yet
+      await supabase
+        .from(TABLES.USERS)
+        .update({
+          stars: (existing.stars || 0) + starterStars,
+          starter_stars_claimed: true,
+        })
+        .eq('telegram_user_id', tgUserId);
     }
 
     if (!existing?.language) {
@@ -351,7 +364,7 @@ export const onRequestPost = async (context: any) => {
       name: firstName,
       img: retailImageCost,
       vid: retailVideoCost,
-      free: FREE_STARS,
+      free: starterStars,
     }));
     return new Response('OK');
   }
@@ -410,7 +423,7 @@ export const onRequestPost = async (context: any) => {
       name: firstName,
       img: retailImageCost,
       vid: retailVideoCost,
-      free: FREE_STARS,
+      free: starterStars,
     }));
 
     return new Response('OK');
@@ -512,7 +525,7 @@ export const onRequestPost = async (context: any) => {
     const isVideo = query.data === 'choose_video';
     
     const retailCost = isVideo ? retailVideoCost : retailImageCost;
-    const backendCost = isVideo ? BASE_VIDEO_COST : BASE_IMAGE_COST;
+    const backendCost = isVideo ? BASE_VIDEO_COST : BASE_IMAGE_COST; // Constant: 8 (Image) / 16 (Video)
     const jobType = isVideo ? 'video' : 'image';
     const lang = await getUserLanguage(supabase, tgUserId, TABLES.USERS);
 
@@ -562,9 +575,10 @@ export const onRequestPost = async (context: any) => {
       return new Response('OK');
     }
 
-    // 4. Pre-deduct Retail Cost from User & Backend Cost from Bot Reserve
+    // 4. Pre-deduct Retail Cost from User & Deduct Backend Cost from Bot Reserve / Increment star_spent
     const userPreviousStars = user.stars;
     const botPreviousReserve = botRecord ? Number(botRecord.bot_star_balance || 0) : 0;
+    const botPreviousSpent = botRecord ? Number(botRecord.star_spent || 0) : 0;
 
     await supabase
       .from(TABLES.USERS)
@@ -576,6 +590,7 @@ export const onRequestPost = async (context: any) => {
         .from('managers_bots')
         .update({
           bot_star_balance: botPreviousReserve - backendCost,
+          star_spent: botPreviousSpent + backendCost,
           updated_at: new Date().toISOString(),
         })
         .eq('id', botRecord.id);
@@ -639,7 +654,10 @@ export const onRequestPost = async (context: any) => {
       if (!isLegacyBot && botRecord) {
         await supabase
           .from('managers_bots')
-          .update({ bot_star_balance: botPreviousReserve })
+          .update({
+            bot_star_balance: botPreviousReserve,
+            star_spent: botPreviousSpent,
+          })
           .eq('id', botRecord.id);
       }
 
@@ -695,72 +713,80 @@ export const onRequestPost = async (context: any) => {
     return new Response('OK');
   }
 
-  // ── Pre-checkout ─────────────────────────────────────────────────────────
+  // ── Pre-checkout Query ───────────────────────────────────────────────────
   if (update.pre_checkout_query) {
-    await answerPreCheckout(BOT_TOKEN, update.pre_checkout_query.id, true);
+    const queryId = update.pre_checkout_query.id;
+    await answerPreCheckout(BOT_TOKEN, queryId, true);
     return new Response('OK');
   }
 
-  // ── Successful payment ───────────────────────────────────────────────────
+  // ── Successful Payment ───────────────────────────────────────────────────
   if (update.message?.successful_payment) {
     const chatId = update.message.chat.id;
     const tgUserId = String(update.message.from.id);
-    const purchaseId = update.message.successful_payment.invoice_payload;
+    const payment = update.message.successful_payment;
+    const starsPaid = Number(payment.total_amount || 0);
+    const purchaseId = payment.invoice_payload;
+    const chargeId = payment.telegram_payment_charge_id || payment.provider_payment_charge_id || '';
+
     const lang = await getUserLanguage(supabase, tgUserId, TABLES.USERS);
 
-    const { data: purchase } = await supabase
-      .from(TABLES.PURCHASES)
-      .select('stars, package_name, incentive_offered, extra_stars, extra_images, extra_videos, incentive_claimed, language')
-      .eq('id', purchaseId)
+    // 1. Fetch current user stars
+    const { data: user } = await supabase
+      .from(TABLES.USERS)
+      .select('stars')
+      .eq('telegram_user_id', tgUserId)
       .maybeSingle();
 
-    if (purchase) {
-      let starsToAdd = purchase.stars;
+    const currentStars = user?.stars ?? 0;
+    const newBalance = currentStars + starsPaid;
 
-      if (purchase.incentive_offered && !purchase.incentive_claimed && purchase.extra_stars > 0) {
-        starsToAdd += purchase.extra_stars;
-      }
+    // 2. Add stars to user account
+    await supabase
+      .from(TABLES.USERS)
+      .update({ stars: newBalance })
+      .eq('telegram_user_id', tgUserId);
 
-      const { data: user } = await supabase
-        .from(TABLES.USERS)
-        .select('stars')
-        .eq('telegram_user_id', tgUserId)
-        .maybeSingle();
-
-      const newBalance = (user?.stars || 0) + starsToAdd;
-
-      await supabase
-        .from(TABLES.USERS)
-        .update({ stars: newBalance })
-        .eq('telegram_user_id', tgUserId);
-
+    // 3. Update purchase ledger row in star_purchases / telegram_purchases
+    if (purchaseId) {
       await supabase
         .from(TABLES.PURCHASES)
-        .update({ status: 'sold', incentive_claimed: true })
+        .update({
+          status: 'completed',
+          telegram_payment_charge_id: chargeId,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', purchaseId);
-
-      let confirmMsg = t('payment_success', lang, {
-        package: purchase.package_name,
-        stars: purchase.stars,
+    } else {
+      await supabase.from(TABLES.PURCHASES).insert({
+        telegram_user_id: tgUserId,
+        package_name: `${starsPaid} Stars Top-up`,
+        stars: starsPaid,
+        status: 'completed',
+        telegram_payment_charge_id: chargeId,
+        language: lang,
+        ...(botmanagerId ? { botmanager_id: botmanagerId } : {}),
       });
-
-      if (purchase.incentive_offered && purchase.extra_stars > 0) {
-        const extraImages = purchase.extra_images || 0;
-        const extraVideos = purchase.extra_videos || 0;
-        const bonusParts: string[] = [];
-
-        if (extraVideos > 0) bonusParts.push(`${extraVideos} extra video${extraVideos !== 1 ? 's' : ''}`);
-        if (extraImages > 0) bonusParts.push(`${extraImages} extra image${extraImages !== 1 ? 's' : ''}`);
-
-        const bonusText = bonusParts.length > 0 ? bonusParts.join(' + ') : `+${purchase.extra_stars} bonus stars`;
-        confirmMsg += t('payment_bonus', lang, { bonus: bonusText });
-      }
-
-      confirmMsg += t('payment_balance', lang, { balance: newBalance });
-
-      await sendMessage(BOT_TOKEN, chatId, confirmMsg);
     }
 
+    // 4. Update Bot Manager's earned stars in managers_bots
+    if (!isLegacyBot && botRecord) {
+      const currentEarned = Number(botRecord.star_earned || 0);
+      await supabase
+        .from('managers_bots')
+        .update({
+          star_earned: currentEarned + starsPaid,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', botRecord.id);
+    }
+
+    // 5. Send confirmation message to end user
+    const successMsg =
+      t('payment_success', lang, { package: `${starsPaid} Stars Package`, stars: starsPaid }) +
+      t('payment_balance', lang, { balance: newBalance });
+
+    await sendMessage(BOT_TOKEN, chatId, successMsg);
     return new Response('OK');
   }
 
