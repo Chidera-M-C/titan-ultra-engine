@@ -41,20 +41,72 @@ function t(key: string, lang: string = 'en', vars: Record<string, any> = {}) {
   return text;
 }
 
-async function sendTelegramMedia(token: string, chatId: string, mediaUrl: string, isVideo: boolean, caption: string) {
+// ====================== HELPERS ======================
+const isHttpUrl = (value: string) => /^https?:\/\//i.test(value);
+
+// Strips "data:...;base64," prefix if present and returns raw base64
+const stripDataPrefix = (value: string) =>
+  value.startsWith('data:') ? value.split(',')[1] : value;
+
+// Converts raw base64 into bytes
+const base64ToBytes = (b64: string) => {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+};
+
+// Sends media to Telegram. Accepts either a public URL or base64 data.
+// Throws if Telegram rejects the request so failures are never silent.
+async function sendTelegramMedia(
+  token: string,
+  chatId: string,
+  media: string,
+  isVideo: boolean,
+  caption: string
+) {
   const endpoint = isVideo ? 'sendVideo' : 'sendPhoto';
   const paramName = isVideo ? 'video' : 'photo';
 
-  await fetch(`https://api.telegram.org/bot${token}/${endpoint}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      [paramName]: mediaUrl,
-      caption,
-      parse_mode: 'HTML',
-    }),
-  });
+  let res: Response;
+
+  if (isHttpUrl(media)) {
+    // Public URL → JSON body
+    res = await fetch(`https://api.telegram.org/bot${token}/${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        [paramName]: media,
+        caption,
+        parse_mode: 'HTML',
+      }),
+    });
+  } else {
+    // Base64 → multipart file upload
+    const bytes = base64ToBytes(stripDataPrefix(media));
+    const form = new FormData();
+    form.append('chat_id', String(chatId));
+    form.append('caption', caption);
+    form.append('parse_mode', 'HTML');
+    form.append(
+      paramName,
+      new Blob([bytes], { type: isVideo ? 'video/mp4' : 'image/jpeg' }),
+      isVideo ? 'result.mp4' : 'result.jpg'
+    );
+
+    res = await fetch(`https://api.telegram.org/bot${token}/${endpoint}`, {
+      method: 'POST',
+      body: form,
+    });
+  }
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Telegram ${endpoint} failed ${res.status}: ${text}`);
+  }
 }
 
 async function sendMessage(token: string, chatId: string, text: string) {
@@ -110,7 +162,7 @@ export const onRequestPost = async (context: any) => {
   }
 
   // Prevent duplicate webhook processing
-  if (job.status === 'completed' || job.status === 'failed') {
+  if (job.status === 'completed' || job.status === 'done' || job.status === 'failed') {
     return new Response('OK (Already Processed)', { status: 200 });
   }
 
@@ -140,44 +192,102 @@ export const onRequestPost = async (context: any) => {
 
   // 3. Handle Successful Output
   if (status === 'COMPLETED' && output) {
+    // Output can be a public URL OR base64 data (raw or data: URI)
     let mediaUrl = '';
     if (typeof output === 'string') {
       mediaUrl = output;
     } else if (Array.isArray(output) && output.length > 0) {
       mediaUrl = typeof output[0] === 'string' ? output[0] : (output[0].image || output[0].video || output[0].url);
     } else if (typeof output === 'object') {
-      mediaUrl = output.video || output.image || output.url || output.result || '';
+      mediaUrl =
+        output.video ||
+        output.videos?.[0] ||
+        output.image ||
+        output.images?.[0] ||
+        output.url ||
+        output.result ||
+        '';
     }
 
-    if (mediaUrl) {
-      // Send result to user via Telegram
-      await sendTelegramMedia(
-        BOT_TOKEN,
-        job.telegram_chat_id,
-        mediaUrl,
-        isVideo,
-        t('job_completed', lang, { type: isVideo ? 'Video' : 'Image' })
-      );
+    if (mediaUrl && typeof mediaUrl === 'string') {
+      const alreadyUrl = isHttpUrl(mediaUrl);
+      let resultUrl: string | null = alreadyUrl ? mediaUrl : null;
+      let delivered = false;
 
-      // Update Job status
-      await supabase
-        .from(jobTable)
-        .update({ status: 'completed', result_url: mediaUrl })
-        .eq('id', job.id);
+      try {
+        // Upload base64 results to storage so we have a permanent public URL
+        if (!alreadyUrl) {
+          const bytes = base64ToBytes(stripDataPrefix(mediaUrl));
+          const contentType = isVideo ? 'video/mp4' : 'image/jpeg';
+          const ext = isVideo ? 'mp4' : 'jpg';
+          const fileName = `edited/${job.id}-${Date.now()}.${ext}`;
 
-      // Finalize Financial Accounting on Bot Record
-      if (botRecord) {
-        await supabase
-          .from('managers_bots')
-          .update({
-            star_earned: (Number(botRecord.star_earned) || 0) + retailCost,
-            star_spent: (Number(botRecord.star_spent) || 0) + backendCost,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', botRecord.id);
+          const { error: uploadError } = await supabase.storage
+            .from('bot-edits')
+            .upload(fileName, new Blob([bytes], { type: contentType }), {
+              contentType,
+              upsert: true,
+            });
+
+          if (uploadError) {
+            console.warn('[callback] Storage upload failed:', uploadError.message);
+            // Continue anyway – we still send the result to the user
+          } else {
+            const { data: publicUrlData } = supabase.storage
+              .from('bot-edits')
+              .getPublicUrl(fileName);
+            resultUrl = publicUrlData.publicUrl;
+          }
+        }
+
+        // Send result to user via Telegram (URL or base64 upload)
+        await sendTelegramMedia(
+          BOT_TOKEN,
+          job.telegram_chat_id,
+          mediaUrl,
+          isVideo,
+          t('job_completed', lang, { type: isVideo ? 'Video' : 'Image' })
+        );
+
+        delivered = true;
+      } catch (err: any) {
+        console.error('[callback] Delivery failed:', err?.message || err);
       }
 
-      return new Response('OK', { status: 200 });
+      if (delivered) {
+        // Update Job status (column names depend on which table the job lives in)
+        const jobUpdate =
+          jobTable === 'image_edits'
+            ? {
+                status: 'done',
+                completed_at: new Date().toISOString(),
+                edited_image: resultUrl,
+              }
+            : {
+                status: 'completed',
+                result_url: resultUrl,
+              };
+
+        await supabase
+          .from(jobTable)
+          .update(jobUpdate)
+          .eq('id', job.id);
+
+        // Finalize Financial Accounting on Bot Record
+        if (botRecord) {
+          await supabase
+            .from('managers_bots')
+            .update({
+              star_earned: (Number(botRecord.star_earned) || 0) + retailCost,
+              star_spent: (Number(botRecord.star_spent) || 0) + backendCost,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', botRecord.id);
+        }
+
+        return new Response('OK', { status: 200 });
+      }
+      // If delivery failed, fall through to the failure & refund flow below
     }
   }
 
@@ -207,11 +317,15 @@ export const onRequestPost = async (context: any) => {
   }
 
   // Notify User of Refund
-  await sendMessage(
-    BOT_TOKEN,
-    job.telegram_chat_id,
-    t('job_failed', lang, { cost: retailCost })
-  );
+  try {
+    await sendMessage(
+      BOT_TOKEN,
+      job.telegram_chat_id,
+      t('job_failed', lang, { cost: retailCost })
+    );
+  } catch (e) {
+    console.error('[callback] Failed to send refund message', e);
+  }
 
   return new Response('OK (Failed Job Refunded)', { status: 200 });
 };
