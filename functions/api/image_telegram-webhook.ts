@@ -631,17 +631,23 @@ export const onRequestPost = async (context: any) => {
         throw new Error('RunPod response missing job.id: ' + JSON.stringify(job));
       }
 
-      // CRITICAL: must successfully store runpod_job_id or the callback will 404
+      // Legacy table (image_edits) does NOT have backend_cost / bot_id
+      // Fleet table (jobs) does
+      const updatePayload: any = {
+        status: 'processing',
+        job_type: jobType,
+        runpod_job_id: job.id,
+        credits_charged: retailCost,
+      };
+
+      if (!isLegacyBot) {
+        updatePayload.backend_cost = backendCost;
+        updatePayload.bot_id = botRecord?.id || null;
+      }
+
       const { data: updatedJob, error: updateErr } = await supabase
         .from(TABLES.JOBS)
-        .update({
-          status: 'processing',
-          job_type: jobType,
-          runpod_job_id: job.id,
-          credits_charged: retailCost,
-          backend_cost: backendCost,
-          bot_id: botRecord?.id || null,
-        })
+        .update(updatePayload)
         .eq('id', pending.id)
         .select('id, runpod_job_id, status')
         .single();
@@ -651,6 +657,7 @@ export const onRequestPost = async (context: any) => {
           pendingId: pending.id,
           runpodId: job.id,
           table: TABLES.JOBS,
+          isLegacyBot,
           error: updateErr,
           updatedJob,
         });
@@ -661,9 +668,8 @@ export const onRequestPost = async (context: any) => {
         pendingId: pending.id,
         runpodId: updatedJob.runpod_job_id,
         table: TABLES.JOBS,
+        isLegacyBot,
       });
-    } catch (err: any) {
-      console.error('[bot] job start failed, rolling back:', err?.message || err);
 
       // Rollback pre-deductions on error
       await supabase
