@@ -1,19 +1,27 @@
 import { createClient } from '@supabase/supabase-js';
 
-export const onRequestPost = async (context: any) => {
-  const env = context.env;
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Max-Age': '86400',
+  'Content-Type': 'application/json',
+};
 
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json',
-  };
-
-  // Handle preflight
+export const onRequest = async (context: any) => {
+  // Handle CORS preflight
   if (context.request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
+
+  if (context.request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: corsHeaders,
+    });
+  }
+
+  const env = context.env;
 
   try {
     const body = await context.request.json();
@@ -41,13 +49,14 @@ export const onRequestPost = async (context: any) => {
       .maybeSingle();
 
     if (botErr || !bot?.bot_token) {
+      console.error('[create-manager-invoice] no active bot', botErr);
       return new Response(JSON.stringify({ error: 'No active bot found for this manager' }), {
         status: 400,
         headers: corsHeaders,
       });
     }
 
-    // Verify the pending purchase still exists
+    // Verify pending purchase
     const { data: purchase, error: pErr } = await supabase
       .from('managers_purchase')
       .select('*')
@@ -57,6 +66,7 @@ export const onRequestPost = async (context: any) => {
       .maybeSingle();
 
     if (pErr || !purchase) {
+      console.error('[create-manager-invoice] purchase not found', pErr);
       return new Response(JSON.stringify({ error: 'Pending purchase not found' }), {
         status: 404,
         headers: corsHeaders,
@@ -91,7 +101,7 @@ export const onRequestPost = async (context: any) => {
       headers: corsHeaders,
     });
   } catch (err: any) {
-    console.error('[create-manager-invoice] error:', err);
+    console.error('[create-manager-invoice] unexpected error:', err);
     return new Response(JSON.stringify({ error: err.message || 'Internal error' }), {
       status: 500,
       headers: corsHeaders,
