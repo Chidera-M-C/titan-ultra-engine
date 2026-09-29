@@ -9,7 +9,6 @@ const corsHeaders = {
 };
 
 export const onRequest = async (context: any) => {
-  // Handle CORS preflight
   if (context.request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
@@ -34,29 +33,31 @@ export const onRequest = async (context: any) => {
       });
     }
 
+    // Prefer a dedicated system bot token for manager top-ups
+    // Fallback order:
+    // 1. MANAGER_INVOICE_BOT_TOKEN (recommended – add this in Cloudflare env)
+    // 2. IMAGE_TELEGRAM_BOT_TOKEN (legacy)
+    // 3. Any other token you already have in env
+    const botToken =
+      env.MANAGER_INVOICE_BOT_TOKEN ||
+      env.IMAGE_TELEGRAM_BOT_TOKEN ||
+      env.TELEGRAM_BOT_TOKEN;
+
+    if (!botToken) {
+      return new Response(JSON.stringify({ 
+        error: 'No system bot token configured for manager invoices' 
+      }), {
+        status: 500,
+        headers: corsHeaders,
+      });
+    }
+
     const supabase = createClient(
       env.SHARED_SUPABASE_URL || env.VITE_SUPABASE_URL,
       env.SHARED_SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    // Find an active bot belonging to this manager
-    const { data: bot, error: botErr } = await supabase
-      .from('managers_bots')
-      .select('id, bot_token')
-      .eq('user_id', user_id)
-      .eq('status', 'active')
-      .limit(1)
-      .maybeSingle();
-
-    if (botErr || !bot?.bot_token) {
-      console.error('[create-manager-invoice] no active bot', botErr);
-      return new Response(JSON.stringify({ error: 'No active bot found for this manager' }), {
-        status: 400,
-        headers: corsHeaders,
-      });
-    }
-
-    // Verify pending purchase
+    // Verify the pending purchase belongs to this manager
     const { data: purchase, error: pErr } = await supabase
       .from('managers_purchase')
       .select('*')
@@ -66,15 +67,14 @@ export const onRequest = async (context: any) => {
       .maybeSingle();
 
     if (pErr || !purchase) {
-      console.error('[create-manager-invoice] purchase not found', pErr);
       return new Response(JSON.stringify({ error: 'Pending purchase not found' }), {
         status: 404,
         headers: corsHeaders,
       });
     }
 
-    // Create Telegram Stars invoice link
-    const tgRes = await fetch(`https://api.telegram.org/bot${bot.bot_token}/createInvoiceLink`, {
+    // Create Telegram Stars invoice link using the system bot
+    const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/createInvoiceLink`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
