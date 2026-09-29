@@ -1,16 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
-export const onRequestPost = async (context) => {
+export const onRequestPost = async (context: any) => {
   const env = context.env;
 
-  // Allow the frontend origin (adjust if needed)
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*', // or your exact frontend domain
+    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Content-Type': 'application/json',
   };
 
+  // Handle preflight
   if (context.request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders });
   }
@@ -47,7 +47,7 @@ export const onRequestPost = async (context) => {
       });
     }
 
-    // Verify pending purchase
+    // Verify the pending purchase still exists
     const { data: purchase, error: pErr } = await supabase
       .from('managers_purchase')
       .select('*')
@@ -80,19 +80,17 @@ export const onRequestPost = async (context) => {
 
     if (!tgData.ok || !tgData.result) {
       console.error('[create-manager-invoice] Telegram error:', tgData);
-      return new Response(JSON.stringify({ 
-        error: tgData.description || 'Telegram createInvoiceLink failed' 
-      }), {
-        status: 500,
-        headers: corsHeaders,
-      });
+      return new Response(
+        JSON.stringify({ error: tgData.description || 'Telegram createInvoiceLink failed' }),
+        { status: 500, headers: corsHeaders }
+      );
     }
 
     return new Response(JSON.stringify({ invoice_link: tgData.result }), {
       status: 200,
       headers: corsHeaders,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error('[create-manager-invoice] error:', err);
     return new Response(JSON.stringify({ error: err.message || 'Internal error' }), {
       status: 500,
