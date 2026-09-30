@@ -209,8 +209,12 @@ export const onRequestPost = async (context: any) => {
     bot_id: job.bot_id || null,
   });
 
-  // Only skip true successes — allow retry when status is "failed" / "processing"
-  if (job.status === 'completed' || job.status === 'done') {
+  // Already successfully finished?
+  const alreadyDone = isLegacy
+    ? job.status === 'done' || job.status === 'completed'
+    : job.status === 'Done';
+
+  if (alreadyDone) {
     return new Response('OK (Already Processed)', { status: 200 });
   }
 
@@ -220,29 +224,70 @@ export const onRequestPost = async (context: any) => {
     return new Response('OK (ignored intermediate status)', { status: 200 });
   }
 
-  // ── Resolve bot + user ─────────────────────────────────────────────────
+  // ── Resolve bot token (strict: no cross-delivery) ──────────────────────
+  // Legacy  → IMAGE_TELEGRAM_BOT_TOKEN only
+  // Fleet   → managers_bots.bot_token where managers_bots.bot_id = jobs.bot_id (bigint)
   let botRecord: any = null;
-  if (job.bot_id && !isLegacy) {
-    const { data: b } = await supabase
+  let BOT_TOKEN: string = '';
+
+  if (isLegacy) {
+    BOT_TOKEN = env.IMAGE_TELEGRAM_BOT_TOKEN;
+    if (!BOT_TOKEN) {
+      console.error('[callback] Legacy job but IMAGE_TELEGRAM_BOT_TOKEN missing');
+      return new Response('Legacy bot token missing', { status: 500 });
+    }
+  } else {
+    if (job.bot_id == null) {
+      console.error('[callback] Fleet job missing bot_id — cannot resolve token', job.id);
+      return new Response('Fleet job missing bot_id', { status: 500 });
+    }
+
+    const { data: b, error: botErr } = await supabase
       .from('managers_bots')
       .select('*')
-      .eq('id', job.bot_id)
+      .eq('bot_id', job.bot_id) // bigint ↔ bigint (NOT managers_bots.id uuid)
       .maybeSingle();
+
+    if (botErr || !b?.bot_token) {
+      console.error('[callback] Fleet bot not found for bot_id', {
+        bot_id: job.bot_id,
+        error: botErr?.message || null,
+      });
+      return new Response('Fleet bot token not found', { status: 500 });
+    }
+
     botRecord = b;
+    BOT_TOKEN = b.bot_token;
   }
 
-  const BOT_TOKEN = botRecord?.bot_token || env.IMAGE_TELEGRAM_BOT_TOKEN;
+  // Dual user id field
+  const tgUserId = isLegacy ? job.telegram_user_id : job.user_id;
+  const chatId = String(job.telegram_chat_id || '');
+
+  if (!chatId) {
+    console.error('[callback] Job missing telegram_chat_id', job.id);
+    return new Response('Missing chat id', { status: 500 });
+  }
 
   const { data: user } = await supabase
     .from('telegram_users')
     .select('stars, language')
-    .eq('telegram_user_id', job.telegram_user_id)
+    .eq('telegram_user_id', tgUserId)
     .maybeSingle();
 
   const lang = user?.language || 'en';
   const isVideo = job.job_type === 'video';
-  const retailCost = Number(job.credits_charged) || (isVideo ? 16 : 8);
-  const backendCost = Number(job.backend_cost) || (isVideo ? 16 : 8);
+
+  // Fleet jobs table has no credits_charged — derive from bot pricing or defaults
+  const retailCost = isLegacy
+    ? (Number(job.credits_charged) || (isVideo ? 16 : 8))
+    : (isVideo
+        ? (Number(botRecord?.video_cost) || 16)
+        : (Number(botRecord?.image_cost) || 8));
+
+  const backendCost = isLegacy
+    ? (Number(job.backend_cost) || (isVideo ? 16 : 8))
+    : (isVideo ? 16 : 8);
 
   // ── SUCCESS path ───────────────────────────────────────────────────────
   if (status === 'COMPLETED' && output) {
@@ -303,7 +348,7 @@ export const onRequestPost = async (context: any) => {
 
         await sendTelegramMedia(
           BOT_TOKEN,
-          String(job.telegram_chat_id),
+          chatId,
           mediaUrl,
           isVideo,
           t('job_completed', lang, { type: isVideo ? 'Video' : 'Image' })
@@ -314,32 +359,44 @@ export const onRequestPost = async (context: any) => {
       }
 
       if (delivered) {
-        const jobUpdate =
-          jobTable === 'image_edits'
-            ? {
-                status: 'done',
-                completed_at: new Date().toISOString(),
-                edited_image: resultUrl,
-              }
-            : {
-                status: 'completed',
-                result_url: resultUrl,
-              };
+        // Dual status + result columns
+        const jobUpdate = isLegacy
+          ? {
+              status: 'done',
+              completed_at: new Date().toISOString(),
+              edited_image: resultUrl,
+            }
+          : {
+              status: 'Done',
+              output_file_url: resultUrl,
+            };
 
-        await supabase.from(jobTable).update(jobUpdate).eq('id', job.id);
+        const { error: updErr } = await supabase
+          .from(jobTable)
+          .update(jobUpdate)
+          .eq('id', job.id);
 
-        // Fleet: only add star_earned (bot_star_balance / star_spent already updated at job start)
-        if (botRecord) {
+        if (updErr) {
+          console.error('[callback] job status update failed', updErr);
+        }
+
+        // Fleet: credit star_earned on the correct managers_bots row
+        if (!isLegacy && botRecord) {
           await supabase
             .from('managers_bots')
             .update({
               star_earned: (Number(botRecord.star_earned) || 0) + retailCost,
               updated_at: new Date().toISOString(),
             })
-            .eq('id', botRecord.id);
+            .eq('id', botRecord.id); // PK uuid for update is fine
         }
 
-        console.log('[callback] delivered OK', { jobId: job.id, isVideo });
+        console.log('[callback] delivered OK', {
+          jobId: job.id,
+          isLegacy,
+          isVideo,
+          bot_id: job.bot_id || null,
+        });
         return new Response('OK', { status: 200 });
       }
       // delivery failed → fall through to refund
@@ -347,30 +404,35 @@ export const onRequestPost = async (context: any) => {
   }
 
   // ── FAILURE / refund path ──────────────────────────────────────────────
-  // Only refund on RunPod FAILED, or COMPLETED that we could not deliver
   if (status !== 'FAILED' && status !== 'COMPLETED') {
     return new Response('OK (ignored)', { status: 200 });
   }
 
-  // Avoid double-refund if we already refunded this job
-  if (job.status === 'failed') {
+  // Avoid double-refund
+  const alreadyFailed = isLegacy
+    ? job.status === 'failed'
+    : job.status === 'Failed';
+
+  if (alreadyFailed) {
     console.log('[callback] already failed — skipping duplicate refund', job.id);
     return new Response('OK (already failed)', { status: 200 });
   }
 
+  const failStatus = isLegacy ? 'failed' : 'Failed';
   await supabase
     .from(jobTable)
-    .update({ status: 'failed' })
+    .update({ status: failStatus })
     .eq('id', job.id);
 
-  if (user) {
+  if (user && tgUserId) {
     await supabase
       .from('telegram_users')
       .update({ stars: (Number(user.stars) || 0) + retailCost })
-      .eq('telegram_user_id', job.telegram_user_id);
+      .eq('telegram_user_id', tgUserId);
   }
 
-  if (botRecord) {
+  // Fleet only: restore bot reserve
+  if (!isLegacy && botRecord) {
     await supabase
       .from('managers_bots')
       .update({
@@ -384,13 +446,19 @@ export const onRequestPost = async (context: any) => {
   try {
     await sendMessage(
       BOT_TOKEN,
-      String(job.telegram_chat_id),
+      chatId,
       t('job_failed', lang, { cost: retailCost })
     );
   } catch (e) {
     console.error('[callback] Failed to send refund message', e);
   }
 
-  console.log('[callback] refunded', { jobId: job.id, retailCost });
+  console.log('[callback] refunded', {
+    jobId: job.id,
+    isLegacy,
+    retailCost,
+    bot_id: job.bot_id || null,
+  });
+
   return new Response('OK (Failed Job Refunded)', { status: 200 });
 };
