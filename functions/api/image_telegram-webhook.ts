@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+
 // ====================== TRANSLATIONS ======================
 const translations: any = {
   en: {
@@ -149,6 +150,7 @@ const translations: any = {
     invoice_description: "Recarga estrellas para imágenes y videos.",
   },
 };
+
 function t(key: string, lang: string = 'en', vars: Record<string, any> = {}) {
   const dict = translations[lang] || translations.en;
   let text = dict[key] || translations.en[key] || key;
@@ -157,6 +159,7 @@ function t(key: string, lang: string = 'en', vars: Record<string, any> = {}) {
   }
   return text;
 }
+
 async function getUserLanguage(supabase: any, telegramUserId: string, userTable: string = 'telegram_users') {
   try {
     const { data } = await supabase
@@ -170,6 +173,7 @@ async function getUserLanguage(supabase: any, telegramUserId: string, userTable:
   }
 }
 // ====================== END TRANSLATIONS ======================
+
 const PACKAGES: Record<string, { name: string; stars: number }> = {
   pack8:    { name: '1 Image',            stars: 8 },
   pack80:   { name: '10 Img / 5 vid',    stars: 80 },
@@ -178,11 +182,14 @@ const PACKAGES: Record<string, { name: string; stars: number }> = {
   pack2400: { name: '300 Img / 150 vid', stars: 2400 },
   pack4500: { name: '562 Img / 281 vid', stars: 4500 },
 };
+
 const BASE_IMAGE_COST = 8;
 const BASE_VIDEO_COST = 16;
 const FREE_STARS = 8;
+
 const IMAGE_HANDLER_URL = 'https://api.runpod.ai/v2/em5th9pvdrelyb/run';
 const VIDEO_HANDLER_URL = 'https://api.runpod.ai/v2/x35b5gomf1482c/run';
+
 async function sendMessage(token: string, chatId: number | string, text: string, extra: any = {}) {
   await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
@@ -190,11 +197,13 @@ async function sendMessage(token: string, chatId: number | string, text: string,
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', ...extra }),
   });
 }
+
 async function getFileUrl(token: string, fileId: string): Promise<string> {
   const res = await fetch(`https://api.telegram.org/bot${token}/getFile?file_id=${fileId}`);
   const data = await res.json();
   return `https://api.telegram.org/file/bot${token}/${data.result.file_path}`;
 }
+
 async function answerPreCheckout(token: string, id: string, ok: boolean, errorMessage?: string) {
   await fetch(`https://api.telegram.org/bot${token}/answerPreCheckoutQuery`, {
     method: 'POST',
@@ -202,6 +211,7 @@ async function answerPreCheckout(token: string, id: string, ok: boolean, errorMe
     body: JSON.stringify({ pre_checkout_query_id: id, ok, error_message: errorMessage }),
   });
 }
+
 function languageMenu() {
   return {
     inline_keyboard: [
@@ -223,6 +233,7 @@ function languageMenu() {
     ],
   };
 }
+
 function creditMenu() {
   return {
     inline_keyboard: [
@@ -235,6 +246,7 @@ function creditMenu() {
     ],
   };
 }
+
 function choiceMenu(lang: string, imgCost: number, vidCost: number) {
   return {
     inline_keyboard: [
@@ -245,13 +257,16 @@ function choiceMenu(lang: string, imgCost: number, vidCost: number) {
     ],
   };
 }
+
 export const onRequestPost = async (context: any) => {
   const env = context.env;
   const secretHeader = context.request.headers.get('X-Telegram-Bot-Api-Secret-Token');
+
   let BOT_TOKEN: string = '';
   let supabase: any = null;
   let botRecord: any = null;
   let isLegacyBot = false;
+
   // ── ROUTING & AUTHENTICATION ─────────────────────────────────────────────
   if (env.TELEGRAM_WEBHOOK_SECRET && secretHeader === env.TELEGRAM_WEBHOOK_SECRET) {
     isLegacyBot = true;
@@ -261,30 +276,45 @@ export const onRequestPost = async (context: any) => {
     const fleetSupabaseUrl = env.SHARED_SUPABASE_URL || env.VITE_SUPABASE_URL;
     const fleetServiceKey = env.SHARED_SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SERVICE_ROLE_KEY;
     const fleetSupabase = createClient(fleetSupabaseUrl, fleetServiceKey);
+
     const { data, error } = await fleetSupabase
       .from('managers_bots')
       .select('*')
       .eq('webhook_secret', secretHeader)
       .single();
+
     if (error || !data) {
       return new Response('Unauthorized', { status: 401 });
     }
+
     botRecord = data;
     BOT_TOKEN = data.bot_token;
     supabase = fleetSupabase;
   }
+
   const retailImageCost = !isLegacyBot && botRecord ? (Number(botRecord.image_cost) || 1) : BASE_IMAGE_COST;
   const retailVideoCost = !isLegacyBot && botRecord ? (Number(botRecord.video_cost) || 5) : BASE_VIDEO_COST;
   const starterStars =
     !isLegacyBot && botRecord && botRecord.starter_stars !== undefined && botRecord.starter_stars !== null
       ? Number(botRecord.starter_stars)
       : FREE_STARS;
+
   const TABLES = {
     USERS: 'telegram_users',
     JOBS: isLegacyBot ? 'image_edits' : 'jobs',
     PURCHASES: isLegacyBot ? 'telegram_purchases' : 'star_purchases',
   };
-  const botmanagerId = isLegacyBot ? null : botRecord?.user_id || botRecord?.botmanager_id;
+
+  // managers_bots.bot_id is bigint — used on jobs / users / purchases (fleet only)
+  const fleetBotId =
+    !isLegacyBot && botRecord?.bot_id != null && botRecord.bot_id !== ''
+      ? Number(botRecord.bot_id)
+      : null;
+
+  const botmanagerId = isLegacyBot
+    ? null
+    : (botRecord?.botmanager_id ?? botRecord?.user_id ?? null);
+
   let update: any;
   try {
     update = await context.request.json();
@@ -293,7 +323,6 @@ export const onRequestPost = async (context: any) => {
   }
 
   // ── Manager Top-up via Mini App (web_app_data) ────────────────────────────
-  // Only relevant for fleet/shared bots (managers_purchase lives there)
   if (update.message?.web_app_data && !isLegacyBot) {
     try {
       const raw = update.message.web_app_data.data;
@@ -302,7 +331,6 @@ export const onRequestPost = async (context: any) => {
         const chatId = update.message.chat.id;
         const tgUserId = update.message.from.id;
 
-        // Verify pending purchase belongs to this user
         const { data: purchase, error: pErr } = await supabase
           .from('managers_purchase')
           .select('*')
@@ -318,7 +346,6 @@ export const onRequestPost = async (context: any) => {
 
         const paidStars = Number(data.paid_stars) || Number(purchase.star_amount);
 
-        // Issue real Telegram Stars invoice (XTR)
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendInvoice`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -344,36 +371,50 @@ export const onRequestPost = async (context: any) => {
     const tgUserId = String(update.message.from.id);
     const tgUsername = update.message.from?.username || '';
     const firstName = update.message.from?.first_name || 'there';
+
     const { data: existing } = await supabase
       .from(TABLES.USERS)
-      .select('id, stars, language, starter_stars_claimed')
+      .select('id, stars, language, starter_stars_claimed, bot_id')
       .eq('telegram_user_id', tgUserId)
       .maybeSingle();
+
     if (!existing) {
-      await supabase.from(TABLES.USERS).insert({
+      const insertUser: any = {
         telegram_user_id: tgUserId,
         telegram_username: tgUsername,
         first_name: firstName,
         stars: starterStars,
         starter_stars_claimed: true,
         language: null,
-        ...(botmanagerId ? { botmanager_id: botmanagerId } : {}),
-      });
-    } else if (!existing.starter_stars_claimed) {
-      await supabase
-        .from(TABLES.USERS)
-        .update({
-          stars: (existing.stars || 0) + starterStars,
-          starter_stars_claimed: true,
-        })
-        .eq('telegram_user_id', tgUserId);
+      };
+      if (botmanagerId != null) insertUser.botmanager_id = botmanagerId;
+      if (fleetBotId != null) insertUser.bot_id = fleetBotId;
+
+      await supabase.from(TABLES.USERS).insert(insertUser);
+    } else {
+      const userPatch: any = {};
+      if (!existing.starter_stars_claimed) {
+        userPatch.stars = (existing.stars || 0) + starterStars;
+        userPatch.starter_stars_claimed = true;
+      }
+      if (fleetBotId != null && (existing.bot_id == null || existing.bot_id === '')) {
+        userPatch.bot_id = fleetBotId;
+      }
+      if (Object.keys(userPatch).length > 0) {
+        await supabase
+          .from(TABLES.USERS)
+          .update(userPatch)
+          .eq('telegram_user_id', tgUserId);
+      }
     }
+
     if (!existing?.language) {
       await sendMessage(BOT_TOKEN, chatId, t('choose_language', 'en'), {
         reply_markup: languageMenu(),
       });
       return new Response('OK');
     }
+
     const lang = existing.language;
     await sendMessage(BOT_TOKEN, chatId, t('welcome', lang, {
       name: firstName,
@@ -383,6 +424,7 @@ export const onRequestPost = async (context: any) => {
     }));
     return new Response('OK');
   }
+
   // ── /language ────────────────────────────────────────────────────────────
   if (update.message?.text === '/language') {
     const chatId = update.message.chat.id;
@@ -393,21 +435,25 @@ export const onRequestPost = async (context: any) => {
     });
     return new Response('OK');
   }
+
   // ── Language selection ───────────────────────────────────────────────────
   if (update.callback_query?.data?.startsWith('lang_')) {
     const lang = update.callback_query.data.replace('lang_', '');
     const tgUserId = String(update.callback_query.from.id);
     const chatId = update.callback_query.message.chat.id;
     const firstName = update.callback_query.from.first_name || 'there';
+
     await supabase
       .from(TABLES.USERS)
       .update({ language: lang })
       .eq('telegram_user_id', tgUserId);
+
     await supabase
       .from(TABLES.PURCHASES)
       .update({ language: lang })
       .eq('telegram_user_id', tgUserId)
       .eq('status', 'pending');
+
     const confirmTexts: any = {
       ar: '✅ تم تغيير اللغة بنجاح إلى العربية',
       hi: '✅ भाषा सफलतापूर्वक हिन्दी में बदल दी गई',
@@ -417,6 +463,7 @@ export const onRequestPost = async (context: any) => {
       es: '✅ Idioma cambiado exitosamente a Español',
       en: '✅ Language successfully changed to English',
     };
+
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -426,6 +473,7 @@ export const onRequestPost = async (context: any) => {
         show_alert: true,
       }),
     });
+
     await sendMessage(BOT_TOKEN, chatId, t('welcome', lang, {
       name: firstName,
       img: retailImageCost,
@@ -434,19 +482,23 @@ export const onRequestPost = async (context: any) => {
     }));
     return new Response('OK');
   }
+
   // ── /credits or /stars ───────────────────────────────────────────────────
   if (update.message?.text === '/credits' || update.message?.text === '/stars') {
     const chatId = update.message.chat.id;
     const tgUserId = String(update.message.from.id);
     const lang = await getUserLanguage(supabase, tgUserId, TABLES.USERS);
+
     const { data: user } = await supabase
       .from(TABLES.USERS)
       .select('stars')
       .eq('telegram_user_id', tgUserId)
       .maybeSingle();
+
     await sendMessage(BOT_TOKEN, chatId, t('credits', lang, { stars: user?.stars ?? 0 }));
     return new Response('OK');
   }
+
   // ── /buy ─────────────────────────────────────────────────────────────────
   if (update.message?.text === '/buy') {
     const lang = await getUserLanguage(supabase, String(update.message.from.id), TABLES.USERS);
@@ -455,6 +507,7 @@ export const onRequestPost = async (context: any) => {
     });
     return new Response('OK');
   }
+
   // ── Photo + caption ──────────────────────────────────────────────────────
   if (update.message?.photo) {
     const chatId = update.message.chat.id;
@@ -462,16 +515,22 @@ export const onRequestPost = async (context: any) => {
     const caption = update.message.caption || '';
     const updateId = update.update_id;
     const lang = await getUserLanguage(supabase, tgUserId, TABLES.USERS);
+
     if (!caption) {
       await sendMessage(BOT_TOKEN, chatId, t('need_caption', lang));
       return new Response('OK');
     }
-    const { data: alreadyProcessed } = await supabase
-      .from(TABLES.JOBS)
-      .select('id')
-      .eq('telegram_update_id', updateId)
-      .maybeSingle();
-    if (alreadyProcessed) return new Response('OK');
+
+    // Legacy dedupe only (jobs has no telegram_update_id)
+    if (isLegacyBot) {
+      const { data: alreadyProcessed } = await supabase
+        .from(TABLES.JOBS)
+        .select('id')
+        .eq('telegram_update_id', updateId)
+        .maybeSingle();
+      if (alreadyProcessed) return new Response('OK');
+    }
+
     try {
       const photos = update.message.photo;
       const largest = photos[photos.length - 1];
@@ -480,49 +539,93 @@ export const onRequestPost = async (context: any) => {
       const imgBuffer = await imgRes.arrayBuffer();
       const bytes = new Uint8Array(imgBuffer);
       const blob = new Blob([bytes], { type: 'image/jpeg' });
+
       const refFileName = `reference/${tgUserId}-${Date.now()}.jpg`;
       const { error: uploadError } = await supabase.storage
         .from('bot-edits')
         .upload(refFileName, blob, { contentType: 'image/jpeg', upsert: true });
+
       if (uploadError) throw new Error(uploadError.message);
+
       const { data: publicUrlData } = supabase.storage.from('bot-edits').getPublicUrl(refFileName);
-      await supabase.from(TABLES.JOBS).insert({
-        telegram_user_id: tgUserId,
-        instruction: caption,
-        user_prompt: caption,
-        reference_image: publicUrlData.publicUrl,
-        status: 'awaiting_choice',
-        telegram_update_id: updateId,
-        telegram_chat_id: String(chatId),
-        job_type: null,
-        ...(botRecord?.id ? { bot_id: botRecord.id } : {}),
-        ...(botmanagerId ? { botmanager_id: botmanagerId } : {}),
+      const publicUrl = publicUrlData.publicUrl;
+
+      let insertPayload: any;
+      if (isLegacyBot) {
+        insertPayload = {
+          telegram_user_id: tgUserId,
+          instruction: caption,
+          user_prompt: caption,
+          reference_image: publicUrl,
+          status: 'awaiting_choice',
+          telegram_update_id: updateId,
+          telegram_chat_id: String(chatId),
+          job_type: null,
+        };
+      } else {
+        // jobs table columns
+        insertPayload = {
+          user_id: tgUserId,
+          prompt: caption,
+          input_file_url: publicUrl,
+          status: 'awaiting_choice',
+          job_type: 'image', // constraint requires image|video; updated on choice
+          telegram_chat_id: String(chatId),
+        };
+        if (fleetBotId != null) insertPayload.bot_id = fleetBotId;
+        if (botmanagerId != null) insertPayload.botmanager_id = botmanagerId;
+      }
+
+      const { data: inserted, error: insertErr } = await supabase
+        .from(TABLES.JOBS)
+        .insert(insertPayload)
+        .select('id')
+        .single();
+
+      if (insertErr || !inserted) {
+        console.error('[bot] FAILED to insert pending job', {
+          table: TABLES.JOBS,
+          isLegacyBot,
+          error: insertErr,
+        });
+        throw new Error(insertErr?.message || 'job insert failed');
+      }
+
+      console.log('[bot] pending job created', {
+        id: inserted.id,
+        table: TABLES.JOBS,
+        bot_id: fleetBotId,
       });
+
       await sendMessage(BOT_TOKEN, chatId, t('how_do_you_want', lang), {
         reply_markup: choiceMenu(lang, retailImageCost, retailVideoCost),
       });
     } catch (err: any) {
-      console.error('[bot] photo error:', err);
+      console.error('[bot] photo error:', err?.message || err);
       await sendMessage(BOT_TOKEN, chatId, t('error_generic', lang));
     }
+
     return new Response('OK');
   }
+
   // ── Choice: Image or Video ───────────────────────────────────────────────
   if (update.callback_query?.data === 'choose_image' || update.callback_query?.data === 'choose_video') {
     const query = update.callback_query;
     const chatId = query.message.chat.id;
     const tgUserId = String(query.from.id);
     const isVideo = query.data === 'choose_video';
+
     const retailCost = isVideo ? retailVideoCost : retailImageCost;
     const backendCost = isVideo ? BASE_VIDEO_COST : BASE_IMAGE_COST;
     const jobType = isVideo ? 'video' : 'image';
     const lang = await getUserLanguage(supabase, tgUserId, TABLES.USERS);
+
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ callback_query_id: query.id }),
     });
-    // 1. Check Bot Manager's Reserve Balance
+
     if (!isLegacyBot && botRecord) {
       const reserveBalance = Number(botRecord.bot_star_balance || 0);
       if (reserveBalance < backendCost) {
@@ -530,12 +633,13 @@ export const onRequestPost = async (context: any) => {
         return new Response('OK');
       }
     }
-    // 2. Check End-User Star Balance
+
     const { data: user } = await supabase
       .from(TABLES.USERS)
       .select('stars')
       .eq('telegram_user_id', tgUserId)
       .maybeSingle();
+
     if (!user || user.stars < retailCost) {
       await sendMessage(BOT_TOKEN, chatId, t('not_enough', lang, {
         img: retailImageCost,
@@ -544,27 +648,49 @@ export const onRequestPost = async (context: any) => {
       }), { reply_markup: creditMenu() });
       return new Response('OK');
     }
-    // 3. Retrieve Pending Job
-    const { data: pending } = await supabase
+
+    // Pending job — dual columns + fleet bot_id filter
+    let pendingQuery = supabase
       .from(TABLES.JOBS)
       .select('*')
-      .eq('telegram_user_id', tgUserId)
       .eq('status', 'awaiting_choice')
       .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
+
+    if (isLegacyBot) {
+      pendingQuery = pendingQuery.eq('telegram_user_id', tgUserId);
+    } else {
+      pendingQuery = pendingQuery.eq('user_id', tgUserId);
+      if (fleetBotId != null) {
+        pendingQuery = pendingQuery.eq('bot_id', fleetBotId);
+      }
+    }
+
+    const { data: pending, error: pendingErr } = await pendingQuery.maybeSingle();
+
+    if (pendingErr) {
+      console.error('[bot] pending lookup error', pendingErr);
+    }
+
     if (!pending) {
       await sendMessage(BOT_TOKEN, chatId, t('no_pending', lang));
       return new Response('OK');
     }
-    // 4. Pre-deduct
+
+    const refImage = isLegacyBot ? pending.reference_image : pending.input_file_url;
+    const userPrompt = isLegacyBot
+      ? (pending.user_prompt || pending.instruction)
+      : pending.prompt;
+
     const userPreviousStars = user.stars;
     const botPreviousReserve = botRecord ? Number(botRecord.bot_star_balance || 0) : 0;
     const botPreviousSpent = botRecord ? Number(botRecord.star_spent || 0) : 0;
+
     await supabase
       .from(TABLES.USERS)
       .update({ stars: userPreviousStars - retailCost })
       .eq('telegram_user_id', tgUserId);
+
     if (!isLegacyBot && botRecord) {
       await supabase
         .from('managers_bots')
@@ -575,11 +701,14 @@ export const onRequestPost = async (context: any) => {
         })
         .eq('id', botRecord.id);
     }
+
     try {
       await sendMessage(BOT_TOKEN, chatId, isVideo ? t('generating_video', lang) : t('generating_image', lang));
-      const imgRes = await fetch(pending.reference_image);
+
+      const imgRes = await fetch(refImage);
       const imgBuffer = await imgRes.arrayBuffer();
       const bytes = new Uint8Array(imgBuffer);
+
       let binary = '';
       const chunkSize = 0x8000;
       for (let i = 0; i < bytes.length; i += chunkSize) {
@@ -587,11 +716,14 @@ export const onRequestPost = async (context: any) => {
       }
       const base64Image = btoa(binary);
       const dataUrl = `data:image/jpeg;base64,${base64Image}`;
+
       const callbackUrl = `https://nudely.org/api/image_runpod-callback`;
       const handlerUrl = isVideo ? VIDEO_HANDLER_URL : IMAGE_HANDLER_URL;
+
       const payload = isVideo
-        ? { input: { prompt: pending.user_prompt, start_image: dataUrl, duration: 6 }, webhook: callbackUrl }
-        : { input: { prompt: pending.user_prompt, image: dataUrl }, webhook: callbackUrl };
+        ? { input: { prompt: userPrompt, start_image: dataUrl, duration: 6 }, webhook: callbackUrl }
+        : { input: { prompt: userPrompt, image: dataUrl }, webhook: callbackUrl };
+
       const editRes = await fetch(handlerUrl, {
         method: 'POST',
         headers: {
@@ -600,28 +732,38 @@ export const onRequestPost = async (context: any) => {
         },
         body: JSON.stringify(payload),
       });
+
       if (!editRes.ok) throw new Error(await editRes.text());
+
       const job = await editRes.json();
       if (!job?.id) {
         throw new Error('RunPod response missing job.id: ' + JSON.stringify(job));
       }
-      // Legacy (image_edits) has no backend_cost / bot_id — fleet (jobs) does
-      const updatePayload: any = {
-        status: 'processing',
-        job_type: jobType,
-        runpod_job_id: job.id,
-        credits_charged: retailCost,
-      };
-      if (!isLegacyBot) {
-        updatePayload.backend_cost = backendCost;
-        updatePayload.bot_id = botRecord?.id || null;
+
+      let updatePayload: any;
+      if (isLegacyBot) {
+        updatePayload = {
+          status: 'processing',
+          job_type: jobType,
+          runpod_job_id: job.id,
+          credits_charged: retailCost,
+        };
+      } else {
+        updatePayload = {
+          status: 'Processing',
+          job_type: jobType,
+          runpod_job_id: job.id,
+        };
+        if (fleetBotId != null) updatePayload.bot_id = fleetBotId;
       }
+
       const { data: updatedJob, error: updateErr } = await supabase
         .from(TABLES.JOBS)
         .update(updatePayload)
         .eq('id', pending.id)
-        .select('id, runpod_job_id, status')
+        .select('id, runpod_job_id')
         .single();
+
       if (updateErr || !updatedJob?.runpod_job_id) {
         console.error('[bot] FAILED to save runpod_job_id', {
           pendingId: pending.id,
@@ -629,22 +771,24 @@ export const onRequestPost = async (context: any) => {
           table: TABLES.JOBS,
           isLegacyBot,
           error: updateErr,
-          updatedJob,
         });
         throw new Error(updateErr?.message || 'runpod_job_id was not saved');
       }
+
       console.log('[bot] saved runpod_job_id', {
         pendingId: pending.id,
         runpodId: updatedJob.runpod_job_id,
         table: TABLES.JOBS,
-        isLegacyBot,
+        bot_id: fleetBotId,
       });
     } catch (err: any) {
       console.error('[bot] job start failed, rolling back:', err?.message || err);
+
       await supabase
         .from(TABLES.USERS)
         .update({ stars: userPreviousStars })
         .eq('telegram_user_id', tgUserId);
+
       if (!isLegacyBot && botRecord) {
         await supabase
           .from('managers_bots')
@@ -654,10 +798,13 @@ export const onRequestPost = async (context: any) => {
           })
           .eq('id', botRecord.id);
       }
+
       await sendMessage(BOT_TOKEN, chatId, t('error_job', lang));
     }
+
     return new Response('OK');
   }
+
   // ── Package selection ────────────────────────────────────────────────────
   if (update.callback_query?.data?.startsWith('buy_')) {
     const query = update.callback_query;
@@ -666,24 +813,31 @@ export const onRequestPost = async (context: any) => {
     const packageId = query.data.replace('buy_', '');
     const pkg = PACKAGES[packageId];
     const lang = await getUserLanguage(supabase, tgUserId, TABLES.USERS);
+
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ callback_query_id: query.id }),
     });
+
     if (!pkg) return new Response('OK');
+
+    const purchaseInsert: any = {
+      telegram_user_id: tgUserId,
+      package_name: pkg.name,
+      stars: pkg.stars,
+      status: 'pending',
+      language: lang,
+    };
+    if (botmanagerId != null) purchaseInsert.botmanager_id = botmanagerId;
+    if (fleetBotId != null) purchaseInsert.bot_id = fleetBotId;
+
     const { data: purchase } = await supabase
       .from(TABLES.PURCHASES)
-      .insert({
-        telegram_user_id: tgUserId,
-        package_name: pkg.name,
-        stars: pkg.stars,
-        status: 'pending',
-        language: lang,
-        ...(botmanagerId ? { botmanager_id: botmanagerId } : {}),
-      })
+      .insert(purchaseInsert)
       .select('id')
       .single();
+
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendInvoice`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -696,13 +850,16 @@ export const onRequestPost = async (context: any) => {
         prices: [{ label: pkg.name, amount: pkg.stars }],
       }),
     });
+
     return new Response('OK');
   }
+
   // ── Pre-checkout Query ───────────────────────────────────────────────────
   if (update.pre_checkout_query) {
     await answerPreCheckout(BOT_TOKEN, update.pre_checkout_query.id, true);
     return new Response('OK');
   }
+
   // ── Successful Payment ───────────────────────────────────────────────────
   if (update.message?.successful_payment) {
     const chatId = update.message.chat.id;
@@ -713,7 +870,7 @@ export const onRequestPost = async (context: any) => {
     const chargeId = payment.telegram_payment_charge_id || payment.provider_payment_charge_id || '';
     const lang = await getUserLanguage(supabase, tgUserId, TABLES.USERS);
 
-    // ── Manager Treasury top-up (fleet/shared only) ───────────────────────
+    // ── Manager Treasury top-up (fleet only) ──────────────────────────────
     if (!isLegacyBot && purchaseId) {
       const { data: managerPurchase } = await supabase
         .from('managers_purchase')
@@ -724,7 +881,6 @@ export const onRequestPost = async (context: any) => {
       if (managerPurchase) {
         const starsToCredit = Number(managerPurchase.star_amount) || starsPaid;
 
-        // Mark purchase completed
         await supabase
           .from('managers_purchase')
           .update({
@@ -733,7 +889,6 @@ export const onRequestPost = async (context: any) => {
           })
           .eq('id', purchaseId);
 
-        // Credit manager wallet
         const { data: manager } = await supabase
           .from('bot_managers')
           .select('star_balance')
@@ -760,38 +915,47 @@ export const onRequestPost = async (context: any) => {
       }
     }
 
-    // ── Regular end-user payment flow (unchanged) ────────────────────────
+    // ── Regular end-user payment ─────────────────────────────────────────
     const { data: user } = await supabase
       .from(TABLES.USERS)
       .select('stars')
       .eq('telegram_user_id', tgUserId)
       .maybeSingle();
+
     const currentStars = user?.stars ?? 0;
     const newBalance = currentStars + starsPaid;
+
     await supabase
       .from(TABLES.USERS)
       .update({ stars: newBalance })
       .eq('telegram_user_id', tgUserId);
+
     if (purchaseId) {
+      const purchaseUpdate: any = {
+        status: 'completed',
+        telegram_payment_charge_id: chargeId,
+        updated_at: new Date().toISOString(),
+      };
+      if (fleetBotId != null) purchaseUpdate.bot_id = fleetBotId;
+
       await supabase
         .from(TABLES.PURCHASES)
-        .update({
-          status: 'completed',
-          telegram_payment_charge_id: chargeId,
-          updated_at: new Date().toISOString(),
-        })
+        .update(purchaseUpdate)
         .eq('id', purchaseId);
     } else {
-      await supabase.from(TABLES.PURCHASES).insert({
+      const fallbackPurchase: any = {
         telegram_user_id: tgUserId,
         package_name: `${starsPaid} Stars Top-up`,
         stars: starsPaid,
         status: 'completed',
         telegram_payment_charge_id: chargeId,
         language: lang,
-        ...(botmanagerId ? { botmanager_id: botmanagerId } : {}),
-      });
+      };
+      if (botmanagerId != null) fallbackPurchase.botmanager_id = botmanagerId;
+      if (fleetBotId != null) fallbackPurchase.bot_id = fleetBotId;
+      await supabase.from(TABLES.PURCHASES).insert(fallbackPurchase);
     }
+
     if (!isLegacyBot && botRecord) {
       const currentEarned = Number(botRecord.star_earned || 0);
       await supabase
@@ -802,11 +966,14 @@ export const onRequestPost = async (context: any) => {
         })
         .eq('id', botRecord.id);
     }
+
     const successMsg =
       t('payment_success', lang, { package: `${starsPaid} Stars Package`, stars: starsPaid }) +
       t('payment_balance', lang, { balance: newBalance });
+
     await sendMessage(BOT_TOKEN, chatId, successMsg);
     return new Response('OK');
   }
+
   return new Response('OK');
 };
