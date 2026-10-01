@@ -267,7 +267,6 @@ export const onRequestPost = async (context: any) => {
   let botRecord: any = null;
   let isLegacyBot = false;
 
-  // ── ROUTING & AUTHENTICATION ─────────────────────────────────────────────
   if (env.TELEGRAM_WEBHOOK_SECRET && secretHeader === env.TELEGRAM_WEBHOOK_SECRET) {
     isLegacyBot = true;
     BOT_TOKEN = env.IMAGE_TELEGRAM_BOT_TOKEN;
@@ -371,7 +370,6 @@ export const onRequestPost = async (context: any) => {
     const tgUsername = update.message.from?.username || '';
     const firstName = update.message.from?.first_name || 'there';
 
-    // Legacy VITE columns only — no bot_id, no starter_stars_claimed
     const userSelectCols = isLegacyBot
       ? 'id, stars, language'
       : 'id, stars, language, starter_stars_claimed, bot_id';
@@ -396,7 +394,6 @@ export const onRequestPost = async (context: any) => {
       };
 
       if (!isLegacyBot) {
-        // fleet-only columns
         insertUser.starter_stars_claimed = true;
         if (botmanagerId != null) insertUser.botmanager_id = botmanagerId;
         if (fleetBotId != null) insertUser.bot_id = fleetBotId;
@@ -413,7 +410,6 @@ export const onRequestPost = async (context: any) => {
         console.log('[bot] /start user created', { tgUserId, isLegacyBot });
       }
     } else if (!isLegacyBot) {
-      // Fleet: claim starter stars once + stamp bot_id
       const userPatch: any = {};
       if (!existing.starter_stars_claimed) {
         userPatch.stars = (existing.stars || 0) + starterStars;
@@ -432,7 +428,6 @@ export const onRequestPost = async (context: any) => {
         }
       }
     }
-    // Legacy existing users: no starter_stars_claimed column — leave as-is
 
     if (!existing?.language) {
       await sendMessage(BOT_TOKEN, chatId, t('choose_language', 'en'), {
@@ -845,6 +840,7 @@ export const onRequestPost = async (context: any) => {
 
     if (!pkg) return new Response('OK');
 
+    // Matches legacy telegram_purchases columns
     const purchaseInsert: any = {
       telegram_user_id: tgUserId,
       package_name: pkg.name,
@@ -904,6 +900,7 @@ export const onRequestPost = async (context: any) => {
     const chargeId = payment.telegram_payment_charge_id || payment.provider_payment_charge_id || '';
     const lang = await getUserLanguage(supabase, tgUserId, TABLES.USERS);
 
+    // Manager treasury (fleet only)
     if (!isLegacyBot && purchaseId) {
       const { data: managerPurchase } = await supabase
         .from('managers_purchase')
@@ -967,11 +964,12 @@ export const onRequestPost = async (context: any) => {
     }
 
     if (purchaseId) {
+      // Legacy telegram_purchases: only status (no telegram_payment_charge_id / updated_at)
       const purchaseUpdate: any = {
         status: 'completed',
-        telegram_payment_charge_id: chargeId,
       };
       if (!isLegacyBot) {
+        purchaseUpdate.telegram_payment_charge_id = chargeId;
         purchaseUpdate.updated_at = new Date().toISOString();
         if (fleetBotId != null) purchaseUpdate.bot_id = fleetBotId;
       }
@@ -987,17 +985,20 @@ export const onRequestPost = async (context: any) => {
           purchaseId,
           error: payUpdErr,
         });
+      } else {
+        console.log('[bot] purchase marked completed', { purchaseId, isLegacyBot });
       }
     } else {
+      // Fallback insert — only columns that exist on each table
       const fallbackPurchase: any = {
         telegram_user_id: tgUserId,
         package_name: `${starsPaid} Stars Top-up`,
         stars: starsPaid,
         status: 'completed',
-        telegram_payment_charge_id: chargeId,
         language: lang,
       };
       if (!isLegacyBot) {
+        fallbackPurchase.telegram_payment_charge_id = chargeId;
         if (botmanagerId != null) fallbackPurchase.botmanager_id = botmanagerId;
         if (fleetBotId != null) fallbackPurchase.bot_id = fleetBotId;
       }
