@@ -305,7 +305,6 @@ export const onRequestPost = async (context: any) => {
     PURCHASES: isLegacyBot ? 'telegram_purchases' : 'star_purchases',
   };
 
-  // fleet only — legacy VITE has no bot_id on users/purchases
   const fleetBotId =
     !isLegacyBot && botRecord?.bot_id != null && botRecord.bot_id !== ''
       ? Number(botRecord.bot_id)
@@ -322,7 +321,7 @@ export const onRequestPost = async (context: any) => {
     return new Response('Bad Request', { status: 400 });
   }
 
-  // ── Manager Top-up via Mini App (web_app_data) — fleet only ─────────────
+  // ── Manager Top-up (fleet only) ──────────────────────────────────────────
   if (update.message?.web_app_data && !isLegacyBot) {
     try {
       const raw = update.message.web_app_data.data;
@@ -372,9 +371,9 @@ export const onRequestPost = async (context: any) => {
     const tgUsername = update.message.from?.username || '';
     const firstName = update.message.from?.first_name || 'there';
 
-    // Legacy VITE has no bot_id — do not select it there
+    // Legacy VITE columns only — no bot_id, no starter_stars_claimed
     const userSelectCols = isLegacyBot
-      ? 'id, stars, language, starter_stars_claimed'
+      ? 'id, stars, language'
       : 'id, stars, language, starter_stars_claimed, bot_id';
 
     const { data: existing, error: userSelectErr } = await supabase
@@ -384,10 +383,7 @@ export const onRequestPost = async (context: any) => {
       .maybeSingle();
 
     if (userSelectErr) {
-      console.error('[bot] /start user select error', {
-        isLegacyBot,
-        error: userSelectErr,
-      });
+      console.error('[bot] /start user select error', { isLegacyBot, error: userSelectErr });
     }
 
     if (!existing) {
@@ -396,11 +392,12 @@ export const onRequestPost = async (context: any) => {
         telegram_username: tgUsername,
         first_name: firstName,
         stars: starterStars,
-        starter_stars_claimed: true,
         language: null,
       };
-      // fleet-only fields
+
       if (!isLegacyBot) {
+        // fleet-only columns
+        insertUser.starter_stars_claimed = true;
         if (botmanagerId != null) insertUser.botmanager_id = botmanagerId;
         if (fleetBotId != null) insertUser.bot_id = fleetBotId;
       }
@@ -415,14 +412,14 @@ export const onRequestPost = async (context: any) => {
       } else {
         console.log('[bot] /start user created', { tgUserId, isLegacyBot });
       }
-    } else {
+    } else if (!isLegacyBot) {
+      // Fleet: claim starter stars once + stamp bot_id
       const userPatch: any = {};
       if (!existing.starter_stars_claimed) {
         userPatch.stars = (existing.stars || 0) + starterStars;
         userPatch.starter_stars_claimed = true;
       }
-      // fleet only: stamp bot_id if missing
-      if (!isLegacyBot && fleetBotId != null && (existing.bot_id == null || existing.bot_id === '')) {
+      if (fleetBotId != null && (existing.bot_id == null || existing.bot_id === '')) {
         userPatch.bot_id = fleetBotId;
       }
       if (Object.keys(userPatch).length > 0) {
@@ -435,6 +432,7 @@ export const onRequestPost = async (context: any) => {
         }
       }
     }
+    // Legacy existing users: no starter_stars_claimed column — leave as-is
 
     if (!existing?.language) {
       await sendMessage(BOT_TOKEN, chatId, t('choose_language', 'en'), {
@@ -549,7 +547,6 @@ export const onRequestPost = async (context: any) => {
       return new Response('OK');
     }
 
-    // Legacy dedupe only (jobs has no telegram_update_id)
     if (isLegacyBot) {
       const { data: alreadyProcessed } = await supabase
         .from(TABLES.JOBS)
@@ -855,7 +852,6 @@ export const onRequestPost = async (context: any) => {
       status: 'pending',
       language: lang,
     };
-    // fleet-only fields — never send bot_id / botmanager_id to legacy telegram_purchases
     if (!isLegacyBot) {
       if (botmanagerId != null) purchaseInsert.botmanager_id = botmanagerId;
       if (fleetBotId != null) purchaseInsert.bot_id = fleetBotId;
@@ -908,7 +904,6 @@ export const onRequestPost = async (context: any) => {
     const chargeId = payment.telegram_payment_charge_id || payment.provider_payment_charge_id || '';
     const lang = await getUserLanguage(supabase, tgUserId, TABLES.USERS);
 
-    // ── Manager Treasury top-up (fleet only) ──────────────────────────────
     if (!isLegacyBot && purchaseId) {
       const { data: managerPurchase } = await supabase
         .from('managers_purchase')
@@ -953,7 +948,6 @@ export const onRequestPost = async (context: any) => {
       }
     }
 
-    // ── Regular end-user payment ─────────────────────────────────────────
     const { data: user } = await supabase
       .from(TABLES.USERS)
       .select('stars')
@@ -973,7 +967,6 @@ export const onRequestPost = async (context: any) => {
     }
 
     if (purchaseId) {
-      // Legacy telegram_purchases may not have updated_at / bot_id
       const purchaseUpdate: any = {
         status: 'completed',
         telegram_payment_charge_id: chargeId,
