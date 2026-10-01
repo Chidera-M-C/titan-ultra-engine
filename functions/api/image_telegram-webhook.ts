@@ -305,7 +305,7 @@ export const onRequestPost = async (context: any) => {
     PURCHASES: isLegacyBot ? 'telegram_purchases' : 'star_purchases',
   };
 
-  // managers_bots.bot_id is bigint — used on jobs / users / purchases (fleet only)
+  // fleet only — legacy VITE has no bot_id on users/purchases
   const fleetBotId =
     !isLegacyBot && botRecord?.bot_id != null && botRecord.bot_id !== ''
       ? Number(botRecord.bot_id)
@@ -322,7 +322,7 @@ export const onRequestPost = async (context: any) => {
     return new Response('Bad Request', { status: 400 });
   }
 
-  // ── Manager Top-up via Mini App (web_app_data) ────────────────────────────
+  // ── Manager Top-up via Mini App (web_app_data) — fleet only ─────────────
   if (update.message?.web_app_data && !isLegacyBot) {
     try {
       const raw = update.message.web_app_data.data;
@@ -372,11 +372,23 @@ export const onRequestPost = async (context: any) => {
     const tgUsername = update.message.from?.username || '';
     const firstName = update.message.from?.first_name || 'there';
 
-    const { data: existing } = await supabase
+    // Legacy VITE has no bot_id — do not select it there
+    const userSelectCols = isLegacyBot
+      ? 'id, stars, language, starter_stars_claimed'
+      : 'id, stars, language, starter_stars_claimed, bot_id';
+
+    const { data: existing, error: userSelectErr } = await supabase
       .from(TABLES.USERS)
-      .select('id, stars, language, starter_stars_claimed, bot_id')
+      .select(userSelectCols)
       .eq('telegram_user_id', tgUserId)
       .maybeSingle();
+
+    if (userSelectErr) {
+      console.error('[bot] /start user select error', {
+        isLegacyBot,
+        error: userSelectErr,
+      });
+    }
 
     if (!existing) {
       const insertUser: any = {
@@ -387,24 +399,40 @@ export const onRequestPost = async (context: any) => {
         starter_stars_claimed: true,
         language: null,
       };
-      if (botmanagerId != null) insertUser.botmanager_id = botmanagerId;
-      if (fleetBotId != null) insertUser.bot_id = fleetBotId;
+      // fleet-only fields
+      if (!isLegacyBot) {
+        if (botmanagerId != null) insertUser.botmanager_id = botmanagerId;
+        if (fleetBotId != null) insertUser.bot_id = fleetBotId;
+      }
 
-      await supabase.from(TABLES.USERS).insert(insertUser);
+      const { error: insertErr } = await supabase.from(TABLES.USERS).insert(insertUser);
+      if (insertErr) {
+        console.error('[bot] /start user insert FAILED', {
+          isLegacyBot,
+          table: TABLES.USERS,
+          error: insertErr,
+        });
+      } else {
+        console.log('[bot] /start user created', { tgUserId, isLegacyBot });
+      }
     } else {
       const userPatch: any = {};
       if (!existing.starter_stars_claimed) {
         userPatch.stars = (existing.stars || 0) + starterStars;
         userPatch.starter_stars_claimed = true;
       }
-      if (fleetBotId != null && (existing.bot_id == null || existing.bot_id === '')) {
+      // fleet only: stamp bot_id if missing
+      if (!isLegacyBot && fleetBotId != null && (existing.bot_id == null || existing.bot_id === '')) {
         userPatch.bot_id = fleetBotId;
       }
       if (Object.keys(userPatch).length > 0) {
-        await supabase
+        const { error: patchErr } = await supabase
           .from(TABLES.USERS)
           .update(userPatch)
           .eq('telegram_user_id', tgUserId);
+        if (patchErr) {
+          console.error('[bot] /start user patch FAILED', patchErr);
+        }
       }
     }
 
@@ -563,13 +591,12 @@ export const onRequestPost = async (context: any) => {
           job_type: null,
         };
       } else {
-        // jobs table columns
         insertPayload = {
           user_id: tgUserId,
           prompt: caption,
           input_file_url: publicUrl,
           status: 'awaiting_choice',
-          job_type: 'image', // constraint requires image|video; updated on choice
+          job_type: 'image',
           telegram_chat_id: String(chatId),
         };
         if (fleetBotId != null) insertPayload.bot_id = fleetBotId;
@@ -649,7 +676,6 @@ export const onRequestPost = async (context: any) => {
       return new Response('OK');
     }
 
-    // Pending job — dual columns + fleet bot_id filter
     let pendingQuery = supabase
       .from(TABLES.JOBS)
       .select('*')
@@ -829,14 +855,26 @@ export const onRequestPost = async (context: any) => {
       status: 'pending',
       language: lang,
     };
-    if (botmanagerId != null) purchaseInsert.botmanager_id = botmanagerId;
-    if (fleetBotId != null) purchaseInsert.bot_id = fleetBotId;
+    // fleet-only fields — never send bot_id / botmanager_id to legacy telegram_purchases
+    if (!isLegacyBot) {
+      if (botmanagerId != null) purchaseInsert.botmanager_id = botmanagerId;
+      if (fleetBotId != null) purchaseInsert.bot_id = fleetBotId;
+    }
 
-    const { data: purchase } = await supabase
+    const { data: purchase, error: purchaseErr } = await supabase
       .from(TABLES.PURCHASES)
       .insert(purchaseInsert)
       .select('id')
       .single();
+
+    if (purchaseErr || !purchase?.id) {
+      console.error('[bot] purchase insert FAILED', {
+        isLegacyBot,
+        table: TABLES.PURCHASES,
+        error: purchaseErr,
+      });
+      return new Response('OK');
+    }
 
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendInvoice`, {
       method: 'POST',
@@ -845,7 +883,7 @@ export const onRequestPost = async (context: any) => {
         chat_id: chatId,
         title: pkg.name,
         description: t('invoice_description', lang),
-        payload: purchase?.id,
+        payload: String(purchase.id),
         currency: 'XTR',
         prices: [{ label: pkg.name, amount: pkg.stars }],
       }),
@@ -925,23 +963,38 @@ export const onRequestPost = async (context: any) => {
     const currentStars = user?.stars ?? 0;
     const newBalance = currentStars + starsPaid;
 
-    await supabase
+    const { error: starErr } = await supabase
       .from(TABLES.USERS)
       .update({ stars: newBalance })
       .eq('telegram_user_id', tgUserId);
 
+    if (starErr) {
+      console.error('[bot] payment star credit FAILED', { isLegacyBot, error: starErr });
+    }
+
     if (purchaseId) {
+      // Legacy telegram_purchases may not have updated_at / bot_id
       const purchaseUpdate: any = {
         status: 'completed',
         telegram_payment_charge_id: chargeId,
-        updated_at: new Date().toISOString(),
       };
-      if (fleetBotId != null) purchaseUpdate.bot_id = fleetBotId;
+      if (!isLegacyBot) {
+        purchaseUpdate.updated_at = new Date().toISOString();
+        if (fleetBotId != null) purchaseUpdate.bot_id = fleetBotId;
+      }
 
-      await supabase
+      const { error: payUpdErr } = await supabase
         .from(TABLES.PURCHASES)
         .update(purchaseUpdate)
         .eq('id', purchaseId);
+
+      if (payUpdErr) {
+        console.error('[bot] purchase complete update FAILED', {
+          isLegacyBot,
+          purchaseId,
+          error: payUpdErr,
+        });
+      }
     } else {
       const fallbackPurchase: any = {
         telegram_user_id: tgUserId,
@@ -951,9 +1004,15 @@ export const onRequestPost = async (context: any) => {
         telegram_payment_charge_id: chargeId,
         language: lang,
       };
-      if (botmanagerId != null) fallbackPurchase.botmanager_id = botmanagerId;
-      if (fleetBotId != null) fallbackPurchase.bot_id = fleetBotId;
-      await supabase.from(TABLES.PURCHASES).insert(fallbackPurchase);
+      if (!isLegacyBot) {
+        if (botmanagerId != null) fallbackPurchase.botmanager_id = botmanagerId;
+        if (fleetBotId != null) fallbackPurchase.bot_id = fleetBotId;
+      }
+
+      const { error: fbErr } = await supabase.from(TABLES.PURCHASES).insert(fallbackPurchase);
+      if (fbErr) {
+        console.error('[bot] fallback purchase insert FAILED', fbErr);
+      }
     }
 
     if (!isLegacyBot && botRecord) {
