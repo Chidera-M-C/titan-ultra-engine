@@ -4,8 +4,9 @@ import { createClient } from '@supabase/supabase-js';
  * POST /api/manager-bootstrap
  * Body: { user_id: number|string, username?: string }
  *
- * Fleet: SHARED_*  |  Legacy (read-only language seed): VITE_* + SUPABASE_SERVICE_ROLE_KEY
+ * Fleet: SHARED_*  |  Legacy (read-only language): VITE_* + SUPABASE_SERVICE_ROLE_KEY
  * Never writes to legacy.
+ * On every open: sync fleet language from legacy when legacy has a value.
  */
 export const onRequestPost = async (context) => {
   const env = context.env;
@@ -89,11 +90,10 @@ export const onRequestPost = async (context) => {
       manager = created;
     }
 
-    const currentLang = (manager.language || '').trim();
-    let finalLang = currentLang || 'en';
+    // Always prefer legacy language when available (keeps mini-app in sync with bot)
+    let finalLang = (manager.language || '').trim() || 'en';
 
-    // Seed from legacy ONLY if fleet language is empty
-    if (!currentLang && legacy) {
+    if (legacy) {
       try {
         const { data: legacyUser } = await legacy
           .from('telegram_users')
@@ -102,7 +102,8 @@ export const onRequestPost = async (context) => {
           .maybeSingle();
 
         const legacyLang = (legacyUser?.language || '').trim();
-        if (legacyLang) {
+
+        if (legacyLang && legacyLang !== finalLang) {
           finalLang = legacyLang;
 
           const { error: patchErr } = await fleet
@@ -118,6 +119,9 @@ export const onRequestPost = async (context) => {
           } else {
             manager = { ...manager, language: finalLang };
           }
+        } else if (legacyLang) {
+          finalLang = legacyLang;
+          manager = { ...manager, language: finalLang };
         }
       } catch (legacyErr) {
         console.warn('[manager-bootstrap] legacy language read failed', legacyErr);
