@@ -3,32 +3,53 @@ import { createClient } from '@supabase/supabase-js';
 // ====================== TRANSLATIONS ======================
 const translations: any = {
   en: {
-    job_completed: "✨ Your {{type}} is ready!",
-    job_failed: "❌ Generation failed. Your {{cost}} stars have been refunded to your balance.",
+    job_completed:
+      "✨ Your {{type}} is ready!\n\nTelegram is banning public adult bots rn.\nPrivate bots stay forever.\nDon't loose access. Own a bot now.",
+    job_failed:
+      "❌ Generation failed. Your {{cost}} stars have been refunded to your balance.",
+    launch_bot_button: "🚀 Launch a bot in 60sec",
   },
   ar: {
-    job_completed: "✨ {{type}} الخاص بك جاهز!",
-    job_failed: "❌ فشلت عملية الإنشاء. تم إرجاع {{cost}} نجوم إلى رصيدك.",
+    job_completed:
+      "✨ {{type}} الخاص بك جاهز!\n\nتيليجرام تحظر البوتات العامة للبالغين حالياً.\nالبوتات الخاصة تبقى للأبد.\nلا تفقد الوصول. امتلك بوت الآن.",
+    job_failed:
+      "❌ فشلت عملية الإنشاء. تم إرجاع {{cost}} نجوم إلى رصيدك.",
+    launch_bot_button: "🚀 أطلق بوت في 60 ثانية",
   },
   hi: {
-    job_completed: "✨ आपका {{type}} तैयार है!",
-    job_failed: "❌ जनरेशन विफल रहा। आपके {{cost}} स्टार्स आपके बैलेंस में वापस कर दिए गए हैं।",
+    job_completed:
+      "✨ आपका {{type}} तैयार है!\n\nटेलीग्राम अभी पब्लिक एडल्ट बॉट्स को बैन कर रहा है।\nप्राइवेट बॉट्स हमेशा के लिए रहते हैं।\nएक्सेस मत खोओ। अभी अपना बॉट लॉन्च करो।",
+    job_failed:
+      "❌ जनरेशन विफल रहा। आपके {{cost}} स्टार्स आपके बैलेंस में वापस कर दिए गए हैं।",
+    launch_bot_button: "🚀 60 सेकंड में बॉट लॉन्च करें",
   },
   ur: {
-    job_completed: "✨ آپ کا {{type}} تیار ہے!",
-    job_failed: "❌ جنریشن ناکام ہوگئی۔ آپ کے {{cost}} ستارے آپ کے بیلنس میں واپس کر دیے گئے ہیں۔",
+    job_completed:
+      "✨ آپ کا {{type}} تیار ہے!\n\nٹیلیگرام اس وقت پبلک ایڈلٹ بوٹس پر پابندی لگا رہا ہے۔\nپرائیویٹ بوٹس ہمیشہ رہتے ہیں۔\nرسائی مت کھوؤ۔ ابھی اپنا بوٹ لانچ کرو۔",
+    job_failed:
+      "❌ جنریشن ناکام ہوگئی۔ آپ کے {{cost}} ستارے آپ کے بیلنس میں واپس کر دیے گئے ہیں۔",
+    launch_bot_button: "🚀 60 سیکنڈ میں بوٹ لانچ کریں",
   },
   bn: {
-    job_completed: "✨ আপনার {{type}} তৈরি!",
-    job_failed: "❌ জেনারেশন ব্যর্থ হয়েছে। আপনার {{cost}} স্টার ব্যালেন্সে ফেরত দেওয়া হয়েছে।",
+    job_completed:
+      "✨ আপনার {{type}} তৈরি!\n\nটেলিগ্রাম এখন পাবলিক অ্যাডাল্ট বট ব্যান করছে।\nপ্রাইভেট বট চিরকাল থাকে।\nঅ্যাক্সেস হারাবেন না। এখনই নিজের বট লঞ্চ করুন।",
+    job_failed:
+      "❌ জেনারেশন ব্যর্থ হয়েছে। আপনার {{cost}} স্টার ব্যালেন্সে ফেরত দেওয়া হয়েছে।",
+    launch_bot_button: "🚀 ৬০ সেকেন্ডে বট লঞ্চ করুন",
   },
   ru: {
-    job_completed: "✨ Ваш {{type}} готов!",
-    job_failed: "❌ Ошибка генерации. Ваши {{cost}} звёзд возвращены на баланс.",
+    job_completed:
+      "✨ Ваш {{type}} готов!\n\nTelegram сейчас банит публичные adult-боты.\nПриватные боты остаются навсегда.\nНе теряйте доступ. Запустите своего бота сейчас.",
+    job_failed:
+      "❌ Ошибка генерации. Ваши {{cost}} звёзд возвращены на баланс.",
+    launch_bot_button: "🚀 Запустить бота за 60 сек",
   },
   es: {
-    job_completed: "✨ ¡Tu {{type}} está listo!",
-    job_failed: "❌ Error en la generación. Se te han reembolsado {{cost}} estrellas a tu saldo.",
+    job_completed:
+      "✨ ¡Tu {{type}} está listo!\n\nTelegram está baneando bots públicos para adultos ahora.\nLos bots privados se quedan para siempre.\nNo pierdas el acceso. Lanza tu bot ahora.",
+    job_failed:
+      "❌ Error en la generación. Se te han reembolsado {{cost}} estrellas a tu saldo.",
+    launch_bot_button: "🚀 Lanza un bot en 60seg",
   },
 };
 
@@ -42,6 +63,8 @@ function t(key: string, lang: string = 'en', vars: Record<string, any> = {}) {
 }
 
 // ====================== HELPERS ======================
+const MINI_APP_URL = 'https://t.me/PixiFantasiesBot/nudelybotui';
+
 const isHttpUrl = (value: string) => /^https?:\/\//i.test(value);
 
 const stripDataPrefix = (value: string) =>
@@ -61,10 +84,23 @@ async function sendTelegramMedia(
   chatId: string,
   media: string,
   isVideo: boolean,
-  caption: string
+  caption: string,
+  buttonText: string
 ) {
   const endpoint = isVideo ? 'sendVideo' : 'sendPhoto';
   const paramName = isVideo ? 'video' : 'photo';
+
+  const replyMarkup = {
+    inline_keyboard: [
+      [
+        {
+          text: buttonText,
+          web_app: { url: MINI_APP_URL },
+        },
+      ],
+    ],
+  };
+
   let res: Response;
 
   if (isHttpUrl(media)) {
@@ -76,6 +112,7 @@ async function sendTelegramMedia(
         [paramName]: media,
         caption,
         parse_mode: 'HTML',
+        reply_markup: replyMarkup,
       }),
     });
   } else {
@@ -84,6 +121,7 @@ async function sendTelegramMedia(
     form.append('chat_id', String(chatId));
     form.append('caption', caption);
     form.append('parse_mode', 'HTML');
+    form.append('reply_markup', JSON.stringify(replyMarkup));
     form.append(
       paramName,
       new Blob([bytes], { type: isVideo ? 'video/mp4' : 'image/jpeg' }),
@@ -346,12 +384,18 @@ export const onRequestPost = async (context: any) => {
           }
         }
 
+        const caption = t('job_completed', lang, {
+          type: isVideo ? 'Video' : 'Image',
+        });
+        const buttonText = t('launch_bot_button', lang);
+
         await sendTelegramMedia(
           BOT_TOKEN,
           chatId,
           mediaUrl,
           isVideo,
-          t('job_completed', lang, { type: isVideo ? 'Video' : 'Image' })
+          caption,
+          buttonText
         );
         delivered = true;
       } catch (err: any) {
