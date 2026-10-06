@@ -90,12 +90,13 @@ async function sendTelegramMedia(
   const endpoint = isVideo ? 'sendVideo' : 'sendPhoto';
   const paramName = isVideo ? 'video' : 'photo';
 
+  // IMPORTANT: use normal "url" button (not web_app) because the link is a t.me deep-link
   const replyMarkup = {
     inline_keyboard: [
       [
         {
           text: buttonText,
-          web_app: { url: MINI_APP_URL },
+          url: MINI_APP_URL,
         },
       ],
     ],
