@@ -234,7 +234,8 @@ function languageMenu() {
   };
 }
 
-function creditMenu() {
+/** Legacy: includes img/vid package hints */
+function creditMenuLegacy() {
   return {
     inline_keyboard: [
       [{ text: '8 ⭐ — $0.10 (1 img 🖼)', callback_data: 'buy_pack8' }],
@@ -245,6 +246,24 @@ function creditMenu() {
       [{ text: '4,500 ⭐ — $56.25 (562 img 🖼 / 281 vid 🎬)', callback_data: 'buy_pack4500' }],
     ],
   };
+}
+
+/** Fleet: stars + price only */
+function creditMenuFleet() {
+  return {
+    inline_keyboard: [
+      [{ text: '8 ⭐ — $0.10', callback_data: 'buy_pack8' }],
+      [{ text: '80 ⭐ — $1', callback_data: 'buy_pack80' }],
+      [{ text: '300 ⭐ — $3.75', callback_data: 'buy_pack300' }],
+      [{ text: '550 ⭐ — $6.70', callback_data: 'buy_pack550' }],
+      [{ text: '2,400 ⭐ — $30', callback_data: 'buy_pack2400' }],
+      [{ text: '4,500 ⭐ — $56.25', callback_data: 'buy_pack4500' }],
+    ],
+  };
+}
+
+function creditMenu(isLegacy: boolean) {
+  return isLegacy ? creditMenuLegacy() : creditMenuFleet();
 }
 
 function choiceMenu(lang: string, imgCost: number, vidCost: number) {
@@ -469,7 +488,7 @@ export const onRequestPost = async (context: any) => {
       .update({ language: lang })
       .eq('telegram_user_id', tgUserId);
 
-    // language column exists only on legacy telegram_purchases
+    // language + status only on legacy telegram_purchases
     if (isLegacyBot) {
       await supabase
         .from(TABLES.PURCHASES)
@@ -527,7 +546,7 @@ export const onRequestPost = async (context: any) => {
   if (update.message?.text === '/buy') {
     const lang = await getUserLanguage(supabase, String(update.message.from.id), TABLES.USERS);
     await sendMessage(BOT_TOKEN, update.message.chat.id, t('pick_package', lang), {
-      reply_markup: creditMenu(),
+      reply_markup: creditMenu(isLegacyBot),
     });
     return new Response('OK');
   }
@@ -667,7 +686,7 @@ export const onRequestPost = async (context: any) => {
         img: retailImageCost,
         vid: retailVideoCost,
         balance: user?.stars ?? 0,
-      }), { reply_markup: creditMenu() });
+      }), { reply_markup: creditMenu(isLegacyBot) });
       return new Response('OK');
     }
 
@@ -843,33 +862,37 @@ export const onRequestPost = async (context: any) => {
 
     if (!pkg) return new Response('OK');
 
-    // star_purchases has NO language column — only legacy telegram_purchases does
-    const purchaseInsert: any = {
-      telegram_user_id: tgUserId,
-      package_name: pkg.name,
-      stars: pkg.stars,
-      status: 'pending',
-    };
+    let invoicePayload: string;
+
     if (isLegacyBot) {
-      purchaseInsert.language = lang;
+      // telegram_purchases: pending row → payload = purchase uuid
+      const purchaseInsert: any = {
+        telegram_user_id: tgUserId,
+        package_name: pkg.name,
+        stars: pkg.stars,
+        status: 'pending',
+        language: lang,
+      };
+
+      const { data: purchase, error: purchaseErr } = await supabase
+        .from(TABLES.PURCHASES)
+        .insert(purchaseInsert)
+        .select('id')
+        .single();
+
+      if (purchaseErr || !purchase?.id) {
+        console.error('[bot] purchase insert FAILED', {
+          isLegacyBot,
+          table: TABLES.PURCHASES,
+          error: purchaseErr,
+        });
+        return new Response('OK');
+      }
+      invoicePayload = String(purchase.id);
     } else {
-      if (botmanagerId != null) purchaseInsert.botmanager_id = botmanagerId;
-      if (fleetBotId != null) purchaseInsert.bot_id = fleetBotId;
-    }
-
-    const { data: purchase, error: purchaseErr } = await supabase
-      .from(TABLES.PURCHASES)
-      .insert(purchaseInsert)
-      .select('id')
-      .single();
-
-    if (purchaseErr || !purchase?.id) {
-      console.error('[bot] purchase insert FAILED', {
-        isLegacyBot,
-        table: TABLES.PURCHASES,
-        error: purchaseErr,
-      });
-      return new Response('OK');
+      // star_purchases has no status — insert only after payment succeeds
+      // payload = package key (e.g. pack8)
+      invoicePayload = packageId;
     }
 
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendInvoice`, {
@@ -879,7 +902,7 @@ export const onRequestPost = async (context: any) => {
         chat_id: chatId,
         title: pkg.name,
         description: t('invoice_description', lang),
-        payload: String(purchase.id),
+        payload: invoicePayload,
         currency: 'XTR',
         prices: [{ label: pkg.name, amount: pkg.stars }],
       }),
@@ -900,11 +923,10 @@ export const onRequestPost = async (context: any) => {
     const tgUserId = String(update.message.from.id);
     const payment = update.message.successful_payment;
     const starsPaid = Number(payment.total_amount || 0);
-    const purchaseId = payment.invoice_payload;
-    const chargeId = payment.telegram_payment_charge_id || payment.provider_payment_charge_id || '';
+    const purchaseId = payment.invoice_payload; // legacy: uuid | fleet: pack8 etc. | manager: uuid
     const lang = await getUserLanguage(supabase, tgUserId, TABLES.USERS);
 
-    // Manager treasury (fleet only)
+    // Manager treasury (fleet only) — payload is managers_purchase uuid
     if (!isLegacyBot && purchaseId) {
       const { data: managerPurchase } = await supabase
         .from('managers_purchase')
@@ -949,6 +971,7 @@ export const onRequestPost = async (context: any) => {
       }
     }
 
+    // Credit end-user stars
     const { data: user } = await supabase
       .from(TABLES.USERS)
       .select('stars')
@@ -967,65 +990,78 @@ export const onRequestPost = async (context: any) => {
       console.error('[bot] payment star credit FAILED', { isLegacyBot, error: starErr });
     }
 
-    if (purchaseId) {
-      const purchaseUpdate: any = {
-        status: 'completed',
-      };
-      if (!isLegacyBot) {
-        purchaseUpdate.telegram_payment_charge_id = chargeId;
-        purchaseUpdate.updated_at = new Date().toISOString();
-        if (fleetBotId != null) purchaseUpdate.bot_id = fleetBotId;
-      }
+    if (isLegacyBot) {
+      // Mark telegram_purchases completed (status only — no charge_id / updated_at)
+      if (purchaseId) {
+        const { error: payUpdErr } = await supabase
+          .from(TABLES.PURCHASES)
+          .update({ status: 'completed' })
+          .eq('id', purchaseId);
 
-      const { error: payUpdErr } = await supabase
-        .from(TABLES.PURCHASES)
-        .update(purchaseUpdate)
-        .eq('id', purchaseId);
-
-      if (payUpdErr) {
-        console.error('[bot] purchase complete update FAILED', {
-          isLegacyBot,
-          purchaseId,
-          error: payUpdErr,
-        });
+        if (payUpdErr) {
+          console.error('[bot] purchase complete update FAILED', {
+            isLegacyBot,
+            purchaseId,
+            error: payUpdErr,
+          });
+        } else {
+          console.log('[bot] purchase marked completed', { purchaseId, isLegacyBot: true });
+        }
       } else {
-        console.log('[bot] purchase marked completed', { purchaseId, isLegacyBot });
+        const { error: fbErr } = await supabase.from(TABLES.PURCHASES).insert({
+          telegram_user_id: tgUserId,
+          package_name: `${starsPaid} Stars Top-up`,
+          stars: starsPaid,
+          status: 'completed',
+          language: lang,
+        });
+        if (fbErr) console.error('[bot] fallback purchase insert FAILED', fbErr);
       }
     } else {
-      const fallbackPurchase: any = {
-        telegram_user_id: tgUserId,
-        package_name: `${starsPaid} Stars Top-up`,
-        stars: starsPaid,
-        status: 'completed',
+      // Fleet: insert into star_purchases (user_id, star_amount, package_name, bot_*)
+      const pkgFromPayload = PACKAGES[purchaseId]; // buy_pack* → pack8 etc.
+      const packageName = pkgFromPayload?.name || `${starsPaid} Stars Top-up`;
+
+      const fleetPurchase: any = {
+        user_id: tgUserId,
+        star_amount: starsPaid,
+        package_name: packageName,
       };
-      if (isLegacyBot) {
-        fallbackPurchase.language = lang;
+      if (botmanagerId != null) fleetPurchase.botmanager_id = botmanagerId;
+      if (fleetBotId != null) fleetPurchase.bot_id = fleetBotId;
+
+      const { error: fleetInsErr } = await supabase
+        .from(TABLES.PURCHASES)
+        .insert(fleetPurchase);
+
+      if (fleetInsErr) {
+        console.error('[bot] star_purchases insert FAILED', fleetInsErr);
       } else {
-        fallbackPurchase.telegram_payment_charge_id = chargeId;
-        if (botmanagerId != null) fallbackPurchase.botmanager_id = botmanagerId;
-        if (fleetBotId != null) fallbackPurchase.bot_id = fleetBotId;
+        console.log('[bot] star_purchases row created', {
+          user_id: tgUserId,
+          star_amount: starsPaid,
+          bot_id: fleetBotId,
+        });
       }
 
-      const { error: fbErr } = await supabase.from(TABLES.PURCHASES).insert(fallbackPurchase);
-      if (fbErr) {
-        console.error('[bot] fallback purchase insert FAILED', fbErr);
+      // Bot manager earned stars
+      if (botRecord) {
+        const currentEarned = Number(botRecord.star_earned || 0);
+        await supabase
+          .from('managers_bots')
+          .update({
+            star_earned: currentEarned + starsPaid,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', botRecord.id);
       }
-    }
-
-    if (!isLegacyBot && botRecord) {
-      const currentEarned = Number(botRecord.star_earned || 0);
-      await supabase
-        .from('managers_bots')
-        .update({
-          star_earned: currentEarned + starsPaid,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', botRecord.id);
     }
 
     const successMsg =
-      t('payment_success', lang, { package: `${starsPaid} Stars Package`, stars: starsPaid }) +
-      t('payment_balance', lang, { balance: newBalance });
+      t('payment_success', lang, {
+        package: PACKAGES[purchaseId]?.name || `${starsPaid} Stars Package`,
+        stars: starsPaid,
+      }) + t('payment_balance', lang, { balance: newBalance });
 
     await sendMessage(BOT_TOKEN, chatId, successMsg);
     return new Response('OK');
