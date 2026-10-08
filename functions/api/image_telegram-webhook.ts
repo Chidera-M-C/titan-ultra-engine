@@ -469,11 +469,14 @@ export const onRequestPost = async (context: any) => {
       .update({ language: lang })
       .eq('telegram_user_id', tgUserId);
 
-    await supabase
-      .from(TABLES.PURCHASES)
-      .update({ language: lang })
-      .eq('telegram_user_id', tgUserId)
-      .eq('status', 'pending');
+    // language column exists only on legacy telegram_purchases
+    if (isLegacyBot) {
+      await supabase
+        .from(TABLES.PURCHASES)
+        .update({ language: lang })
+        .eq('telegram_user_id', tgUserId)
+        .eq('status', 'pending');
+    }
 
     const confirmTexts: any = {
       ar: '✅ تم تغيير اللغة بنجاح إلى العربية',
@@ -840,15 +843,16 @@ export const onRequestPost = async (context: any) => {
 
     if (!pkg) return new Response('OK');
 
-    // Matches legacy telegram_purchases columns
+    // star_purchases has NO language column — only legacy telegram_purchases does
     const purchaseInsert: any = {
       telegram_user_id: tgUserId,
       package_name: pkg.name,
       stars: pkg.stars,
       status: 'pending',
-      language: lang,
     };
-    if (!isLegacyBot) {
+    if (isLegacyBot) {
+      purchaseInsert.language = lang;
+    } else {
       if (botmanagerId != null) purchaseInsert.botmanager_id = botmanagerId;
       if (fleetBotId != null) purchaseInsert.bot_id = fleetBotId;
     }
@@ -964,7 +968,6 @@ export const onRequestPost = async (context: any) => {
     }
 
     if (purchaseId) {
-      // Legacy telegram_purchases: only status (no telegram_payment_charge_id / updated_at)
       const purchaseUpdate: any = {
         status: 'completed',
       };
@@ -989,15 +992,15 @@ export const onRequestPost = async (context: any) => {
         console.log('[bot] purchase marked completed', { purchaseId, isLegacyBot });
       }
     } else {
-      // Fallback insert — only columns that exist on each table
       const fallbackPurchase: any = {
         telegram_user_id: tgUserId,
         package_name: `${starsPaid} Stars Top-up`,
         stars: starsPaid,
         status: 'completed',
-        language: lang,
       };
-      if (!isLegacyBot) {
+      if (isLegacyBot) {
+        fallbackPurchase.language = lang;
+      } else {
         fallbackPurchase.telegram_payment_charge_id = chargeId;
         if (botmanagerId != null) fallbackPurchase.botmanager_id = botmanagerId;
         if (fleetBotId != null) fallbackPurchase.bot_id = fleetBotId;
