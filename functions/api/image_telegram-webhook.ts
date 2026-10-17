@@ -917,35 +917,45 @@ export const onRequestPost = async (context: any) => {
     return new Response('OK');
   }
 
-  // ── Successful Payment ───────────────────────────────────────────────────
+  // ── Successful Payment (dual-client + payload routing) ─────────────────
   if (update.message?.successful_payment) {
     const chatId = update.message.chat.id;
     const tgUserId = String(update.message.from.id);
     const payment = update.message.successful_payment;
     const starsPaid = Number(payment.total_amount || 0);
-    const purchaseId = payment.invoice_payload; // legacy: uuid | fleet: pack8 etc. | manager: uuid
+    const payload = String(payment.invoice_payload || '');
     const lang = await getUserLanguage(supabase, tgUserId, TABLES.USERS);
 
-    // Manager treasury (fleet only) — payload is managers_purchase uuid
-    if (!isLegacyBot && purchaseId) {
-      const { data: managerPurchase } = await supabase
+    // Both DBs — routing is by payload, not webhook secret
+    const legacySb = createClient(
+      env.VITE_SUPABASE_URL,
+      env.SUPABASE_SERVICE_ROLE_KEY
+    );
+    const fleetSb = createClient(
+      env.SHARED_SUPABASE_URL || env.VITE_SUPABASE_URL,
+      env.SHARED_SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SERVICE_ROLE_KEY
+    );
+
+    // ① Fleet manager treasury (managers_purchase UUID)
+    if (payload) {
+      const { data: managerPurchase } = await fleetSb
         .from('managers_purchase')
         .select('*')
-        .eq('id', purchaseId)
+        .eq('id', payload)
         .maybeSingle();
 
       if (managerPurchase) {
         const starsToCredit = Number(managerPurchase.star_amount) || starsPaid;
 
-        await supabase
+        await fleetSb
           .from('managers_purchase')
           .update({
             status: 'Completed',
             updated_at: new Date().toISOString(),
           })
-          .eq('id', purchaseId);
+          .eq('id', payload);
 
-        const { data: manager } = await supabase
+        const { data: manager } = await fleetSb
           .from('bot_managers')
           .select('star_balance')
           .eq('user_id', managerPurchase.user_id)
@@ -954,7 +964,7 @@ export const onRequestPost = async (context: any) => {
         const currentBal = Number(manager?.star_balance || 0);
         const newBalance = currentBal + starsToCredit;
 
-        await supabase
+        await fleetSb
           .from('bot_managers')
           .update({
             star_balance: newBalance,
@@ -967,87 +977,50 @@ export const onRequestPost = async (context: any) => {
           chatId,
           `✅ <b>Manager Treasury topped up!</b>\n\n📦 ${managerPurchase.package_name}\n⭐ +${starsToCredit.toLocaleString()} Stars\n💳 New balance: <b>${newBalance.toLocaleString()} Stars</b>`
         );
+        console.log('[bot] manager top-up fulfilled', { payload, starsToCredit });
         return new Response('OK');
       }
     }
 
-    // Credit end-user stars
-    const { data: user } = await supabase
-      .from(TABLES.USERS)
-      .select('stars')
-      .eq('telegram_user_id', tgUserId)
-      .maybeSingle();
+    // ② Fleet end-user pack (payload = pack8, pack80, …)
+    if (payload && PACKAGES[payload]) {
+      const pkg = PACKAGES[payload];
 
-    const currentStars = user?.stars ?? 0;
-    const newBalance = currentStars + starsPaid;
+      const { data: user } = await fleetSb
+        .from('telegram_users')
+        .select('stars')
+        .eq('telegram_user_id', tgUserId)
+        .maybeSingle();
 
-    const { error: starErr } = await supabase
-      .from(TABLES.USERS)
-      .update({ stars: newBalance })
-      .eq('telegram_user_id', tgUserId);
+      const currentStars = user?.stars ?? 0;
+      const newBalance = currentStars + starsPaid;
 
-    if (starErr) {
-      console.error('[bot] payment star credit FAILED', { isLegacyBot, error: starErr });
-    }
+      const { error: starErr } = await fleetSb
+        .from('telegram_users')
+        .update({ stars: newBalance })
+        .eq('telegram_user_id', tgUserId);
 
-    if (isLegacyBot) {
-      // Mark telegram_purchases completed (status only — no charge_id / updated_at)
-      if (purchaseId) {
-        const { error: payUpdErr } = await supabase
-          .from(TABLES.PURCHASES)
-          .update({ status: 'completed' })
-          .eq('id', purchaseId);
-
-        if (payUpdErr) {
-          console.error('[bot] purchase complete update FAILED', {
-            isLegacyBot,
-            purchaseId,
-            error: payUpdErr,
-          });
-        } else {
-          console.log('[bot] purchase marked completed', { purchaseId, isLegacyBot: true });
-        }
-      } else {
-        const { error: fbErr } = await supabase.from(TABLES.PURCHASES).insert({
-          telegram_user_id: tgUserId,
-          package_name: `${starsPaid} Stars Top-up`,
-          stars: starsPaid,
-          status: 'completed',
-          language: lang,
-        });
-        if (fbErr) console.error('[bot] fallback purchase insert FAILED', fbErr);
+      if (starErr) {
+        console.error('[bot] fleet pack star credit FAILED', starErr);
       }
-    } else {
-      // Fleet: insert into star_purchases (user_id, star_amount, package_name, bot_*)
-      const pkgFromPayload = PACKAGES[purchaseId]; // buy_pack* → pack8 etc.
-      const packageName = pkgFromPayload?.name || `${starsPaid} Stars Top-up`;
 
       const fleetPurchase: any = {
         user_id: tgUserId,
         star_amount: starsPaid,
-        package_name: packageName,
+        package_name: pkg.name,
       };
+      // bot context only if this webhook is a fleet bot
       if (botmanagerId != null) fleetPurchase.botmanager_id = botmanagerId;
       if (fleetBotId != null) fleetPurchase.bot_id = fleetBotId;
 
-      const { error: fleetInsErr } = await supabase
-        .from(TABLES.PURCHASES)
-        .insert(fleetPurchase);
-
-      if (fleetInsErr) {
-        console.error('[bot] star_purchases insert FAILED', fleetInsErr);
-      } else {
-        console.log('[bot] star_purchases row created', {
-          user_id: tgUserId,
-          star_amount: starsPaid,
-          bot_id: fleetBotId,
-        });
+      const { error: insErr } = await fleetSb.from('star_purchases').insert(fleetPurchase);
+      if (insErr) {
+        console.error('[bot] star_purchases insert FAILED', insErr);
       }
 
-      // Bot manager earned stars
-      if (botRecord) {
+      if (!isLegacyBot && botRecord) {
         const currentEarned = Number(botRecord.star_earned || 0);
-        await supabase
+        await fleetSb
           .from('managers_bots')
           .update({
             star_earned: currentEarned + starsPaid,
@@ -1055,15 +1028,69 @@ export const onRequestPost = async (context: any) => {
           })
           .eq('id', botRecord.id);
       }
+
+      const successMsg =
+        t('payment_success', lang, { package: pkg.name, stars: starsPaid }) +
+        t('payment_balance', lang, { balance: newBalance });
+      await sendMessage(BOT_TOKEN, chatId, successMsg);
+      console.log('[bot] fleet pack fulfilled', { payload, tgUserId, starsPaid });
+      return new Response('OK');
     }
 
-    const successMsg =
-      t('payment_success', lang, {
-        package: PACKAGES[purchaseId]?.name || `${starsPaid} Stars Package`,
-        stars: starsPaid,
-      }) + t('payment_balance', lang, { balance: newBalance });
+    // ③ Legacy casual buy (telegram_purchases UUID)
+    if (payload) {
+      const { data: legacyPurchase } = await legacySb
+        .from('telegram_purchases')
+        .select('*')
+        .eq('id', payload)
+        .maybeSingle();
 
-    await sendMessage(BOT_TOKEN, chatId, successMsg);
+      if (legacyPurchase) {
+        const { data: user } = await legacySb
+          .from('telegram_users')
+          .select('stars')
+          .eq('telegram_user_id', tgUserId)
+          .maybeSingle();
+
+        const currentStars = user?.stars ?? 0;
+        const newBalance = currentStars + starsPaid;
+
+        const { error: starErr } = await legacySb
+          .from('telegram_users')
+          .update({ stars: newBalance })
+          .eq('telegram_user_id', tgUserId);
+
+        if (starErr) {
+          console.error('[bot] legacy star credit FAILED', starErr);
+        }
+
+        const { error: payUpdErr } = await legacySb
+          .from('telegram_purchases')
+          .update({ status: 'completed' })
+          .eq('id', payload);
+
+        if (payUpdErr) {
+          console.error('[bot] legacy purchase complete FAILED', payUpdErr);
+        }
+
+        const successMsg =
+          t('payment_success', lang, {
+            package: legacyPurchase.package_name || `${starsPaid} Stars Package`,
+            stars: starsPaid,
+          }) + t('payment_balance', lang, { balance: newBalance });
+        await sendMessage(BOT_TOKEN, chatId, successMsg);
+        console.log('[bot] legacy purchase fulfilled', { payload, tgUserId, starsPaid });
+        return new Response('OK');
+      }
+    }
+
+    // ④ Unknown payload — still credit nothing; log for ops
+    console.error('[bot] successful_payment unknown payload', {
+      payload,
+      tgUserId,
+      starsPaid,
+      isLegacyBot,
+    });
     return new Response('OK');
   }
 
