@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
 // ====================== TRANSLATIONS ======================
+// ====================== TRANSLATIONS ======================
 const translations: any = {
   en: {
     choose_language: "Please choose your language:",
