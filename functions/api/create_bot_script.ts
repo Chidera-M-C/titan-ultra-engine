@@ -186,13 +186,9 @@ Lanza tu primer bot • Obtén 25 estrellas de generación gratis.`,
   },
 };
 
-function t(key: string, lang: string = 'en', vars: Record<string, any> = {}) {
+function t(key: string, lang: string = 'en') {
   const dict = translations[lang] || translations.en;
-  let text = dict[key] || translations.en[key] || key;
-  for (const [k, v] of Object.entries(vars)) {
-    text = text.replaceAll(`{{${k}}}`, String(v));
-  }
-  return text;
+  return dict[key] || translations.en[key] || key;
 }
 
 async function getUserLanguage(supabase: any, telegramUserId: number | string) {
@@ -217,15 +213,20 @@ const COURSE_LINK = 'https://t.me/NudelyBotUI/3';
 const SUPPORT_URL = 'https://t.me/nudelyadmin';
 
 async function sendMessage(token: string, chatId: number | string, text: string, extra: any = {}) {
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', ...extra }),
   });
+  const data = await res.json();
+  if (!data.ok) {
+    console.error('[sendMessage] FAILED', data);
+  }
+  return data;
 }
 
 async function sendVideo(token: string, chatId: number | string, caption: string, reply_markup: any) {
-  await fetch(`https://api.telegram.org/bot${token}/sendVideo`, {
+  const res = await fetch(`https://api.telegram.org/bot${token}/sendVideo`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -236,6 +237,13 @@ async function sendVideo(token: string, chatId: number | string, caption: string
       reply_markup,
     }),
   });
+  const data = await res.json();
+  if (!data.ok) {
+    console.error('[sendVideo] FAILED', JSON.stringify(data));
+    // Fallback → send as normal message if video fails
+    await sendMessage(token, chatId, caption, { reply_markup });
+  }
+  return data;
 }
 
 function languageMenu() {
@@ -263,21 +271,10 @@ function languageMenu() {
 function promoButtons(lang: string) {
   return {
     inline_keyboard: [
-      [
-        {
-          text: t('btn_launch', lang),
-          web_app: { url: MINI_APP_URL },
-        },
-      ],
-      [
-        { text: t('btn_community', lang), url: CHANNEL_LINK },
-      ],
-      [
-        { text: t('btn_course', lang), url: COURSE_LINK },
-      ],
-      [
-        { text: t('btn_support', lang), url: SUPPORT_URL },
-      ],
+      [{ text: t('btn_launch', lang), web_app: { url: MINI_APP_URL } }],
+      [{ text: t('btn_community', lang), url: CHANNEL_LINK }],
+      [{ text: t('btn_course', lang), url: COURSE_LINK }],
+      [{ text: t('btn_support', lang), url: SUPPORT_URL }],
     ],
   };
 }
@@ -288,11 +285,13 @@ export const onRequestPost = async (context: any) => {
   const secretHeader = context.request.headers.get('X-Telegram-Bot-Api-Secret-Token');
 
   if (!env.CREATE_BOT_SECRET || secretHeader !== env.CREATE_BOT_SECRET) {
+    console.error('Unauthorized - secret mismatch');
     return new Response('Unauthorized', { status: 401 });
   }
 
   const BOT_TOKEN = env.CREATE_BOT_TOKEN;
   if (!BOT_TOKEN) {
+    console.error('CREATE_BOT_TOKEN missing');
     return new Response('Bot token missing', { status: 500 });
   }
 
@@ -303,49 +302,70 @@ export const onRequestPost = async (context: any) => {
   let update: any;
   try {
     update = await context.request.json();
-  } catch {
+  } catch (e) {
+    console.error('JSON parse error', e);
     return new Response('Bad Request', { status: 400 });
   }
 
+  console.log('Update received:', JSON.stringify({
+    hasMessage: !!update.message,
+    text: update.message?.text,
+    hasCallback: !!update.callback_query,
+    callbackData: update.callback_query?.data,
+  }));
+
   // ── /start ───────────────────────────────────────────────────────────────
   if (update.message?.text === '/start' || update.message?.text?.startsWith('/start ')) {
+    console.log('→ Handling /start');
+
     const chatId = update.message.chat.id;
     const tgUserId = Number(update.message.from.id);
     const tgUsername = update.message.from?.username || null;
 
-    const { data: existing } = await supabase
-      .from('bot_managers')
-      .select('user_id, language')
-      .eq('user_id', tgUserId)
-      .maybeSingle();
-
-    if (!existing) {
-      // Brand new user
-      const { error } = await supabase.from('bot_managers').insert({
-        user_id: tgUserId,
-        username: tgUsername,
-        star_balance: 0,
-      });
+    try {
+      const { data: existing, error } = await supabase
+        .from('bot_managers')
+        .select('user_id, language')
+        .eq('user_id', tgUserId)
+        .maybeSingle();
 
       if (error) {
-        console.error('[create-bot] insert failed:', error);
+        console.error('Supabase select error:', error);
       }
 
-      // Always show language picker for first-time users
-      await sendMessage(BOT_TOKEN, chatId, t('choose_language', 'en'), {
-        reply_markup: languageMenu(),
-      });
+      console.log('Existing user:', existing);
+
+      if (!existing) {
+        console.log('New user → inserting + showing language menu');
+        const { error: insertError } = await supabase.from('bot_managers').insert({
+          user_id: tgUserId,
+          username: tgUsername,
+          star_balance: 0,
+        });
+        if (insertError) console.error('Insert error:', insertError);
+
+        await sendMessage(BOT_TOKEN, chatId, t('choose_language', 'en'), {
+          reply_markup: languageMenu(),
+        });
+        return new Response('OK');
+      }
+
+      // Existing user → send promo
+      const lang = existing.language || 'en';
+      console.log('Existing user, language =', lang, '→ sending promo');
+
+      await sendVideo(BOT_TOKEN, chatId, t('promo_caption', lang), promoButtons(lang));
+      return new Response('OK');
+    } catch (err: any) {
+      console.error('/start fatal error:', err?.message || err);
+      await sendMessage(BOT_TOKEN, chatId, 'Something went wrong. Please try again.');
       return new Response('OK');
     }
-
-    // Existing user → send promo in their saved language
-    const lang = existing.language || 'en';
-    await sendVideo(BOT_TOKEN, chatId, t('promo_caption', lang), promoButtons(lang));
-    return new Response('OK');
   }
 
   // ── /language ────────────────────────────────────────────────────────────
   if (update.message?.text === '/language') {
+    console.log('→ Handling /language');
     const chatId = update.message.chat.id;
     const lang = await getUserLanguage(supabase, update.message.from.id);
     await sendMessage(BOT_TOKEN, chatId, t('choose_language', lang), {
@@ -356,14 +376,13 @@ export const onRequestPost = async (context: any) => {
 
   // ── /support ─────────────────────────────────────────────────────────────
   if (update.message?.text === '/support') {
+    console.log('→ Handling /support');
     const chatId = update.message.chat.id;
     const lang = await getUserLanguage(supabase, update.message.from.id);
 
     await sendMessage(BOT_TOKEN, chatId, t('support_msg', lang), {
       reply_markup: {
-        inline_keyboard: [
-          [{ text: t('btn_support', lang), url: SUPPORT_URL }],
-        ],
+        inline_keyboard: [[{ text: t('btn_support', lang), url: SUPPORT_URL }]],
       },
     });
     return new Response('OK');
@@ -371,12 +390,12 @@ export const onRequestPost = async (context: any) => {
 
   // ── Language selection ───────────────────────────────────────────────────
   if (update.callback_query?.data?.startsWith('lang_')) {
+    console.log('→ Handling language selection');
     const lang = update.callback_query.data.replace('lang_', '');
     const tgUserId = Number(update.callback_query.from.id);
     const chatId = update.callback_query.message.chat.id;
     const tgUsername = update.callback_query.from.username || null;
 
-    // Update language
     await supabase
       .from('bot_managers')
       .update({
@@ -386,7 +405,6 @@ export const onRequestPost = async (context: any) => {
       })
       .eq('user_id', tgUserId);
 
-    // Answer the button
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -397,10 +415,10 @@ export const onRequestPost = async (context: any) => {
       }),
     });
 
-    // Send promo in the newly selected language
     await sendVideo(BOT_TOKEN, chatId, t('promo_caption', lang), promoButtons(lang));
     return new Response('OK');
   }
 
+  console.log('No matching handler');
   return new Response('OK');
 };
