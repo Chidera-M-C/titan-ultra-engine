@@ -195,7 +195,7 @@ function t(key: string, lang: string = 'en', vars: Record<string, any> = {}) {
   return text;
 }
 
-async function getUserLanguage(supabase: any, telegramUserId: string) {
+async function getUserLanguage(supabase: any, telegramUserId: number | string) {
   try {
     const { data } = await supabase
       .from('bot_managers')
@@ -320,30 +320,26 @@ export const onRequestPost = async (context: any) => {
       .maybeSingle();
 
     if (!existing) {
-      // New user → insert with language = null (will force language picker)
-      await supabase.from('bot_managers').insert({
+      // Brand new user
+      const { error } = await supabase.from('bot_managers').insert({
         user_id: tgUserId,
         username: tgUsername,
         star_balance: 0,
-        language: null, // force picker
       });
 
+      if (error) {
+        console.error('[create-bot] insert failed:', error);
+      }
+
+      // Always show language picker for first-time users
       await sendMessage(BOT_TOKEN, chatId, t('choose_language', 'en'), {
         reply_markup: languageMenu(),
       });
       return new Response('OK');
     }
 
-    // Existing user
-    if (!existing.language) {
-      await sendMessage(BOT_TOKEN, chatId, t('choose_language', 'en'), {
-        reply_markup: languageMenu(),
-      });
-      return new Response('OK');
-    }
-
-    // Already has language → send promo
-    const lang = existing.language;
+    // Existing user → send promo in their saved language
+    const lang = existing.language || 'en';
     await sendVideo(BOT_TOKEN, chatId, t('promo_caption', lang), promoButtons(lang));
     return new Response('OK');
   }
@@ -351,7 +347,7 @@ export const onRequestPost = async (context: any) => {
   // ── /language ────────────────────────────────────────────────────────────
   if (update.message?.text === '/language') {
     const chatId = update.message.chat.id;
-    const lang = await getUserLanguage(supabase, String(update.message.from.id));
+    const lang = await getUserLanguage(supabase, update.message.from.id);
     await sendMessage(BOT_TOKEN, chatId, t('choose_language', lang), {
       reply_markup: languageMenu(),
     });
@@ -361,8 +357,7 @@ export const onRequestPost = async (context: any) => {
   // ── /support ─────────────────────────────────────────────────────────────
   if (update.message?.text === '/support') {
     const chatId = update.message.chat.id;
-    const tgUserId = String(update.message.from.id);
-    const lang = await getUserLanguage(supabase, tgUserId);
+    const lang = await getUserLanguage(supabase, update.message.from.id);
 
     await sendMessage(BOT_TOKEN, chatId, t('support_msg', lang), {
       reply_markup: {
@@ -381,32 +376,17 @@ export const onRequestPost = async (context: any) => {
     const chatId = update.callback_query.message.chat.id;
     const tgUsername = update.callback_query.from.username || null;
 
-    // Upsert language (and username just in case)
-    const { data: existing } = await supabase
+    // Update language
+    await supabase
       .from('bot_managers')
-      .select('user_id')
-      .eq('user_id', tgUserId)
-      .maybeSingle();
-
-    if (existing) {
-      await supabase
-        .from('bot_managers')
-        .update({
-          language: lang,
-          username: tgUsername,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', tgUserId);
-    } else {
-      await supabase.from('bot_managers').insert({
-        user_id: tgUserId,
-        username: tgUsername,
-        star_balance: 0,
+      .update({
         language: lang,
-      });
-    }
+        username: tgUsername,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', tgUserId);
 
-    // Answer callback
+    // Answer the button
     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -417,7 +397,7 @@ export const onRequestPost = async (context: any) => {
       }),
     });
 
-    // Send promo video
+    // Send promo in the newly selected language
     await sendVideo(BOT_TOKEN, chatId, t('promo_caption', lang), promoButtons(lang));
     return new Response('OK');
   }
