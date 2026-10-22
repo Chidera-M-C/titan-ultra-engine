@@ -271,10 +271,21 @@ function languageMenu() {
 function promoButtons(lang: string) {
   return {
     inline_keyboard: [
-      [{ text: t('btn_launch', lang), web_app: { url: MINI_APP_URL } }],
-      [{ text: t('btn_community', lang), url: CHANNEL_LINK }],
-      [{ text: t('btn_course', lang), url: COURSE_LINK }],
-      [{ text: t('btn_support', lang), url: SUPPORT_URL }],
+      [
+        {
+          text: t('btn_launch', lang),
+          url: MINI_APP_URL,          // ← changed from web_app to url
+        },
+      ],
+      [
+        { text: t('btn_community', lang), url: CHANNEL_LINK },
+      ],
+      [
+        { text: t('btn_course', lang), url: COURSE_LINK },
+      ],
+      [
+        { text: t('btn_support', lang), url: SUPPORT_URL },
+      ],
     ],
   };
 }
