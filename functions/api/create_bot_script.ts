@@ -205,7 +205,7 @@ async function getUserLanguage(supabase: any, telegramUserId: number | string) {
 }
 
 // ====================== HELPERS ======================
-const VIDEO_FILE_ID = 'BAACAgQAAxkDAANCatpxHZysSCcUEsBSNf8JdyQJwkEAAtYfAAKjltlSoj7Qt79xZK09BA';
+const VIDEO_FILE_ID = 'BAACAgQAAxkDAANeatuZ0gLN8AW4Iz4mRcAmJrH4F10AAp0gAAJF79lSO1SO9RgVd4s9B';
 
 const MINI_APP_URL = 'https://t.me/lovelyfantasiesbot/botui';
 const CHANNEL_LINK = 'https://t.me/+vYwWjoJYk7AxODQ0';
