@@ -18,7 +18,7 @@ Steps are simple:
 5. Click Create New Bot and paste the token
 6. Fund $10 in Stars
 
-Boom! You've got a private fantasy bot that never goes missing.
+Boom! You've got a private bot that never goes missing.
 
 Launch your first bot • Get 25 free generation stars.`,
     btn_launch: "🔥 Be in control now",
