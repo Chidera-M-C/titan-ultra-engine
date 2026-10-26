@@ -303,7 +303,7 @@ function promoButtons(lang: string) {
       [
         {
           text: t('btn_launch', lang),
-          url: MINI_APP_URL,
+          url: CTA_URL,
         },
       ],
     ],
