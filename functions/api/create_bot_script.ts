@@ -234,11 +234,11 @@ async function getUserLanguage(supabase: any, telegramUserId: number | string) {
 
 // ====================== HELPERS ======================
 const VIDEO_FILE_ID = 'BAACAgQAAxkDAANeatuZ0gLN8AW4Iz4mRcAmJrH4F10AAp0gAAJF79lSO1SO9RgVd4s9BA';
-const CTA_URL = 'https://t.me/botui_test_motherbot?start=ad';
+const CTA_URL = 'https://t.me/botui_test_motherbot';
 const CHANNEL_LINK = 'https://t.me/+vYwWjoJYk7AxODQ0';
 const COURSE_LINK = 'https://t.me/NudelyBotUI/3';
 const SUPPORT_URL = 'https://t.me/emma_melnyk';
-const TESTBOT_URL = 'https://t.me/botui_test_motherbot?start=ad'; // ← replace this later
+const TESTBOT_URL = 'https://t.me/botui_test_motherbot'; // ← replace this later
 
 async function sendMessage(token: string, chatId: number | string, text: string, extra: any = {}) {
   const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
