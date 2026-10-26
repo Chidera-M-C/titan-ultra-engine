@@ -25,7 +25,11 @@ Launch your first bot • Get 25 free generation stars.`,
     btn_community: "👥 Join other bot owners",
     btn_course: "▶️ Watch our course",
     btn_support: "💬 Talk to Emma",
+    btn_testbot: "🧪 Try Test Bot",
     support_msg: "Need help? Talk to Emma 👇",
+    community_msg: "Join other bot owners in our community 👇",
+    course_msg: "Watch our course and learn how to grow your bot 👇",
+    testbot_msg: "Try our test bot here 👇",
     lang_changed: "✅ Language successfully changed to English",
   },
   ar: {
@@ -51,7 +55,11 @@ Boom! أصبح لديك بوت خيالي خاص لا يختفي أبداً.
     btn_community: "👥 انضم لمالكي البوتات الآخرين",
     btn_course: "▶️ شاهد كورسنا",
     btn_support: "💬 تحدث مع إيما",
+    btn_testbot: "🧪 جرب البوت التجريبي",
     support_msg: "تحتاج مساعدة؟ تحدث مع إيما 👇",
+    community_msg: "انضم لمالكي البوتات الآخرين في مجتمعنا 👇",
+    course_msg: "شاهد كورسنا وتعلم كيف تنمي بوتك 👇",
+    testbot_msg: "جرب البوت التجريبي هنا 👇",
     lang_changed: "✅ تم تغيير اللغة بنجاح إلى العربية",
   },
   hi: {
@@ -77,7 +85,11 @@ Boom! आपके पास एक प्राइवेट फैंटेस�
     btn_community: "👥 अन्य बॉट ओनर्स से जुड़ें",
     btn_course: "▶️ हमारा कोर्स देखें",
     btn_support: "💬 एम्मा से बात करें",
+    btn_testbot: "🧪 टेस्ट बॉट आज़माएं",
     support_msg: "मदद चाहिए? एम्मा से बात करें 👇",
+    community_msg: "अन्य बॉट ओनर्स के कम्युनिटी में शामिल हों 👇",
+    course_msg: "हमारा कोर्स देखें और अपना बॉट बढ़ाएं 👇",
+    testbot_msg: "यहाँ टेस्ट बॉट आज़माएं 👇",
     lang_changed: "✅ भाषा सफलतापूर्वक हिन्दी में बदल दी गई",
   },
   ur: {
@@ -103,7 +115,11 @@ Boom! آپ کے پاس ایک پرائیویٹ فینٹسی بوٹ ہے جو ک�
     btn_community: "👥 دیگر بوٹ اونرز سے جڑیں",
     btn_course: "▶️ ہمارا کورس دیکھیں",
     btn_support: "💬 اما سے بات کریں",
+    btn_testbot: "🧪 ٹیسٹ بوٹ آزمائیں",
     support_msg: "مدد چاہیے؟ اما سے بات کریں 👇",
+    community_msg: "دیگر بوٹ اونرز کی کمیونٹی میں شامل ہوں 👇",
+    course_msg: "ہمارا کورس دیکھیں اور اپنا بوٹ بڑھائیں 👇",
+    testbot_msg: "یہاں ٹیسٹ بوٹ آزمائیں 👇",
     lang_changed: "✅ زبان کامیابی سے اردو میں تبدیل ہو گئی",
   },
   bn: {
@@ -129,7 +145,11 @@ Boom! আপনার কাছে একটি প্রাইভেট ফ্�
     btn_community: "👥 অন্য বট মালিকদের সাথে যোগ দিন",
     btn_course: "▶️ আমাদের কোর্স দেখুন",
     btn_support: "💬 এমমার সাথে কথা বলুন",
+    btn_testbot: "🧪 টেস্ট বট চেষ্টা করুন",
     support_msg: "সাহায্য দরকার? এমমার সাথে কথা বলুন 👇",
+    community_msg: "অন্য বট মালিকদের কমিউনিটিতে যোগ দিন 👇",
+    course_msg: "আমাদের কোর্স দেখুন এবং বট বাড়ান 👇",
+    testbot_msg: "এখানে টেস্ট বট চেষ্টা করুন 👇",
     lang_changed: "✅ ভাষা সফলভাবে বাংলায় পরিবর্তন করা হয়েছে",
   },
   ru: {
@@ -155,7 +175,11 @@ Boom! У вас есть приватный fantasy-бот, который ни�
     btn_community: "👥 Присоединиться к владельцам ботов",
     btn_course: "▶️ Смотреть наш курс",
     btn_support: "💬 Написать Эмме",
+    btn_testbot: "🧪 Попробовать тестовый бот",
     support_msg: "Нужна помощь? Напишите Эмме 👇",
+    community_msg: "Присоединяйтесь к сообществу владельцев ботов 👇",
+    course_msg: "Смотрите наш курс и развивайте своего бота 👇",
+    testbot_msg: "Попробуйте тестовый бот здесь 👇",
     lang_changed: "✅ Язык успешно изменён на Русский",
   },
   es: {
@@ -181,7 +205,11 @@ Lanza tu primer bot • Obtén 25 estrellas de generación gratis.`,
     btn_community: "👥 Únete a otros dueños de bots",
     btn_course: "▶️ Ver nuestro curso",
     btn_support: "💬 Hablar con Emma",
+    btn_testbot: "🧪 Probar bot de prueba",
     support_msg: "¿Necesitas ayuda? Habla con Emma 👇",
+    community_msg: "Únete a la comunidad de dueños de bots 👇",
+    course_msg: "Mira nuestro curso y haz crecer tu bot 👇",
+    testbot_msg: "Prueba nuestro bot de prueba aquí 👇",
     lang_changed: "✅ Idioma cambiado exitosamente a Español",
   },
 };
@@ -206,11 +234,11 @@ async function getUserLanguage(supabase: any, telegramUserId: number | string) {
 
 // ====================== HELPERS ======================
 const VIDEO_FILE_ID = 'BAACAgQAAxkDAANeatuZ0gLN8AW4Iz4mRcAmJrH4F10AAp0gAAJF79lSO1SO9RgVd4s9BA';
-
-const MINI_APP_URL = 'https://t.me/lovelyfantasiesbot/botui';
+const MINI_APP_URL = 'https://t.me/magicmotherbot/botui';
 const CHANNEL_LINK = 'https://t.me/+vYwWjoJYk7AxODQ0';
 const COURSE_LINK = 'https://t.me/NudelyBotUI/3';
-const SUPPORT_URL = 'https://t.me/nudelyadmin';
+const SUPPORT_URL = 'https://t.me/emma_melnyk';
+const TESTBOT_URL = 'https://t.me/PLACEHOLDER_TESTBOT'; // ← replace this later
 
 async function sendMessage(token: string, chatId: number | string, text: string, extra: any = {}) {
   const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -268,23 +296,15 @@ function languageMenu() {
   };
 }
 
+// Only Launch button on the promo message
 function promoButtons(lang: string) {
   return {
     inline_keyboard: [
       [
         {
           text: t('btn_launch', lang),
-          url: MINI_APP_URL,          // ← changed from web_app to url
+          url: MINI_APP_URL,
         },
-      ],
-      [
-        { text: t('btn_community', lang), url: CHANNEL_LINK },
-      ],
-      [
-        { text: t('btn_course', lang), url: COURSE_LINK },
-      ],
-      [
-        { text: t('btn_support', lang), url: SUPPORT_URL },
       ],
     ],
   };
@@ -328,7 +348,6 @@ export const onRequestPost = async (context: any) => {
   // ── /start ───────────────────────────────────────────────────────────────
   if (update.message?.text === '/start' || update.message?.text?.startsWith('/start ')) {
     console.log('→ Handling /start');
-
     const chatId = update.message.chat.id;
     const tgUserId = Number(update.message.from.id);
     const tgUsername = update.message.from?.username || null;
@@ -361,10 +380,9 @@ export const onRequestPost = async (context: any) => {
         return new Response('OK');
       }
 
-      // Existing user → send promo
+      // Existing user → send promo (only Launch button)
       const lang = existing.language || 'en';
       console.log('Existing user, language =', lang, '→ sending promo');
-
       await sendVideo(BOT_TOKEN, chatId, t('promo_caption', lang), promoButtons(lang));
       return new Response('OK');
     } catch (err: any) {
@@ -393,7 +411,57 @@ export const onRequestPost = async (context: any) => {
 
     await sendMessage(BOT_TOKEN, chatId, t('support_msg', lang), {
       reply_markup: {
-        inline_keyboard: [[{ text: t('btn_support', lang), url: SUPPORT_URL }]],
+        inline_keyboard: [
+          [{ text: t('btn_support', lang), url: SUPPORT_URL }],
+        ],
+      },
+    });
+    return new Response('OK');
+  }
+
+  // ── /community ──────────────────────────────────────────────────────────
+  if (update.message?.text === '/community') {
+    console.log('→ Handling /community');
+    const chatId = update.message.chat.id;
+    const lang = await getUserLanguage(supabase, update.message.from.id);
+
+    await sendMessage(BOT_TOKEN, chatId, t('community_msg', lang), {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: t('btn_community', lang), url: CHANNEL_LINK }],
+        ],
+      },
+    });
+    return new Response('OK');
+  }
+
+  // ── /courses ────────────────────────────────────────────────────────────
+  if (update.message?.text === '/courses') {
+    console.log('→ Handling /courses');
+    const chatId = update.message.chat.id;
+    const lang = await getUserLanguage(supabase, update.message.from.id);
+
+    await sendMessage(BOT_TOKEN, chatId, t('course_msg', lang), {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: t('btn_course', lang), url: COURSE_LINK }],
+        ],
+      },
+    });
+    return new Response('OK');
+  }
+
+  // ── /testbot ─────────────────────────────────────────────────────────────
+  if (update.message?.text === '/testbot') {
+    console.log('→ Handling /testbot');
+    const chatId = update.message.chat.id;
+    const lang = await getUserLanguage(supabase, update.message.from.id);
+
+    await sendMessage(BOT_TOKEN, chatId, t('testbot_msg', lang), {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: t('btn_testbot', lang), url: TESTBOT_URL }],
+        ],
       },
     });
     return new Response('OK');
@@ -426,6 +494,7 @@ export const onRequestPost = async (context: any) => {
       }),
     });
 
+    // Send promo with only Launch button
     await sendVideo(BOT_TOKEN, chatId, t('promo_caption', lang), promoButtons(lang));
     return new Response('OK');
   }
