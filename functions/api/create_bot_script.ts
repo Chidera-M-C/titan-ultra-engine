@@ -21,7 +21,7 @@ Steps are simple:
 Boom! You've got a private fantasy bot that never goes missing.
 
 Launch your first bot • Get 25 free generation stars.`,
-    btn_launch: "🚀 Launch bot in 60s",
+    btn_launch: "🔥 Be in control now",
     btn_community: "👥 Join other bot owners",
     btn_course: "▶️ Watch our course",
     btn_support: "💬 Talk to Emma",
@@ -51,7 +51,7 @@ Launch your first bot • Get 25 free generation stars.`,
 Boom! أصبح لديك بوت خيالي خاص لا يختفي أبداً.
 
 أطلق بوتك الأول • احصل على 25 نجمة مجانية.`,
-    btn_launch: "🚀 أطلق البوت في 60 ثانية",
+    btn_launch: "🔥 كن المتحكم الآن",
     btn_community: "👥 انضم لمالكي البوتات الآخرين",
     btn_course: "▶️ شاهد كورسنا",
     btn_support: "💬 تحدث مع إيما",
@@ -81,7 +81,7 @@ Boom! أصبح لديك بوت خيالي خاص لا يختفي أبداً.
 Boom! आपके पास एक प्राइवेट फैंटेसी बॉट है जो कभी गायब नहीं होता।
 
 अपना पहला बॉट लॉन्च करें • 25 फ्री जनरेशन स्टार्स पाएं।`,
-    btn_launch: "🚀 60 सेकंड में बॉट लॉन्च करें",
+    btn_launch: "🔥 अब नियंत्रण अपने हाथ में लें",
     btn_community: "👥 अन्य बॉट ओनर्स से जुड़ें",
     btn_course: "▶️ हमारा कोर्स देखें",
     btn_support: "💬 एम्मा से बात करें",
@@ -111,7 +111,7 @@ Boom! आपके पास एक प्राइवेट फैंटेस�
 Boom! آپ کے پاس ایک پرائیویٹ فینٹسی بوٹ ہے جو کبھی غائب نہیں ہوتا۔
 
 اپنا پہلا بوٹ لانچ کریں • 25 مفت جنریشن سٹارز حاصل کریں۔`,
-    btn_launch: "🚀 60 سیکنڈ میں بوٹ لانچ کریں",
+    btn_launch: "🔥 اب کنٹرول اپنے ہاتھ میں لیں",
     btn_community: "👥 دیگر بوٹ اونرز سے جڑیں",
     btn_course: "▶️ ہمارا کورس دیکھیں",
     btn_support: "💬 اما سے بات کریں",
@@ -141,7 +141,7 @@ Boom! آپ کے پاس ایک پرائیویٹ فینٹسی بوٹ ہے جو ک�
 Boom! আপনার কাছে একটি প্রাইভেট ফ্যান্টাসি বট আছে যা কখনো হারায় না।
 
 আপনার প্রথম বট লঞ্চ করুন • ২৫টি ফ্রি জেনারেশন স্টার পান।`,
-    btn_launch: "🚀 ৬০ সেকেন্ডে বট লঞ্চ করুন",
+    btn_launch: "🔥 এখন নিয়ন্ত্রণ নিন",
     btn_community: "👥 অন্য বট মালিকদের সাথে যোগ দিন",
     btn_course: "▶️ আমাদের কোর্স দেখুন",
     btn_support: "💬 এমমার সাথে কথা বলুন",
@@ -171,7 +171,7 @@ Boom! আপনার কাছে একটি প্রাইভেট ফ্�
 Boom! У вас есть приватный fantasy-бот, который никогда не пропадает.
 
 Запустите своего первого бота • Получите 25 бесплатных звёзд генерации.`,
-    btn_launch: "🚀 Запустить бота за 60 сек",
+    btn_launch: "🔥 Возьми контроль сейчас",
     btn_community: "👥 Присоединиться к владельцам ботов",
     btn_course: "▶️ Смотреть наш курс",
     btn_support: "💬 Написать Эмме",
@@ -201,7 +201,7 @@ Los pasos son simples:
 ¡Boom! Tienes un bot fantasy privado que nunca desaparece.
 
 Lanza tu primer bot • Obtén 25 estrellas de generación gratis.`,
-    btn_launch: "🚀 Lanzar bot en 60s",
+    btn_launch: "🔥 Toma el control ahora",
     btn_community: "👥 Únete a otros dueños de bots",
     btn_course: "▶️ Ver nuestro curso",
     btn_support: "💬 Hablar con Emma",
@@ -296,7 +296,7 @@ function languageMenu() {
   };
 }
 
-// Only Launch button on the promo message
+// Only one CTA button
 function promoButtons(lang: string) {
   return {
     inline_keyboard: [
@@ -346,6 +346,7 @@ export const onRequestPost = async (context: any) => {
   }));
 
   // ── /start ───────────────────────────────────────────────────────────────
+  // Now always shows promo immediately (no language picker first)
   if (update.message?.text === '/start' || update.message?.text?.startsWith('/start ')) {
     console.log('→ Handling /start');
     const chatId = update.message.chat.id;
@@ -363,26 +364,20 @@ export const onRequestPost = async (context: any) => {
         console.error('Supabase select error:', error);
       }
 
-      console.log('Existing user:', existing);
-
       if (!existing) {
-        console.log('New user → inserting + showing language menu');
+        // New user → insert with default language 'en'
         const { error: insertError } = await supabase.from('bot_managers').insert({
           user_id: tgUserId,
           username: tgUsername,
           star_balance: 0,
+          language: 'en',
         });
         if (insertError) console.error('Insert error:', insertError);
-
-        await sendMessage(BOT_TOKEN, chatId, t('choose_language', 'en'), {
-          reply_markup: languageMenu(),
-        });
-        return new Response('OK');
       }
 
-      // Existing user → send promo (only Launch button)
-      const lang = existing.language || 'en';
-      console.log('Existing user, language =', lang, '→ sending promo');
+      // Always send promo immediately
+      const lang = existing?.language || 'en';
+      console.log('Sending promo, language =', lang);
       await sendVideo(BOT_TOKEN, chatId, t('promo_caption', lang), promoButtons(lang));
       return new Response('OK');
     } catch (err: any) {
@@ -494,7 +489,7 @@ export const onRequestPost = async (context: any) => {
       }),
     });
 
-    // Send promo with only Launch button
+    // After changing language → show promo again
     await sendVideo(BOT_TOKEN, chatId, t('promo_caption', lang), promoButtons(lang));
     return new Response('OK');
   }
