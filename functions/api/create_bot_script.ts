@@ -4,15 +4,13 @@ import { createClient } from '@supabase/supabase-js';
 const translations: any = {
   en: {
     choose_language: "Please choose your language:",
-    promo_caption: `Create your own bot in 5 simple steps:
+    promo_caption: `✨ Welcome to Magic BotMother — your personal AI bot studio.
 
-1. Go to @BotFather
-2. Create a new bot
-3. Copy the token
-4. Open the Mini App
-5. Paste the token and create your bot
+Create your own AI bots, interact with them, and manage everything in one place.
 
-You own it and you control it.`,
+Start building your first bot in seconds.
+
+By tapping the button below, you accept our Terms of Use and Privacy Policy.`,
     btn_launch: "🔥 Be in control now",
     btn_community: "👥 Join other bot owners",
     btn_course: "▶️ Watch our course",
@@ -26,15 +24,13 @@ You own it and you control it.`,
   },
   ar: {
     choose_language: "الرجاء اختيار لغتك:",
-    promo_caption: `أنشئ بوتك الخاص في 5 خطوات بسيطة:
+    promo_caption: `✨ مرحباً بك في Magic BotMother — استوديو البوتات الذكية الخاص بك.
 
-1. اذهب إلى @BotFather
-2. أنشئ بوتاً جديداً
-3. انسخ التوكن
-4. افتح تطبيقنا المصغر
-5. ألصق التوكن وأنشئ بوتك
+أنشئ بوتاتك الذكية، تفاعل معها، وأدر كل شيء من مكان واحد.
 
-أنت تملكه وأنت تتحكم فيه.`,
+ابدأ ببناء بوتك الأول خلال ثوانٍ.
+
+بالضغط على الزر أدناه، فإنك توافق على شروط الاستخدام وسياسة الخصوصية.`,
     btn_launch: "🔥 كن المتحكم الآن",
     btn_community: "👥 انضم لمالكي البوتات الآخرين",
     btn_course: "▶️ شاهد كورسنا",
@@ -48,15 +44,13 @@ You own it and you control it.`,
   },
   hi: {
     choose_language: "कृपया अपनी भाषा चुनें:",
-    promo_caption: `अपना प्राइवेट बॉट 5 आसान स्टेप्स में बनाएं:
+    promo_caption: `✨ Magic BotMother में आपका स्वागत है — आपका पersonal AI बॉट स्टूडियो।
 
-1. @BotFather पर जाएं
-2. नया बॉट बनाएं
-3. टोकन कॉपी करें
-4. मिनी ऐप खोलें
-5. टोकन पेस्ट करके अपना बॉट बनाएं
+अपने AI बॉट्स बनाएं, उनके साथ इंटरैक्ट करें, और सब कुछ एक ही जगह मैनेज करें।
 
-यह आपका है और आप इसे कंट्रोल करते हैं।`,
+सेकंडों में अपना पहला बॉट बनाना शुरू करें।
+
+नीचे दिए गए बटन पर टैप करके, आप हमारी Terms of Use और Privacy Policy से सहमत होते हैं।`,
     btn_launch: "🔥 अब नियंत्रण अपने हाथ में लें",
     btn_community: "👥 अन्य बॉट ओनर्स से जुड़ें",
     btn_course: "▶️ हमारा कोर्स देखें",
@@ -70,15 +64,13 @@ You own it and you control it.`,
   },
   ur: {
     choose_language: "براہ کرم اپنی زبان منتخب کریں:",
-    promo_caption: `اپنا پرائیویٹ بوٹ 5 آسان مراحل میں بنائیں:
+    promo_caption: `✨ Magic BotMother میں خوش آمدید — آپ کا ذاتی AI بوٹ اسٹوڈیو۔
 
-1. @BotFather پر جائیں
-2. نیا بوٹ بنائیں
-3. ٹوکن کاپی کریں
-4. منی ایپ کھولیں
-5. ٹوکن پیسٹ کرکے اپنا بوٹ بنائیں
+اپنے AI بوٹس بنائیں، ان کے ساتھ بات چیت کریں، اور سب کچھ ایک جگہ سے مینج کریں۔
 
-یہ آپ کا ہے اور آپ اسے کنٹرول کرتے ہیں۔`,
+سیکنڈز میں اپنا پہلا بوٹ بنانا شروع کریں۔
+
+نیچے دیے گئے بٹن پر ٹیپ کرکے، آپ ہماری Terms of Use اور Privacy Policy سے اتفاق کرتے ہیں۔`,
     btn_launch: "🔥 اب کنٹرول اپنے ہاتھ میں لیں",
     btn_community: "👥 دیگر بوٹ اونرز سے جڑیں",
     btn_course: "▶️ ہمارا کورس دیکھیں",
@@ -92,15 +84,13 @@ You own it and you control it.`,
   },
   bn: {
     choose_language: "অনুগ্রহ করে আপনার ভাষা নির্বাচন করুন:",
-    promo_caption: `আপনার নিজের প্রাইভেট বট ৫টি সহজ ধাপে তৈরি করুন:
+    promo_caption: `✨ Magic BotMother-এ স্বাগতম — আপনার ব্যক্তিগত AI বট স্টুডিও।
 
-1. @BotFather এ যান
-2. নতুন বট তৈরি করুন
-3. টোকেন কপি করুন
-4. মিনি অ্যাপ খুলুন
-5. টোকেন পেস্ট করে আপনার বট তৈরি করুন
+নিজের AI বট তৈরি করুন, তাদের সাথে ইন্টারঅ্যাক্ট করুন, এবং সবকিছু এক জায়গা থেকে ম্যানেজ করুন।
 
-এটি আপনার এবং আপনিই এটি নিয়ন্ত্রণ করেন।`,
+সেকেন্ডের মধ্যে আপনার প্রথম বট তৈরি শুরু করুন।
+
+নিচের বাটনে ট্যাপ করে আপনি আমাদের Terms of Use এবং Privacy Policy-তে সম্মত হচ্ছেন।`,
     btn_launch: "🔥 এখন নিয়ন্ত্রণ নিন",
     btn_community: "👥 অন্য বট মালিকদের সাথে যোগ দিন",
     btn_course: "▶️ আমাদের কোর্স দেখুন",
@@ -114,15 +104,13 @@ You own it and you control it.`,
   },
   ru: {
     choose_language: "Пожалуйста, выберите язык:",
-    promo_caption: `Создайте своего приватного бота за 5 простых шагов:
+    promo_caption: `✨ Добро пожаловать в Magic BotMother — вашу персональную студию AI-ботов.
 
-1. Перейдите к @BotFather
-2. Создайте нового бота
-3. Скопируйте токен
-4. Откройте Mini App
-5. Вставьте токен и создайте бота
+Создавайте своих AI-ботов, взаимодействуйте с ними и управляйте всем в одном месте.
 
-Вы владеете им и контролируете его.`,
+Начните создавать своего первого бота за секунды.
+
+Нажимая кнопку ниже, вы принимаете наши Условия использования и Политику конфиденциальности.`,
     btn_launch: "🔥 Возьми контроль сейчас",
     btn_community: "👥 Присоединиться к владельцам ботов",
     btn_course: "▶️ Смотреть наш курс",
@@ -136,15 +124,13 @@ You own it and you control it.`,
   },
   es: {
     choose_language: "Por favor elige tu idioma:",
-    promo_caption: `Crea tu propio bot privado en 5 pasos simples:
+    promo_caption: `✨ Bienvenido a Magic BotMother — tu estudio personal de bots de IA.
 
-1. Ve a @BotFather
-2. Crea un nuevo bot
-3. Copia el token
-4. Abre la Mini App
-5. Pega el token y crea tu bot
+Crea tus propios bots de IA, interactúa con ellos y gestiona todo en un solo lugar.
 
-Tú lo posees y tú lo controlas.`,
+Empieza a crear tu primer bot en segundos.
+
+Al tocar el botón de abajo, aceptas nuestros Términos de Uso y Política de Privacidad.`,
     btn_launch: "🔥 Toma el control ahora",
     btn_community: "👥 Únete a otros dueños de bots",
     btn_course: "▶️ Ver nuestro curso",
