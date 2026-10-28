@@ -233,7 +233,7 @@ async function getUserLanguage(supabase: any, telegramUserId: number | string) {
 }
 
 // ====================== HELPERS ======================
-const VIDEO_FILE_ID = 'BAACAgQAAxkDAANeatuZ0gLN8AW4Iz4mRcAmJrH4F10AAp0gAAJF79lSO1SO9RgVd4s9BA';
+const VIDEO_FILE_ID = 'BAACAgQAAxkDAAN1auHQJMWf26d6wuYE0zh2_T2Q8KgAAmgfAAKDWAlT01nJDfE5U8E9BA';
 const CTA_URL = 'https://t.me/botui_test_motherbot';
 const CHANNEL_LINK = 'https://t.me/+vYwWjoJYk7AxODQ0';
 const COURSE_LINK = 'https://t.me/NudelyBotUI/3';
