@@ -6,7 +6,7 @@ const translations: any = {
     choose_language: "Please choose your language:",
     promo_caption: `Create your own bot in 5 simple steps:
 
-1. Go to @BotFather
+1. Go to BotFather
 2. Create a new bot
 3. Copy the token
 4. Open the Mini App
@@ -28,7 +28,7 @@ You own it and you control it.`,
     choose_language: "الرجاء اختيار لغتك:",
     promo_caption: `أنشئ بوتك الخاص في 5 خطوات بسيطة:
 
-1. اذهب إلى @BotFather
+1. اذهب إلى BotFather
 2. أنشئ بوتاً جديداً
 3. انسخ التوكن
 4. افتح تطبيقنا المصغر
@@ -50,7 +50,7 @@ You own it and you control it.`,
     choose_language: "कृपया अपनी भाषा चुनें:",
     promo_caption: `अपना प्राइवेट बॉट 5 आसान स्टेप्स में बनाएं:
 
-1. @BotFather पर जाएं
+1. BotFather पर जाएं
 2. नया बॉट बनाएं
 3. टोकन कॉपी करें
 4. मिनी ऐप खोलें
@@ -72,7 +72,7 @@ You own it and you control it.`,
     choose_language: "براہ کرم اپنی زبان منتخب کریں:",
     promo_caption: `اپنا پرائیویٹ بوٹ 5 آسان مراحل میں بنائیں:
 
-1. @BotFather پر جائیں
+1. BotFather پر جائیں
 2. نیا بوٹ بنائیں
 3. ٹوکن کاپی کریں
 4. منی ایپ کھولیں
@@ -94,7 +94,7 @@ You own it and you control it.`,
     choose_language: "অনুগ্রহ করে আপনার ভাষা নির্বাচন করুন:",
     promo_caption: `আপনার নিজের প্রাইভেট বট ৫টি সহজ ধাপে তৈরি করুন:
 
-1. @BotFather এ যান
+1. BotFather এ যান
 2. নতুন বট তৈরি করুন
 3. টোকেন কপি করুন
 4. মিনি অ্যাপ খুলুন
@@ -116,7 +116,7 @@ You own it and you control it.`,
     choose_language: "Пожалуйста, выберите язык:",
     promo_caption: `Создайте своего приватного бота за 5 простых шагов:
 
-1. Перейдите к @BotFather
+1. Перейдите к BotFather
 2. Создайте нового бота
 3. Скопируйте токен
 4. Откройте Mini App
@@ -138,7 +138,7 @@ You own it and you control it.`,
     choose_language: "Por favor elige tu idioma:",
     promo_caption: `Crea tu propio bot privado en 5 pasos simples:
 
-1. Ve a @BotFather
+1. Ve a BotFather
 2. Crea un nuevo bot
 3. Copia el token
 4. Abre la Mini App
