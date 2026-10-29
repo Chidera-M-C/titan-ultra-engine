@@ -8,7 +8,7 @@ const translations: any = {
 
 Create your own AI bots, interact with them, and manage everything in one place.
 
-Start building your first bot in seconds.
+Start building your first bot today.
 
 By tapping the button below, you accept our Terms of Use and Privacy Policy.`,
     btn_launch: "🔥 Be in control now",
@@ -28,8 +28,6 @@ By tapping the button below, you accept our Terms of Use and Privacy Policy.`,
 
 أنشئ بوتاتك الذكية، تفاعل معها، وأدر كل شيء من مكان واحد.
 
-ابدأ ببناء بوتك الأول خلال ثوانٍ.
-
 بالضغط على الزر أدناه، فإنك توافق على شروط الاستخدام وسياسة الخصوصية.`,
     btn_launch: "🔥 كن المتحكم الآن",
     btn_community: "👥 انضم لمالكي البوتات الآخرين",
@@ -48,7 +46,6 @@ By tapping the button below, you accept our Terms of Use and Privacy Policy.`,
 
 अपने AI बॉट्स बनाएं, उनके साथ इंटरैक्ट करें, और सब कुछ एक ही जगह मैनेज करें।
 
-सेकंडों में अपना पहला बॉट बनाना शुरू करें।
 
 नीचे दिए गए बटन पर टैप करके, आप हमारी Terms of Use और Privacy Policy से सहमत होते हैं।`,
     btn_launch: "🔥 अब नियंत्रण अपने हाथ में लें",
@@ -68,8 +65,6 @@ By tapping the button below, you accept our Terms of Use and Privacy Policy.`,
 
 اپنے AI بوٹس بنائیں، ان کے ساتھ بات چیت کریں، اور سب کچھ ایک جگہ سے مینج کریں۔
 
-سیکنڈز میں اپنا پہلا بوٹ بنانا شروع کریں۔
-
 نیچے دیے گئے بٹن پر ٹیپ کرکے، آپ ہماری Terms of Use اور Privacy Policy سے اتفاق کرتے ہیں۔`,
     btn_launch: "🔥 اب کنٹرول اپنے ہاتھ میں لیں",
     btn_community: "👥 دیگر بوٹ اونرز سے جڑیں",
@@ -88,7 +83,6 @@ By tapping the button below, you accept our Terms of Use and Privacy Policy.`,
 
 নিজের AI বট তৈরি করুন, তাদের সাথে ইন্টারঅ্যাক্ট করুন, এবং সবকিছু এক জায়গা থেকে ম্যানেজ করুন।
 
-সেকেন্ডের মধ্যে আপনার প্রথম বট তৈরি শুরু করুন।
 
 নিচের বাটনে ট্যাপ করে আপনি আমাদের Terms of Use এবং Privacy Policy-তে সম্মত হচ্ছেন।`,
     btn_launch: "🔥 এখন নিয়ন্ত্রণ নিন",
@@ -108,7 +102,6 @@ By tapping the button below, you accept our Terms of Use and Privacy Policy.`,
 
 Создавайте своих AI-ботов, взаимодействуйте с ними и управляйте всем в одном месте.
 
-Начните создавать своего первого бота за секунды.
 
 Нажимая кнопку ниже, вы принимаете наши Условия использования и Политику конфиденциальности.`,
     btn_launch: "🔥 Возьми контроль сейчас",
@@ -128,7 +121,6 @@ By tapping the button below, you accept our Terms of Use and Privacy Policy.`,
 
 Crea tus propios bots de IA, interactúa con ellos y gestiona todo en un solo lugar.
 
-Empieza a crear tu primer bot en segundos.
 
 Al tocar el botón de abajo, aceptas nuestros Términos de Uso y Política de Privacidad.`,
     btn_launch: "🔥 Toma el control ahora",
