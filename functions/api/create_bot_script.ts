@@ -163,7 +163,7 @@ async function getUserLanguage(supabase: any, telegramUserId: number | string) {
 }
 
 // ====================== HELPERS ======================
-const VIDEO_FILE_ID = 'BAACAgQAAxkDAANHauMqJHsEhWNEMoMVGGop5ov22BkAAqowAALc1hlTjmkq0IhdjQw9BA';
+const IMAGE_FILE_ID = 'AgACAgQAAxkDAANIauMr4yiREbDmokRBRQjeMHLRkoAAAhMTaxvc1hlTl0kPdkhJBxgBAAMCAAN3AAM9BA';
 const CTA_URL = 'https://t.me/botui_test_motherbot';
 const CHANNEL_LINK = 'https://t.me/+vYwWjoJYk7AxODQ0';
 const COURSE_LINK = 'https://t.me/NudelyBotUI/3';
@@ -183,13 +183,13 @@ async function sendMessage(token: string, chatId: number | string, text: string,
   return data;
 }
 
-async function sendVideo(token: string, chatId: number | string, caption: string, reply_markup: any) {
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendVideo`, {
+async function sendPhoto(token: string, chatId: number | string, caption: string, reply_markup: any) {
+  const res = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       chat_id: chatId,
-      video: VIDEO_FILE_ID,
+      photo: IMAGE_FILE_ID,
       caption,
       parse_mode: 'HTML',
       reply_markup,
@@ -197,8 +197,8 @@ async function sendVideo(token: string, chatId: number | string, caption: string
   });
   const data = await res.json();
   if (!data.ok) {
-    console.error('[sendVideo] FAILED', JSON.stringify(data));
-    // Fallback → send as normal message if video fails
+    console.error('[sendPhoto] FAILED', JSON.stringify(data));
+    // Fallback → send as normal message if photo fails
     await sendMessage(token, chatId, caption, { reply_markup });
   }
   return data;
@@ -307,8 +307,8 @@ export const onRequestPost = async (context: any) => {
 
       // Always send promo immediately
       const lang = existing?.language || 'en';
-      console.log('Sending promo, language =', lang);
-      await sendVideo(BOT_TOKEN, chatId, t('promo_caption', lang), promoButtons(lang));
+      console.log('Sending promo image, language =', lang);
+      await sendPhoto(BOT_TOKEN, chatId, t('promo_caption', lang), promoButtons(lang));
       return new Response('OK');
     } catch (err: any) {
       console.error('/start fatal error:', err?.message || err);
@@ -419,8 +419,8 @@ export const onRequestPost = async (context: any) => {
       }),
     });
 
-    // After changing language → show promo again
-    await sendVideo(BOT_TOKEN, chatId, t('promo_caption', lang), promoButtons(lang));
+    // After changing language → show promo image again
+    await sendPhoto(BOT_TOKEN, chatId, t('promo_caption', lang), promoButtons(lang));
     return new Response('OK');
   }
 
