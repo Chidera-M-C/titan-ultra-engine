@@ -8,7 +8,7 @@ const translations: any = {
 
 Create your own AI bots, interact with them, and manage everything in one place.
 
-Start building your first bot in seconds.
+Start building your first bot today.
 
 By tapping the button below, you accept our Terms of Use and Privacy Policy.`,
     btn_launch: "🔥 Be in control now",
