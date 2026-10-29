@@ -63,7 +63,7 @@ function t(key: string, lang: string = 'en', vars: Record<string, any> = {}) {
 }
 
 // ====================== HELPERS ======================
-const MINI_APP_URL = 'https://t.me/PixiFantasiesBot/nudelybotui';
+const MINI_APP_URL = 'https://t.me/magicmotherbot/botui';
 
 const isHttpUrl = (value: string) => /^https?:\/\//i.test(value);
 
