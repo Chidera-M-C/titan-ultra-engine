@@ -156,7 +156,7 @@ async function getUserLanguage(supabase: any, telegramUserId: number | string) {
 
 // ====================== HELPERS ======================
 const IMAGE_FILE_ID = 'AgACAgQAAxkDAANRauOEju6_JGSwjRCKThxOULE6KSEAAtQTaxvc1hlT4IKzCQvpZPEBAAMCAAN4AAM9BA';
-const CTA_URL = 'https://t.me/botui_test_motherbot';
+const CTA_URL = 'https://t.me/magicmotherbot/botui';
 const CHANNEL_LINK = 'https://t.me/+vYwWjoJYk7AxODQ0';
 const COURSE_LINK = 'https://t.me/NudelyBotUI/3';
 const SUPPORT_URL = 'https://t.me/emma_melnyk';
