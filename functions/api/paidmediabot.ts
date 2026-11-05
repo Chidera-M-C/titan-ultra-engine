@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 /*
   PAID MEDIA BOT  (Telegram Business)
+  PAID MEDIA BOT  (Telegram Business)
   -----------------------------------
   A bot connected to YOUR Premium account (Settings > Business > Chatbots).
   It sends messages and locked Stars media into YOUR existing chats, as you.
