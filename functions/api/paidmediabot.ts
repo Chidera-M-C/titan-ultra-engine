@@ -178,10 +178,16 @@ async function runCommand(ctx: Ctx, text: string, where: Where) {
 
     // Remove the "/send 3" text you typed in the friend's chat.
     if (where.cmdMessageId) {
-      await tg(ctx.token, 'deleteBusinessMessages', {
+      const del = await tg(ctx.token, 'deleteBusinessMessages', {
         business_connection_id: connId,
         message_ids: [where.cmdMessageId],
       });
+      if (!del.ok) {
+        await notifyOwner(
+          ctx,
+          `⚠️ Couldn't delete your command message: <code>${esc(del.description)}</code>`
+        );
+      }
     }
     return notifyOwner(ctx, `✅ Item #${itemId} sent${cmd === 'send' ? ` (${item.price} ⭐ locked)` : ' (free)'}.`);
   }
