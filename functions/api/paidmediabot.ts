@@ -2,7 +2,6 @@ import { createClient } from '@supabase/supabase-js';
 
 /*
   PAID MEDIA BOT  (Telegram Business)
-  PAID MEDIA BOT  (Telegram Business)
   -----------------------------------
   A bot connected to YOUR Premium account (Settings > Business > Chatbots).
   It sends messages and locked Stars media into YOUR existing chats, as you.
@@ -14,12 +13,16 @@ import { createClient } from '@supabase/supabase-js';
     SHARED_SUPABASE_URL / SHARED_SUPABASE_SERVICE_ROLE_KEY   (same ones your other bots use)
 
   HOW YOU USE IT
-    1) In the bot's own chat, send a photo or video with caption:   50 | your caption
-       The bot saves it as item #N.
+    1) In the bot's own chat, send ONE photo/video, or an ALBUM of up to 10 photos and/or videos
+       (select several in Telegram and send together). Put this caption on it:   50 | your caption
+       The bot saves everything as one item #N.
     2) Open any friend's chat and type:   /send N
-       The bot posts the locked media there as you, then deletes your "/send N" message.
+       The bot posts all the locked media there as you, then tries to delete your "/send N" message.
     Other commands (type them in the bot's chat): /help
 */
+
+const MAX_MEDIA = 10; // Telegram's limit for one paid post
+const ALBUM_WAIT_MS = 3000; // how long to wait for all album pieces to arrive
 
 // ====================== HELPERS ======================
 async function tg(token: string, method: string, body: any = {}) {
@@ -48,7 +51,7 @@ const validPrice = (p: number) => Number.isInteger(p) && p >= 1 && p <= 25000;
 
 const HELP = `<b>Paid Media Bot</b> — sends locked media from your own account.
 
-<b>Add an item:</b> send a photo/video here with caption <code>50 | your caption</code>
+<b>Add an item:</b> send a photo/video here, or an album of up to 10 photos/videos (mixed is fine), with caption <code>50 | your caption</code>
 
 <b>Send it:</b> open a friend's chat and type <code>/send 3</code>
 (or from here: <code>/send 3 @username</code>)
@@ -61,6 +64,43 @@ const HELP = `<b>Paid Media Bot</b> — sends locked media from your own account
 <code>/addbuyer @username</code> / <code>/buyers</code>
 <code>/broadcast 3</code> — send to all buyers
 <code>/balance</code> — Stars balance of the bot`;
+
+// ---- media helpers (one item can hold several photos/videos) ----
+type MediaPiece = { type: 'photo' | 'video'; file_id: string; width: number; height: number; duration: number };
+
+function mediaFromMessage(m: any): MediaPiece | null {
+  if (m.photo?.length) {
+    return { type: 'photo', file_id: m.photo[m.photo.length - 1].file_id, width: 0, height: 0, duration: 0 };
+  }
+  if (m.video) {
+    return {
+      type: 'video',
+      file_id: m.video.file_id,
+      width: m.video.width || 0,
+      height: m.video.height || 0,
+      duration: m.video.duration || 0,
+    };
+  }
+  return null;
+}
+
+// Works for new multi-media items AND old single-photo/video items.
+function itemMedia(item: any): MediaPiece[] {
+  const list: MediaPiece[] =
+    Array.isArray(item.media) && item.media.length
+      ? item.media
+      : [{ type: item.kind, file_id: item.file_id, width: item.width || 0, height: item.height || 0, duration: item.duration || 0 }];
+  return list.slice(0, MAX_MEDIA);
+}
+
+function describeMedia(list: MediaPiece[]) {
+  const photos = list.filter((x) => x.type === 'photo').length;
+  const videos = list.length - photos;
+  const parts = [];
+  if (photos) parts.push(`${photos} photo${photos > 1 ? 's' : ''}`);
+  if (videos) parts.push(`${videos} video${videos > 1 ? 's' : ''}`);
+  return parts.join(' + ');
+}
 
 // ====================== CONTEXT ======================
 type Ctx = { token: string; owner: number; supabase: any };
@@ -100,24 +140,27 @@ async function resolveTarget(ctx: Ctx, who: string | undefined, currentChat?: nu
 }
 
 // ====================== SENDING ======================
-async function sendPaid(ctx: Ctx, connId: string, chatId: number, item: any) {
-  const media: any =
-    item.kind === 'video'
+function toInputMedia(list: MediaPiece[]) {
+  return list.map((x) =>
+    x.type === 'video'
       ? {
           type: 'video',
-          media: item.file_id,
-          width: item.width || undefined,
-          height: item.height || undefined,
-          duration: item.duration || undefined,
+          media: x.file_id,
+          width: x.width || undefined,
+          height: x.height || undefined,
+          duration: x.duration || undefined,
           supports_streaming: true,
         }
-      : { type: 'photo', media: item.file_id };
+      : { type: 'photo', media: x.file_id }
+  );
+}
 
+async function sendPaid(ctx: Ctx, connId: string, chatId: number, item: any) {
   return tg(ctx.token, 'sendPaidMedia', {
     business_connection_id: connId,
     chat_id: chatId,
     star_count: item.price,
-    media: [media],
+    media: toInputMedia(itemMedia(item)),
     caption: item.caption || '',
     payload: `item-${item.id}`,
     protect_content: true,
@@ -125,11 +168,23 @@ async function sendPaid(ctx: Ctx, connId: string, chatId: number, item: any) {
 }
 
 async function sendFree(ctx: Ctx, connId: string, chatId: number, item: any) {
-  const isVideo = item.kind === 'video';
+  const list = itemMedia(item);
+
+  // several pieces -> one normal album
+  if (list.length > 1) {
+    const media = toInputMedia(list).map((x: any, i: number) => (i === 0 ? { ...x, caption: item.caption || '' } : x));
+    return tg(ctx.token, 'sendMediaGroup', {
+      business_connection_id: connId,
+      chat_id: chatId,
+      media,
+    });
+  }
+
+  const isVideo = list[0].type === 'video';
   return tg(ctx.token, isVideo ? 'sendVideo' : 'sendPhoto', {
     business_connection_id: connId,
     chat_id: chatId,
-    [isVideo ? 'video' : 'photo']: item.file_id,
+    [isVideo ? 'video' : 'photo']: list[0].file_id,
     caption: item.caption || '',
   });
 }
@@ -183,10 +238,7 @@ async function runCommand(ctx: Ctx, text: string, where: Where) {
         message_ids: [where.cmdMessageId],
       });
       if (!del.ok) {
-        await notifyOwner(
-          ctx,
-          `⚠️ Couldn't delete your command message: <code>${esc(del.description)}</code>`
-        );
+        await notifyOwner(ctx, `⚠️ Couldn't delete your command message: <code>${esc(del.description)}</code>`);
       }
     }
     return notifyOwner(ctx, `✅ Item #${itemId} sent${cmd === 'send' ? ` (${item.price} ⭐ locked)` : ' (free)'}.`);
@@ -199,7 +251,12 @@ async function runCommand(ctx: Ctx, text: string, where: Where) {
     return notifyOwner(
       ctx,
       '<b>Items</b>\n' +
-        data.map((i: any) => `#${i.id} ${i.kind} · ${i.price} ⭐ · sent ${i.sold} · ${esc((i.caption || '').slice(0, 40))}`).join('\n')
+        data
+          .map((i: any) => {
+            const list = itemMedia(i);
+            return `#${i.id} ${esc(describeMedia(list))} · ${i.price} ⭐ · sent ${i.sold} · ${esc((i.caption || '').slice(0, 40))}`;
+          })
+          .join('\n')
     );
   }
 
@@ -324,7 +381,7 @@ async function onBusinessConnection(ctx: Ctx, conn: any) {
   );
   if (!conn.is_enabled) return notifyOwner(ctx, '⚠️ The bot was disconnected from your account.');
   if (!canReply) return notifyOwner(ctx, '⚠️ Connected, but "Reply to messages" is off. Turn it on in Settings → Business → Chatbots.');
-  return notifyOwner(ctx, '✅ Bot connected to your account. Send me a photo/video with caption <code>50 | caption</code> to begin.');
+  return notifyOwner(ctx, '✅ Bot connected to your account. Send me a photo/video (or an album) with caption <code>50 | caption</code> to begin.');
 }
 
 // A message in one of YOUR chats (from you or from your friend)
@@ -340,6 +397,41 @@ async function onBusinessMessage(ctx: Ctx, bm: any) {
   });
 }
 
+const CAPTION_HINT =
+  'Add a caption like <code>50 | your caption</code> (price in Stars, then a bar, then the caption). For an album, put it on any one of the photos/videos.';
+
+// Save one item made of 1 to 10 photos/videos
+async function createItem(ctx: Ctx, list: MediaPiece[], pc: { price: number; caption: string }) {
+  if (!validPrice(pc.price)) return notifyOwner(ctx, 'Price must be between 1 and 25000 Stars.');
+  const media = list.slice(0, MAX_MEDIA);
+  const first = media[0];
+
+  const { data, error } = await ctx.supabase
+    .from('pm_items')
+    .insert({
+      kind: media.length > 1 ? 'album' : first.type,
+      price: pc.price,
+      caption: pc.caption,
+      file_id: first.file_id,
+      width: first.width || 0,
+      height: first.height || 0,
+      duration: first.duration || 0,
+      media,
+    })
+    .select('id')
+    .single();
+
+  if (error) {
+    console.error('insert item error', error);
+    return notifyOwner(ctx, 'Could not save the item. Check the logs.');
+  }
+  const extra = list.length > MAX_MEDIA ? `\n⚠️ Only the first ${MAX_MEDIA} were kept (Telegram's limit).` : '';
+  return notifyOwner(
+    ctx,
+    `Queued item <b>#${data.id}</b> · ${pc.price} ⭐ · ${describeMedia(media)}${extra}\nOpen a friend's chat and type <code>/send ${data.id}</code>`
+  );
+}
+
 // A message sent to the bot's own chat
 async function onDirectMessage(ctx: Ctx, m: any) {
   if (Number(m.from?.id) !== ctx.owner) {
@@ -349,40 +441,48 @@ async function onDirectMessage(ctx: Ctx, m: any) {
   const text = (m.text || '').trim();
   if (text.startsWith('/')) return runCommand(ctx, text, {});
 
-  // Photo or video with "50 | caption"  ->  new item
-  const isPhoto = !!m.photo?.length;
-  const isVideo = !!m.video;
-  if (!isPhoto && !isVideo) return;
+  const piece = mediaFromMessage(m);
+  if (!piece) return;
 
-  const pc = parsePriceCaption(m.caption || '');
-  if (!pc) {
-    return notifyOwner(ctx, 'Add a caption like <code>50 | your caption</code> (price in Stars, then a bar, then the caption).');
+  // ---- one photo/video on its own
+  if (!m.media_group_id) {
+    const pc = parsePriceCaption(m.caption || '');
+    if (!pc) return notifyOwner(ctx, CAPTION_HINT);
+    return createItem(ctx, [piece], pc);
   }
-  if (!validPrice(pc.price)) return notifyOwner(ctx, 'Price must be between 1 and 25000 Stars.');
 
-  const row = isVideo
-    ? {
-        kind: 'video',
-        file_id: m.video.file_id,
-        width: m.video.width || 0,
-        height: m.video.height || 0,
-        duration: m.video.duration || 0,
-      }
-    : { kind: 'photo', file_id: m.photo[m.photo.length - 1].file_id };
+  // ---- part of an album: Telegram sends each piece as a separate update.
+  // Park this piece, wait a moment for the others, then ONE handler builds the item.
+  const groupId = String(m.media_group_id);
+  await ctx.supabase.from('pm_pending_media').insert({
+    media_group_id: groupId,
+    message_id: m.message_id,
+    caption: m.caption || null,
+    ...piece,
+  });
 
-  const { data, error } = await ctx.supabase
-    .from('pm_items')
-    .insert({ ...row, price: pc.price, caption: pc.caption })
-    .select('id')
-    .single();
-  if (error) {
-    console.error('insert item error', error);
-    return notifyOwner(ctx, 'Could not save the item. Check the logs.');
-  }
-  return notifyOwner(
-    ctx,
-    `Queued item <b>#${data.id}</b> · ${pc.price} ⭐ · ${row.kind}\nOpen a friend's chat and type <code>/send ${data.id}</code>`
-  );
+  await sleep(ALBUM_WAIT_MS);
+
+  // Whoever deletes the rows first gets them; the other handlers get nothing and stop.
+  const { data: rows } = await ctx.supabase
+    .from('pm_pending_media')
+    .delete()
+    .eq('media_group_id', groupId)
+    .select();
+  if (!rows?.length) return;
+
+  rows.sort((a: any, b: any) => a.message_id - b.message_id);
+  const pc = rows.map((r: any) => parsePriceCaption(r.caption || '')).find(Boolean);
+  if (!pc) return notifyOwner(ctx, `I got your album (${rows.length} items) but no price caption. ${CAPTION_HINT}`);
+
+  const list: MediaPiece[] = rows.map((r: any) => ({
+    type: r.type,
+    file_id: r.file_id,
+    width: r.width || 0,
+    height: r.height || 0,
+    duration: r.duration || 0,
+  }));
+  return createItem(ctx, list, pc);
 }
 
 async function processUpdate(env: any, update: any) {
