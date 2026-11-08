@@ -160,7 +160,7 @@ const CTA_URL = 'https://t.me/magicmotherbot/botui';
 const CHANNEL_LINK = 'https://t.me/+vYwWjoJYk7AxODQ0';
 const COURSE_LINK = 'https://t.me/NudelyBotUI/3';
 const SUPPORT_URL = 'https://t.me/emma_melnyk';
-const TESTBOT_URL = 'https://t.me/botui_test_motherbot'; // ← replace this later
+const TESTBOT_URL = 'https://t.me/letitshinebot'; // ← replace this later
 
 async function sendMessage(token: string, chatId: number | string, text: string, extra: any = {}) {
   const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
